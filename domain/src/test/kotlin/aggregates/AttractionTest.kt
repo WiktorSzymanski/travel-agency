@@ -4,7 +4,11 @@ import AttractionStatusEnum
 import LocationEnum
 import java.time.LocalDateTime
 import java.util.UUID
-import kotlin.test.*
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class AttractionTest {
 
