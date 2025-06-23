@@ -13,9 +13,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Ktlint Check
-        uses: ktlint/ktlint-action@v1.1.0
-
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -24,9 +21,6 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2
-
-#      - name: Run Ktlint Check
-#        run: ./gradlew ktlintCheck
 
       - name: Run Detekt
         run: ./gradlew detekt

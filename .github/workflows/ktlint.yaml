@@ -12,9 +12,15 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
 
       - name: ktlint Check
-        uses: ScaCap/action-ktlint@master
+        uses: ScaCap/action-ktlint@v1.9.0
         with:
-          github_token: ${{ secrets.github_token }}
-          reporter: ktlint
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review      # Use review comment
+          level: warning                 # warning | error | info
+          filter_mode: added            # only new code
+          fail_on_error: true           # optional: fail CI on issues
+          ktlint_version: "0.49.2"      # optional ktlint version
