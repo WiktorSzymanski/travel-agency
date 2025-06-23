@@ -14,8 +14,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Ktlint Check
-      - uses: ktlint/ktlint-action@v1.1.0
-
+        uses: ktlint/ktlint-action@v1.1.0
 
       - name: Set up JDK
         uses: actions/setup-java@v3
