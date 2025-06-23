@@ -12,7 +12,7 @@ data class Attraction(
     val date: LocalDateTime,
     val capacity: Int,
     val bookings: MutableList<Booking> = mutableListOf(),
-    var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED
+    var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
 ) {
     fun cancel() {
         require(status == AttractionStatusEnum.SCHEDULED) {

@@ -11,7 +11,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class AccommodationTest {
-
     private lateinit var accommodationId: UUID
     private lateinit var userId: UUID
     private lateinit var now: LocalDateTime
@@ -41,19 +40,24 @@ class AccommodationTest {
         val acc =
             Accommodation(accommodationId, LocationEnum.PARIS, rentFuture, status = AccommodationStatusEnum.BOOKED)
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.book(userId)
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.book(userId)
+            }
 
         assertEquals("Accommodation $accommodationId in not AVAILABLE", ex.message)
     }
 
     @Test
     fun cancelBooking_should_clear_booking_if_user_matches() {
-        val acc = Accommodation(
-            accommodationId, LocationEnum.PARIS, rentFuture,
-            booking = Booking(userId, now), status = AccommodationStatusEnum.BOOKED
-        )
+        val acc =
+            Accommodation(
+                accommodationId,
+                LocationEnum.PARIS,
+                rentFuture,
+                booking = Booking(userId, now),
+                status = AccommodationStatusEnum.BOOKED,
+            )
 
         acc.cancelBooking(userId)
         assertNull(acc.booking)
@@ -64,23 +68,29 @@ class AccommodationTest {
         val acc =
             Accommodation(accommodationId, LocationEnum.PARIS, rentFuture, status = AccommodationStatusEnum.AVAILABLE)
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.cancelBooking(userId)
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.cancelBooking(userId)
+            }
 
         assertEquals("Accommodation $accommodationId is not BOOKED", ex.message)
     }
 
     @Test
     fun cancelBooking_should_fail_if_wrong_user() {
-        val acc = Accommodation(
-            accommodationId, LocationEnum.PARIS, rentFuture,
-            booking = Booking(UUID.randomUUID(), now), status = AccommodationStatusEnum.BOOKED
-        )
+        val acc =
+            Accommodation(
+                accommodationId,
+                LocationEnum.PARIS,
+                rentFuture,
+                booking = Booking(UUID.randomUUID(), now),
+                status = AccommodationStatusEnum.BOOKED,
+            )
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.cancelBooking(userId)
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.cancelBooking(userId)
+            }
 
         assertEquals("Accommodation $accommodationId is not BOOKED by user $userId", ex.message)
     }
@@ -96,9 +106,10 @@ class AccommodationTest {
     fun expire_should_fail_if_available_but_from_in_future() {
         val acc = Accommodation(accommodationId, LocationEnum.PARIS, rentFuture)
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.expire()
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.expire()
+            }
 
         assertEquals("Accommodation $accommodationId cannot be expired before its from date", ex.message)
     }
@@ -108,9 +119,10 @@ class AccommodationTest {
         val acc =
             Accommodation(accommodationId, LocationEnum.PARIS, rentFuture, status = AccommodationStatusEnum.RENTING)
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.expire()
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.expire()
+            }
 
         assertEquals("Accommodation $accommodationId cannot expire while RENTING", ex.message)
     }
@@ -120,19 +132,24 @@ class AccommodationTest {
         val acc =
             Accommodation(accommodationId, LocationEnum.PARIS, rentFuture, status = AccommodationStatusEnum.BOOKED)
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.expire()
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.expire()
+            }
 
         assertEquals("Accommodation $accommodationId cannot expire in status BOOKED", ex.message)
     }
 
     @Test
     fun renting_should_succeed_if_from_in_past_and_booked() {
-        val acc = Accommodation(
-            accommodationId, LocationEnum.PARIS, rentPast,
-            booking = Booking(userId, now), status = AccommodationStatusEnum.BOOKED
-        )
+        val acc =
+            Accommodation(
+                accommodationId,
+                LocationEnum.PARIS,
+                rentPast,
+                booking = Booking(userId, now),
+                status = AccommodationStatusEnum.BOOKED,
+            )
 
         acc.renting()
         assertEquals(AccommodationStatusEnum.RENTING, acc.status)
@@ -140,14 +157,19 @@ class AccommodationTest {
 
     @Test
     fun renting_should_fail_if_from_in_future() {
-        val acc = Accommodation(
-            accommodationId, LocationEnum.PARIS, rentFuture,
-            booking = Booking(userId, now), status = AccommodationStatusEnum.BOOKED
-        )
+        val acc =
+            Accommodation(
+                accommodationId,
+                LocationEnum.PARIS,
+                rentFuture,
+                booking = Booking(userId, now),
+                status = AccommodationStatusEnum.BOOKED,
+            )
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.renting()
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.renting()
+            }
 
         assertEquals("Accommodation $accommodationId cannot be in RENTING before ${rentFuture.from}", ex.message)
     }
@@ -157,9 +179,10 @@ class AccommodationTest {
         val acc =
             Accommodation(accommodationId, LocationEnum.PARIS, rentPast, status = AccommodationStatusEnum.AVAILABLE)
 
-        val ex = assertFailsWith<IllegalArgumentException> {
-            acc.renting()
-        }
+        val ex =
+            assertFailsWith<IllegalArgumentException> {
+                acc.renting()
+            }
 
         assertEquals("Accommodation $accommodationId is not BOOKED so it cannot be in RENTING", ex.message)
     }

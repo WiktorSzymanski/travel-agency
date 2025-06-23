@@ -3,7 +3,7 @@ import java.util.UUID
 
 data class LocationAndTime(
     val location: LocationEnum,
-    val time: LocalDateTime
+    val time: LocalDateTime,
 )
 
 data class Booking(

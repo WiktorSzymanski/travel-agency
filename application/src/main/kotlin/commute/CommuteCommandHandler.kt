@@ -15,33 +15,29 @@ class CommuteCommandHandler {
     }
 
     fun handleCreateCommuteCommand(command: CreateCommuteCommand) {
-        val commute = Commute(
-            commuteId = command.commuteId,
-            departure = command.departure,
-            arrival = command.arrival,
-            seats = command.seats
-        )
+        val commute =
+            Commute(
+                commuteId = command.commuteId,
+                departure = command.departure,
+                arrival = command.arrival,
+                seats = command.seats,
+            )
 
         // SAVE or something
     }
 
     fun handleCancelCommuteCommand(command: CancelCommuteCommand) {
-
     }
 
     fun handleCommuteDepartureCommand(command: CommuteDepartureCommand) {
-
     }
 
     fun handleCommuteArrivalCommand(command: CommuteArrivalCommand) {
-
     }
 
     fun handleBookSeatCommand(command: BookSeatCommand) {
-
     }
 
     fun handleCancelBookedSeatCommand(command: CancelBookedSeatCommand) {
-
     }
 }

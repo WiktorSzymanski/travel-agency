@@ -46,7 +46,10 @@ data class Commute(
         // EVENT or something
     }
 
-    fun bookSeat(seat: Seat, userId: UUID) {
+    fun bookSeat(
+        seat: Seat,
+        userId: UUID,
+    ) {
         require(this.status == CommuteStatusEnum.SCHEDULED) {
             "Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
         }
@@ -64,16 +67,23 @@ data class Commute(
         // EVENT or something
     }
 
-    fun cancelBookedSeat(seat: Seat, userId: UUID) {
+    fun cancelBookedSeat(
+        seat: Seat,
+        userId: UUID,
+    ) {
         require(this.status == CommuteStatusEnum.SCHEDULED)
 
-        this.bookings.getOrElse(seat, {
-            throw IllegalArgumentException( "Booking for seat $seat not found in Commute $commuteId")
-        }).let {
-            if (it.userId == userId)
-                this.bookings.remove(seat)
-            else
-                throw IllegalArgumentException("Booking for seat $seat in Commute $commuteId is owned by other user")}
+        this.bookings
+            .getOrElse(seat, {
+                throw IllegalArgumentException("Booking for seat $seat not found in Commute $commuteId")
+            })
+            .let {
+                if (it.userId == userId) {
+                    this.bookings.remove(seat)
+                } else {
+                    throw IllegalArgumentException("Booking for seat $seat in Commute $commuteId is owned by other user")
+                }
+            }
 
         // EVENT or something
     }

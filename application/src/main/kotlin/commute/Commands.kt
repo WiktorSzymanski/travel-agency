@@ -12,7 +12,7 @@ data class CreateCommuteCommand(
     override val commuteId: UUID,
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
-    val seats: List<Seat>
+    val seats: List<Seat>,
 ) : CommuteCommand
 
 data class CancelCommuteCommand(
@@ -30,11 +30,11 @@ data class CommuteArrivalCommand(
 data class BookSeatCommand(
     override val commuteId: UUID,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : CommuteCommand
 
 data class CancelBookedSeatCommand(
     override val commuteId: UUID,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : CommuteCommand

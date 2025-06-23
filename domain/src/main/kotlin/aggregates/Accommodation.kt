@@ -12,19 +12,21 @@ data class Accommodation(
     val location: LocationEnum,
     val rent: Rent,
     var booking: Booking? = null,
-    var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE
+    var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
 ) {
     fun expire() {
         when (status) {
             AccommodationStatusEnum.AVAILABLE ->
                 require(LocalDateTime.now().isAfter(rent.from)) {
-                    "Accommodation $accommodationId cannot be expired before its from date"}
+                    "Accommodation $accommodationId cannot be expired before its from date"
+                }
             AccommodationStatusEnum.RENTING ->
                 require(LocalDateTime.now().isAfter(rent.till)) {
                     "Accommodation $accommodationId cannot expire while RENTING"
                 }
             else -> throw IllegalArgumentException(
-                    "Accommodation $accommodationId cannot expire in status $status")
+                "Accommodation $accommodationId cannot expire in status $status",
+            )
         }
 
         this.status = AccommodationStatusEnum.EXPIRED

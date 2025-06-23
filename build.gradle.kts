@@ -30,11 +30,16 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 }
 
+subprojects {
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+}
+
 ktlint {
     version.set("1.2.1")
     verbose.set(true)
     android.set(false)
-    outputColorName.set("RED")
+    outputToConsole.set(true)
+    coloredOutput.set(true)
 }
 
 detekt {
