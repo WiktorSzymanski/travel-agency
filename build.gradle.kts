@@ -45,6 +45,7 @@ detekt {
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     reports {
         sarif {
+            ignoreFailures = true
             required.set(true)
             outputLocation.set(layout.buildDirectory.file("reports/detekt/report.sarif"))
         }

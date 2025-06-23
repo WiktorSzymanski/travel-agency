@@ -1,23 +1,24 @@
-name: codeAnalysis.yml
+name: detekt.yml
+
 on:
   pull_request:
   push:
     branches: [main]
 
 jobs:
-  codeAnalysis:
-    name: Code Analysis - Ktlint & Detekt
+  detekt:
+    name: Check detekt
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@master
 
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2
@@ -26,6 +27,7 @@ jobs:
         run: ./gradlew detekt
 
       - name: Upload SARIF to GitHub
+        if: success() || failure()
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: build/reports/detekt/report.sarif
