@@ -32,6 +32,7 @@ dependencies {
 
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    apply(plugin = "io.gitlab.arturbosch.detekt")
 }
 
 ktlint {
@@ -48,9 +49,10 @@ detekt {
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    ignoreFailures = true
+
     reports {
         sarif {
-            ignoreFailures = true
             required.set(true)
             outputLocation.set(layout.buildDirectory.file("reports/detekt/report.sarif"))
         }
