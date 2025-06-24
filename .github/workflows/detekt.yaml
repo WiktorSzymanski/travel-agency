@@ -1,4 +1,5 @@
 name: Detekt Check
+
 on:
   pull_request:
   push:
