@@ -17,4 +17,5 @@ jobs:
         uses: ScaCap/action-ktlint@master
         with:
           github_token: ${{ secrets.ACTIONS_TOKEN }}
+          filter_mode: diff_context
           reporter: github-pr-review # Change reporter

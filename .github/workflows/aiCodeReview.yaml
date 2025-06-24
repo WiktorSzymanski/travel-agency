@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: AI Code Review
-        uses: lfsevergnini/ai-code-reviewer@main
+        uses: lfsevergnini/ai-codereviewer@main
         with:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
           AI_PROVIDER: "openai"
