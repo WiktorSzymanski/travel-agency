@@ -83,7 +83,8 @@ data class Commute(
             })
             .let {
                 require(it.userId == userId) {
-                    "Booking for seat $seat in Commute $commuteId is owned by other user"}
+                    "Booking for seat $seat in Commute $commuteId is owned by other user"
+                }
                 this.bookings.remove(seat)
             }
 

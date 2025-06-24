@@ -81,7 +81,8 @@ class AttractionTest {
             }
         assertEquals(
             "Cannot cancel booking for Attraction ${attraction.attractionId} not in SCHEDULED status",
-            ex.message)
+            ex.message,
+        )
     }
 
     @Test
@@ -109,7 +110,8 @@ class AttractionTest {
             }
         assertEquals(
             "Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status",
-            ex.message)
+            ex.message,
+        )
     }
 
     @Test
@@ -122,7 +124,8 @@ class AttractionTest {
             }
         assertEquals(
             "Attraction ${attraction.attractionId} cannot be cancelled when more than half of seats are booked",
-            ex.message)
+            ex.message,
+        )
     }
 
     @Test
@@ -141,7 +144,8 @@ class AttractionTest {
             }
         assertEquals(
             "Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status",
-            ex.message)
+            ex.message,
+        )
     }
 
     @Test
@@ -153,6 +157,7 @@ class AttractionTest {
             }
         assertEquals(
             "Attraction ${attraction.attractionId} cannot expire before its date",
-            ex.message)
+            ex.message,
+        )
     }
 }

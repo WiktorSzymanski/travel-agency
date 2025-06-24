@@ -1,6 +1,6 @@
-//package commute
-//
-//class CommuteCommandHandler {
+package commute
+
+class CommuteCommandHandler {
 //    fun handle(command: CommuteCommand) {
 //        when (command) {
 //            is CreateCommuteCommand -> handleCreateCommuteCommand(command)
@@ -23,4 +23,4 @@
 //    fun handleBookSeatCommand(command: BookSeatCommand) { }
 //
 //    fun handleCancelBookedSeatCommand(command: CancelBookedSeatCommand) { }
-//}
+}
