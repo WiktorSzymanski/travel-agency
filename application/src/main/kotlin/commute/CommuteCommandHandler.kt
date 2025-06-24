@@ -1,7 +1,5 @@
 package commute
 
-import aggregates.Commute
-
 class CommuteCommandHandler {
     fun handle(command: CommuteCommand) {
         when (command) {
@@ -14,30 +12,15 @@ class CommuteCommandHandler {
         }
     }
 
-    fun handleCreateCommuteCommand(command: CreateCommuteCommand) {
-        val commute =
-            Commute(
-                commuteId = command.commuteId,
-                departure = command.departure,
-                arrival = command.arrival,
-                seats = command.seats,
-            )
+    fun handleCreateCommuteCommand(command: CreateCommuteCommand) { }
 
-        // SAVE or something
-    }
+    fun handleCancelCommuteCommand(command: CancelCommuteCommand) { }
 
-    fun handleCancelCommuteCommand(command: CancelCommuteCommand) {
-    }
+    fun handleCommuteDepartureCommand(command: CommuteDepartureCommand) { }
 
-    fun handleCommuteDepartureCommand(command: CommuteDepartureCommand) {
-    }
+    fun handleCommuteArrivalCommand(command: CommuteArrivalCommand) { }
 
-    fun handleCommuteArrivalCommand(command: CommuteArrivalCommand) {
-    }
+    fun handleBookSeatCommand(command: BookSeatCommand) { }
 
-    fun handleBookSeatCommand(command: BookSeatCommand) {
-    }
-
-    fun handleCancelBookedSeatCommand(command: CancelBookedSeatCommand) {
-    }
+    fun handleCancelBookedSeatCommand(command: CancelBookedSeatCommand) { }
 }
