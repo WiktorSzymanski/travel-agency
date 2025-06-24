@@ -14,12 +14,16 @@ data class Attraction(
     val bookings: MutableList<Booking> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
 ) {
+    companion object {
+        const val MINIMUM_REQUIRED_BOOKINGS_RATIO = 0.5
+    }
+
     fun cancel() {
         require(status == AttractionStatusEnum.SCHEDULED) {
             "Attraction $attractionId cannot be cancelled when not in SCHEDULED status"
         }
 
-        require(bookings.size < 0.5 * capacity) {
+        require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * capacity) {
             "Attraction $attractionId cannot be cancelled when more than half of seats are booked"
         }
 

@@ -79,7 +79,9 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.cancelBooking(userId)
             }
-        assertEquals("Cannot cancel booking for Attraction ${attraction.attractionId} not in SCHEDULED status", ex.message)
+        assertEquals(
+            "Cannot cancel booking for Attraction ${attraction.attractionId} not in SCHEDULED status",
+            ex.message)
     }
 
     @Test
@@ -105,7 +107,9 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.cancel()
             }
-        assertEquals("Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status", ex.message)
+        assertEquals(
+            "Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status",
+            ex.message)
     }
 
     @Test
@@ -116,7 +120,9 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.cancel()
             }
-        assertEquals("Attraction ${attraction.attractionId} cannot be cancelled when more than half of seats are booked", ex.message)
+        assertEquals(
+            "Attraction ${attraction.attractionId} cannot be cancelled when more than half of seats are booked",
+            ex.message)
     }
 
     @Test
@@ -133,7 +139,9 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.expire()
             }
-        assertEquals("Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status", ex.message)
+        assertEquals(
+            "Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status",
+            ex.message)
     }
 
     @Test
@@ -143,6 +151,8 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.expire()
             }
-        assertEquals("Attraction ${attraction.attractionId} cannot expire before its date", ex.message)
+        assertEquals(
+            "Attraction ${attraction.attractionId} cannot expire before its date",
+            ex.message)
     }
 }

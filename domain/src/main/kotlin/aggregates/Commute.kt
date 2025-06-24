@@ -15,12 +15,16 @@ data class Commute(
     val bookings: MutableMap<Seat, Booking> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
 ) {
+    companion object {
+        const val MINIMUM_REQUIRED_BOOKINGS_RATIO = 0.5
+    }
+
     fun cancel() {
         require(status == CommuteStatusEnum.SCHEDULED) {
             "Commute $commuteId cannot be cancelled when not in SCHEDULED status"
         }
 
-        require(bookings.size < 0.5 * seats.size) {
+        require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * seats.size) {
             "Commute $commuteId cannot be cancelled when more than half of seats are booked"
         }
         this.status = CommuteStatusEnum.CANCELLED
@@ -78,11 +82,9 @@ data class Commute(
                 throw IllegalArgumentException("Booking for seat $seat not found in Commute $commuteId")
             })
             .let {
-                if (it.userId == userId) {
-                    this.bookings.remove(seat)
-                } else {
-                    throw IllegalArgumentException("Booking for seat $seat in Commute $commuteId is owned by other user")
-                }
+                require(it.userId == userId) {
+                    "Booking for seat $seat in Commute $commuteId is owned by other user"}
+                this.bookings.remove(seat)
             }
 
         // EVENT or something
