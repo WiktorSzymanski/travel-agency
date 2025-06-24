@@ -26,8 +26,18 @@ jobs:
       - name: Run Detekt
         run: ./gradlew detekt
 
-      - name: Upload SARIF to GitHub
-        if: failure()
+      - name: Merge SARIF reports
+        run: |
+          echo '{"version":"2.1.0","runs":[]}' > merged.sarif
+          for file in $(find . -type f -name "*.sarif"); do
+            jq -s '
+              def merge_runs: add | {runs: .};
+              (.[0] + .[1]) | 
+              { version: "2.1.0", runs: (.runs + .runs) } 
+            ' merged.sarif "$file" > tmp.sarif && mv tmp.sarif merged.sarif
+          done
+
+      - name: Upload merged SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: build/reports/detekt/report.sarif
+          sarif_file: merged.sarif
