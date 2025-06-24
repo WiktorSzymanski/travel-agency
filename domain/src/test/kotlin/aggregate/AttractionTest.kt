@@ -1,4 +1,4 @@
-package aggregates
+package aggregate
 
 import AttractionStatusEnum
 import LocationEnum
@@ -19,6 +19,7 @@ class AttractionTest {
         attraction =
             Attraction(
                 attractionId = UUID.randomUUID(),
+                name = "attraction_name",
                 location = LocationEnum.POZNAN,
                 date = LocalDateTime.now().plusHours(1),
                 capacity = 3,

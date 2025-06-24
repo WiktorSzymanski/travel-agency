@@ -1,4 +1,4 @@
-package aggregates
+package aggregate
 
 import Booking
 import CommuteStatusEnum
@@ -9,6 +9,7 @@ import java.util.UUID
 
 data class Commute(
     val commuteId: UUID,
+    val name: String,
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
     val seats: List<Seat>,

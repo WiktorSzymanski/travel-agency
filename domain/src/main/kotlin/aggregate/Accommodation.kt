@@ -1,4 +1,4 @@
-package aggregates
+package aggregate
 
 import AccommodationStatusEnum
 import Booking
@@ -9,6 +9,7 @@ import java.util.UUID
 
 data class Accommodation(
     val accommodationId: UUID,
+    val name: String,
     val location: LocationEnum,
     val rent: Rent,
     var booking: Booking? = null,

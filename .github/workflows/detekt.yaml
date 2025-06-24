@@ -1,13 +1,12 @@
-name: detekt.yml
-
+name: Detekt Check
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   detekt:
-    name: Check detekt
+    name: Detekt Check
     runs-on: ubuntu-latest
 
     steps:
@@ -43,3 +42,11 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: merged.sarif
+    needs:
+    with:
+    permissions:
+    uses:
+    strategy:
+    if:
+    secrets:
+    concurrency:

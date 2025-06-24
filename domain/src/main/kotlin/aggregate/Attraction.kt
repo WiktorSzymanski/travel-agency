@@ -1,4 +1,4 @@
-package aggregates
+package aggregate
 
 import AttractionStatusEnum
 import Booking
@@ -8,6 +8,7 @@ import java.util.UUID
 
 data class Attraction(
     val attractionId: UUID,
+    val name: String,
     val location: LocationEnum,
     val date: LocalDateTime,
     val capacity: Int,

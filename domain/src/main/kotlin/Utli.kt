@@ -1,6 +1,13 @@
 import java.time.LocalDateTime
 import java.util.UUID
 
+enum class LocationEnum {
+    POZNAN,
+    LONDON,
+    PARIS,
+    BERLIN,
+}
+
 data class LocationAndTime(
     val location: LocationEnum,
     val time: LocalDateTime,
@@ -21,6 +28,13 @@ data class Rent(
     val till: LocalDateTime,
 )
 
+enum class CommuteStatusEnum {
+    SCHEDULED,
+    CANCELLED,
+    ARRIVED,
+    DEPARTED,
+}
+
 enum class AccommodationStatusEnum {
     AVAILABLE,
     BOOKED,
@@ -32,4 +46,11 @@ enum class AttractionStatusEnum {
     SCHEDULED,
     CANCELLED,
     EXPIRED,
+}
+
+enum class OfferStatusEnum {
+    AVAILABLE,
+    BOOKED,
+    EXPIRED,
+    CANCELLED,
 }

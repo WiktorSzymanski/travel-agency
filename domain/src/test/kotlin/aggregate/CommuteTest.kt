@@ -1,4 +1,4 @@
-package aggregates
+package aggregate
 
 import LocationAndTime
 import Seat
@@ -23,7 +23,7 @@ class CommuteTest {
         val departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(10))
         val arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusHours(2))
         val seats = listOf(seat1, seat2, seat3)
-        commute = Commute(UUID.randomUUID(), departure, arrival, seats)
+        commute = Commute(UUID.randomUUID(), "commute_name", departure, arrival, seats)
     }
 
     @Test

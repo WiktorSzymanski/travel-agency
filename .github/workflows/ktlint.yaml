@@ -1,10 +1,10 @@
-name: reviewdog
+name: Ktlint Check
 
 on: [pull_request]
 
 jobs:
   ktlint:
-    name: Check ktlint
+    name: Ktlint Check
     runs-on: ubuntu-latest
 
     steps:
