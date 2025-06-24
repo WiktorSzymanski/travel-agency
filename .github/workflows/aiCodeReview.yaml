@@ -20,7 +20,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ACTIONS_TOKEN }}
           AI_PROVIDER: "openai"
           AI_API_KEY: ${{ secrets.GPT_TOKEN }}
-          AI_MODEL: "gpt-3.5"
+          AI_MODEL: "gpt-3.5-turbo"
           AI_TEMPERATURE: 0.3
           MAX_COMMENTS: 10
           PROJECT_CONTEXT: "This is a Kotlin Ktor project"
