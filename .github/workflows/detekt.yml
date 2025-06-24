@@ -27,6 +27,7 @@ jobs:
         run: ./gradlew detekt
 
       - name: Merge SARIF reports
+        if: failure()
         run: |
           echo '{"version":"2.1.0","runs":[]}' > merged.sarif
           for file in $(find . -type f -name "*.sarif"); do
