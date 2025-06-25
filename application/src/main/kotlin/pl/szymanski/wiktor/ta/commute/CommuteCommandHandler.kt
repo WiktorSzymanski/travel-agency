@@ -1,4 +1,4 @@
-package commute
+package pl.szymanski.wiktor.ta.commute
 
 class CommuteCommandHandler {
 //    fun handle(command: CommuteCommand) {

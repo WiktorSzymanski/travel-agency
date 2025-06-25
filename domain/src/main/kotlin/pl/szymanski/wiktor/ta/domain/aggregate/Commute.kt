@@ -1,9 +1,9 @@
-package aggregate
+package pl.szymanski.wiktor.ta.domain.aggregate
 
-import Booking
-import CommuteStatusEnum
-import LocationAndTime
-import Seat
+import pl.szymanski.wiktor.ta.domain.Booking
+import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
+import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.Seat
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -56,15 +56,15 @@ data class Commute(
         userId: UUID,
     ) {
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
+            "domain.Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
         }
 
         require(this.seats.contains(seat)) {
-            "Seat $seat not found in Commute $commuteId"
+            "domain.Seat $seat not found in Commute $commuteId"
         }
 
         require(!this.bookings.containsKey(seat)) {
-            "Seat $seat already booked in Commute $commuteId"
+            "domain.Seat $seat already booked in Commute $commuteId"
         }
 
         this.bookings.put(seat, Booking(userId, LocalDateTime.now()))
@@ -80,11 +80,11 @@ data class Commute(
 
         this.bookings
             .getOrElse(seat, {
-                throw IllegalArgumentException("Booking for seat $seat not found in Commute $commuteId")
+                throw IllegalArgumentException("domain.Booking for seat $seat not found in Commute $commuteId")
             })
             .let {
                 require(it.userId == userId) {
-                    "Booking for seat $seat in Commute $commuteId is owned by other user"
+                    "domain.Booking for seat $seat in Commute $commuteId is owned by other user"
                 }
                 this.bookings.remove(seat)
             }

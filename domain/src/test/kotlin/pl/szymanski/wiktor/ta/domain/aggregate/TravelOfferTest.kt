@@ -1,7 +1,7 @@
-package aggregate
+package pl.szymanski.wiktor.ta.domain.aggregate
 
-import Booking
-import OfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.Booking
+import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest

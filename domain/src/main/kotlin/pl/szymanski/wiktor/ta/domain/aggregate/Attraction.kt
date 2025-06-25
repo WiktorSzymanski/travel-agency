@@ -1,8 +1,8 @@
-package aggregate
+package pl.szymanski.wiktor.ta.domain.aggregate
 
-import AttractionStatusEnum
-import Booking
-import LocationEnum
+import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.domain.Booking
+import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 import java.util.UUID
 
