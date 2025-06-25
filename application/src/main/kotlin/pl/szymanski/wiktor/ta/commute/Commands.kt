@@ -1,7 +1,7 @@
-package commute
+package pl.szymanski.wiktor.ta.commute
 
-import LocationAndTime
-import Seat
+import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
 sealed interface CommuteCommand {

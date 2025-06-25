@@ -1,3 +1,5 @@
+package pl.szymanski.wiktor.ta.domain
+
 import java.time.LocalDateTime
 import java.util.UUID
 

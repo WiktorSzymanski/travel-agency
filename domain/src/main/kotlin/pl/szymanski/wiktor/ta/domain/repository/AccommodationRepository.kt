@@ -1,6 +1,6 @@
-package repository
+package pl.szymanski.wiktor.ta.domain.repository
 
-import aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import java.util.UUID
 
 interface AccommodationRepository {

@@ -1,7 +1,7 @@
-package aggregate
+package pl.szymanski.wiktor.ta.domain.aggregate
 
-import AttractionStatusEnum
-import LocationEnum
+import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest

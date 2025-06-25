@@ -1,6 +1,6 @@
-package repository
+package pl.szymanski.wiktor.ta.domain.repository
 
-import aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import java.util.UUID
 
 interface CommuteRepository {

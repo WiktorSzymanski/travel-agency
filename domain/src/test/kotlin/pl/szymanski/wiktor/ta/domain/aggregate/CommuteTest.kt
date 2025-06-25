@@ -1,7 +1,9 @@
-package aggregate
+package pl.szymanski.wiktor.ta.domain.aggregate
 
-import LocationAndTime
-import Seat
+import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
+import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.Seat
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
