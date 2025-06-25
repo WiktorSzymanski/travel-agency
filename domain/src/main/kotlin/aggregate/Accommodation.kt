@@ -37,7 +37,7 @@ data class Accommodation(
 
     fun book(userId: UUID) {
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
-            "Accommodation $accommodationId in not AVAILABLE"
+            "Accommodation $accommodationId is not AVAILABLE"
         }
 
         this.status = AccommodationStatusEnum.BOOKED
