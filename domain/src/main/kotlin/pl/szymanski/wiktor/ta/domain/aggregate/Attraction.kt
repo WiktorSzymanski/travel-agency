@@ -29,7 +29,8 @@ data class Attraction(
         }
 
         this.status = AttractionStatusEnum.CANCELLED
-        // EVENT: AttractionCancelled
+
+        // EVENT or something
     }
 
     fun expire() {
@@ -42,7 +43,8 @@ data class Attraction(
         }
 
         this.status = AttractionStatusEnum.EXPIRED
-        // EVENT: AttractionExpired
+
+        // EVENT or something
     }
 
     fun book(userId: UUID) {
@@ -59,7 +61,8 @@ data class Attraction(
         }
 
         bookings.add(Booking(userId, LocalDateTime.now()))
-        // EVENT: BookingCreated
+
+        // EVENT or something
     }
 
     fun cancelBooking(userId: UUID) {
@@ -73,6 +76,6 @@ data class Attraction(
             "User $userId has no booking for Attraction $attractionId"
         }
 
-        // EVENT: BookingCancelled
+        // EVENT or something
     }
 }

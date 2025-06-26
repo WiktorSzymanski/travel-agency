@@ -24,7 +24,8 @@ data class TravelOffer(
         }
 
         this.status = OfferStatusEnum.EXPIRED
-        // EVENT: AttractionExpired
+
+        // EVENT or something
     }
 
     fun book(userId: UUID) {
@@ -34,7 +35,8 @@ data class TravelOffer(
 
         this.status = OfferStatusEnum.BOOKED
         this.booking = Booking(userId, LocalDateTime.now())
-        // EVENT: BookingCreated
+
+        // EVENT or something
     }
 
     fun cancelBooking(userId: UUID) {
@@ -47,6 +49,7 @@ data class TravelOffer(
         }
 
         this.booking = null
-        // EVENT: BookingCancelled
+
+        // EVENT or something
     }
 }
