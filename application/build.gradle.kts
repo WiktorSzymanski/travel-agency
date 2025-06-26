@@ -1,3 +1,5 @@
+val exposedVersion = "0.50.1"
+
 plugins {
     kotlin("jvm")
 }
@@ -11,6 +13,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation("org.jetbrains.exposed:exposed-core:${exposedVersion}")
+    implementation("org.jetbrains.exposed:exposed-jdbc:${exposedVersion}")
 }
 
 tasks.test {
