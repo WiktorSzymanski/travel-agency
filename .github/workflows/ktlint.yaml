@@ -1,0 +1,21 @@
+name: Ktlint Check
+
+on: [pull_request]
+
+jobs:
+  ktlint:
+    name: Ktlint Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+
+      - name: ktlint
+        uses: ScaCap/action-ktlint@master
+        with:
+          github_token: ${{ secrets.ACTIONS_TOKEN }}
+          filter_mode: diff_context
+          reporter: github-pr-review # Change reporter

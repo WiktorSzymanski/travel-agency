@@ -1,0 +1,42 @@
+name: Detekt Check
+
+on: [pull_request]
+
+jobs:
+  detekt:
+    name: Detekt Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@master
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Run Detekt
+        run: ./gradlew detekt
+
+      - name: Merge SARIF reports
+        if: failure()
+        run: |
+          echo '{"version":"2.1.0","runs":[]}' > merged.sarif
+          for file in $(find . -type f -name "*.sarif"); do
+            jq -s '
+              def merge_runs: add | {runs: .};
+              (.[0] + .[1]) | 
+              { version: "2.1.0", runs: (.runs + .runs) } 
+            ' merged.sarif "$file" > tmp.sarif && mv tmp.sarif merged.sarif
+          done
+
+      - name: Upload merged SARIF to GitHub
+        if: failure()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: merged.sarif
