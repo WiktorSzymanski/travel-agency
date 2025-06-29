@@ -10,7 +10,7 @@ data class TravelOffer(
     val name: String,
     val commuteId: UUID,
     val accommodationId: UUID,
-    val attractionId: UUID?,
+    val attractionId: UUID? = null,
     var booking: Booking? = null,
     var status: OfferStatusEnum = OfferStatusEnum.AVAILABLE,
 ) {

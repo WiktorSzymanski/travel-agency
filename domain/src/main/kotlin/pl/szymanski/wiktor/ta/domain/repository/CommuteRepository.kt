@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import java.util.UUID
 
 interface CommuteRepository {
-    fun findById(commuteId: UUID): Commute?
+    suspend fun findById(commuteId: UUID): Commute?
 
-    fun save(commute: Commute)
+    suspend fun save(commute: Commute): Commute
 }
