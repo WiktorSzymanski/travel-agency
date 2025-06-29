@@ -48,7 +48,7 @@ class AccommodationTest {
                 accommodation.book(userId)
             }
 
-        assertEquals("Accommodation $accommodationId in not AVAILABLE", ex.message)
+        assertEquals("Accommodation $accommodationId is not AVAILABLE", ex.message)
     }
 
     @Test

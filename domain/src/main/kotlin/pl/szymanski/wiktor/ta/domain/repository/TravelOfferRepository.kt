@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
 interface TravelOfferRepository {
-    fun findById(travelOfferId: UUID): TravelOffer?
+    suspend fun findById(travelOfferId: UUID): TravelOffer?
 
-    fun save(travelOffer: TravelOffer)
+    suspend fun save(travelOffer: TravelOffer): TravelOffer
 }
