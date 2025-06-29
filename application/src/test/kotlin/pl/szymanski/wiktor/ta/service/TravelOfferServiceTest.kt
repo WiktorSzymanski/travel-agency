@@ -1,27 +1,18 @@
 package pl.szymanski.wiktor.ta.service
 
-import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.BookingCoordinator
 import java.util.UUID
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 
 class TravelOfferServiceTest {
-    @MockK private lateinit var bookingCoordinator: BookingCoordinator
-
-    private lateinit var travelOfferService: TravelOfferService
-
-    @BeforeTest
-    fun setUp() {
-        MockKAnnotations.init(this)
-        travelOfferService = TravelOfferService(bookingCoordinator)
-    }
+    private val bookingCoordinator = mockk<BookingCoordinator>()
+    private val travelOfferService = TravelOfferService(bookingCoordinator)
 
     @Test
     fun bookTravelOffer() =
