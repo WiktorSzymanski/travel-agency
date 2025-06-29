@@ -56,15 +56,15 @@ data class Commute(
         userId: UUID,
     ) {
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "domain.Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
+            "Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
         }
 
         require(this.seats.contains(seat)) {
-            "domain.Seat $seat not found in Commute $commuteId"
+            "Seat $seat not found in Commute $commuteId"
         }
 
         require(!this.bookings.containsKey(seat)) {
-            "domain.Seat $seat already booked in Commute $commuteId"
+            "Seat $seat already booked in Commute $commuteId"
         }
 
         this.bookings.put(seat, Booking(userId, LocalDateTime.now()))
