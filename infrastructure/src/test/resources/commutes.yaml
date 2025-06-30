@@ -1,0 +1,17 @@
+- name: "London to Paris"
+  departureLocation: "London"
+  arrivalLocation: "Paris"
+  seats:
+    - row: "A"
+      column: "1"
+    - row: "A"
+      column: "2"
+
+- name: "Paris to Berlin"
+  departureLocation: "Paris"
+  arrivalLocation: "Berlin"
+  seats:
+    - row: "B"
+      column: "3"
+    - row: "B"
+      column: "4"
