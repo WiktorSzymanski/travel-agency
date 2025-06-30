@@ -42,7 +42,8 @@ class CommuteTest {
             assertFailsWith<IllegalArgumentException> {
                 commute.bookSeat(seat1, userId)
             }
-        assertEquals("Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status", ex.message)
+        assertEquals("Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status",
+            ex.message)
     }
 
     @Test
