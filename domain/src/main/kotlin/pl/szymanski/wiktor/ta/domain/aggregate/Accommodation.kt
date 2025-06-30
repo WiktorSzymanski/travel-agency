@@ -21,10 +21,6 @@ data class Accommodation(
                 require(LocalDateTime.now().isAfter(rent.from)) {
                     "Accommodation $accommodationId cannot be expired before its from date"
                 }
-            AccommodationStatusEnum.RENTING ->
-                require(LocalDateTime.now().isAfter(rent.till)) {
-                    "Accommodation $accommodationId cannot expire while RENTING"
-                }
             else -> throw IllegalArgumentException(
                 "Accommodation $accommodationId cannot expire in status $status",
             )
@@ -36,6 +32,7 @@ data class Accommodation(
     }
 
     fun book(userId: UUID) {
+        statusCheck()
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
             "Accommodation $accommodationId is not AVAILABLE"
         }
@@ -47,6 +44,7 @@ data class Accommodation(
     }
 
     fun cancelBooking(userId: UUID) {
+        statusCheck()
         require(this.status == AccommodationStatusEnum.BOOKED) {
             "Accommodation $accommodationId is not BOOKED"
         }
@@ -60,17 +58,11 @@ data class Accommodation(
         // EVENT or something
     }
 
-    fun renting() {
-        require(LocalDateTime.now().isAfter(rent.from)) {
-            "Accommodation $accommodationId cannot be in RENTING before ${rent.from}"
+    private fun statusCheck() {
+        if (this.status == AccommodationStatusEnum.AVAILABLE) {
+            if (LocalDateTime.now().isAfter(rent.from)) {
+                this.status = AccommodationStatusEnum.EXPIRED
+            }
         }
-
-        require(this.status == AccommodationStatusEnum.BOOKED) {
-            "Accommodation $accommodationId is not BOOKED so it cannot be in RENTING"
-        }
-
-        this.status = AccommodationStatusEnum.RENTING
-
-        // EVENT or something
     }
 }

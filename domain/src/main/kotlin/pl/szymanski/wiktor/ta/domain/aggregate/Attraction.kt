@@ -48,6 +48,8 @@ data class Attraction(
     }
 
     fun book(userId: UUID) {
+        statusCheck()
+
         require(status == AttractionStatusEnum.SCHEDULED) {
             "Attraction $attractionId is not open for booking"
         }
@@ -66,6 +68,8 @@ data class Attraction(
     }
 
     fun cancelBooking(userId: UUID) {
+        statusCheck()
+
         require(status == AttractionStatusEnum.SCHEDULED) {
             "Cannot cancel booking for Attraction $attractionId not in SCHEDULED status"
         }
@@ -77,5 +81,17 @@ data class Attraction(
         }
 
         // EVENT or something
+    }
+
+    private fun statusCheck() {
+        if (this.status == AttractionStatusEnum.SCHEDULED) {
+            if (LocalDateTime.now().isAfter(date)) {
+                if (bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * capacity) {
+                    this.status = AttractionStatusEnum.CANCELLED
+                } else {
+                    this.status = AttractionStatusEnum.EXPIRED
+                }
+            }
+        }
     }
 }

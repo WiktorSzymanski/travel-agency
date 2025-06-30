@@ -33,14 +33,12 @@ data class Rent(
 enum class CommuteStatusEnum {
     SCHEDULED,
     CANCELLED,
-    ARRIVED,
     DEPARTED,
 }
 
 enum class AccommodationStatusEnum {
     AVAILABLE,
     BOOKED,
-    RENTING,
     EXPIRED,
 }
 

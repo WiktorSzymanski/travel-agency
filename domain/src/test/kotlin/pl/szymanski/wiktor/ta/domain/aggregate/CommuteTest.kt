@@ -22,7 +22,7 @@ class CommuteTest {
 
     @BeforeTest
     fun setup() {
-        val departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(10))
+        val departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusMinutes(10))
         val arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusHours(2))
         val seats = listOf(seat1, seat2, seat3)
         commute = Commute(UUID.randomUUID(), "commute_name", departure, arrival, seats)
@@ -42,7 +42,10 @@ class CommuteTest {
             assertFailsWith<IllegalArgumentException> {
                 commute.bookSeat(seat1, userId)
             }
-        assertEquals("Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status", ex.message)
+        assertEquals(
+            "Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status",
+            ex.message,
+        )
     }
 
     @Test
@@ -116,6 +119,11 @@ class CommuteTest {
 
     @Test
     fun commute_can_depart_after_departure_time() {
+        val commute =
+            commute.copy(
+                departure =
+                    LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(1)),
+            )
         commute.depart()
         assertEquals(CommuteStatusEnum.DEPARTED, commute.status)
     }
@@ -129,27 +137,5 @@ class CommuteTest {
             }
         assertTrue(ex.message!!.contains("cannot depart"))
         assertEquals("Commute ${commute.commuteId} cannot depart before its departure time", ex.message)
-    }
-
-    @Test
-    fun can_arrive_after_arrival_time() {
-        commute =
-            commute.copy(
-                departure = commute.departure.copy(time = LocalDateTime.now().minusHours(2)),
-                arrival = commute.arrival.copy(time = LocalDateTime.now().minusMinutes(1)),
-            )
-        commute.arrive()
-        assertEquals(CommuteStatusEnum.ARRIVED, commute.status)
-    }
-
-    @Test
-    fun cannot_arrive_before_arrival_time() {
-        commute = commute.copy(arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusMinutes(10)))
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.arrive()
-            }
-        assertTrue(ex.message!!.contains("cannot arrive"))
-        assertEquals("Commute ${commute.commuteId} cannot arrive before its arrival time", ex.message)
     }
 }

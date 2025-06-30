@@ -1,7 +1,6 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
-import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.time.LocalDateTime
@@ -100,18 +99,6 @@ class AccommodationTest {
     }
 
     @Test
-    fun expire_should_fail_if_renting_and_till_is_future() {
-        val accommodation = accommodation.copy(status = AccommodationStatusEnum.RENTING)
-
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                accommodation.expire()
-            }
-
-        assertEquals("Accommodation $accommodationId cannot expire while RENTING", ex.message)
-    }
-
-    @Test
     fun expire_should_fail_if_in_unexpected_status() {
         val accommodation = accommodation.copy(status = AccommodationStatusEnum.BOOKED)
 
@@ -121,47 +108,5 @@ class AccommodationTest {
             }
 
         assertEquals("Accommodation $accommodationId cannot expire in status BOOKED", ex.message)
-    }
-
-    @Test
-    fun renting_should_succeed_if_from_in_past_and_booked() {
-        val accommodation =
-            accommodation.copy(
-                rent = rentPast,
-                booking = Booking(userId, now),
-                status = AccommodationStatusEnum.BOOKED,
-            )
-
-        accommodation.renting()
-        assertEquals(AccommodationStatusEnum.RENTING, accommodation.status)
-    }
-
-    @Test
-    fun renting_should_fail_if_from_in_future() {
-        val accommodation =
-            accommodation.copy(
-                rent = rentFuture,
-                booking = Booking(userId, now),
-                status = AccommodationStatusEnum.BOOKED,
-            )
-
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                accommodation.renting()
-            }
-
-        assertEquals("Accommodation $accommodationId cannot be in RENTING before ${rentFuture.from}", ex.message)
-    }
-
-    @Test
-    fun renting_should_fail_if_not_booked() {
-        val accommodation = accommodation.copy(rent = rentPast)
-
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                accommodation.renting()
-            }
-
-        assertEquals("Accommodation $accommodationId is not BOOKED so it cannot be in RENTING", ex.message)
     }
 }
