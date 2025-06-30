@@ -42,8 +42,10 @@ class CommuteTest {
             assertFailsWith<IllegalArgumentException> {
                 commute.bookSeat(seat1, userId)
             }
-        assertEquals("Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status",
-            ex.message)
+        assertEquals(
+            "Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status",
+            ex.message,
+        )
     }
 
     @Test
@@ -117,7 +119,11 @@ class CommuteTest {
 
     @Test
     fun commute_can_depart_after_departure_time() {
-        val commute = commute.copy(departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(1)))
+        val commute =
+            commute.copy(
+                departure =
+                    LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(1)),
+            )
         commute.depart()
         assertEquals(CommuteStatusEnum.DEPARTED, commute.status)
     }
