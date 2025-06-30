@@ -7,7 +7,7 @@ data class CommuteTemplate(
     val name: String,
     val departureLocation: String,
     val arrivalLocation: String,
-    val seats: List<Seat>
+    val seats: List<Seat>,
 )
 
 data class AttractionTemplate(
@@ -19,5 +19,5 @@ data class AttractionTemplate(
 data class AccommodationTemplate(
     val name: String,
     val location: String,
-    val rent: Rent
+    val rent: Rent,
 )
