@@ -1,14 +1,29 @@
 package pl.szymanski.wiktor.ta
 
-class CommandHandler {
-    fun handle(command: TravelOfferCommand) {
+import pl.szymanski.wiktor.ta.service.TravelOfferService
+
+class CommandHandler(
+    private val travelOfferService: TravelOfferService,
+) {
+    suspend fun handle(command: TravelOfferCommand) {
         when (command) {
             is BookTravelOfferCommand -> handle(command)
             is CancelBookTravelOfferCommand -> handle(command)
         }
     }
 
-    fun handle(command: BookTravelOfferCommand) {}
+    suspend fun handle(command: BookTravelOfferCommand) {
+        travelOfferService.bookTravelOffer(
+            command.travelOfferId,
+            command.userId,
+            command.seat,
+        )
+    }
 
-    fun handle(command: CancelBookTravelOfferCommand) {}
+    suspend fun handle(command: CancelBookTravelOfferCommand) {
+        travelOfferService.cancelTravelOfferBooking(
+            command.travelOfferId,
+            command.userId,
+        )
+    }
 }
