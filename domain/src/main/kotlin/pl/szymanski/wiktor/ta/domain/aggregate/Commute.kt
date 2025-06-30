@@ -28,6 +28,7 @@ data class Commute(
         require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * seats.size) {
             "Commute $commuteId cannot be cancelled when more than half of seats are booked"
         }
+
         this.status = CommuteStatusEnum.CANCELLED
 
         // EVENT or something
@@ -42,19 +43,11 @@ data class Commute(
         // EVENT or something
     }
 
-    fun arrive() {
-        require(LocalDateTime.now().isAfter(this.arrival.time)) {
-            "Commute $commuteId cannot arrive before its arrival time"
-        }
-        this.status = CommuteStatusEnum.ARRIVED
-
-        // EVENT or something
-    }
-
     fun bookSeat(
         seat: Seat,
         userId: UUID,
     ) {
+        statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
             "Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
         }
@@ -76,19 +69,34 @@ data class Commute(
         seat: Seat,
         userId: UUID,
     ) {
-        require(this.status == CommuteStatusEnum.SCHEDULED)
+        statusCheck()
+        require(this.status == CommuteStatusEnum.SCHEDULED) {
+            "Cannot cancel seat $seat when Commute $commuteId not in SCHEDULED status"
+        }
 
         this.bookings
             .getOrElse(seat, {
-                throw IllegalArgumentException("domain.Booking for seat $seat not found in Commute $commuteId")
+                throw IllegalArgumentException("Booking for seat $seat not found in Commute $commuteId")
             })
             .let {
                 require(it.userId == userId) {
-                    "domain.Booking for seat $seat in Commute $commuteId is owned by other user"
+                    "Booking for seat $seat in Commute $commuteId is owned by other user"
                 }
                 this.bookings.remove(seat)
             }
 
         // EVENT or something
+    }
+
+    private fun statusCheck() {
+        if (this.status == CommuteStatusEnum.SCHEDULED) {
+            if (LocalDateTime.now().isAfter(this.departure.time)) {
+                if (bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * seats.size) {
+                    this.status = CommuteStatusEnum.CANCELLED
+                } else {
+                    this.status = CommuteStatusEnum.DEPARTED
+                }
+            }
+        }
     }
 }
