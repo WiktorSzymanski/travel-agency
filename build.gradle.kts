@@ -1,3 +1,5 @@
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+
 val kotlinVersion: String by project
 val logbackVersion: String by project
 
@@ -40,7 +42,9 @@ ktlint {
     verbose.set(true)
     android.set(false)
     outputToConsole.set(true)
-    coloredOutput.set(true)
+    reporters {
+        reporter(ReporterType.PLAIN)
+    }
 }
 
 detekt {
