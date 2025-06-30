@@ -1,4 +1,4 @@
-package generator
+package loader
 
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.Seat
