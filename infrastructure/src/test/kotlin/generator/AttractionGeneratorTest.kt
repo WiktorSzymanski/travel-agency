@@ -1,0 +1,44 @@
+package generator
+
+import loader.YamlConfigLoader
+import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.domain.LocationEnum
+import java.time.Clock
+import java.time.LocalDateTime
+import java.time.ZoneId
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class AttractionGeneratorTest {
+    private val fixedTime = LocalDateTime.of(2025, 6, 30, 12, 0, 0)
+    private val zone = ZoneId.of("UTC")
+    private val fixedClock = Clock.fixed(fixedTime.atZone(zone).toInstant(), zone)
+
+    private val plusSeconds = 5L
+
+    private val attractionGenerator =
+        AttractionGenerator(
+            YamlConfigLoader(),
+            plusSeconds,
+            fixedClock,
+        )
+
+    @Test
+    fun `generate attraction from yaml`() {
+        val actual = attractionGenerator.generate("src/test/resources/attractions.yaml")
+
+        assertEquals("Big Ben tour", actual[0].name)
+        assertEquals(LocationEnum.LONDON, actual[0].location)
+        assertEquals(10, actual[0].capacity)
+        assertEquals(AttractionStatusEnum.SCHEDULED, actual[0].status)
+        assert(actual[0].bookings.isEmpty())
+        assert(actual[0].date.isAfter(fixedTime))
+
+        assertEquals("City tour by boat", actual[1].name)
+        assertEquals(LocationEnum.BERLIN, actual[1].location)
+        assertEquals(30, actual[1].capacity)
+        assertEquals(AttractionStatusEnum.SCHEDULED, actual[1].status)
+        assert(actual[1].bookings.isEmpty())
+        assert(actual[1].date.isAfter(fixedTime))
+    }
+}
