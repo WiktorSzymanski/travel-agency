@@ -4,7 +4,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import kotlin.random.Random
 
-const val TO_SECONDS_MULTIPLAYER = 1_000_000
+const val TO_SECONDS_MULTIPLIER = 1_000_000
 
 fun randomDateTimeBetween(
     startDate: LocalDateTime,
@@ -20,5 +20,5 @@ fun randomDateTimeBetween(
             Duration.between(startDate, endDate).toMillis() + 1,
         )
 
-    return startDate.plusNanos(randomMillis * TO_SECONDS_MULTIPLAYER)
+    return startDate.plusNanos(randomMillis * TO_SECONDS_MULTIPLIER)
 }
