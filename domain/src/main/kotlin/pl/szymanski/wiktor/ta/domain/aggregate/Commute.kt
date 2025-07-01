@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Commute(
-    val commuteId: UUID,
+    val commuteId: UUID = UUID.randomUUID(),
     val name: String,
     val departure: LocationAndTime,
     val arrival: LocationAndTime,

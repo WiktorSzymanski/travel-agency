@@ -1,0 +1,7 @@
+- name: "Big Ben tour"
+  location: "London"
+  capacity: 10
+
+- name: "City tour by boat"
+  location: "Berlin"
+  capacity: 30

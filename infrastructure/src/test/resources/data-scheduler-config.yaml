@@ -1,0 +1,14 @@
+intervalSeconds: 5
+
+generators:
+  - type: ACCOMMODATION
+    yamlFilePath: "src/test/resources/accommodations.yaml"
+    futureDurationSeconds: 5
+
+  - type: ATTRACTION
+    yamlFilePath: "src/test/resources/attractions.yaml"
+    futureDurationSeconds: 5
+
+  - type: COMMUTE
+    yamlFilePath: "src/test/resources/commutes.yaml"
+    futureDurationSeconds: 5

@@ -3,8 +3,8 @@ package pl.szymanski.wiktor.ta.domain.repository
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import java.util.UUID
 
-interface CommuteRepository {
+interface CommuteRepository : Repository<Commute> {
     suspend fun findById(commuteId: UUID): Commute?
 
-    suspend fun save(commute: Commute): Commute
+    override suspend fun save(entity: Commute): Commute
 }
