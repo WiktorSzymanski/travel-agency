@@ -19,13 +19,14 @@ class AttractionGeneratorTest {
     private val attractionGenerator =
         AttractionGenerator(
             YamlConfigLoader(),
+            "src/test/resources/attractions.yaml",
             plusSeconds,
             fixedClock,
         )
 
     @Test
     fun `generate attraction from yaml`() {
-        val actual = attractionGenerator.generate("src/test/resources/attractions.yaml")
+        val actual = attractionGenerator.generate()
 
         assertEquals("Big Ben tour", actual[0].name)
         assertEquals(LocationEnum.LONDON, actual[0].location)

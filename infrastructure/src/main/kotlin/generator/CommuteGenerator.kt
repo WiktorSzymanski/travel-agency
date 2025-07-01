@@ -10,10 +10,11 @@ import java.time.LocalDateTime
 
 class CommuteGenerator(
     val loader: YamlConfigLoader,
+    private val filePath: String,
     val plusSeconds: Long,
     val clock: Clock = Clock.systemDefaultZone(),
 ) : Generator<CommuteTemplate, Commute> {
-    override fun generate(filePath: String): List<Commute> {
+    override fun generate(): List<Commute> {
         val templates = loader.loadConfig<CommuteTemplate>(filePath)
         return templates.map { toDomainModel(it) }
     }

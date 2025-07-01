@@ -17,13 +17,14 @@ class AccommodationGeneratorTest {
     private val accommodationGenerator =
         AccommodationGenerator(
             YamlConfigLoader(),
+            "src/test/resources/accommodations.yaml",
             plusDays,
             fixedClock,
         )
 
     @Test
     fun `generate accommodation from yaml`() {
-        val actual = accommodationGenerator.generate("src/test/resources/accommodations.yaml")
+        val actual = accommodationGenerator.generate()
 
         assertEquals("Hotel", actual[0].name)
         assertEquals(LocationEnum.LONDON, actual[0].location)

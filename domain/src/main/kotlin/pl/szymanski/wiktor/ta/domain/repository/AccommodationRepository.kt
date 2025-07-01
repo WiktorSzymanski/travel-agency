@@ -3,8 +3,8 @@ package pl.szymanski.wiktor.ta.domain.repository
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import java.util.UUID
 
-interface AccommodationRepository {
+interface AccommodationRepository : Repository<Accommodation> {
     suspend fun findById(accommodationId: UUID): Accommodation?
 
-    suspend fun save(accommodation: Accommodation): Accommodation
+    override suspend fun save(entity: Accommodation): Accommodation
 }
