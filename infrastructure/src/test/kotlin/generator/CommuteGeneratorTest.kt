@@ -19,13 +19,14 @@ class CommuteGeneratorTest {
     private val commuteGenerator =
         CommuteGenerator(
             YamlConfigLoader(),
+            "src/test/resources/commutes.yaml",
             plusSeconds,
             fixedClock,
         )
 
     @Test
     fun `generate commute from yaml`() {
-        val actual = commuteGenerator.generate("src/test/resources/commutes.yaml")
+        val actual = commuteGenerator.generate()
 
         assertEquals(actual[0].name, "London to Paris")
         assertEquals(actual[0].departure.location, LocationEnum.LONDON)

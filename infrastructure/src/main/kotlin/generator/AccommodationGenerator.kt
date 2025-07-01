@@ -11,10 +11,11 @@ import java.util.UUID
 
 class AccommodationGenerator(
     private val loader: YamlConfigLoader,
+    private val filePath: String,
     private val plusSeconds: Long,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : Generator<AccommodationTemplate, Accommodation> {
-    override fun generate(filePath: String): List<Accommodation> {
+    override fun generate(): List<Accommodation> {
         val templates = loader.loadConfig<AccommodationTemplate>(filePath)
         return templates.map { toDomainModel(it) }
     }

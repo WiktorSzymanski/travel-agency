@@ -10,10 +10,11 @@ import java.util.UUID
 
 class AttractionGenerator(
     private val loader: YamlConfigLoader,
+    private val filePath: String,
     private val plusSeconds: Long,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : Generator<AttractionTemplate, Attraction> {
-    override fun generate(filePath: String): List<Attraction> {
+    override fun generate(): List<Attraction> {
         val templates = loader.loadConfig<AttractionTemplate>(filePath)
         return templates.map { toDomainModel(it) }
     }
