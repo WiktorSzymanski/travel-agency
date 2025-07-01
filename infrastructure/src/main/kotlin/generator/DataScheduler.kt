@@ -8,6 +8,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 
+const val TO_SECONDS = 1000
+
 open class DataScheduler(
     private val generatorLoader: GeneratorLoader,
     protected val coroutineContext: CoroutineContext = Dispatchers.Default,
@@ -24,7 +26,7 @@ open class DataScheduler(
             CoroutineScope(coroutineContext).launch {
                 while (isActive) {
                     generate()
-                    delay(generatorLoader.getInterval() * 1000)
+                    delay(generatorLoader.getInterval() * TO_SECONDS)
                 }
             }
     }
