@@ -7,7 +7,6 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import java.time.LocalDateTime
 import java.util.UUID
 
-// TODO: add constrains on init
 
 data class Commute(
     val commuteId: UUID = UUID.randomUUID(),
