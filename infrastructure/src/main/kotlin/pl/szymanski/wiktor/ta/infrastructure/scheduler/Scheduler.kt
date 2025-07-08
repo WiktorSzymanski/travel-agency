@@ -16,7 +16,6 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.GeneratorRepoPair
 import kotlin.coroutines.CoroutineContext
 
-const val TO_SECONDS = 1000
 
 object Scheduler {
     private lateinit var coroutineContext: CoroutineContext
@@ -24,6 +23,8 @@ object Scheduler {
     private lateinit var generators: List<GeneratorRepoPair<*, *>>
 
     private var job: Job? = null
+
+    const val TO_SECONDS = 1000
 
     fun init(
         config: SchedulerConfig,
