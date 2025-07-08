@@ -7,7 +7,6 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import java.time.LocalDateTime
 import java.util.UUID
 
-
 data class Commute(
     val commuteId: UUID = UUID.randomUUID(),
     val name: String,

@@ -7,6 +7,4 @@ fun main(args: Array<String>) {
         .main(args)
 }
 
-fun Application.application() {
-    throw UnsupportedOperationException("Not yet implemented")
-}
+fun Application.application(): Unit = throw UnsupportedOperationException("Not yet implemented")

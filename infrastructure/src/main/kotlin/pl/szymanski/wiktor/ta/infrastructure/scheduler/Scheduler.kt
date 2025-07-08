@@ -16,7 +16,6 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.GeneratorRepoPair
 import kotlin.coroutines.CoroutineContext
 
-
 object Scheduler {
     private lateinit var coroutineContext: CoroutineContext
     private lateinit var config: SchedulerConfig
