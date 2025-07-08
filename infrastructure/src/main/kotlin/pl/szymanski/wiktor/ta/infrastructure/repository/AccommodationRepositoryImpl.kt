@@ -15,7 +15,8 @@ class AccommodationRepositoryImpl(
     override suspend fun findById(accommodationId: UUID): Accommodation? =
         collection.find(org.bson.Document("accommodationId", accommodationId)).toList().firstOrNull()
 
-    override suspend fun save(entity: Accommodation): Accommodation? = collection.insertOne(entity).insertedId?.let { entity }
+    override suspend fun save(entity: Accommodation): Accommodation? =
+        collection.insertOne(entity).insertedId?.let { entity }
 
     override suspend fun findAll(): List<Accommodation> = collection.find().toList()
 }

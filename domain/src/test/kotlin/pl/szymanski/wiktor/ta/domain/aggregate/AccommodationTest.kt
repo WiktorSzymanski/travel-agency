@@ -24,8 +24,8 @@ class AccommodationTest {
         accommodationId = UUID.randomUUID()
         userId = UUID.randomUUID()
         now = LocalDateTime.now()
-        rentFuture = Rent(from = now.plusDays(1), till = now.plusDays(5))
-        rentPast = Rent(from = now.minusDays(5), till = now.minusDays(1))
+        rentFuture = Rent(from = now.plusSeconds(1), till = now.plusSeconds(5))
+        rentPast = Rent(from = now.minusSeconds(5), till = now.minusSeconds(1))
 
         accommodation = Accommodation(accommodationId, "accommodation_name", LocationEnum.PARIS, rentFuture)
     }
