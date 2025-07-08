@@ -15,7 +15,8 @@ class CommuteRepositoryImpl(
     override suspend fun findById(commuteId: UUID): Commute? =
         collection.find(org.bson.Document("commuteId", commuteId)).toList().firstOrNull()
 
-    override suspend fun save(entity: Commute): Commute? = collection.insertOne(entity).insertedId?.let { entity }
+    override suspend fun save(entity: Commute): Commute? =
+        collection.insertOne(entity).insertedId?.let { entity }
 
     override suspend fun findAll(): List<Commute> = collection.find().toList()
 }
