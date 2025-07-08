@@ -7,4 +7,6 @@ fun main(args: Array<String>) {
         .main(args)
 }
 
-fun Application.application() {}
+fun Application.application() {
+    throw UnsupportedOperationException("Not yet implemented")
+}
