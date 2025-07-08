@@ -6,5 +6,7 @@ import java.util.UUID
 interface CommuteRepository : Repository<Commute> {
     suspend fun findById(commuteId: UUID): Commute?
 
-    override suspend fun save(entity: Commute): Commute
+    override suspend fun save(entity: Commute): Commute?
+
+    suspend fun findAll(): List<Commute>
 }
