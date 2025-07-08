@@ -18,13 +18,13 @@ class AccommodationGenerator(
         val fromTime =
             randomDateTimeBetween(
                 LocalDateTime.now(clock),
-                LocalDateTime.now(clock).plusDays(plusSeconds / 2),
+                LocalDateTime.now(clock).plusSeconds(plusSeconds / 2),
             )
 
         val tillTime =
             randomDateTimeBetween(
                 fromTime,
-                LocalDateTime.now(clock).plusDays(plusSeconds),
+                LocalDateTime.now(clock).plusSeconds(plusSeconds),
             )
 
         return Accommodation(

@@ -23,7 +23,7 @@ object Scheduler {
 
     private var job: Job? = null
 
-    const val TO_SECONDS = 1000
+    const val MILLIS_IN_SECOND = 1000
 
     fun init(
         config: SchedulerConfig,
@@ -69,7 +69,7 @@ object Scheduler {
             CoroutineScope(coroutineContext).launch {
                 while (isActive) {
                     generate()
-                    delay(config.intervalSeconds * TO_SECONDS)
+                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
                 }
             }
     }
