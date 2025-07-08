@@ -7,13 +7,15 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import java.time.LocalDateTime
 import java.util.UUID
 
+// TODO: add constrains on init
+
 data class Commute(
     val commuteId: UUID = UUID.randomUUID(),
     val name: String,
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
     val seats: List<Seat>,
-    val bookings: MutableMap<Seat, Booking> = mutableMapOf(),
+    val bookings: MutableMap<String, Booking> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
 ) {
     companion object {
@@ -56,11 +58,11 @@ data class Commute(
             "Seat $seat not found in Commute $commuteId"
         }
 
-        require(!this.bookings.containsKey(seat)) {
+        require(!this.bookings.containsKey(seat.toString())) {
             "Seat $seat already booked in Commute $commuteId"
         }
 
-        this.bookings.put(seat, Booking(userId, LocalDateTime.now()))
+        this.bookings.put(seat.toString(), Booking(userId, LocalDateTime.now()))
 
         // EVENT or something
     }
@@ -75,14 +77,14 @@ data class Commute(
         }
 
         this.bookings
-            .getOrElse(seat, {
+            .getOrElse(seat.toString(), {
                 throw IllegalArgumentException("Booking for seat $seat not found in Commute $commuteId")
             })
             .let {
                 require(it.userId == userId) {
                     "Booking for seat $seat in Commute $commuteId is owned by other user"
                 }
-                this.bookings.remove(seat)
+                this.bookings.remove(seat.toString())
             }
 
         // EVENT or something

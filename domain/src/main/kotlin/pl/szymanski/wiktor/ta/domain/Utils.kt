@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.domain
 
+import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -20,10 +21,13 @@ data class Booking(
     val timestamp: LocalDateTime,
 )
 
+@Serializable
 data class Seat(
     val row: String,
     val column: String,
-)
+) {
+    override fun toString(): String = "$row$column"
+}
 
 data class Rent(
     val from: LocalDateTime,

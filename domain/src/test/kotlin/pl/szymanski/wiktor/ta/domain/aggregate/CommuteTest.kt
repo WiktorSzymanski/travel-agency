@@ -32,7 +32,7 @@ class CommuteTest {
     fun book_seat_successfully() {
         commute.bookSeat(seat1, userId)
         assertEquals(1, commute.bookings.size)
-        assertEquals(userId, commute.bookings[seat1]?.userId)
+        assertEquals(userId, commute.bookings[seat1.toString()]?.userId)
     }
 
     @Test
@@ -73,7 +73,7 @@ class CommuteTest {
     fun can_cancel_own_booking() {
         commute.bookSeat(seat1, userId)
         commute.cancelBookedSeat(seat1, userId)
-        assertFalse(commute.bookings.containsKey(seat1))
+        assertFalse(commute.bookings.containsKey(seat1.toString()))
     }
 
     @Test

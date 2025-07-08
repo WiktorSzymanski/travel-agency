@@ -1,0 +1,44 @@
+ktor:
+    deployment:
+        port: 8080
+    application:
+        modules:
+            - pl.szymanski.wiktor.ta.infrastructure.ApplicationKt.application
+            - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
+
+database:
+    uri: "mongodb://localhost:27017"
+    dbName: "travel_agency"
+
+scheduler:
+    intervalSeconds: 5
+    futureDurationSeconds: 5
+    accommodations:
+        - name: "Hotel"
+          location: "London"
+        - name: "Hostel"
+          location: "Berlin"
+    attractions:
+        - name: "Big Ben tour"
+          location: "London"
+          capacity: 10
+        - name: "City tour by boat"
+          location: "Berlin"
+          capacity: 30
+    commutes:
+        - name: "London to Paris"
+          departureLocation: "London"
+          arrivalLocation: "Paris"
+          seats:
+              - row: "A"
+                column: "1"
+              - row: "A"
+                column: "2"
+        - name: "Paris to Berlin"
+          departureLocation: "Paris"
+          arrivalLocation: "Berlin"
+          seats:
+              - row: "B"
+                column: "3"
+              - row: "B"
+                column: "4"
