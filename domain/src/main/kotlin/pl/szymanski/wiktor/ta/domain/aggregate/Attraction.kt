@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Attraction(
-    val attractionId: UUID,
+    val _id: UUID = UUID.randomUUID(),
     val name: String,
     val location: LocationEnum,
     val date: LocalDateTime,
@@ -21,11 +21,11 @@ data class Attraction(
 
     fun cancel() {
         require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $attractionId cannot be cancelled when not in SCHEDULED status"
+            "Attraction $_id cannot be cancelled when not in SCHEDULED status"
         }
 
         require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * capacity) {
-            "Attraction $attractionId cannot be cancelled when more than half of seats are booked"
+            "Attraction $_id cannot be cancelled when more than half of seats are booked"
         }
 
         this.status = AttractionStatusEnum.CANCELLED
@@ -35,11 +35,11 @@ data class Attraction(
 
     fun expire() {
         require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $attractionId cannot be cancelled when not in SCHEDULED status"
+            "Attraction $_id cannot be cancelled when not in SCHEDULED status"
         }
 
         require(LocalDateTime.now().isAfter(date)) {
-            "Attraction $attractionId cannot expire before its date"
+            "Attraction $_id cannot expire before its date"
         }
 
         this.status = AttractionStatusEnum.EXPIRED
@@ -51,15 +51,15 @@ data class Attraction(
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $attractionId is not open for booking"
+            "Attraction $_id is not open for booking"
         }
 
         require(bookings.none { it.userId == userId }) {
-            "User $userId already booked Attraction $attractionId"
+            "User $userId already booked Attraction $_id"
         }
 
         require(bookings.size < capacity) {
-            "Attraction $attractionId is fully booked"
+            "Attraction $_id is fully booked"
         }
 
         bookings.add(Booking(userId, LocalDateTime.now()))
@@ -71,13 +71,13 @@ data class Attraction(
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
-            "Cannot cancel booking for Attraction $attractionId not in SCHEDULED status"
+            "Cannot cancel booking for Attraction $_id not in SCHEDULED status"
         }
 
         val removed = bookings.removeIf { it.userId == userId }
 
         require(removed) {
-            "User $userId has no booking for Attraction $attractionId"
+            "User $userId has no booking for Attraction $_id"
         }
 
         // EVENT or something

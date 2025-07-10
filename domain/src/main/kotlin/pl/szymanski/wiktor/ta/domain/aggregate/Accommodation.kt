@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Accommodation(
-    val accommodationId: UUID,
+    val _id: UUID = UUID.randomUUID(),
     val name: String,
     val location: LocationEnum,
     val rent: Rent,
@@ -19,10 +19,10 @@ data class Accommodation(
         when (status) {
             AccommodationStatusEnum.AVAILABLE ->
                 require(LocalDateTime.now().isAfter(rent.from)) {
-                    "Accommodation $accommodationId cannot be expired before its from date"
+                    "Accommodation $_id cannot be expired before its from date"
                 }
             else -> throw IllegalArgumentException(
-                "Accommodation $accommodationId cannot expire in status $status",
+                "Accommodation $_id cannot expire in status $status",
             )
         }
 
@@ -34,7 +34,7 @@ data class Accommodation(
     fun book(userId: UUID) {
         statusCheck()
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
-            "Accommodation $accommodationId is not AVAILABLE"
+            "Accommodation $_id is not AVAILABLE"
         }
 
         this.status = AccommodationStatusEnum.BOOKED
@@ -46,11 +46,11 @@ data class Accommodation(
     fun cancelBooking(userId: UUID) {
         statusCheck()
         require(this.status == AccommodationStatusEnum.BOOKED) {
-            "Accommodation $accommodationId is not BOOKED"
+            "Accommodation $_id is not BOOKED"
         }
 
         require(this.booking?.userId == userId) {
-            "Accommodation $accommodationId is not BOOKED by user $userId"
+            "Accommodation $_id is not BOOKED by user $userId"
         }
 
         this.booking = null

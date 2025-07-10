@@ -8,7 +8,8 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteTemplate
 @Serializable
 data class SchedulerConfig(
     val intervalSeconds: Long,
-    val futureDurationSeconds: Long,
+    val inAdvanceSeconds: Long,
+    val creationWindowSeconds: Long,
     val accommodations: List<AccommodationTemplate>,
     val attractions: List<AttractionTemplate>,
     val commutes: List<CommuteTemplate>,

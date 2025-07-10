@@ -43,7 +43,7 @@ class CommuteTest {
                 commute.bookSeat(seat1, userId)
             }
         assertEquals(
-            "Seat cannot be booked when Commute ${commute.commuteId} not in SCHEDULED status",
+            "Seat cannot be booked when Commute ${commute._id} not in SCHEDULED status",
             ex.message,
         )
     }
@@ -55,7 +55,7 @@ class CommuteTest {
             assertFailsWith<IllegalArgumentException> {
                 commute.bookSeat(unknownSeat, userId)
             }
-        assertEquals("Seat $unknownSeat not found in Commute ${commute.commuteId}", ex.message)
+        assertEquals("Seat $unknownSeat not found in Commute ${commute._id}", ex.message)
     }
 
     @Test
@@ -66,7 +66,7 @@ class CommuteTest {
                 commute.bookSeat(seat1, UUID.randomUUID())
             }
         assertTrue(ex.message!!.contains("already booked"))
-        assertEquals("Seat $seat1 already booked in Commute ${commute.commuteId}", ex.message)
+        assertEquals("Seat $seat1 already booked in Commute ${commute._id}", ex.message)
     }
 
     @Test
@@ -82,7 +82,7 @@ class CommuteTest {
             assertFailsWith<IllegalArgumentException> {
                 commute.cancelBookedSeat(seat1, userId)
             }
-        assertEquals("Booking for seat $seat1 not found in Commute ${commute.commuteId}", ex.message)
+        assertEquals("Booking for seat $seat1 not found in Commute ${commute._id}", ex.message)
     }
 
     @Test
@@ -93,7 +93,7 @@ class CommuteTest {
             assertFailsWith<IllegalArgumentException> {
                 commute.cancelBookedSeat(seat1, otherUser)
             }
-        assertEquals("Booking for seat $seat1 in Commute ${commute.commuteId} is owned by other user", ex.message)
+        assertEquals("Booking for seat $seat1 in Commute ${commute._id} is owned by other user", ex.message)
     }
 
     @Test
@@ -112,7 +112,7 @@ class CommuteTest {
                 commute.cancel()
             }
         assertEquals(
-            "Commute ${commute.commuteId} cannot be cancelled when more than half of seats are booked",
+            "Commute ${commute._id} cannot be cancelled when more than half of seats are booked",
             ex.message,
         )
     }
@@ -136,6 +136,6 @@ class CommuteTest {
                 commute.depart()
             }
         assertTrue(ex.message!!.contains("cannot depart"))
-        assertEquals("Commute ${commute.commuteId} cannot depart before its departure time", ex.message)
+        assertEquals("Commute ${commute._id} cannot depart before its departure time", ex.message)
     }
 }

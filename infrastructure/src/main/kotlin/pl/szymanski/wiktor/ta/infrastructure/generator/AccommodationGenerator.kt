@@ -5,10 +5,10 @@ import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import java.time.Clock
 import java.time.LocalDateTime
-import java.util.UUID
 
 class AccommodationGenerator(
-    private val plusSeconds: Long,
+    private val inAdvanceSeconds: Long,
+    private val creationWindowSeconds: Long,
     private val templates: List<AccommodationTemplate>,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : Generator<AccommodationTemplate, Accommodation> {
@@ -17,18 +17,17 @@ class AccommodationGenerator(
     override fun toDomainModel(template: AccommodationTemplate): Accommodation {
         val fromTime =
             randomDateTimeBetween(
-                LocalDateTime.now(clock),
-                LocalDateTime.now(clock).plusSeconds(plusSeconds / 2),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
             )
 
         val tillTime =
             randomDateTimeBetween(
                 fromTime,
-                LocalDateTime.now(clock).plusSeconds(plusSeconds),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
             )
 
         return Accommodation(
-            accommodationId = UUID.randomUUID(),
             name = template.name,
             location = LocationEnum.valueOf(template.location.uppercase()),
             rent =

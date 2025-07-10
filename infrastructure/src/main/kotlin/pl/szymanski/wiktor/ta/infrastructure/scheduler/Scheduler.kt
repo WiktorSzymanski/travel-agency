@@ -38,21 +38,24 @@ object Scheduler {
             listOf(
                 GeneratorRepoPair(
                     CommuteGenerator(
-                        config.futureDurationSeconds,
+                        config.inAdvanceSeconds,
+                        config.creationWindowSeconds,
                         config.commutes,
                     ),
                     commuteRepository,
                 ),
                 GeneratorRepoPair(
                     AccommodationGenerator(
-                        config.futureDurationSeconds,
+                        config.inAdvanceSeconds,
+                        config.creationWindowSeconds,
                         config.accommodations,
                     ),
                     accommodationRepository,
                 ),
                 GeneratorRepoPair(
                     AttractionGenerator(
-                        config.futureDurationSeconds,
+                        config.inAdvanceSeconds,
+                        config.creationWindowSeconds,
                         config.attractions,
                     ),
                     attractionRepository,

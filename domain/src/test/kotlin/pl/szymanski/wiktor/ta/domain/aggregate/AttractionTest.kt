@@ -18,7 +18,7 @@ class AttractionTest {
     fun setup() {
         attraction =
             Attraction(
-                attractionId = UUID.randomUUID(),
+                _id = UUID.randomUUID(),
                 name = "attraction_name",
                 location = LocationEnum.POZNAN,
                 date = LocalDateTime.now().plusHours(1),
@@ -41,7 +41,7 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.book(userId)
             }
-        assertEquals("Attraction ${attraction.attractionId} is not open for booking", ex.message)
+        assertEquals("Attraction ${attraction._id} is not open for booking", ex.message)
     }
 
     @Test
@@ -51,7 +51,7 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.book(userId)
             }
-        assertEquals("User $userId already booked Attraction ${attraction.attractionId}", ex.message)
+        assertEquals("User $userId already booked Attraction ${attraction._id}", ex.message)
     }
 
     @Test
@@ -63,7 +63,7 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.book(userId)
             }
-        assertEquals("Attraction ${attraction.attractionId} is fully booked", ex.message)
+        assertEquals("Attraction ${attraction._id} is fully booked", ex.message)
     }
 
     @Test
@@ -81,7 +81,7 @@ class AttractionTest {
                 attraction.cancelBooking(userId)
             }
         assertEquals(
-            "Cannot cancel booking for Attraction ${attraction.attractionId} not in SCHEDULED status",
+            "Cannot cancel booking for Attraction ${attraction._id} not in SCHEDULED status",
             ex.message,
         )
     }
@@ -92,7 +92,7 @@ class AttractionTest {
             assertFailsWith<IllegalArgumentException> {
                 attraction.cancelBooking(userId)
             }
-        assertEquals("User $userId has no booking for Attraction ${attraction.attractionId}", ex.message)
+        assertEquals("User $userId has no booking for Attraction ${attraction._id}", ex.message)
     }
 
     @Test
@@ -110,7 +110,7 @@ class AttractionTest {
                 attraction.cancel()
             }
         assertEquals(
-            "Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status",
+            "Attraction ${attraction._id} cannot be cancelled when not in SCHEDULED status",
             ex.message,
         )
     }
@@ -124,7 +124,7 @@ class AttractionTest {
                 attraction.cancel()
             }
         assertEquals(
-            "Attraction ${attraction.attractionId} cannot be cancelled when more than half of seats are booked",
+            "Attraction ${attraction._id} cannot be cancelled when more than half of seats are booked",
             ex.message,
         )
     }
@@ -144,7 +144,7 @@ class AttractionTest {
                 attraction.expire()
             }
         assertEquals(
-            "Attraction ${attraction.attractionId} cannot be cancelled when not in SCHEDULED status",
+            "Attraction ${attraction._id} cannot be cancelled when not in SCHEDULED status",
             ex.message,
         )
     }
@@ -157,7 +157,7 @@ class AttractionTest {
                 attraction.expire()
             }
         assertEquals(
-            "Attraction ${attraction.attractionId} cannot expire before its date",
+            "Attraction ${attraction._id} cannot expire before its date",
             ex.message,
         )
     }

@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Commute(
-    val commuteId: UUID = UUID.randomUUID(),
+    val _id: UUID = UUID.randomUUID(),
     val name: String,
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
@@ -21,12 +21,16 @@ data class Commute(
     }
 
     fun cancel() {
+        require(LocalDateTime.now().isAfter(this.departure.time)) {
+            "Commute $_id cannot be canceled before its departure time"
+        }
+
         require(status == CommuteStatusEnum.SCHEDULED) {
-            "Commute $commuteId cannot be cancelled when not in SCHEDULED status"
+            "Commute $_id cannot be cancelled when not in SCHEDULED status"
         }
 
         require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * seats.size) {
-            "Commute $commuteId cannot be cancelled when more than half of seats are booked"
+            "Commute $_id cannot be cancelled when more than half of seats are booked"
         }
 
         this.status = CommuteStatusEnum.CANCELLED
@@ -36,7 +40,7 @@ data class Commute(
 
     fun depart() {
         require(LocalDateTime.now().isAfter(this.departure.time)) {
-            "Commute $commuteId cannot depart before its departure time"
+            "Commute $_id cannot depart before its departure time"
         }
         this.status = CommuteStatusEnum.DEPARTED
 
@@ -49,15 +53,15 @@ data class Commute(
     ) {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Seat cannot be booked when Commute $commuteId not in SCHEDULED status"
+            "Seat cannot be booked when Commute $_id not in SCHEDULED status"
         }
 
         require(this.seats.contains(seat)) {
-            "Seat $seat not found in Commute $commuteId"
+            "Seat $seat not found in Commute $_id"
         }
 
         require(!this.bookings.containsKey(seat.toString())) {
-            "Seat $seat already booked in Commute $commuteId"
+            "Seat $seat already booked in Commute $_id"
         }
 
         this.bookings.put(seat.toString(), Booking(userId, LocalDateTime.now()))
@@ -71,16 +75,16 @@ data class Commute(
     ) {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Cannot cancel seat $seat when Commute $commuteId not in SCHEDULED status"
+            "Cannot cancel seat $seat when Commute $_id not in SCHEDULED status"
         }
 
         this.bookings
             .getOrElse(seat.toString(), {
-                throw IllegalArgumentException("Booking for seat $seat not found in Commute $commuteId")
+                throw IllegalArgumentException("Booking for seat $seat not found in Commute $_id")
             })
             .let {
                 require(it.userId == userId) {
-                    "Booking for seat $seat in Commute $commuteId is owned by other user"
+                    "Booking for seat $seat in Commute $_id is owned by other user"
                 }
                 this.bookings.remove(seat.toString())
             }

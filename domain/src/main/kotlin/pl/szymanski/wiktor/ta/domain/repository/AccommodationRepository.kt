@@ -9,4 +9,6 @@ interface AccommodationRepository : Repository<Accommodation> {
     override suspend fun save(entity: Accommodation): Accommodation?
 
     suspend fun findAll(): List<Accommodation>
+
+    suspend fun updateAllStaus(accommodations: List<Accommodation>)
 }

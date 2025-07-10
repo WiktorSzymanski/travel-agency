@@ -56,6 +56,7 @@ class SchedulerTest {
             SchedulerConfig(
                 5,
                 5,
+                5,
                 listOf(
                     AccommodationTemplate(
                         "Test Accommodation",
@@ -122,7 +123,7 @@ class SchedulerTest {
     // Helper methods to create mock domain objects
     private fun createMockAccommodation(): Accommodation =
         Accommodation(
-            accommodationId = UUID.randomUUID(),
+            _id = UUID.randomUUID(),
             name = "Test Accommodation",
             location = LocationEnum.POZNAN,
             rent =
@@ -134,7 +135,7 @@ class SchedulerTest {
 
     private fun createMockAttraction(): Attraction =
         Attraction(
-            attractionId = UUID.randomUUID(),
+            _id = UUID.randomUUID(),
             name = "Test Attraction",
             location = LocationEnum.POZNAN,
             date = LocalDateTime.now(),
