@@ -33,28 +33,31 @@ fun makeOffers(
 
         accommodations.flatMap { accommodation ->
             val validAttractions = nearbyAttractions.filter { it.date < accommodation.rent.till }
-            val validCommutes = nearbyCommutes.filter {
-                it.arrival.time.truncatedTo(ChronoUnit.MINUTES) ==
-                    accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
-            }
+            val validCommutes =
+                nearbyCommutes.filter {
+                    it.arrival.time.truncatedTo(ChronoUnit.MINUTES) ==
+                        accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
+                }
 
             validCommutes.flatMap { commute ->
-                val basicOffer = TravelOffer(
-                    UUID.randomUUID(),
-                    "${commute.name} ${accommodation.name}",
-                    commute._id,
-                    accommodation._id,
-                )
-
-                val offersWithAttractions = validAttractions.map { attraction ->
+                val basicOffer =
                     TravelOffer(
                         UUID.randomUUID(),
-                        "${commute.name} ${accommodation.name} ${attraction.name}",
+                        "${commute.name} ${accommodation.name}",
                         commute._id,
                         accommodation._id,
-                        attraction._id,
                     )
-                }
+
+                val offersWithAttractions =
+                    validAttractions.map { attraction ->
+                        TravelOffer(
+                            UUID.randomUUID(),
+                            "${commute.name} ${accommodation.name} ${attraction.name}",
+                            commute._id,
+                            accommodation._id,
+                            attraction._id,
+                        )
+                    }
 
                 listOf(basicOffer) + offersWithAttractions
             }
@@ -70,8 +73,11 @@ suspend fun offerMaker(
     commuteRepository: CommuteRepository,
     travelOfferRepository: TravelOfferRepository,
 ) = coroutineScope {
-    val accommodations = async { accommodationRepository.findAll()
-        .filter {it.status == AccommodationStatusEnum.AVAILABLE } }
+    val accommodations =
+        async {
+            accommodationRepository.findAll()
+                .filter { it.status == AccommodationStatusEnum.AVAILABLE }
+        }
     val attractions = async { attractionRepository.findAll().filter { it.status == AttractionStatusEnum.SCHEDULED } }
     val commutes = async { commuteRepository.findAll().filter { it.status == CommuteStatusEnum.SCHEDULED } }
 
