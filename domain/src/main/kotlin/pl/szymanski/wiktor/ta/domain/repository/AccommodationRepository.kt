@@ -10,5 +10,5 @@ interface AccommodationRepository : Repository<Accommodation> {
 
     suspend fun findAll(): List<Accommodation>
 
-    suspend fun updateAllStaus(accommodations: List<Accommodation>)
+    suspend fun updateAllStatus(accommodations: List<Accommodation>)
 }

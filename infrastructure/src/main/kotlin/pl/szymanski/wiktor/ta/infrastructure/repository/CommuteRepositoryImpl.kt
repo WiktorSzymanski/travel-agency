@@ -22,7 +22,7 @@ class CommuteRepositoryImpl(
 
     override suspend fun findAll(): List<Commute> = collection.find().toList()
 
-    override suspend fun updateAllStaus(commutes: List<Commute>) {
+    override suspend fun updateAllStatus(commutes: List<Commute>) {
         collection.bulkWrite(
             commutes.map { commute ->
                 UpdateOneModel(

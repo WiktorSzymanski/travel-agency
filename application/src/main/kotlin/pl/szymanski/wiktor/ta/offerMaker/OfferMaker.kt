@@ -83,9 +83,9 @@ suspend fun offerMaker(
     val (expiredAttractions, validAttractions) = attractionPairs.await()
     val (expiredCommutes, validCommutes) = commutePairs.await()
 
-    if (expiredAccommodations.isNotEmpty()) launch { accommodationRepository.updateAllStaus(expiredAccommodations) }
-    if (expiredAttractions.isNotEmpty()) launch { attractionRepository.updateAllStaus(expiredAttractions) }
-    if (expiredCommutes.isNotEmpty()) launch { commuteRepository.updateAllStaus(expiredCommutes) }
+    if (expiredAccommodations.isNotEmpty()) launch { accommodationRepository.updateAllStatus(expiredAccommodations) }
+    if (expiredAttractions.isNotEmpty()) launch { attractionRepository.updateAllStatus(expiredAttractions) }
+    if (expiredCommutes.isNotEmpty()) launch { commuteRepository.updateAllStatus(expiredCommutes) }
 
     val offers = makeOffers(validCommutes, validAccommodations, validAttractions)
     if (offers.isNotEmpty()) launch { travelOfferRepository.saveAll(offers) }

@@ -10,5 +10,5 @@ interface CommuteRepository : Repository<Commute> {
 
     suspend fun findAll(): List<Commute>
 
-    suspend fun updateAllStaus(commutes: List<Commute>)
+    suspend fun updateAllStatus(commutes: List<Commute>)
 }

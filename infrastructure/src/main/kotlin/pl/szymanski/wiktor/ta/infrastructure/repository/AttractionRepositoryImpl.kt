@@ -22,7 +22,7 @@ class AttractionRepositoryImpl(
 
     override suspend fun findAll(): List<Attraction> = collection.find().toList()
 
-    override suspend fun updateAllStaus(attractions: List<Attraction>) {
+    override suspend fun updateAllStatus(attractions: List<Attraction>) {
         collection.bulkWrite(
             attractions.map { attraction ->
                 UpdateOneModel(
