@@ -27,45 +27,39 @@ fun makeOffers(
     val accommodationGroups = accommodations.groupBy { it.location }
     val attractionGroups = attractions.groupBy { it.location }
 
-    val offers = mutableListOf<TravelOffer>()
-
-    for ((location, accommodations) in accommodationGroups) {
+    return accommodationGroups.flatMap { (location, accommodations) ->
         val nearbyAttractions = attractionGroups[location] ?: emptyList()
         val nearbyCommutes = commuteGroups[location] ?: emptyList()
 
-        for (accommodation in accommodations) {
+        accommodations.flatMap { accommodation ->
             val validAttractions = nearbyAttractions.filter { it.date < accommodation.rent.till }
-            val validCommutes =
-                nearbyCommutes.filter {
-                    it.arrival.time.truncatedTo(ChronoUnit.MINUTES) ==
-                        accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
-                }
+            val validCommutes = nearbyCommutes.filter {
+                it.arrival.time.truncatedTo(ChronoUnit.MINUTES) ==
+                    accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
+            }
 
-            for (vc in validCommutes) {
-                offers.add(
-                    TravelOffer(
-                        UUID.randomUUID(),
-                        "${vc.name} ${accommodation.name}",
-                        vc._id,
-                        accommodation._id,
-                    ),
+            validCommutes.flatMap { commute ->
+                val basicOffer = TravelOffer(
+                    UUID.randomUUID(),
+                    "${commute.name} ${accommodation.name}",
+                    commute._id,
+                    accommodation._id,
                 )
 
-                for (va in validAttractions) {
-                    offers.add(
-                        TravelOffer(
-                            UUID.randomUUID(),
-                            "${vc.name} ${accommodation.name} ${va.name}",
-                            vc._id,
-                            accommodation._id,
-                            va._id,
-                        ),
+                val offersWithAttractions = validAttractions.map { attraction ->
+                    TravelOffer(
+                        UUID.randomUUID(),
+                        "${commute.name} ${accommodation.name} ${attraction.name}",
+                        commute._id,
+                        accommodation._id,
+                        attraction._id,
                     )
                 }
+
+                listOf(basicOffer) + offersWithAttractions
             }
         }
     }
-    return offers
 }
 
 // maybe cache with hashes of entities combinations as "support" for db dup indexes?
@@ -76,7 +70,8 @@ suspend fun offerMaker(
     commuteRepository: CommuteRepository,
     travelOfferRepository: TravelOfferRepository,
 ) = coroutineScope {
-    val accommodations = async { accommodationRepository.findAll().filter { it.status == AccommodationStatusEnum.AVAILABLE } }
+    val accommodations = async { accommodationRepository.findAll()
+        .filter {it.status == AccommodationStatusEnum.AVAILABLE } }
     val attractions = async { attractionRepository.findAll().filter { it.status == AttractionStatusEnum.SCHEDULED } }
     val commutes = async { commuteRepository.findAll().filter { it.status == CommuteStatusEnum.SCHEDULED } }
 

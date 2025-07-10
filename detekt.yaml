@@ -1,0 +1,4 @@
+naming:
+  active: true
+  ConstructorParameterNaming:
+    active: false

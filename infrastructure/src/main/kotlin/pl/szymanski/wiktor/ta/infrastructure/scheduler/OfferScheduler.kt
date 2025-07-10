@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.infrastructure.scheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -15,7 +16,6 @@ import pl.szymanski.wiktor.ta.offerMaker.offerMaker
 import kotlin.coroutines.CoroutineContext
 
 object OfferScheduler {
-    private lateinit var coroutineContext: CoroutineContext
     private lateinit var config: OfferSchedulerConfig
 
     private lateinit var accommodationRepository: AccommodationRepository
@@ -33,24 +33,21 @@ object OfferScheduler {
         attractionRepository: AttractionRepository,
         commuteRepository: CommuteRepository,
         travelOfferRepository: TravelOfferRepository,
-        coroutineContext: CoroutineContext = Dispatchers.Default,
     ) {
         this.accommodationRepository = accommodationRepository
         this.attractionRepository = attractionRepository
         this.commuteRepository = commuteRepository
         this.travelOfferRepository = travelOfferRepository
 
-        this.coroutineContext = coroutineContext
         this.config = config
     }
 
-    fun start() {
+    suspend fun start() = coroutineScope {
         if (job != null) {
-            return
+            return@coroutineScope
         }
 
-        job =
-            CoroutineScope(coroutineContext).launch {
+        job = launch {
                 while (isActive) {
                     offerMaker(
                         accommodationRepository,

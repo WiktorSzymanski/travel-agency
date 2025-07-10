@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.infrastructure.scheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -17,7 +18,6 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.GeneratorRepoPair
 import kotlin.coroutines.CoroutineContext
 
 object Scheduler {
-    private lateinit var coroutineContext: CoroutineContext
     private lateinit var config: SchedulerConfig
     private lateinit var generators: List<GeneratorRepoPair<*, *>>
 
@@ -30,9 +30,7 @@ object Scheduler {
         accommodationRepository: AccommodationRepository,
         attractionRepository: AttractionRepository,
         commuteRepository: CommuteRepository,
-        coroutineContext: CoroutineContext = Dispatchers.Default,
     ) {
-        this.coroutineContext = coroutineContext
         this.config = config
         this.generators =
             listOf(
@@ -63,13 +61,12 @@ object Scheduler {
             )
     }
 
-    fun start() {
+    suspend fun start() = coroutineScope {
         if (job != null) {
-            return
+            return@coroutineScope
         }
 
-        job =
-            CoroutineScope(coroutineContext).launch {
+        job = launch {
                 while (isActive) {
                     generate()
                     delay(config.intervalSeconds * MILLIS_IN_SECOND)

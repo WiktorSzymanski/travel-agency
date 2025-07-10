@@ -12,12 +12,17 @@ import java.util.UUID
 class TravelOfferRepositoryImpl(
     database: MongoDatabase,
 ) : TravelOfferRepository {
+    companion object {
+        const val DUPLICATE_ERROR_CODE = 11000
+    }
+
     private val collection: MongoCollection<TravelOffer> = database.getCollection("travelOffer")
 
     override suspend fun findById(travelOfferId: UUID): TravelOffer? =
         collection.find(org.bson.Document("_id", travelOfferId)).toList().firstOrNull()
 
-    override suspend fun save(travelOffer: TravelOffer): TravelOffer? = collection.insertOne(travelOffer).insertedId?.let { travelOffer }
+    override suspend fun save(travelOffer: TravelOffer): TravelOffer? =
+        collection.insertOne(travelOffer).insertedId?.let { travelOffer }
 
     override suspend fun findAll(): List<TravelOffer> = collection.find().toList()
 
@@ -26,7 +31,7 @@ class TravelOfferRepositoryImpl(
         try {
             collection.insertMany(travelOffers, InsertManyOptions().ordered(false))
         } catch (e: MongoBulkWriteException) {
-            if (!e.writeErrors.all { it.code == 11000 }) throw e
+            if (!e.writeErrors.all { it.code == DUPLICATE_ERROR_CODE }) throw e
         }
     }
 }
