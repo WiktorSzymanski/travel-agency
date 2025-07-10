@@ -2,6 +2,7 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 val kotlinVersion: String by project
 val logbackVersion: String by project
+val ktlintVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.1.10"
@@ -26,6 +27,7 @@ dependencies {
 //    implementation("io.ktor:ktor-server-config-yaml")
 //    testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+    ktlint("com.pinterest.ktlint:ktlint-cli:$ktlintVersion")
 }
 
 subprojects {
@@ -58,5 +60,4 @@ subprojects {
             }
         }
     }
-
 }

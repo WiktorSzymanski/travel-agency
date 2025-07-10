@@ -1,7 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -15,7 +13,6 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.AccommodationGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.GeneratorRepoPair
-import kotlin.coroutines.CoroutineContext
 
 object Scheduler {
     private lateinit var config: SchedulerConfig
@@ -61,18 +58,20 @@ object Scheduler {
             )
     }
 
-    suspend fun start() = coroutineScope {
-        if (job != null) {
-            return@coroutineScope
-        }
-
-        job = launch {
-                while (isActive) {
-                    generate()
-                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
-                }
+    suspend fun start() =
+        coroutineScope {
+            if (job != null) {
+                return@coroutineScope
             }
-    }
+
+            job =
+                launch {
+                    while (isActive) {
+                        generate()
+                        delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                    }
+                }
+        }
 
     fun stop() {
         job?.cancel()

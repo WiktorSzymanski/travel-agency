@@ -21,8 +21,7 @@ class TravelOfferRepositoryImpl(
     override suspend fun findById(travelOfferId: UUID): TravelOffer? =
         collection.find(org.bson.Document("_id", travelOfferId)).toList().firstOrNull()
 
-    override suspend fun save(travelOffer: TravelOffer): TravelOffer? =
-        collection.insertOne(travelOffer).insertedId?.let { travelOffer }
+    override suspend fun save(travelOffer: TravelOffer): TravelOffer? = collection.insertOne(travelOffer).insertedId?.let { travelOffer }
 
     override suspend fun findAll(): List<TravelOffer> = collection.find().toList()
 

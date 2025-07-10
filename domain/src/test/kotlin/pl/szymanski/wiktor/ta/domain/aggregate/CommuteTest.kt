@@ -4,6 +4,7 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
+import java.lang.Thread.sleep
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -22,8 +23,8 @@ class CommuteTest {
 
     @BeforeTest
     fun setup() {
-        val departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusMinutes(10))
-        val arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusHours(2))
+        val departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusSeconds(10))
+        val arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusSeconds(20))
         val seats = listOf(seat1, seat2, seat3)
         commute = Commute(UUID.randomUUID(), "commute_name", departure, arrival, seats)
     }
@@ -99,6 +100,7 @@ class CommuteTest {
     @Test
     fun can_cancel_commute_if_less_than_half_booked() {
         commute.bookSeat(seat1, userId)
+        sleep(10000)
         commute.cancel()
         assertEquals(CommuteStatusEnum.CANCELLED, commute.status)
     }
@@ -107,6 +109,7 @@ class CommuteTest {
     fun cannot_cancel_commute_if_half_or_more_booked() {
         commute.bookSeat(seat1, userId)
         commute.bookSeat(seat2, UUID.randomUUID())
+        sleep(10000)
         val ex =
             assertFailsWith<IllegalArgumentException> {
                 commute.cancel()

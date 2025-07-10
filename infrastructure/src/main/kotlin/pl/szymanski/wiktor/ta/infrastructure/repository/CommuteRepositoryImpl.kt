@@ -15,8 +15,7 @@ class CommuteRepositoryImpl(
 ) : CommuteRepository {
     private val collection: MongoCollection<Commute> = database.getCollection("commute")
 
-    override suspend fun findById(commuteId: UUID): Commute? =
-        collection.find(org.bson.Document("_id", commuteId)).toList().firstOrNull()
+    override suspend fun findById(commuteId: UUID): Commute? = collection.find(org.bson.Document("_id", commuteId)).toList().firstOrNull()
 
     override suspend fun save(entity: Commute): Commute? = collection.insertOne(entity).insertedId?.let { entity }
 

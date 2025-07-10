@@ -1,7 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -13,7 +11,6 @@ import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.OfferSchedulerConfig
 import pl.szymanski.wiktor.ta.offerMaker.offerMaker
-import kotlin.coroutines.CoroutineContext
 
 object OfferScheduler {
     private lateinit var config: OfferSchedulerConfig
@@ -42,23 +39,25 @@ object OfferScheduler {
         this.config = config
     }
 
-    suspend fun start() = coroutineScope {
-        if (job != null) {
-            return@coroutineScope
-        }
-
-        job = launch {
-                while (isActive) {
-                    offerMaker(
-                        accommodationRepository,
-                        attractionRepository,
-                        commuteRepository,
-                        travelOfferRepository,
-                    )
-                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
-                }
+    suspend fun start() =
+        coroutineScope {
+            if (job != null) {
+                return@coroutineScope
             }
-    }
+
+            job =
+                launch {
+                    while (isActive) {
+                        offerMaker(
+                            accommodationRepository,
+                            attractionRepository,
+                            commuteRepository,
+                            travelOfferRepository,
+                        )
+                        delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                    }
+                }
+        }
 
     fun stop() {
         job?.cancel()
