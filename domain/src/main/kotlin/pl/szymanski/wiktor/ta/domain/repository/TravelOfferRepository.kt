@@ -9,4 +9,6 @@ interface TravelOfferRepository {
     suspend fun save(travelOffer: TravelOffer): TravelOffer?
 
     suspend fun findAll(): List<TravelOffer>
+
+    suspend fun saveAll(travelOffers: List<TravelOffer>)
 }

@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class TravelOffer(
-    val travelOfferId: UUID,
+    val _id: UUID,
     val name: String,
     val commuteId: UUID,
     val accommodationId: UUID,
@@ -20,7 +20,7 @@ data class TravelOffer(
 
     fun expire() {
         require(status == OfferStatusEnum.AVAILABLE) {
-            "TravelOffer $travelOfferId cannot be cancelled when not in AVAILABLE status"
+            "TravelOffer $_id cannot be cancelled when not in AVAILABLE status"
         }
 
         this.status = OfferStatusEnum.EXPIRED
@@ -30,7 +30,7 @@ data class TravelOffer(
 
     fun book(userId: UUID) {
         require(status == OfferStatusEnum.AVAILABLE) {
-            "TravelOffer $travelOfferId is not open for booking"
+            "TravelOffer $_id is not open for booking"
         }
 
         this.status = OfferStatusEnum.BOOKED
@@ -41,11 +41,11 @@ data class TravelOffer(
 
     fun cancelBooking(userId: UUID) {
         require(status == OfferStatusEnum.BOOKED) {
-            "Cannot cancel booking for TravelOffer $travelOfferId when not in BOOKED status"
+            "Cannot cancel booking for TravelOffer $_id when not in BOOKED status"
         }
 
         require(this.booking?.userId == userId) {
-            "TravelOffer $travelOfferId is not BOOKED by user $userId"
+            "TravelOffer $_id is not BOOKED by user $userId"
         }
 
         this.booking = null

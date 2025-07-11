@@ -4,10 +4,10 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import java.time.Clock
 import java.time.LocalDateTime
-import java.util.UUID
 
 class AttractionGenerator(
-    private val plusSeconds: Long,
+    private val inAdvanceSeconds: Long,
+    private val creationWindowSeconds: Long,
     private val templates: List<AttractionTemplate>,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : Generator<AttractionTemplate, Attraction> {
@@ -15,13 +15,12 @@ class AttractionGenerator(
 
     override fun toDomainModel(template: AttractionTemplate): Attraction =
         Attraction(
-            attractionId = UUID.randomUUID(),
             name = template.name,
             location = LocationEnum.valueOf(template.location.uppercase()),
             date =
                 randomDateTimeBetween(
-                    LocalDateTime.now(clock),
-                    LocalDateTime.now(clock).plusSeconds(plusSeconds / 2),
+                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
                 ),
             capacity = template.capacity,
         )

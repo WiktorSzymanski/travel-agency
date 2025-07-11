@@ -7,7 +7,8 @@ import java.time.Clock
 import java.time.LocalDateTime
 
 class CommuteGenerator(
-    val plusSeconds: Long,
+    val inAdvanceSeconds: Long,
+    val creationWindowSeconds: Long,
     val templates: List<CommuteTemplate>,
     val clock: Clock = Clock.systemDefaultZone(),
 ) : Generator<CommuteTemplate, Commute> {
@@ -16,14 +17,14 @@ class CommuteGenerator(
     override fun toDomainModel(template: CommuteTemplate): Commute {
         val dTime =
             randomDateTimeBetween(
-                LocalDateTime.now(clock),
-                LocalDateTime.now(clock).plusSeconds(plusSeconds / 2),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
             )
 
         val aTime =
             randomDateTimeBetween(
                 dTime,
-                LocalDateTime.now(clock).plusSeconds(plusSeconds),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
             )
 
         return Commute(

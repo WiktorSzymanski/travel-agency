@@ -9,4 +9,6 @@ interface AttractionRepository : Repository<Attraction> {
     override suspend fun save(entity: Attraction): Attraction?
 
     suspend fun findAll(): List<Attraction>
+
+    suspend fun updateAllStatus(attractions: List<Attraction>)
 }

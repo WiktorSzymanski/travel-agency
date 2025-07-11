@@ -1,8 +1,7 @@
 package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -14,10 +13,8 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.AccommodationGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.GeneratorRepoPair
-import kotlin.coroutines.CoroutineContext
 
 object Scheduler {
-    private lateinit var coroutineContext: CoroutineContext
     private lateinit var config: SchedulerConfig
     private lateinit var generators: List<GeneratorRepoPair<*, *>>
 
@@ -30,29 +27,30 @@ object Scheduler {
         accommodationRepository: AccommodationRepository,
         attractionRepository: AttractionRepository,
         commuteRepository: CommuteRepository,
-        coroutineContext: CoroutineContext = Dispatchers.Default,
     ) {
-        this.coroutineContext = coroutineContext
         this.config = config
         this.generators =
             listOf(
                 GeneratorRepoPair(
                     CommuteGenerator(
-                        config.futureDurationSeconds,
+                        config.inAdvanceSeconds,
+                        config.creationWindowSeconds,
                         config.commutes,
                     ),
                     commuteRepository,
                 ),
                 GeneratorRepoPair(
                     AccommodationGenerator(
-                        config.futureDurationSeconds,
+                        config.inAdvanceSeconds,
+                        config.creationWindowSeconds,
                         config.accommodations,
                     ),
                     accommodationRepository,
                 ),
                 GeneratorRepoPair(
                     AttractionGenerator(
-                        config.futureDurationSeconds,
+                        config.inAdvanceSeconds,
+                        config.creationWindowSeconds,
                         config.attractions,
                     ),
                     attractionRepository,
@@ -60,19 +58,20 @@ object Scheduler {
             )
     }
 
-    fun start() {
-        if (job != null) {
-            return
-        }
-
-        job =
-            CoroutineScope(coroutineContext).launch {
-                while (isActive) {
-                    generate()
-                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
-                }
+    suspend fun start() =
+        coroutineScope {
+            if (job != null) {
+                return@coroutineScope
             }
-    }
+
+            job =
+                launch {
+                    while (isActive) {
+                        generate()
+                        delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                    }
+                }
+        }
 
     fun stop() {
         job?.cancel()

@@ -12,12 +12,13 @@ class AttractionGeneratorTest {
     private val fixedTime = LocalDateTime.of(2025, 6, 30, 12, 0, 0)
     private val zone = ZoneId.of("UTC")
     private val fixedClock = Clock.fixed(fixedTime.atZone(zone).toInstant(), zone)
-
-    private val plusSeconds = 5L
+    private val inAdvanceSeconds = 5L
+    private val creationWindowSeconds = 5L
 
     private val attractionGenerator =
         AttractionGenerator(
-            plusSeconds,
+            inAdvanceSeconds,
+            creationWindowSeconds,
             listOf(
                 AttractionTemplate(
                     "Big Ben tour",
@@ -42,13 +43,27 @@ class AttractionGeneratorTest {
         assertEquals(10, actual[0].capacity)
         assertEquals(AttractionStatusEnum.SCHEDULED, actual[0].status)
         assert(actual[0].bookings.isEmpty())
-        assert(actual[0].date.isAfter(fixedTime))
+        assert(
+            actual[0].date.isBetween(
+                fixedTime.plusSeconds(inAdvanceSeconds),
+                fixedTime.plusSeconds(
+                    inAdvanceSeconds + creationWindowSeconds / 2,
+                ),
+            ),
+        )
 
         assertEquals("City tour by boat", actual[1].name)
         assertEquals(LocationEnum.BERLIN, actual[1].location)
         assertEquals(30, actual[1].capacity)
         assertEquals(AttractionStatusEnum.SCHEDULED, actual[1].status)
         assert(actual[1].bookings.isEmpty())
-        assert(actual[1].date.isAfter(fixedTime))
+        assert(
+            actual[1].date.isBetween(
+                fixedTime.plusSeconds(inAdvanceSeconds),
+                fixedTime.plusSeconds(
+                    inAdvanceSeconds + creationWindowSeconds / 2,
+                ),
+            ),
+        )
     }
 }

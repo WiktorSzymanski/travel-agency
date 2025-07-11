@@ -2,6 +2,7 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 val kotlinVersion: String by project
 val logbackVersion: String by project
+val ktlintVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.1.10"
@@ -26,35 +27,37 @@ dependencies {
 //    implementation("io.ktor:ktor-server-config-yaml")
 //    testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
+    ktlint("com.pinterest.ktlint:ktlint-cli:$ktlintVersion")
 }
 
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
-}
 
-ktlint {
-    version.set("1.2.1")
-    verbose.set(true)
-    android.set(false)
-    outputToConsole.set(true)
-    reporters {
-        reporter(ReporterType.PLAIN)
+    ktlint {
+        version.set("1.2.1")
+        verbose.set(true)
+        android.set(false)
+        outputToConsole.set(true)
+        reporters {
+            reporter(ReporterType.PLAIN)
+        }
     }
-}
 
-detekt {
-    buildUponDefaultConfig = true
-    parallel = true
-}
+    detekt {
+        config.setFrom("${project.rootDir}/detekt.yaml")
+        buildUponDefaultConfig = true
+        parallel = true
+    }
 
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    ignoreFailures = true
+    tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+        ignoreFailures = true
 
-    reports {
-        sarif {
-            required.set(true)
-            outputLocation.set(layout.buildDirectory.file("reports/detekt/report.sarif"))
+        reports {
+            sarif {
+                required.set(true)
+                outputLocation.set(layout.buildDirectory.file("reports/detekt/report.sarif"))
+            }
         }
     }
 }

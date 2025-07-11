@@ -9,4 +9,6 @@ interface CommuteRepository : Repository<Commute> {
     override suspend fun save(entity: Commute): Commute?
 
     suspend fun findAll(): List<Commute>
+
+    suspend fun updateAllStatus(commutes: List<Commute>)
 }

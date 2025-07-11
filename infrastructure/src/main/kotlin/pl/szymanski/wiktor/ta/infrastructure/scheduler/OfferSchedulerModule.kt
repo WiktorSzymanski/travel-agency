@@ -8,17 +8,19 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryI
 import pl.szymanski.wiktor.ta.infrastructure.repository.AttractionRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.CommuteRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
+import pl.szymanski.wiktor.ta.infrastructure.repository.TravelOfferRepositoryImpl
 
-fun Application.scheduler() {
+fun Application.offerScheduler() {
     MongoDbProvider.init(property<DatabaseConfig>("database"))
 
-    Scheduler.init(
-        property("scheduler"),
+    OfferScheduler.init(
+        property("offerScheduler"),
         AccommodationRepositoryImpl(MongoDbProvider.database),
         AttractionRepositoryImpl(MongoDbProvider.database),
         CommuteRepositoryImpl(MongoDbProvider.database),
+        TravelOfferRepositoryImpl(MongoDbProvider.database),
     )
 
-    launch { Scheduler.start() }
-    Runtime.getRuntime().addShutdownHook(Thread { Scheduler.stop() })
+    launch { OfferScheduler.start() }
+    Runtime.getRuntime().addShutdownHook(Thread { OfferScheduler.stop() })
 }
