@@ -8,6 +8,7 @@ val logbackVersion = "1.4.14"
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "2.1.10"
+    id("io.ktor.plugin") version "3.2.1"
 }
 
 group = "pl.szymanski.wiktor"
@@ -23,6 +24,10 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
+    implementation("io.ktor:ktor-server-openapi")
+
+    implementation("io.ktor:ktor-server-swagger")
+
     implementation(project(":domain"))
     implementation(project(":application"))
 
@@ -36,10 +41,11 @@ dependencies {
 
     implementation("org.mongodb:bson-kotlinx:5.2.0")
 
-    implementation("io.ktor:ktor-server-content-negotiation:3.2.0")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.0")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:$mongoVersion")
+    implementation("org.openfolder:kotlin-asyncapi-ktor:3.1.1")
 
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")

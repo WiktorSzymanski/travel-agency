@@ -3,9 +3,9 @@ ktor:
         port: 8080
     application:
         modules:
-#            - pl.szymanski.wiktor.ta.infrastructure.ApplicationKt.application
-            - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
-            - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
+            - pl.szymanski.wiktor.ta.infrastructure.ApplicationKt.application
+#            - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
+#            - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
 
 database:
     uri: "mongodb://localhost:27017"
@@ -15,9 +15,9 @@ offerScheduler:
   intervalSeconds: 1
 
 scheduler:
-    intervalSeconds: 1
+    intervalSeconds: 10
     inAdvanceSeconds: 50
-    creationWindowSeconds: 1
+    creationWindowSeconds: 2
     accommodations:
         - name: "Hotel"
           location: "London"
