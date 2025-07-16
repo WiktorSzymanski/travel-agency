@@ -5,7 +5,6 @@ import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Rent
-import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
@@ -62,9 +61,7 @@ data class CommuteDto(
     val name: String,
     val departure: LocationAndTimeDto,
     val arrival: LocationAndTimeDto,
-//    val seats: List<SeatDto>,
-//    val bookings: Map<String, BookingDto> = mapOf(),
-//    val status: String,
+    val availableSeats: List<String>
 ) {
     companion object {
         fun fromDomain(commute: Commute): CommuteDto {
@@ -73,9 +70,7 @@ data class CommuteDto(
                 name = commute.name,
                 departure = LocationAndTimeDto.fromDomain(commute.departure),
                 arrival = LocationAndTimeDto.fromDomain(commute.arrival),
-//                seats = commute.seats.map { SeatDto.fromDomain(it) },
-//                bookings = commute.bookings.mapValues { BookingDto.fromDomain(it.value) },
-//                status = commute.status.name
+                availableSeats = commute.seats.map { it.toString() }.filter { !commute.bookings.containsKey(it) }
             )
         }
     }
@@ -87,9 +82,7 @@ data class AttractionDto(
     val name: String,
     val location: String,
     val date: String,
-//    val capacity: Int,
-//    val bookings: List<BookingDto> = listOf(),
-//    val status: String,
+    val availableSlots: Int
 ) {
     companion object {
         fun fromDomain(attraction: Attraction): AttractionDto {
@@ -98,9 +91,7 @@ data class AttractionDto(
                 name = attraction.name,
                 location = attraction.location.name,
                 date = attraction.date.toString(),
-//                capacity = attraction.capacity,
-//                bookings = attraction.bookings.map { BookingDto.fromDomain(it) },
-//                status = attraction.status.name
+                availableSlots = attraction.capacity - attraction.bookings.size
             )
         }
     }
@@ -139,21 +130,6 @@ data class LocationAndTimeDto(
             return LocationAndTimeDto(
                 location = locationAndTime.location.name,
                 time = locationAndTime.time.toString()
-            )
-        }
-    }
-}
-
-@Serializable
-data class SeatDto(
-    val row: String,
-    val column: String,
-) {
-    companion object {
-        fun fromDomain(seat: Seat): SeatDto {
-            return SeatDto(
-                row = seat.row,
-                column = seat.column
             )
         }
     }

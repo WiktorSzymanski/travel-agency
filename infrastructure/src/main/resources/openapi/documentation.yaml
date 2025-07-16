@@ -1,23 +1,180 @@
 openapi: "3.0.3"
 info:
-  title: "Application API"
-  description: "Application API"
+  title: "Travel Agency API"
+  description: "API for managing travel offers, bookings, and related services"
   version: "1.0.0"
 servers:
   - url: "http://0.0.0.0:8080"
 paths:
   /travelOffers:
     get:
-      description: "Lists all travel offers"
+      summary: Get all travel offers
+      description: Returns a list of all available travel offers with related accommodation, attraction, and commute details
+      operationId: getTravelOffers
       responses:
-        "200":
-          description: "OK"
+        '200':
+          description: Successful operation
           content:
-            text/plain:
+            application/json:
               schema:
-                type: "string"
-              examples:
-                Example#1:
-                  value: "Hello World!"
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
+
+  /bookTravelOffer:
+    post:
+      summary: Book a travel offer
+      description: Books a travel offer for a specific user with a selected seat
+      operationId: bookTravelOffer
+      parameters:
+        - name: offerId
+          in: query
+          description: ID of the travel offer to book
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          description: ID of the user making the booking
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: seat
+          in: query
+          description: Seat to book in format "row/column" (e.g., "1/A")
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking successful
+        '400':
+          description: Invalid input parameters
+        '404':
+          description: Travel offer not found
+
 components:
-  schemas: { }
+  schemas:
+    TravelOfferDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the travel offer
+        name:
+          type: string
+          description: Name of the travel offer
+        commute:
+          $ref: '#/components/schemas/CommuteDto'
+        accommodation:
+          $ref: '#/components/schemas/AccommodationDto'
+        attraction:
+          $ref: '#/components/schemas/AttractionDto'
+          nullable: true
+        booking:
+          $ref: '#/components/schemas/BookingDto'
+          nullable: true
+        status:
+          type: string
+          description: Current status of the travel offer
+          enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
+      $ref:
+
+    CommuteDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the commute
+        name:
+          type: string
+          description: Name of the commute
+        departure:
+          $ref: '#/components/schemas/LocationAndTimeDto'
+        arrival:
+          $ref: '#/components/schemas/LocationAndTimeDto'
+
+    AccommodationDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the accommodation
+        name:
+          type: string
+          description: Name of the accommodation
+        location:
+          type: string
+          description: Location of the accommodation
+        rent:
+          $ref: '#/components/schemas/RentDto'
+        booking:
+          $ref: '#/components/schemas/BookingDto'
+          nullable: true
+        status:
+          type: string
+          description: Current status of the accommodation
+          enum: [ AVAILABLE, BOOKED, EXPIRED ]
+
+    AttractionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the attraction
+        name:
+          type: string
+          description: Name of the attraction
+        location:
+          type: string
+          description: Location of the attraction
+        date:
+          type: string
+          format: date-time
+          description: Date and time of the attraction
+
+    BookingDto:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ID of the user who made the booking
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when the booking was made
+
+    LocationAndTimeDto:
+      type: object
+      properties:
+        location:
+          type: string
+          description: Name of the location
+        time:
+          type: string
+          format: date-time
+          description: Time at the location
+
+    RentDto:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: Start date of the rent
+        till:
+          type: string
+          format: date-time
+          description: End date of the rent
+
+    SeatDto:
+      type: object
+      properties:
+        row:
+          type: string
+          description: Row of the seat
+        column:
+          type: string
+          description: Column of the seat

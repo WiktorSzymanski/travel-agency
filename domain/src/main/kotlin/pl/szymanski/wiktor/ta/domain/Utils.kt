@@ -26,7 +26,13 @@ data class Seat(
     val row: String,
     val column: String,
 ) {
-    override fun toString(): String = "$row$column"
+    override fun toString(): String = "$row/$column"
+    companion object {
+        fun fromString(seat: String): Seat {
+            val (row, column) = seat.split("/")
+            return Seat(row, column)
+        }
+    }
 }
 
 data class Rent(

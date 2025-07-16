@@ -4,6 +4,9 @@ import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -50,7 +53,7 @@ data class Commute(
     fun bookSeat(
         seat: Seat,
         userId: UUID,
-    ) {
+    ): CommuteEvent {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
             "Seat cannot be booked when Commute $_id not in SCHEDULED status"
@@ -66,13 +69,17 @@ data class Commute(
 
         this.bookings.put(seat.toString(), Booking(userId, LocalDateTime.now()))
 
-        // EVENT or something
+        return CommuteBookedEvent(
+            commuteId = _id,
+            userId = userId,
+            seat = seat
+        )
     }
 
     fun cancelBookedSeat(
         seat: Seat,
         userId: UUID,
-    ) {
+    ): CommuteEvent {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
             "Cannot cancel seat $seat when Commute $_id not in SCHEDULED status"
@@ -89,7 +96,11 @@ data class Commute(
                 this.bookings.remove(seat.toString())
             }
 
-        // EVENT or something
+        return CommuteBookingCanceledEvent(
+            commuteId = _id,
+            userId = userId,
+            seat = seat
+        )
     }
 
     private fun statusCheck() {

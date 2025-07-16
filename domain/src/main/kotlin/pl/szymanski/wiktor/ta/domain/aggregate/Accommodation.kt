@@ -4,6 +4,9 @@ import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -31,7 +34,7 @@ data class Accommodation(
         // EVENT or something
     }
 
-    fun book(userId: UUID) {
+    fun book(userId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
             "Accommodation $_id is not AVAILABLE"
@@ -40,10 +43,13 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.BOOKED
         this.booking = Booking(userId, LocalDateTime.now())
 
-        // EVENT or something
+        return AccommodationBookedEvent(
+            accommodationId = _id,
+            userId = userId,
+        )
     }
 
-    fun cancelBooking(userId: UUID) {
+    fun cancelBooking(userId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.BOOKED) {
             "Accommodation $_id is not BOOKED"
@@ -54,8 +60,12 @@ data class Accommodation(
         }
 
         this.booking = null
+        this.status = AccommodationStatusEnum.AVAILABLE
 
-        // EVENT or something
+        return AccommodationBookingCanceledEvent(
+            accommodationId = _id,
+            userId = userId,
+        )
     }
 
     private fun statusCheck() {

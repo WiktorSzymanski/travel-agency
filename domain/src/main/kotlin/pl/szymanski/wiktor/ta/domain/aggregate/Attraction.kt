@@ -3,6 +3,9 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -47,7 +50,7 @@ data class Attraction(
         // EVENT or something
     }
 
-    fun book(userId: UUID) {
+    fun book(userId: UUID): AttractionEvent {
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
@@ -64,10 +67,13 @@ data class Attraction(
 
         bookings.add(Booking(userId, LocalDateTime.now()))
 
-        // EVENT or something
+        return AttractionBookedEvent(
+            attractionId = _id,
+            userId = userId,
+        )
     }
 
-    fun cancelBooking(userId: UUID) {
+    fun cancelBooking(userId: UUID): AttractionEvent {
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
@@ -80,7 +86,10 @@ data class Attraction(
             "User $userId has no booking for Attraction $_id"
         }
 
-        // EVENT or something
+        return AttractionBookingCanceledEvent(
+            attractionId = _id,
+            userId = userId,
+        )
     }
 
     private fun statusCheck() {
