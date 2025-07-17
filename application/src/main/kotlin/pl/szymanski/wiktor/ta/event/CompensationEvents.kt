@@ -16,7 +16,6 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import java.util.UUID
 
-
 data class AccommodationBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
@@ -28,7 +27,7 @@ data class AccommodationBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val accommodationId: UUID,
-    val userId: UUID
+    val userId: UUID,
 ) : AccommodationEvent
 
 data class AttractionBookedCompensatedEvent(
@@ -42,7 +41,7 @@ data class AttractionBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val attractionId: UUID,
-    val userId: UUID
+    val userId: UUID,
 ) : AttractionEvent
 
 data class CommuteBookedCompensatedEvent(
@@ -50,7 +49,7 @@ data class CommuteBookedCompensatedEvent(
     override var correlationId: UUID?,
     override val commuteId: UUID,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : CommuteEvent
 
 data class CommuteBookingCanceledCompensatedEvent(
@@ -58,7 +57,7 @@ data class CommuteBookingCanceledCompensatedEvent(
     override var correlationId: UUID?,
     override val commuteId: UUID,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : CommuteEvent
 
 data class TravelOfferBookedCompensatedEvent(
@@ -69,7 +68,7 @@ data class TravelOfferBookedCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferBookingCanceledCompensatedEvent(
@@ -80,19 +79,69 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : TravelOfferEvent
 
 fun Event.toCompensationEvent(): Event {
     return when (this) {
-        is AccommodationBookedEvent -> AccommodationBookedCompensatedEvent(correlationId = this.correlationId, accommodationId = this.accommodationId, userId = this.userId)
-        is AccommodationBookingCanceledEvent -> AccommodationBookingCanceledCompensatedEvent(correlationId = this.correlationId, accommodationId = this.accommodationId, userId = this.userId)
-        is AttractionBookedEvent -> AttractionBookedCompensatedEvent(correlationId = this.correlationId, attractionId = this.attractionId, userId = this.userId)
-        is AttractionBookingCanceledEvent -> AttractionBookingCanceledCompensatedEvent(correlationId = this.correlationId, attractionId = this.attractionId, userId = this.userId)
-        is CommuteBookedEvent -> CommuteBookedCompensatedEvent(correlationId = this.correlationId, commuteId = this.commuteId, userId = this.userId, seat = this.seat)
-        is CommuteBookingCanceledEvent -> CommuteBookingCanceledCompensatedEvent(correlationId = this.correlationId, commuteId = this.commuteId, userId = this.userId, seat = this.seat)
-        is TravelOfferBookedEvent -> TravelOfferBookedCompensatedEvent(correlationId = this.correlationId, travelOfferId = this.travelOfferId, accommodationId = this.accommodationId, commuteId = this.commuteId, attractionId = this.attractionId, userId = this.userId, seat = this.seat)
-        is TravelOfferBookingCanceledEvent -> TravelOfferBookingCanceledCompensatedEvent(correlationId = this.correlationId, travelOfferId = this.travelOfferId, accommodationId = this.accommodationId, commuteId = this.commuteId, attractionId = this.attractionId, userId = this.userId, seat = this.seat)
+        is AccommodationBookedEvent ->
+            AccommodationBookedCompensatedEvent(
+                correlationId = this.correlationId,
+                accommodationId = this.accommodationId,
+                userId = this.userId,
+            )
+        is AccommodationBookingCanceledEvent ->
+            AccommodationBookingCanceledCompensatedEvent(
+                correlationId = this.correlationId,
+                accommodationId = this.accommodationId,
+                userId = this.userId,
+            )
+        is AttractionBookedEvent ->
+            AttractionBookedCompensatedEvent(
+                correlationId = this.correlationId,
+                attractionId = this.attractionId,
+                userId = this.userId,
+            )
+        is AttractionBookingCanceledEvent ->
+            AttractionBookingCanceledCompensatedEvent(
+                correlationId = this.correlationId,
+                attractionId = this.attractionId,
+                userId = this.userId,
+            )
+        is CommuteBookedEvent ->
+            CommuteBookedCompensatedEvent(
+                correlationId = this.correlationId,
+                commuteId = this.commuteId,
+                userId = this.userId,
+                seat = this.seat,
+            )
+        is CommuteBookingCanceledEvent ->
+            CommuteBookingCanceledCompensatedEvent(
+                correlationId = this.correlationId,
+                commuteId = this.commuteId,
+                userId = this.userId,
+                seat = this.seat,
+            )
+        is TravelOfferBookedEvent ->
+            TravelOfferBookedCompensatedEvent(
+                correlationId = this.correlationId,
+                travelOfferId = this.travelOfferId,
+                accommodationId = this.accommodationId,
+                commuteId = this.commuteId,
+                attractionId = this.attractionId,
+                userId = this.userId,
+                seat = this.seat,
+            )
+        is TravelOfferBookingCanceledEvent ->
+            TravelOfferBookingCanceledCompensatedEvent(
+                correlationId = this.correlationId,
+                travelOfferId = this.travelOfferId,
+                accommodationId = this.accommodationId,
+                commuteId = this.commuteId,
+                attractionId = this.attractionId,
+                userId = this.userId,
+                seat = this.seat,
+            )
         else -> throw IllegalArgumentException("Unsupported event type: ${this.javaClass.simpleName}")
     }
 }

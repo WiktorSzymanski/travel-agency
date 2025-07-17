@@ -22,10 +22,11 @@ class AccommodationRepositoryImpl(
 
     override suspend fun update(entity: Accommodation) {
         val filter = org.bson.Document("_id", entity._id)
-        val update = Updates.combine(
-            Updates.set("booking", entity.booking),
-            Updates.set("status", "${entity.status}")
-        )
+        val update =
+            Updates.combine(
+                Updates.set("booking", entity.booking),
+                Updates.set("status", "${entity.status}"),
+            )
 
         collection.updateOne(filter, update)
     }

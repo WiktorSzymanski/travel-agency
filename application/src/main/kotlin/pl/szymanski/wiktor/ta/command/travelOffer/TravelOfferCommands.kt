@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-sealed interface TravelOfferCommand: Command {
+sealed interface TravelOfferCommand : Command {
     val travelOfferId: UUID
 }
 

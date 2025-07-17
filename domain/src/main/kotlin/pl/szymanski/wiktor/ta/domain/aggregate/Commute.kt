@@ -72,7 +72,7 @@ data class Commute(
         return CommuteBookedEvent(
             commuteId = _id,
             userId = userId,
-            seat = seat
+            seat = seat,
         )
     }
 
@@ -99,7 +99,7 @@ data class Commute(
         return CommuteBookingCanceledEvent(
             commuteId = _id,
             userId = userId,
-            seat = seat
+            seat = seat,
         )
     }
 

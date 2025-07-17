@@ -23,7 +23,7 @@ object EventBus {
 
     suspend inline fun <reified T> subscribe(
         correlationId: UUID,
-        crossinline onEvent: suspend (T) -> Unit
+        crossinline onEvent: suspend (T) -> Unit,
     ) where T : Event {
         events
             .filterIsInstance<T>()

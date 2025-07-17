@@ -13,18 +13,19 @@ class TravelOfferEventHandler(
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
-    private val accommodationCommandHandler: AccommodationCommandHandler
+    private val accommodationCommandHandler: AccommodationCommandHandler,
 ) {
-    suspend fun setup() = coroutineScope {
-        EventBus.subscribe<TravelOfferBookedEvent> {
-            println("New travel offer booked: ${it.travelOfferId}")
-            BookingSaga(
-                travelOfferCommandHandler,
-                attractionCommandHandler,
-                commuteCommandHandler,
-                accommodationCommandHandler,
-                it
-            ).execute()
+    suspend fun setup() =
+        coroutineScope {
+            EventBus.subscribe<TravelOfferBookedEvent> {
+                println("New travel offer booked: ${it.travelOfferId}")
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    it,
+                ).execute()
+            }
         }
-    }
 }

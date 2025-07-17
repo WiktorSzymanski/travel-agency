@@ -3,7 +3,7 @@ package pl.szymanski.wiktor.ta.domain.event
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-interface TravelOfferEvent: Event {
+interface TravelOfferEvent : Event {
     val travelOfferId: UUID
 }
 
@@ -15,7 +15,7 @@ data class TravelOfferBookedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferBookingCanceledEvent(
@@ -26,5 +26,5 @@ data class TravelOfferBookingCanceledEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val userId: UUID,
-    val seat: Seat
+    val seat: Seat,
 ) : TravelOfferEvent

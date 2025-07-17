@@ -26,62 +26,67 @@ class BookingSaga(
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
-    private val event: TravelOfferBookedEvent
+    private val event: TravelOfferBookedEvent,
 ) {
-    suspend fun execute() = coroutineScope {
-        val compensations = mutableListOf<suspend () -> Unit>()
+    suspend fun execute() =
+        coroutineScope {
+            val compensations = mutableListOf<suspend () -> Unit>()
 
-        launch {
-            EventBus.subscribe<CommuteBookedEvent>(event.correlationId!!) {
-                compensations.add { commuteCommandHandler.compensate(it) }
-            }
-        }
-
-        launch {
-            EventBus.subscribe<AccommodationBookedEvent>(event.correlationId!!) {
-                compensations.add { accommodationCommandHandler.compensate(it) }
-            }
-        }
-        event.attractionId?.let {
             launch {
-                EventBus.subscribe<AttractionBookedEvent>(event.correlationId!!) {
-                    compensations.add { attractionCommandHandler.compensate(it) }
+                EventBus.subscribe<CommuteBookedEvent>(event.correlationId!!) {
+                    compensations.add { commuteCommandHandler.compensate(it) }
                 }
             }
-        }
 
-        val accommodationCommand = BookAccommodationCommand(event.accommodationId, event.correlationId!!, event.userId)
-        val commuteCommand = BookCommuteCommand(event.commuteId, event.correlationId!!, event.userId, event.seat)
-        val attractionCommand = event.attractionId?.let {
-            BookAttractionCommand(it, event.correlationId!!, event.userId)
-        }
-
-        val handleJobs = mutableListOf<Deferred<Result<Unit>>>()
-
-        handleJobs += async {
-            runCatching { commuteCommandHandler.handle(commuteCommand as CommuteCommand) }
-        }
-
-        handleJobs += async {
-            runCatching { accommodationCommandHandler.handle(accommodationCommand as AccommodationCommand) }
-        }
-
-        attractionCommand?.let {
-            handleJobs += async {
-                runCatching { attractionCommandHandler.handle(it as AttractionCommand) }
+            launch {
+                EventBus.subscribe<AccommodationBookedEvent>(event.correlationId!!) {
+                    compensations.add { accommodationCommandHandler.compensate(it) }
+                }
             }
-        }
+            event.attractionId?.let {
+                launch {
+                    EventBus.subscribe<AttractionBookedEvent>(event.correlationId!!) {
+                        compensations.add { attractionCommandHandler.compensate(it) }
+                    }
+                }
+            }
 
-        // Can't there be race between collecting all jobs and caching events of completed jobs?
-        // Shouldn't handle return event in handleJobs list? Seems more robust
-        if (handleJobs.awaitAll().any { it.isFailure }) {
-            println("Saga Failed — running compensations")
-            compensations.reversed().forEach { it.invoke() }
-            travelOfferCommandHandler.compensate(event)
-        } else {
-            println("Saga Succeeded")
-        }
+            val accommodationCommand = BookAccommodationCommand(event.accommodationId, event.correlationId!!, event.userId)
+            val commuteCommand = BookCommuteCommand(event.commuteId, event.correlationId!!, event.userId, event.seat)
+            val attractionCommand =
+                event.attractionId?.let {
+                    BookAttractionCommand(it, event.correlationId!!, event.userId)
+                }
 
-        coroutineContext.cancelChildren()
-    }
+            val handleJobs = mutableListOf<Deferred<Result<Unit>>>()
+
+            handleJobs +=
+                async {
+                    runCatching { commuteCommandHandler.handle(commuteCommand as CommuteCommand) }
+                }
+
+            handleJobs +=
+                async {
+                    runCatching { accommodationCommandHandler.handle(accommodationCommand as AccommodationCommand) }
+                }
+
+            attractionCommand?.let {
+                handleJobs +=
+                    async {
+                        runCatching { attractionCommandHandler.handle(it as AttractionCommand) }
+                    }
+            }
+
+            // Can't there be race between collecting all jobs and caching events of completed jobs?
+            // Shouldn't handle return event in handleJobs list? Seems more robust
+            if (handleJobs.awaitAll().any { it.isFailure }) {
+                println("Saga Failed — running compensations")
+                compensations.reversed().forEach { it.invoke() }
+                travelOfferCommandHandler.compensate(event)
+            } else {
+                println("Saga Succeeded")
+            }
+
+            coroutineContext.cancelChildren()
+        }
 }

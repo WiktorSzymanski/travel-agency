@@ -34,7 +34,7 @@ data class TravelOfferDto(
                 accommodation = AccommodationDto.fromDomain(accommodation),
                 attraction = if (attraction != null) AttractionDto.fromDomain(attraction) else null,
                 booking = travelOffer.booking?.let { BookingDto.fromDomain(it) },
-                status = travelOffer.status.name
+                status = travelOffer.status.name,
             )
         }
     }
@@ -49,7 +49,7 @@ data class BookingDto(
         fun fromDomain(booking: Booking): BookingDto {
             return BookingDto(
                 userId = booking.userId.toString(),
-                timestamp = booking.timestamp.toString()
+                timestamp = booking.timestamp.toString(),
             )
         }
     }
@@ -61,7 +61,7 @@ data class CommuteDto(
     val name: String,
     val departure: LocationAndTimeDto,
     val arrival: LocationAndTimeDto,
-    val availableSeats: List<String>
+    val availableSeats: List<String>,
 ) {
     companion object {
         fun fromDomain(commute: Commute): CommuteDto {
@@ -70,7 +70,7 @@ data class CommuteDto(
                 name = commute.name,
                 departure = LocationAndTimeDto.fromDomain(commute.departure),
                 arrival = LocationAndTimeDto.fromDomain(commute.arrival),
-                availableSeats = commute.seats.map { it.toString() }.filter { !commute.bookings.containsKey(it) }
+                availableSeats = commute.seats.map { it.toString() }.filter { !commute.bookings.containsKey(it) },
             )
         }
     }
@@ -82,7 +82,7 @@ data class AttractionDto(
     val name: String,
     val location: String,
     val date: String,
-    val availableSlots: Int
+    val availableSlots: Int,
 ) {
     companion object {
         fun fromDomain(attraction: Attraction): AttractionDto {
@@ -91,7 +91,7 @@ data class AttractionDto(
                 name = attraction.name,
                 location = attraction.location.name,
                 date = attraction.date.toString(),
-                availableSlots = attraction.capacity - attraction.bookings.size
+                availableSlots = attraction.capacity - attraction.bookings.size,
             )
         }
     }
@@ -114,7 +114,7 @@ data class AccommodationDto(
                 location = accommodation.location.name,
                 rent = RentDto.fromDomain(accommodation.rent),
                 booking = accommodation.booking?.let { BookingDto.fromDomain(it) },
-                status = accommodation.status.name
+                status = accommodation.status.name,
             )
         }
     }
@@ -129,7 +129,7 @@ data class LocationAndTimeDto(
         fun fromDomain(locationAndTime: LocationAndTime): LocationAndTimeDto {
             return LocationAndTimeDto(
                 location = locationAndTime.location.name,
-                time = locationAndTime.time.toString()
+                time = locationAndTime.time.toString(),
             )
         }
     }
@@ -144,7 +144,7 @@ data class RentDto(
         fun fromDomain(rent: Rent): RentDto {
             return RentDto(
                 from = rent.from.toString(),
-                till = rent.till.toString()
+                till = rent.till.toString(),
             )
         }
     }

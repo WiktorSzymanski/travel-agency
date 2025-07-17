@@ -32,7 +32,10 @@ data class TravelOffer(
         // EVENT or something
     }
 
-    fun book(userId: UUID, seat: Seat): TravelOfferEvent {
+    fun book(
+        userId: UUID,
+        seat: Seat,
+    ): TravelOfferEvent {
         require(status == OfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id is not open for booking"
         }
@@ -46,11 +49,14 @@ data class TravelOffer(
             commuteId = commuteId,
             attractionId = attractionId,
             userId = userId,
-            seat = seat
+            seat = seat,
         )
     }
 
-    fun cancelBooking(userId: UUID, seat: Seat): TravelOfferEvent {
+    fun cancelBooking(
+        userId: UUID,
+        seat: Seat,
+    ): TravelOfferEvent {
         require(status == OfferStatusEnum.BOOKED) {
             "Cannot cancel booking for TravelOffer $_id when not in BOOKED status"
         }
@@ -68,7 +74,7 @@ data class TravelOffer(
             commuteId = commuteId,
             attractionId = attractionId,
             userId = userId,
-            seat = seat
+            seat = seat,
         )
     }
 }

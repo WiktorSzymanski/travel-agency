@@ -9,6 +9,6 @@ fun main(args: Array<String>) {
         .main(args)
 }
 
-fun Application.application(): Unit {
+fun Application.application() {
     travelOfferController()
 }

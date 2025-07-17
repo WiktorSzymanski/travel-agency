@@ -24,12 +24,13 @@ class TravelOfferRepositoryImpl(
 
     override suspend fun save(travelOffer: TravelOffer): TravelOffer? = collection.insertOne(travelOffer).insertedId?.let { travelOffer }
 
-    override suspend fun update(travelOffer: TravelOffer): Unit {
+    override suspend fun update(travelOffer: TravelOffer) {
         val filter = org.bson.Document("_id", travelOffer._id)
-        val update = Updates.combine(
-            Updates.set("booking", travelOffer.booking),
-            Updates.set("status", "${travelOffer.status}")
-        )
+        val update =
+            Updates.combine(
+                Updates.set("booking", travelOffer.booking),
+                Updates.set("status", "${travelOffer.status}"),
+            )
 
         collection.updateOne(filter, update)
     }

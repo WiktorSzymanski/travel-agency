@@ -11,18 +11,28 @@ class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
 ) {
     suspend fun handle(command: TravelOfferCommand) {
-        EventBus.publish(when (command) {
-            is BookTravelOfferCommand -> handle(command)
-            is CancelBookTravelOfferCommand -> handle(command)
-        }.apply { correlationId = command.correlationId })
+        EventBus.publish(
+            when (command) {
+                is BookTravelOfferCommand -> handle(command)
+                is CancelBookTravelOfferCommand -> handle(command)
+            }.apply { correlationId = command.correlationId },
+        )
     }
 
     suspend fun compensate(event: TravelOfferEvent) {
-        EventBus.publish(when (event) {
-            is TravelOfferBookedEvent -> handle(CancelBookTravelOfferCommand(event.travelOfferId, event.correlationId!!, event.userId, event.seat))
-            is TravelOfferBookingCanceledEvent -> handle(BookTravelOfferCommand(event.travelOfferId, event.correlationId!!, event.userId, event.seat))
-            else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
-        }.apply { correlationId = event.correlationId }.toCompensationEvent())
+        EventBus.publish(
+            when (event) {
+                is TravelOfferBookedEvent ->
+                    handle(
+                        CancelBookTravelOfferCommand(event.travelOfferId, event.correlationId!!, event.userId, event.seat),
+                    )
+                is TravelOfferBookingCanceledEvent ->
+                    handle(
+                        BookTravelOfferCommand(event.travelOfferId, event.correlationId!!, event.userId, event.seat),
+                    )
+                else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
+            }.apply { correlationId = event.correlationId }.toCompensationEvent(),
+        )
     }
 
     suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =

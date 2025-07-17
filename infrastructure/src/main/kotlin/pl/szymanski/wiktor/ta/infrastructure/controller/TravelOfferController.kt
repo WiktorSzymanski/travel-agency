@@ -35,12 +35,13 @@ import java.util.UUID
 
 fun Application.travelOfferController() {
     install(AsyncApiPlugin) {
-        extension = AsyncApiExtension.builder {
-            info {
-                title("Sample API")
-                version("1.0.0")
+        extension =
+            AsyncApiExtension.builder {
+                info {
+                    title("Sample API")
+                    version("1.0.0")
+                }
             }
-        }
     }
 
     install(ContentNegotiation) {
@@ -49,36 +50,39 @@ fun Application.travelOfferController() {
                 prettyPrint = true
                 isLenient = true
                 ignoreUnknownKeys = true
-            }
+            },
         )
     }
 
     MongoDbProvider.init(property<DatabaseConfig>("database"))
     val travelOfferRepository = TravelOfferRepositoryImpl(MongoDbProvider.database)
     val travelOfferService = TravelOfferQuery(travelOfferRepository)
-    
+
     val accommodationRepository = AccommodationRepositoryImpl(MongoDbProvider.database)
     val attractionRepository = AttractionRepositoryImpl(MongoDbProvider.database)
     val commuteRepository = CommuteRepositoryImpl(MongoDbProvider.database)
 
     val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
 
-    launch { TravelOfferEventHandler(
-        travelOfferCommandHandler = travelOfferCommandHandler,
-        attractionCommandHandler = AttractionCommandHandler(attractionRepository),
-        commuteCommandHandler = CommuteCommandHandler(commuteRepository),
-        accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository)
-    ).setup() }
+    launch {
+        TravelOfferEventHandler(
+            travelOfferCommandHandler = travelOfferCommandHandler,
+            attractionCommandHandler = AttractionCommandHandler(attractionRepository),
+            commuteCommandHandler = CommuteCommandHandler(commuteRepository),
+            accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository),
+        ).setup()
+    }
 
     routing {
         get("/travelOffers") {
-            val offerDtos = travelOfferService.getTravelOffers().map {
-                val accommodation = async { accommodationRepository.findById(it.accommodationId) }
-                val attraction = if (it.attractionId != null) async { attractionRepository.findById(it.attractionId!!) } else null
-                val commute = async { commuteRepository.findById(it.commuteId) }
+            val offerDtos =
+                travelOfferService.getTravelOffers().map {
+                    val accommodation = async { accommodationRepository.findById(it.accommodationId) }
+                    val attraction = if (it.attractionId != null) async { attractionRepository.findById(it.attractionId!!) } else null
+                    val commute = async { commuteRepository.findById(it.commuteId) }
 
-                TravelOfferDto.fromDomain(it, commute.await(), accommodation.await(), attraction?.await())
-            }
+                    TravelOfferDto.fromDomain(it, commute.await(), accommodation.await(), attraction?.await())
+                }
 
             call.response.status(io.ktor.http.HttpStatusCode.OK)
             call.respond(offerDtos)

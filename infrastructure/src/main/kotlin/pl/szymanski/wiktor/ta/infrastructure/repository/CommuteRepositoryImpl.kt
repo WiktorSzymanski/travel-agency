@@ -21,10 +21,11 @@ class CommuteRepositoryImpl(
 
     override suspend fun update(entity: Commute) {
         val filter = org.bson.Document("_id", entity._id)
-        val update = Updates.combine(
-            Updates.set("bookings", entity.bookings),
-            Updates.set("status", "${entity.status}")
-        )
+        val update =
+            Updates.combine(
+                Updates.set("bookings", entity.bookings),
+                Updates.set("status", "${entity.status}"),
+            )
 
         collection.updateOne(filter, update)
     }

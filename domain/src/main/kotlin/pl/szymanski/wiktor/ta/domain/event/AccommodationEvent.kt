@@ -2,7 +2,7 @@ package pl.szymanski.wiktor.ta.domain.event
 
 import java.util.UUID
 
-interface AccommodationEvent: Event {
+interface AccommodationEvent : Event {
     val accommodationId: UUID
 }
 
@@ -17,5 +17,5 @@ data class AccommodationBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val accommodationId: UUID,
-    val userId: UUID
+    val userId: UUID,
 ) : AccommodationEvent
