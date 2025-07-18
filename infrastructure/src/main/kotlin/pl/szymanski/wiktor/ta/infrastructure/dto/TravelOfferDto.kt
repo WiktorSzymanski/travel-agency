@@ -46,12 +46,10 @@ data class BookingDto(
     val timestamp: String,
 ) {
     companion object {
-        fun fromDomain(booking: Booking): BookingDto {
-            return BookingDto(
-                userId = booking.userId.toString(),
-                timestamp = booking.timestamp.toString(),
+        fun fromDomain(booking: Booking) = BookingDto(
+            userId = booking.userId.toString(),
+            timestamp = booking.timestamp.toString(),
             )
-        }
     }
 }
 
@@ -64,15 +62,13 @@ data class CommuteDto(
     val availableSeats: List<String>,
 ) {
     companion object {
-        fun fromDomain(commute: Commute): CommuteDto {
-            return CommuteDto(
-                id = commute._id.toString(),
-                name = commute.name,
-                departure = LocationAndTimeDto.fromDomain(commute.departure),
-                arrival = LocationAndTimeDto.fromDomain(commute.arrival),
-                availableSeats = commute.seats.map { it.toString() }.filter { !commute.bookings.containsKey(it) },
-            )
-        }
+        fun fromDomain(commute: Commute) = CommuteDto(
+            id = commute._id.toString(),
+            name = commute.name,
+            departure = LocationAndTimeDto.fromDomain(commute.departure),
+            arrival = LocationAndTimeDto.fromDomain(commute.arrival),
+            availableSeats = commute.seats.map { it.toString() }.filter { !commute.bookings.containsKey(it) },
+        )
     }
 }
 
@@ -85,15 +81,13 @@ data class AttractionDto(
     val availableSlots: Int,
 ) {
     companion object {
-        fun fromDomain(attraction: Attraction): AttractionDto {
-            return AttractionDto(
-                id = attraction._id.toString(),
-                name = attraction.name,
-                location = attraction.location.name,
-                date = attraction.date.toString(),
-                availableSlots = attraction.capacity - attraction.bookings.size,
-            )
-        }
+        fun fromDomain(attraction: Attraction) = AttractionDto(
+            id = attraction._id.toString(),
+            name = attraction.name,
+            location = attraction.location.name,
+            date = attraction.date.toString(),
+            availableSlots = attraction.capacity - attraction.bookings.size,
+        )
     }
 }
 
@@ -107,16 +101,14 @@ data class AccommodationDto(
     val status: String,
 ) {
     companion object {
-        fun fromDomain(accommodation: Accommodation): AccommodationDto {
-            return AccommodationDto(
-                id = accommodation._id.toString(),
-                name = accommodation.name,
-                location = accommodation.location.name,
-                rent = RentDto.fromDomain(accommodation.rent),
-                booking = accommodation.booking?.let { BookingDto.fromDomain(it) },
-                status = accommodation.status.name,
-            )
-        }
+        fun fromDomain(accommodation: Accommodation) = AccommodationDto(
+            id = accommodation._id.toString(),
+            name = accommodation.name,
+            location = accommodation.location.name,
+            rent = RentDto.fromDomain(accommodation.rent),
+            booking = accommodation.booking?.let { BookingDto.fromDomain(it) },
+            status = accommodation.status.name,
+        )
     }
 }
 
@@ -126,12 +118,10 @@ data class LocationAndTimeDto(
     val time: String,
 ) {
     companion object {
-        fun fromDomain(locationAndTime: LocationAndTime): LocationAndTimeDto {
-            return LocationAndTimeDto(
-                location = locationAndTime.location.name,
-                time = locationAndTime.time.toString(),
-            )
-        }
+        fun fromDomain(locationAndTime: LocationAndTime) = LocationAndTimeDto(
+            location = locationAndTime.location.name,
+            time = locationAndTime.time.toString(),
+        )
     }
 }
 
@@ -141,11 +131,9 @@ data class RentDto(
     val till: String,
 ) {
     companion object {
-        fun fromDomain(rent: Rent): RentDto {
-            return RentDto(
-                from = rent.from.toString(),
-                till = rent.till.toString(),
-            )
-        }
+        fun fromDomain(rent: Rent) = RentDto(
+            from = rent.from.toString(),
+            till = rent.till.toString(),
+        )
     }
 }

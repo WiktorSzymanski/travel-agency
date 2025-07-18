@@ -79,6 +79,7 @@ class BookingSaga(
 
             // Can't there be race between collecting all jobs and caching events of completed jobs?
             // Shouldn't handle return event in handleJobs list? Seems more robust
+            // MAYBE: subscribers for Booked Events with the same entity id so if race did happened it can be detected
             if (handleJobs.awaitAll().any { it.isFailure }) {
                 println("Saga Failed — running compensations")
                 compensations.reversed().forEach { it.invoke() }

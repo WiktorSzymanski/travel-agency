@@ -82,8 +82,7 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val seat: Seat,
 ) : TravelOfferEvent
 
-fun Event.toCompensationEvent(): Event {
-    return when (this) {
+fun Event.toCompensationEvent(): Event = when (this) {
         is AccommodationBookedEvent ->
             AccommodationBookedCompensatedEvent(
                 correlationId = this.correlationId,
@@ -143,5 +142,4 @@ fun Event.toCompensationEvent(): Event {
                 seat = this.seat,
             )
         else -> throw IllegalArgumentException("Unsupported event type: ${this.javaClass.simpleName}")
-    }
 }

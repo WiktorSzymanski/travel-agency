@@ -30,14 +30,16 @@ class AttractionCommandHandler(
     }
 
     suspend fun handle(command: BookAttractionCommand): AttractionEvent =
-        attractionRepository.findById(command.attractionId).let { attraction ->
-            attraction.book(command.userId)
-                .also { attractionRepository.update(attraction) }
-        }.apply { correlationId = command.correlationId }
+        attractionRepository
+            .findById(command.attractionId)
+            .let { attraction -> attraction.book(command.userId)
+                .also { attractionRepository.update(attraction) } }
+            .apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelAttractionBookingCommand): AttractionEvent =
-        attractionRepository.findById(command.attractionId).let { attraction ->
-            attraction.cancelBooking(command.userId)
-                .also { attractionRepository.update(attraction) }
-        }.apply { correlationId = command.correlationId }
+        attractionRepository
+            .findById(command.attractionId)
+            .let { attraction -> attraction.cancelBooking(command.userId)
+                .also { attractionRepository.update(attraction) } }
+            .apply { correlationId = command.correlationId }
 }

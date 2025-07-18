@@ -10,7 +10,7 @@ import pl.szymanski.wiktor.ta.event.toCompensationEvent
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
-    // TODO: all should be handled by this but for now saga sucks so it is what is is
+    // MEYBE: all should be handled by this but for now saga sucks so it is what is is
     suspend fun handle(command: AccommodationCommand) {
         EventBus.publish(
             when (command) {
@@ -37,14 +37,16 @@ class AccommodationCommandHandler(
     }
 
     suspend fun handle(command: BookAccommodationCommand): AccommodationEvent =
-        accommodationRepository.findById(command.accommodationId).let { accommodation ->
-            accommodation.book(command.userId)
-                .also { accommodationRepository.update(accommodation) }
-        }.apply { correlationId = command.correlationId }
+        accommodationRepository
+            .findById(command.accommodationId)
+            .let { accommodation -> accommodation.book(command.userId)
+                .also { accommodationRepository.update(accommodation) } }
+            .apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
-        accommodationRepository.findById(command.accommodationId).let { accommodation ->
-            accommodation.cancelBooking(command.userId)
-                .also { accommodationRepository.update(accommodation) }
-        }.apply { correlationId = command.correlationId }
+        accommodationRepository
+            .findById(command.accommodationId)
+            .let { accommodation -> accommodation.cancelBooking(command.userId)
+                .also { accommodationRepository.update(accommodation) } }
+            .apply { correlationId = command.correlationId }
 }
