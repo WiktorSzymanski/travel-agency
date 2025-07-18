@@ -38,14 +38,18 @@ class TravelOfferCommandHandler(
     suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
-            .let { travelOffer -> travelOffer.book(command.userId, command.seat)
-                .also { travelOfferRepository.update(travelOffer) } }
+            .let { travelOffer ->
+                travelOffer.book(command.userId, command.seat)
+                    .also { travelOfferRepository.update(travelOffer) }
+            }
             .apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
-            .let { travelOffer -> travelOffer.cancelBooking(command.userId, command.seat)
-                .also { travelOfferRepository.update(travelOffer) } }
+            .let { travelOffer ->
+                travelOffer.cancelBooking(command.userId, command.seat)
+                    .also { travelOfferRepository.update(travelOffer) }
+            }
             .apply { correlationId = command.correlationId }
 }

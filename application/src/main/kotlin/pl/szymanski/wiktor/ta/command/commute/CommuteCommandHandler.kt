@@ -48,14 +48,18 @@ class CommuteCommandHandler(
     suspend fun handle(command: BookCommuteCommand): CommuteEvent =
         commuteRepository
             .findById(command.commuteId)
-            .let { commute -> commute.bookSeat(command.seat, command.userId)
-                .also { commuteRepository.update(commute) } }
+            .let { commute ->
+                commute.bookSeat(command.seat, command.userId)
+                    .also { commuteRepository.update(commute) }
+            }
             .apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelCommuteBookingCommand): CommuteEvent =
         commuteRepository
             .findById(command.commuteId)
-            .let { commute -> commute.cancelBookedSeat(command.seat, command.userId)
-                .also { commuteRepository.update(commute) } }
+            .let { commute ->
+                commute.cancelBookedSeat(command.seat, command.userId)
+                    .also { commuteRepository.update(commute) }
+            }
             .apply { correlationId = command.correlationId }
 }

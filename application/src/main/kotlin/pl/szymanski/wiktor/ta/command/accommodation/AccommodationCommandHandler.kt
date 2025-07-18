@@ -39,14 +39,18 @@ class AccommodationCommandHandler(
     suspend fun handle(command: BookAccommodationCommand): AccommodationEvent =
         accommodationRepository
             .findById(command.accommodationId)
-            .let { accommodation -> accommodation.book(command.userId)
-                .also { accommodationRepository.update(accommodation) } }
+            .let { accommodation ->
+                accommodation.book(command.userId)
+                    .also { accommodationRepository.update(accommodation) }
+            }
             .apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
         accommodationRepository
             .findById(command.accommodationId)
-            .let { accommodation -> accommodation.cancelBooking(command.userId)
-                .also { accommodationRepository.update(accommodation) } }
+            .let { accommodation ->
+                accommodation.cancelBooking(command.userId)
+                    .also { accommodationRepository.update(accommodation) }
+            }
             .apply { correlationId = command.correlationId }
 }
