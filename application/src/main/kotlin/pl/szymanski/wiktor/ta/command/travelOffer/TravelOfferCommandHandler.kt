@@ -39,7 +39,8 @@ class TravelOfferCommandHandler(
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer.book(command.userId, command.seat)
+                travelOffer
+                    .book(command.userId, command.seat)
                     .also { travelOfferRepository.update(travelOffer) }
             }
             .apply { correlationId = command.correlationId }
@@ -48,7 +49,8 @@ class TravelOfferCommandHandler(
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer.cancelBooking(command.userId, command.seat)
+                travelOffer
+                    .cancelBooking(command.userId, command.seat)
                     .also { travelOfferRepository.update(travelOffer) }
             }
             .apply { correlationId = command.correlationId }

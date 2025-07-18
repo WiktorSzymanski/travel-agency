@@ -33,7 +33,8 @@ class AttractionCommandHandler(
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
-                attraction.book(command.userId)
+                attraction
+                    .book(command.userId)
                     .also { attractionRepository.update(attraction) }
             }
             .apply { correlationId = command.correlationId }
@@ -42,7 +43,8 @@ class AttractionCommandHandler(
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
-                attraction.cancelBooking(command.userId)
+                attraction
+                    .cancelBooking(command.userId)
                     .also { attractionRepository.update(attraction) }
             }
             .apply { correlationId = command.correlationId }

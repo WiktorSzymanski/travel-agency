@@ -40,7 +40,8 @@ class AccommodationCommandHandler(
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
-                accommodation.book(command.userId)
+                accommodation
+                    .book(command.userId)
                     .also { accommodationRepository.update(accommodation) }
             }
             .apply { correlationId = command.correlationId }
@@ -49,7 +50,8 @@ class AccommodationCommandHandler(
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
-                accommodation.cancelBooking(command.userId)
+                accommodation
+                    .cancelBooking(command.userId)
                     .also { accommodationRepository.update(accommodation) }
             }
             .apply { correlationId = command.correlationId }
