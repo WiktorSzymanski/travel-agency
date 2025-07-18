@@ -52,8 +52,7 @@ class CommuteCommandHandler(
                 commute
                     .bookSeat(command.seat, command.userId)
                     .also { commuteRepository.update(commute) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelCommuteBookingCommand): CommuteEvent =
         commuteRepository
@@ -62,6 +61,5 @@ class CommuteCommandHandler(
                 commute
                     .cancelBookedSeat(command.seat, command.userId)
                     .also { commuteRepository.update(commute) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 }

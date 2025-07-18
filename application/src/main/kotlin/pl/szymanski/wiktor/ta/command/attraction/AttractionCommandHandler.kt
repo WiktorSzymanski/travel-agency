@@ -36,8 +36,7 @@ class AttractionCommandHandler(
                 attraction
                     .book(command.userId)
                     .also { attractionRepository.update(attraction) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelAttractionBookingCommand): AttractionEvent =
         attractionRepository
@@ -46,6 +45,5 @@ class AttractionCommandHandler(
                 attraction
                     .cancelBooking(command.userId)
                     .also { attractionRepository.update(attraction) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 }

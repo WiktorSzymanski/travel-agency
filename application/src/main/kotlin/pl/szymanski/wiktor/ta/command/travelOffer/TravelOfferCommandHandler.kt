@@ -42,8 +42,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .book(command.userId, command.seat)
                     .also { travelOfferRepository.update(travelOffer) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
@@ -52,6 +51,5 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .cancelBooking(command.userId, command.seat)
                     .also { travelOfferRepository.update(travelOffer) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 }

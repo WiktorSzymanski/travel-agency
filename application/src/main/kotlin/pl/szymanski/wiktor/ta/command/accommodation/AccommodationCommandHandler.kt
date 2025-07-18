@@ -43,8 +43,7 @@ class AccommodationCommandHandler(
                 accommodation
                     .book(command.userId)
                     .also { accommodationRepository.update(accommodation) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
         accommodationRepository
@@ -53,6 +52,5 @@ class AccommodationCommandHandler(
                 accommodation
                     .cancelBooking(command.userId)
                     .also { accommodationRepository.update(accommodation) }
-            }
-            .apply { correlationId = command.correlationId }
+            }.apply { correlationId = command.correlationId }
 }
