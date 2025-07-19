@@ -5,18 +5,19 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.event.toCompensationEvent
+import pl.szymanski.wiktor.ta.event.toCompensation
 
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
-    suspend fun handle(command: AttractionCommand) {
-        EventBus.publish(
-            when (command) {
-                is BookAttractionCommand -> handle(command)
-                is CancelAttractionBookingCommand -> handle(command)
-            }.apply { correlationId = command.correlationId },
-        )
+    suspend fun handle(command: AttractionCommand): AttractionEvent {
+        val event = when (command) {
+            is BookAttractionCommand -> handle(command)
+            is CancelAttractionBookingCommand -> handle(command)
+        }.apply { correlationId = command.correlationId }
+        
+        EventBus.publish(event)
+        return event
     }
 
     suspend fun compensate(event: AttractionEvent) {
@@ -25,7 +26,7 @@ class AttractionCommandHandler(
                 is AttractionBookedEvent -> handle(CancelAttractionBookingCommand(event.attractionId, event.correlationId!!, event.userId))
                 is AttractionBookingCanceledEvent -> handle(BookAttractionCommand(event.attractionId, event.correlationId!!, event.userId))
                 else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
-            }.apply { correlationId = event.correlationId }.toCompensationEvent(),
+            }.apply { correlationId = event.correlationId }.toCompensation(),
         )
     }
 

@@ -82,7 +82,7 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val seat: Seat,
 ) : TravelOfferEvent
 
-fun Event.toCompensationEvent(): Event =
+fun AccommodationEvent.toCompensation(): AccommodationEvent =
     when (this) {
         is AccommodationBookedEvent ->
             AccommodationBookedCompensatedEvent(
@@ -96,6 +96,11 @@ fun Event.toCompensationEvent(): Event =
                 accommodationId = this.accommodationId,
                 userId = this.userId,
             )
+        else -> throw IllegalArgumentException("Unsupported AccommodationEvent type: ${this.javaClass.simpleName}")
+    }
+
+fun AttractionEvent.toCompensation(): AttractionEvent =
+    when (this) {
         is AttractionBookedEvent ->
             AttractionBookedCompensatedEvent(
                 correlationId = this.correlationId,
@@ -108,6 +113,11 @@ fun Event.toCompensationEvent(): Event =
                 attractionId = this.attractionId,
                 userId = this.userId,
             )
+        else -> throw IllegalArgumentException("Unsupported AttractionEvent type: ${this.javaClass.simpleName}")
+    }
+
+fun CommuteEvent.toCompensation(): CommuteEvent =
+    when (this) {
         is CommuteBookedEvent ->
             CommuteBookedCompensatedEvent(
                 correlationId = this.correlationId,
@@ -122,6 +132,11 @@ fun Event.toCompensationEvent(): Event =
                 userId = this.userId,
                 seat = this.seat,
             )
+        else -> throw IllegalArgumentException("Unsupported CommuteEvent type: ${this.javaClass.simpleName}")
+    }
+
+fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
+    when (this) {
         is TravelOfferBookedEvent ->
             TravelOfferBookedCompensatedEvent(
                 correlationId = this.correlationId,
@@ -142,5 +157,5 @@ fun Event.toCompensationEvent(): Event =
                 userId = this.userId,
                 seat = this.seat,
             )
-        else -> throw IllegalArgumentException("Unsupported event type: ${this.javaClass.simpleName}")
+        else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: ${this.javaClass.simpleName}")
     }

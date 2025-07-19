@@ -5,18 +5,19 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.event.toCompensationEvent
+import pl.szymanski.wiktor.ta.event.toCompensation
 
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
-    suspend fun handle(command: CommuteCommand) {
-        EventBus.publish(
-            when (command) {
-                is BookCommuteCommand -> handle(command)
-                is CancelCommuteBookingCommand -> handle(command)
-            }.apply { correlationId = command.correlationId },
-        )
+    suspend fun handle(command: CommuteCommand): CommuteEvent {
+        val event = when (command) {
+            is BookCommuteCommand -> handle(command)
+            is CancelCommuteBookingCommand -> handle(command)
+        }.apply { correlationId = command.correlationId }
+        
+        EventBus.publish(event)
+        return event
     }
 
     suspend fun compensate(event: CommuteEvent) {
@@ -41,7 +42,7 @@ class CommuteCommandHandler(
                         ),
                     )
                 else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
-            }.apply { correlationId = event.correlationId }.toCompensationEvent(),
+            }.apply { correlationId = event.correlationId }.toCompensation(),
         )
     }
 

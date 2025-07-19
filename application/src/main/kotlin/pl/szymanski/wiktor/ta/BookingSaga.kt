@@ -5,7 +5,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.command.accommodation.BookAccommodationCommand
@@ -26,39 +25,18 @@ class BookingSaga(
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
-    private val event: TravelOfferBookedEvent,
+    private val triggeringEvent: TravelOfferBookedEvent,
 ) {
     suspend fun execute() =
         coroutineScope {
-            val compensations = mutableListOf<suspend () -> Unit>()
-
-            launch {
-                EventBus.subscribe<CommuteBookedEvent>(event.correlationId!!) {
-                    compensations.add { commuteCommandHandler.compensate(it) }
-                }
-            }
-
-            launch {
-                EventBus.subscribe<AccommodationBookedEvent>(event.correlationId!!) {
-                    compensations.add { accommodationCommandHandler.compensate(it) }
-                }
-            }
-            event.attractionId?.let {
-                launch {
-                    EventBus.subscribe<AttractionBookedEvent>(event.correlationId!!) {
-                        compensations.add { attractionCommandHandler.compensate(it) }
-                    }
-                }
-            }
-
-            val accommodationCommand = BookAccommodationCommand(event.accommodationId, event.correlationId!!, event.userId)
-            val commuteCommand = BookCommuteCommand(event.commuteId, event.correlationId!!, event.userId, event.seat)
+            val accommodationCommand = BookAccommodationCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
+            val commuteCommand = BookCommuteCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
             val attractionCommand =
-                event.attractionId?.let {
-                    BookAttractionCommand(it, event.correlationId!!, event.userId)
+                triggeringEvent.attractionId?.let {
+                    BookAttractionCommand(it, triggeringEvent.correlationId!!, triggeringEvent.userId)
                 }
 
-            val handleJobs = mutableListOf<Deferred<Result<Unit>>>()
+            val handleJobs = mutableListOf<Deferred<Result<Any>>>()
 
             handleJobs +=
                 async {
@@ -77,13 +55,25 @@ class BookingSaga(
                     }
             }
 
-            // Can't there be race between collecting all jobs and caching events of completed jobs?
-            // Shouldn't handle return event in handleJobs list? Seems more robust
-            // MAYBE: subscribers for Booked Events with the same entity id so if race did happened it can be detected
-            if (handleJobs.awaitAll().any { it.isFailure }) {
+            val results = handleJobs.awaitAll()
+            
+            if (results.any { it.isFailure }) {
                 println("Saga Failed — running compensations")
-                compensations.reversed().forEach { it.invoke() }
-                travelOfferCommandHandler.compensate(event)
+
+                val successfulEvents = results
+                    .filter { it.isSuccess }
+                    .mapNotNull { it.getOrNull() }
+                    .reversed()
+
+                successfulEvents.forEach { event ->
+                    when (event) {
+                        is CommuteBookedEvent -> commuteCommandHandler.compensate(event)
+                        is AccommodationBookedEvent -> accommodationCommandHandler.compensate(event)
+                        is AttractionBookedEvent -> attractionCommandHandler.compensate(event)
+                    }
+                }
+                
+                travelOfferCommandHandler.compensate(triggeringEvent)
             } else {
                 println("Saga Succeeded")
             }
