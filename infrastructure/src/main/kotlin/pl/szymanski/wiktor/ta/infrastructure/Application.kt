@@ -1,13 +1,14 @@
 package pl.szymanski.wiktor.ta.infrastructure
 
 import io.ktor.server.application.Application
+import io.ktor.server.cio.EngineMain
 import pl.szymanski.wiktor.ta.infrastructure.controller.travelOfferController
 
 fun main(args: Array<String>) {
-    io.ktor.server.cio.EngineMain
+    EngineMain
         .main(args)
 }
 
-fun Application.application(): Unit {
+fun Application.application() {
     travelOfferController()
 }

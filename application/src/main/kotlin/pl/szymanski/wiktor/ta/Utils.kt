@@ -24,13 +24,9 @@ fun Accommodation.timeMet(): Boolean {
 
 fun Commute.timeMet(): Boolean {
     try {
-        this.cancel()
+        this.expire()
     } catch (_: Exception) {
-        try {
-            this.depart()
-        } catch (_: Exception) {
-            return false
-        }
+        return false
     }
     return true
 }

@@ -2,6 +2,11 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -14,21 +19,22 @@ data class TravelOffer(
     var booking: Booking? = null,
     var status: OfferStatusEnum = OfferStatusEnum.AVAILABLE,
 ) {
-    fun cancel() {
-        status = OfferStatusEnum.CANCELLED
-    }
-
-    fun expire() {
+    fun expire(): TravelOfferEvent {
         require(status == OfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id cannot be cancelled when not in AVAILABLE status"
         }
 
         this.status = OfferStatusEnum.EXPIRED
 
-        // EVENT or something
+        return TravelOfferExpiredEvent(
+            travelOfferId = _id,
+        )
     }
 
-    fun book(userId: UUID) {
+    fun book(
+        userId: UUID,
+        seat: Seat,
+    ): TravelOfferEvent {
         require(status == OfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id is not open for booking"
         }
@@ -36,10 +42,20 @@ data class TravelOffer(
         this.status = OfferStatusEnum.BOOKED
         this.booking = Booking(userId, LocalDateTime.now())
 
-        // EVENT or something
+        return TravelOfferBookedEvent(
+            travelOfferId = _id,
+            accommodationId = accommodationId,
+            commuteId = commuteId,
+            attractionId = attractionId,
+            userId = userId,
+            seat = seat,
+        )
     }
 
-    fun cancelBooking(userId: UUID) {
+    fun cancelBooking(
+        userId: UUID,
+        seat: Seat,
+    ): TravelOfferEvent {
         require(status == OfferStatusEnum.BOOKED) {
             "Cannot cancel booking for TravelOffer $_id when not in BOOKED status"
         }
@@ -49,7 +65,15 @@ data class TravelOffer(
         }
 
         this.booking = null
+        this.status = OfferStatusEnum.AVAILABLE
 
-        // EVENT or something
+        return TravelOfferBookingCanceledEvent(
+            travelOfferId = _id,
+            accommodationId = accommodationId,
+            commuteId = commuteId,
+            attractionId = attractionId,
+            userId = userId,
+            seat = seat,
+        )
     }
 }

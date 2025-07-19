@@ -4,8 +4,8 @@ ktor:
     application:
         modules:
             - pl.szymanski.wiktor.ta.infrastructure.ApplicationKt.application
-#            - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
-#            - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
+            - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
+            - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
 
 database:
     uri: "mongodb://localhost:27017"
@@ -15,8 +15,8 @@ offerScheduler:
   intervalSeconds: 1
 
 scheduler:
-    intervalSeconds: 10
-    inAdvanceSeconds: 50
+    intervalSeconds: 100000
+    inAdvanceSeconds: 500000
     creationWindowSeconds: 2
     accommodations:
         - name: "Hotel"
@@ -35,15 +35,15 @@ scheduler:
           departureLocation: "Paris"
           arrivalLocation: "London"
           seats:
-              - row: "A"
-                column: "1"
-              - row: "A"
-                column: "2"
+              - row: "1"
+                column: "A"
+              - row: "2"
+                column: "A"
         - name: "Paris to Berlin"
           departureLocation: "Paris"
           arrivalLocation: "Berlin"
           seats:
-              - row: "B"
-                column: "3"
-              - row: "B"
-                column: "4"
+              - row: "3"
+                column: "B"
+              - row: "4"
+                column: "B"
