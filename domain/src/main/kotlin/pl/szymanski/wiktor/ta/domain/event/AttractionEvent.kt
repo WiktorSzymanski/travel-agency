@@ -19,3 +19,9 @@ data class AttractionBookingCanceledEvent(
     override val attractionId: UUID,
     val userId: UUID,
 ) : AttractionEvent
+
+data class AttractionExpiredEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val attractionId: UUID,
+) : AttractionEvent

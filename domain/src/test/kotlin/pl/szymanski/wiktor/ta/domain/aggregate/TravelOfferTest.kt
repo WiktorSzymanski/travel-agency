@@ -3,6 +3,10 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -39,8 +43,16 @@ class TravelOfferTest {
 
     @Test
     fun book_should_succeed_when_offer_is_available() {
-        offer.book(userId, Seat("1", "A"))
+        val event = offer.book(userId, seat)
 
+        assertEventEquals(TravelOfferBookedEvent(
+            travelOfferId = travelOfferId,
+            accommodationId = accommodationId,
+            commuteId = commuteId,
+            attractionId = attractionId,
+            userId = userId,
+            seat = seat
+        ), event)
         assertEquals(OfferStatusEnum.BOOKED, offer.status)
         assertEquals(userId, offer.booking?.userId)
     }
@@ -61,16 +73,22 @@ class TravelOfferTest {
     }
 
     @Test
-    fun cancel_should_change_status_to_cancelled() {
-        offer.cancel()
+    fun expire_should_change_status_to_expired() {
+        val event = offer.expire()
 
-        assertEquals(OfferStatusEnum.CANCELLED, offer.status)
+        assertEventEquals(TravelOfferExpiredEvent(
+            travelOfferId = travelOfferId
+        ), event)
+        assertEquals(OfferStatusEnum.EXPIRED, offer.status)
     }
 
     @Test
     fun expire_should_succeed_if_status_available() {
-        offer.expire()
+        val event = offer.expire()
 
+        assertEventEquals(TravelOfferExpiredEvent(
+            travelOfferId = travelOfferId
+        ), event)
         assertEquals(OfferStatusEnum.EXPIRED, offer.status)
     }
 
@@ -98,8 +116,16 @@ class TravelOfferTest {
                 status = OfferStatusEnum.BOOKED,
             )
 
-        offer.cancelBooking(userId, seat)
+        val event = offer.cancelBooking(userId, seat)
 
+        assertEventEquals(TravelOfferBookingCanceledEvent(
+            travelOfferId = travelOfferId,
+            accommodationId = accommodationId,
+            commuteId = commuteId,
+            attractionId = attractionId,
+            userId = userId,
+            seat = seat
+        ), event)
         assertNull(offer.booking)
     }
 

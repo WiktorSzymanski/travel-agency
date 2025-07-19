@@ -6,6 +6,7 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -18,18 +19,16 @@ data class TravelOffer(
     var booking: Booking? = null,
     var status: OfferStatusEnum = OfferStatusEnum.AVAILABLE,
 ) {
-    fun cancel() {
-        status = OfferStatusEnum.CANCELLED
-    }
-
-    fun expire() {
+    fun expire(): TravelOfferEvent {
         require(status == OfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id cannot be cancelled when not in AVAILABLE status"
         }
 
         this.status = OfferStatusEnum.EXPIRED
 
-        // EVENT or something
+        return TravelOfferExpiredEvent(
+            travelOfferId = _id,
+        )
     }
 
     fun book(

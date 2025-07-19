@@ -22,3 +22,9 @@ data class CommuteBookingCanceledEvent(
     val userId: UUID,
     val seat: Seat,
 ) : CommuteEvent
+
+data class CommuteExpiredEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val commuteId: UUID,
+) : CommuteEvent

@@ -7,6 +7,7 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -19,35 +20,20 @@ data class Commute(
     val bookings: MutableMap<String, Booking> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
 ) {
-    companion object {
-        const val MINIMUM_REQUIRED_BOOKINGS_RATIO = 0.5
-    }
-
-    fun cancel() {
+    fun expire(): CommuteEvent {
         require(LocalDateTime.now().isAfter(this.departure.time)) {
-            "Commute $_id cannot be canceled before its departure time"
+            "Commute $_id cannot expire before its departure time"
         }
 
-        require(status == CommuteStatusEnum.SCHEDULED) {
-            "Commute $_id cannot be cancelled when not in SCHEDULED status"
+        require(listOf(CommuteStatusEnum.SCHEDULED, CommuteStatusEnum.FULL).contains(this.status)) {
+            "Commute $_id cannot expire when not in SCHEDULED or FULL status"
         }
 
-        require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * seats.size) {
-            "Commute $_id cannot be cancelled when more than half of seats are booked"
-        }
+        this.status = CommuteStatusEnum.EXPIRED
 
-        this.status = CommuteStatusEnum.CANCELLED
-
-        // EVENT or something
-    }
-
-    fun depart() {
-        require(LocalDateTime.now().isAfter(this.departure.time)) {
-            "Commute $_id cannot depart before its departure time"
-        }
-        this.status = CommuteStatusEnum.DEPARTED
-
-        // EVENT or something
+        return CommuteExpiredEvent(
+            commuteId = _id
+        )
     }
 
     fun bookSeat(
@@ -104,14 +90,9 @@ data class Commute(
     }
 
     private fun statusCheck() {
-        if (this.status == CommuteStatusEnum.SCHEDULED) {
-            if (LocalDateTime.now().isAfter(this.departure.time)) {
-                if (bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * seats.size) {
-                    this.status = CommuteStatusEnum.CANCELLED
-                } else {
-                    this.status = CommuteStatusEnum.DEPARTED
-                }
-            }
-        }
+        if (!listOf(CommuteStatusEnum.SCHEDULED, CommuteStatusEnum.FULL).contains(this.status)) return
+        if (LocalDateTime.now().isBefore(this.departure.time)) return
+
+        this.status = CommuteStatusEnum.EXPIRED
     }
 }

@@ -7,6 +7,7 @@ import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -18,11 +19,11 @@ data class Accommodation(
     var booking: Booking? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
 ) {
-    fun expire() {
+    fun expire(): AccommodationEvent {
         when (status) {
             AccommodationStatusEnum.AVAILABLE ->
                 require(LocalDateTime.now().isAfter(rent.from)) {
-                    "Accommodation $_id cannot be expired before its from date"
+                    "Accommodation $_id cannot be expired before its rent start"
                 }
             else -> throw IllegalArgumentException(
                 "Accommodation $_id cannot expire in status $status",
@@ -31,7 +32,9 @@ data class Accommodation(
 
         this.status = AccommodationStatusEnum.EXPIRED
 
-        // EVENT or something
+        return AccommodationExpiredEvent(
+            accommodationId = _id,
+        )
     }
 
     fun book(userId: UUID): AccommodationEvent {
@@ -69,10 +72,9 @@ data class Accommodation(
     }
 
     private fun statusCheck() {
-        if (this.status == AccommodationStatusEnum.AVAILABLE) {
-            if (LocalDateTime.now().isAfter(rent.from)) {
-                this.status = AccommodationStatusEnum.EXPIRED
-            }
-        }
+        if (!listOf(AccommodationStatusEnum.AVAILABLE, AccommodationStatusEnum.BOOKED).contains(this.status)) return
+        if (LocalDateTime.now().isBefore(rent.from)) return
+
+        this.status = AccommodationStatusEnum.EXPIRED
     }
 }
