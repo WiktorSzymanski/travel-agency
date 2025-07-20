@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
@@ -29,8 +28,10 @@ class BookingSaga(
 ) {
     suspend fun execute() =
         coroutineScope {
-            val accommodationCommand = BookAccommodationCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
-            val commuteCommand = BookCommuteCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
+            val accommodationCommand =
+                BookAccommodationCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
+            val commuteCommand =
+                BookCommuteCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
             val attractionCommand =
                 triggeringEvent.attractionId?.let {
                     BookAttractionCommand(it, triggeringEvent.correlationId!!, triggeringEvent.userId)
@@ -56,14 +57,15 @@ class BookingSaga(
             }
 
             val results = handleJobs.awaitAll()
-            
+
             if (results.any { it.isFailure }) {
                 println("Saga Failed — running compensations")
 
-                val successfulEvents = results
-                    .filter { it.isSuccess }
-                    .mapNotNull { it.getOrNull() }
-                    .reversed()
+                val successfulEvents =
+                    results
+                        .filter { it.isSuccess }
+                        .mapNotNull { it.getOrNull() }
+                        .reversed()
 
                 successfulEvents.forEach { event ->
                     when (event) {
@@ -72,12 +74,10 @@ class BookingSaga(
                         is AttractionBookedEvent -> attractionCommandHandler.compensate(event)
                     }
                 }
-                
+
                 travelOfferCommandHandler.compensate(triggeringEvent)
             } else {
                 println("Saga Succeeded")
             }
-
-            coroutineContext.cancelChildren()
         }
 }

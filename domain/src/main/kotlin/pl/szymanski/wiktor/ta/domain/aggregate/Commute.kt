@@ -32,7 +32,7 @@ data class Commute(
         this.status = CommuteStatusEnum.EXPIRED
 
         return CommuteExpiredEvent(
-            commuteId = _id
+            commuteId = _id,
         )
     }
 

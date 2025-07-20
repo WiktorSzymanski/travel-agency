@@ -1,6 +1,6 @@
 val jacksonVersion = "2.15.2"
 val coroutinesVersion = "1.7.3"
-val mockkVersion = "1.13.5"
+val mockkVersion = "1.14.5"
 val ktorVersion = "3.2.0"
 val mongoVersion = "5.1.0"
 val logbackVersion = "1.4.14"

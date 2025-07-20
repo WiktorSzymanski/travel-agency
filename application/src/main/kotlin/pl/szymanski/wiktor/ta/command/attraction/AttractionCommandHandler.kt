@@ -11,11 +11,12 @@ class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
     suspend fun handle(command: AttractionCommand): AttractionEvent {
-        val event = when (command) {
-            is BookAttractionCommand -> handle(command)
-            is CancelAttractionBookingCommand -> handle(command)
-        }.apply { correlationId = command.correlationId }
-        
+        val event =
+            when (command) {
+                is BookAttractionCommand -> handle(command)
+                is CancelAttractionBookingCommand -> handle(command)
+            }.apply { correlationId = command.correlationId }
+
         EventBus.publish(event)
         return event
     }

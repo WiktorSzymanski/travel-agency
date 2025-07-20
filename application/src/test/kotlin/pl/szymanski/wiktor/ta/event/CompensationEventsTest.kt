@@ -20,7 +20,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class CompensationEventsTest {
-
     private val correlationId = UUID.randomUUID()
     private val userId = UUID.randomUUID()
     private val accommodationId = UUID.randomUUID()
@@ -32,11 +31,12 @@ class CompensationEventsTest {
     @Test
     fun `AccommodationBookedEvent toCompensation should return AccommodationBookedCompensatedEvent`() {
         // Given
-        val event = AccommodationBookedEvent(
-            correlationId = correlationId,
-            accommodationId = accommodationId,
-            userId = userId
-        )
+        val event =
+            AccommodationBookedEvent(
+                correlationId = correlationId,
+                accommodationId = accommodationId,
+                userId = userId,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -52,11 +52,12 @@ class CompensationEventsTest {
     @Test
     fun `AccommodationBookingCanceledEvent toCompensation should return AccommodationBookingCanceledCompensatedEvent`() {
         // Given
-        val event = AccommodationBookingCanceledEvent(
-            correlationId = correlationId,
-            accommodationId = accommodationId,
-            userId = userId
-        )
+        val event =
+            AccommodationBookingCanceledEvent(
+                correlationId = correlationId,
+                accommodationId = accommodationId,
+                userId = userId,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -72,10 +73,11 @@ class CompensationEventsTest {
     @Test
     fun `AccommodationExpiredEvent toCompensation should throw IllegalArgumentException`() {
         // Given
-        val event = AccommodationExpiredEvent(
-            correlationId = correlationId,
-            accommodationId = accommodationId
-        )
+        val event =
+            AccommodationExpiredEvent(
+                correlationId = correlationId,
+                accommodationId = accommodationId,
+            )
 
         // When/Then
         assertFailsWith<IllegalArgumentException> {
@@ -86,11 +88,12 @@ class CompensationEventsTest {
     @Test
     fun `AttractionBookedEvent toCompensation should return AttractionBookedCompensatedEvent`() {
         // Given
-        val event = AttractionBookedEvent(
-            correlationId = correlationId,
-            attractionId = attractionId,
-            userId = userId
-        )
+        val event =
+            AttractionBookedEvent(
+                correlationId = correlationId,
+                attractionId = attractionId,
+                userId = userId,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -106,11 +109,12 @@ class CompensationEventsTest {
     @Test
     fun `AttractionBookingCanceledEvent toCompensation should return AttractionBookingCanceledCompensatedEvent`() {
         // Given
-        val event = AttractionBookingCanceledEvent(
-            correlationId = correlationId,
-            attractionId = attractionId,
-            userId = userId
-        )
+        val event =
+            AttractionBookingCanceledEvent(
+                correlationId = correlationId,
+                attractionId = attractionId,
+                userId = userId,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -126,10 +130,11 @@ class CompensationEventsTest {
     @Test
     fun `AttractionExpiredEvent toCompensation should throw IllegalArgumentException`() {
         // Given
-        val event = AttractionExpiredEvent(
-            correlationId = correlationId,
-            attractionId = attractionId
-        )
+        val event =
+            AttractionExpiredEvent(
+                correlationId = correlationId,
+                attractionId = attractionId,
+            )
 
         // When/Then
         assertFailsWith<IllegalArgumentException> {
@@ -140,12 +145,13 @@ class CompensationEventsTest {
     @Test
     fun `CommuteBookedEvent toCompensation should return CommuteBookedCompensatedEvent`() {
         // Given
-        val event = CommuteBookedEvent(
-            correlationId = correlationId,
-            commuteId = commuteId,
-            userId = userId,
-            seat = seat
-        )
+        val event =
+            CommuteBookedEvent(
+                correlationId = correlationId,
+                commuteId = commuteId,
+                userId = userId,
+                seat = seat,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -162,12 +168,13 @@ class CompensationEventsTest {
     @Test
     fun `CommuteBookingCanceledEvent toCompensation should return CommuteBookingCanceledCompensatedEvent`() {
         // Given
-        val event = CommuteBookingCanceledEvent(
-            correlationId = correlationId,
-            commuteId = commuteId,
-            userId = userId,
-            seat = seat
-        )
+        val event =
+            CommuteBookingCanceledEvent(
+                correlationId = correlationId,
+                commuteId = commuteId,
+                userId = userId,
+                seat = seat,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -184,10 +191,11 @@ class CompensationEventsTest {
     @Test
     fun `CommuteExpiredEvent toCompensation should throw IllegalArgumentException`() {
         // Given
-        val event = CommuteExpiredEvent(
-            correlationId = correlationId,
-            commuteId = commuteId
-        )
+        val event =
+            CommuteExpiredEvent(
+                correlationId = correlationId,
+                commuteId = commuteId,
+            )
 
         // When/Then
         assertFailsWith<IllegalArgumentException> {
@@ -198,15 +206,16 @@ class CompensationEventsTest {
     @Test
     fun `TravelOfferBookedEvent toCompensation should return TravelOfferBookedCompensatedEvent`() {
         // Given
-        val event = TravelOfferBookedEvent(
-            correlationId = correlationId,
-            travelOfferId = travelOfferId,
-            accommodationId = accommodationId,
-            commuteId = commuteId,
-            attractionId = attractionId,
-            userId = userId,
-            seat = seat
-        )
+        val event =
+            TravelOfferBookedEvent(
+                correlationId = correlationId,
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                userId = userId,
+                seat = seat,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -226,15 +235,16 @@ class CompensationEventsTest {
     @Test
     fun `TravelOfferBookingCanceledEvent toCompensation should return TravelOfferBookingCanceledCompensatedEvent`() {
         // Given
-        val event = TravelOfferBookingCanceledEvent(
-            correlationId = correlationId,
-            travelOfferId = travelOfferId,
-            accommodationId = accommodationId,
-            commuteId = commuteId,
-            attractionId = attractionId,
-            userId = userId,
-            seat = seat
-        )
+        val event =
+            TravelOfferBookingCanceledEvent(
+                correlationId = correlationId,
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                userId = userId,
+                seat = seat,
+            )
 
         // When
         val compensationEvent = event.toCompensation()
@@ -254,10 +264,11 @@ class CompensationEventsTest {
     @Test
     fun `TravelOfferExpiredEvent toCompensation should throw IllegalArgumentException`() {
         // Given
-        val event = TravelOfferExpiredEvent(
-            correlationId = correlationId,
-            travelOfferId = travelOfferId
-        )
+        val event =
+            TravelOfferExpiredEvent(
+                correlationId = correlationId,
+                travelOfferId = travelOfferId,
+            )
 
         // When/Then
         assertFailsWith<IllegalArgumentException> {

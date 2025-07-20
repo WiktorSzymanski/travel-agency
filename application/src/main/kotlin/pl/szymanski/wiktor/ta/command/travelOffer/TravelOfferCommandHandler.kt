@@ -11,11 +11,12 @@ class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
 ) {
     suspend fun handle(command: TravelOfferCommand): TravelOfferEvent {
-        val event = when (command) {
-            is BookTravelOfferCommand -> handle(command)
-            is CancelBookTravelOfferCommand -> handle(command)
-        }.apply { correlationId = command.correlationId }
-        
+        val event =
+            when (command) {
+                is BookTravelOfferCommand -> handle(command)
+                is CancelBookTravelOfferCommand -> handle(command)
+            }.apply { correlationId = command.correlationId }
+
         EventBus.publish(event)
         return event
     }

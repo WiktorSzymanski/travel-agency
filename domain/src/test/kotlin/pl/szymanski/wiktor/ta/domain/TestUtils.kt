@@ -20,9 +20,13 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-private fun assertCommuteEventEquals(expected: CommuteEvent, actual: CommuteEvent, message: String?) {
+private fun assertCommuteEventEquals(
+    expected: CommuteEvent,
+    actual: CommuteEvent,
+    message: String?,
+) {
     assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
-    
+
     when (expected) {
         is CommuteBookedEvent -> {
             actual as CommuteBookedEvent
@@ -41,9 +45,13 @@ private fun assertCommuteEventEquals(expected: CommuteEvent, actual: CommuteEven
     }
 }
 
-private fun assertAccommodationEventEquals(expected: AccommodationEvent, actual: AccommodationEvent, message: String?) {
+private fun assertAccommodationEventEquals(
+    expected: AccommodationEvent,
+    actual: AccommodationEvent,
+    message: String?,
+) {
     assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
-    
+
     when (expected) {
         is AccommodationBookedEvent -> {
             actual as AccommodationBookedEvent
@@ -60,9 +68,13 @@ private fun assertAccommodationEventEquals(expected: AccommodationEvent, actual:
     }
 }
 
-private fun assertAttractionEventEquals(expected: AttractionEvent, actual: AttractionEvent, message: String?) {
+private fun assertAttractionEventEquals(
+    expected: AttractionEvent,
+    actual: AttractionEvent,
+    message: String?,
+) {
     assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
-    
+
     when (expected) {
         is AttractionBookedEvent -> {
             actual as AttractionBookedEvent
@@ -79,9 +91,13 @@ private fun assertAttractionEventEquals(expected: AttractionEvent, actual: Attra
     }
 }
 
-private fun assertTravelOfferEventEquals(expected: TravelOfferEvent, actual: TravelOfferEvent, message: String?) {
+private fun assertTravelOfferEventEquals(
+    expected: TravelOfferEvent,
+    actual: TravelOfferEvent,
+    message: String?,
+) {
     assertEquals(expected.travelOfferId, actual.travelOfferId, message ?: "travelOfferId differs")
-    
+
     when (expected) {
         is TravelOfferBookedEvent -> {
             actual as TravelOfferBookedEvent
@@ -106,7 +122,11 @@ private fun assertTravelOfferEventEquals(expected: TravelOfferEvent, actual: Tra
     }
 }
 
-fun assertEventEquals(expected: Event, actual: Event, message: String? = null) {
+fun assertEventEquals(
+    expected: Event,
+    actual: Event,
+    message: String? = null,
+) {
     if (expected === actual) {
         return
     }

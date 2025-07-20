@@ -11,11 +11,12 @@ class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
     suspend fun handle(command: CommuteCommand): CommuteEvent {
-        val event = when (command) {
-            is BookCommuteCommand -> handle(command)
-            is CancelCommuteBookingCommand -> handle(command)
-        }.apply { correlationId = command.correlationId }
-        
+        val event =
+            when (command) {
+                is BookCommuteCommand -> handle(command)
+                is CancelCommuteBookingCommand -> handle(command)
+            }.apply { correlationId = command.correlationId }
+
         EventBus.publish(event)
         return event
     }
