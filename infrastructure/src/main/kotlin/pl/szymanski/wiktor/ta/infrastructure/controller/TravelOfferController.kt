@@ -23,6 +23,7 @@ import pl.szymanski.wiktor.ta.command.travelOffer.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommand
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.event.DateMetEventHandler
 import pl.szymanski.wiktor.ta.event.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 import pl.szymanski.wiktor.ta.infrastructure.dto.TravelOfferDto
@@ -68,6 +69,14 @@ fun Application.travelOfferController() {
     launch {
         TravelOfferEventHandler(
             travelOfferCommandHandler = travelOfferCommandHandler,
+            attractionCommandHandler = AttractionCommandHandler(attractionRepository),
+            commuteCommandHandler = CommuteCommandHandler(commuteRepository),
+            accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository),
+        ).setup()
+    }
+
+    launch {
+        DateMetEventHandler(
             attractionCommandHandler = AttractionCommandHandler(attractionRepository),
             commuteCommandHandler = CommuteCommandHandler(commuteRepository),
             accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository),

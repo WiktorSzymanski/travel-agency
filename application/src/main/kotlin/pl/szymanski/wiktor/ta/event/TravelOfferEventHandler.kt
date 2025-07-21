@@ -10,8 +10,6 @@ import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 
 class TravelOfferEventHandler(
     private val travelOfferCommandHandler: TravelOfferCommandHandler,

@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.infrastructure.generator
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.command.attraction.AttractionCommand
@@ -18,9 +19,15 @@ class GeneratorCHPair<T, U>(
             generator.generate().forEach { command ->
                 launch {
                     when (commandHandler) {
-                        is AccommodationCommandHandler -> commandHandler.handle(command as AccommodationCommand)
-                        is AttractionCommandHandler -> commandHandler.handle(command as AttractionCommand)
-                        is CommuteCommandHandler -> commandHandler.handle(command as CommuteCommand)
+                        is AccommodationCommandHandler -> {
+                            commandHandler.handle(command as AccommodationCommand)
+                        }
+                        is AttractionCommandHandler -> {
+                            commandHandler.handle(command as AttractionCommand)
+                        }
+                        is CommuteCommandHandler -> {
+                            commandHandler.handle(command as CommuteCommand)
+                        }
                     }
                 }
             }
