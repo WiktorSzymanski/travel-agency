@@ -54,7 +54,39 @@ paths:
           description: Invalid input parameters
         '404':
           description: Travel offer not found
-
+  /cancelTravelOffer:
+    post:
+      summary: Cancel travel offer booking
+      description: Books a travel offer for a specific user with a selected seat
+      operationId: bookTravelOffer
+      parameters:
+        - name: offerId
+          in: query
+          description: ID of the travel offer to book
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          description: ID of the user making the booking
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: seat
+          in: query
+          description: Seat to book in format "row/column" (e.g., "1/A")
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking successful
+        '400':
+          description: Invalid input parameters
+        '404':
+          description: Travel offer not found
 components:
   schemas:
     TravelOfferDto:

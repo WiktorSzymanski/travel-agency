@@ -7,35 +7,66 @@ import kotlinx.coroutines.coroutineScope
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.command.accommodation.BookAccommodationCommand
+import pl.szymanski.wiktor.ta.command.accommodation.CancelAccommodationBookingCommand
 import pl.szymanski.wiktor.ta.command.attraction.AttractionCommand
 import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.command.attraction.BookAttractionCommand
+import pl.szymanski.wiktor.ta.command.attraction.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.commute.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.commute.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.commute.CommuteCommand
 import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommand
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 
 class BookingSaga(
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
-    private val triggeringEvent: TravelOfferBookedEvent,
+    private val triggeringEvent: TravelOfferEvent,
 ) {
-    suspend fun execute() =
-        coroutineScope {
-            val accommodationCommand =
+    private lateinit var accommodationCommand: AccommodationCommand
+    private lateinit var commuteCommand: CommuteCommand
+    private var attractionCommand: AttractionCommand? = null
+
+
+    fun prepareCommands() = when (triggeringEvent) {
+        is TravelOfferBookedEvent -> {
+            accommodationCommand =
                 BookAccommodationCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
-            val commuteCommand =
+            commuteCommand =
                 BookCommuteCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
-            val attractionCommand =
+            attractionCommand =
                 triggeringEvent.attractionId?.let {
                     BookAttractionCommand(it, triggeringEvent.correlationId!!, triggeringEvent.userId)
                 }
+        }
+        is TravelOfferBookingCanceledEvent -> {
+            accommodationCommand =
+                CancelAccommodationBookingCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
+            commuteCommand =
+                CancelCommuteBookingCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
+            attractionCommand =
+                triggeringEvent.attractionId?.let {
+                    CancelAttractionBookingCommand(it, triggeringEvent.correlationId!!, triggeringEvent.userId)
+            }
+        }
+        else -> { throw IllegalArgumentException("Invalid event for BookingSaga: $triggeringEvent") }
+    }
+
+    suspend fun execute() =
+        coroutineScope {
+            prepareCommands()
 
             val handleJobs = mutableListOf<Deferred<Result<Any>>>()
 
@@ -69,9 +100,9 @@ class BookingSaga(
 
                 successfulEvents.forEach { event ->
                     when (event) {
-                        is CommuteBookedEvent -> commuteCommandHandler.compensate(event)
-                        is AccommodationBookedEvent -> accommodationCommandHandler.compensate(event)
-                        is AttractionBookedEvent -> attractionCommandHandler.compensate(event)
+                        is CommuteEvent -> commuteCommandHandler.compensate(event)
+                        is AccommodationEvent -> accommodationCommandHandler.compensate(event)
+                        is AttractionEvent -> attractionCommandHandler.compensate(event)
                     }
                 }
 

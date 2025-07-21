@@ -19,6 +19,7 @@ import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.command.travelOffer.BookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.travelOffer.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommand
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
@@ -98,6 +99,18 @@ fun Application.travelOfferController() {
             requireNotNull(seat)
 
             travelOfferCommandHandler.handle(BookTravelOfferCommand(offerId, UUID.randomUUID(), userId, seat) as TravelOfferCommand)
+        }
+
+        post("/cancelTravelOffer") {
+            val offerId = call.request.queryParameters["offerId"]?.let { UUID.fromString(it) }
+            val userId = call.request.queryParameters["userId"]?.let { UUID.fromString(it) }
+            val seat = call.request.queryParameters["seat"]?.let { Seat.fromString(it) }
+
+            requireNotNull(offerId)
+            requireNotNull(userId)
+            requireNotNull(seat)
+
+            travelOfferCommandHandler.handle(CancelBookTravelOfferCommand(offerId, UUID.randomUUID(), userId, seat) as TravelOfferCommand)
         }
     }
 

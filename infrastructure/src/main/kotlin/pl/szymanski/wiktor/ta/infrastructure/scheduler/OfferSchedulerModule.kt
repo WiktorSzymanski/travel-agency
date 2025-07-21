@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.infrastructure.scheduler
 import io.ktor.server.application.Application
 import io.ktor.server.config.property
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.AttractionRepositoryImpl
@@ -18,7 +19,7 @@ fun Application.offerScheduler() {
         AccommodationRepositoryImpl(MongoDbProvider.database),
         AttractionRepositoryImpl(MongoDbProvider.database),
         CommuteRepositoryImpl(MongoDbProvider.database),
-        TravelOfferRepositoryImpl(MongoDbProvider.database),
+        TravelOfferCommandHandler(TravelOfferRepositoryImpl(MongoDbProvider.database)),
     )
 
     launch { OfferScheduler.start() }

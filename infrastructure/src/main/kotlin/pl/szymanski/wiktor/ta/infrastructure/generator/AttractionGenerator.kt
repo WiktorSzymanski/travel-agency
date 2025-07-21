@@ -1,27 +1,29 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
+import pl.szymanski.wiktor.ta.command.attraction.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
-import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import java.time.Clock
 import java.time.LocalDateTime
+import java.util.UUID
 
 class AttractionGenerator(
     private val inAdvanceSeconds: Long,
     private val creationWindowSeconds: Long,
     private val templates: List<AttractionTemplate>,
     private val clock: Clock = Clock.systemDefaultZone(),
-) : Generator<AttractionTemplate, Attraction> {
-    override fun generate(): List<Attraction> = templates.map { toDomainModel(it) }
+) : Generator<AttractionTemplate, CreateAttractionCommand> {
+    override fun generate(): List<CreateAttractionCommand> = templates.map { toCommand(it) }
 
-    override fun toDomainModel(template: AttractionTemplate): Attraction =
-        Attraction(
+    override fun toCommand(template: AttractionTemplate): CreateAttractionCommand =
+        CreateAttractionCommand(
             name = template.name,
             location = LocationEnum.valueOf(template.location.uppercase()),
-            date =
-                randomDateTimeBetween(
-                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
-                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
-                ),
+            date = randomDateTimeBetween(
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
+            ),
             capacity = template.capacity,
+            attractionId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
         )
 }

@@ -7,26 +7,40 @@ import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.command.accommodation.BookAccommodationCommand
+import pl.szymanski.wiktor.ta.command.accommodation.CancelAccommodationBookingCommand
 import pl.szymanski.wiktor.ta.command.attraction.AttractionCommand
 import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.command.attraction.BookAttractionCommand
+import pl.szymanski.wiktor.ta.command.attraction.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.commute.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.commute.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.commute.CommuteCommand
 import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.command.travelOffer.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.event.AccommodationBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.event.AttractionBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.event.AttractionBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.fail
 
 class BookingSagaTest {
     private val travelOfferCommandHandler = mockk<TravelOfferCommandHandler>(relaxed = true)
@@ -42,14 +56,26 @@ class BookingSagaTest {
     private lateinit var correlationId: UUID
     private lateinit var seat: Seat
 
-    private lateinit var saga: BookingSaga
-
-    private lateinit var triggeringEvent: TravelOfferBookedEvent
+    private lateinit var triggeringBookedEvent: TravelOfferBookedEvent
+    private lateinit var triggeringCanceledEvent: TravelOfferBookingCanceledEvent
 
     fun mockTravelOfferCommandHandler() {
         coEvery { travelOfferCommandHandler.compensate(any<TravelOfferBookedEvent>()) } answers {
             val event = firstArg<TravelOfferBookedEvent>()
             TravelOfferBookedCompensatedEvent(
+                travelOfferId = event.travelOfferId,
+                accommodationId = event.accommodationId,
+                commuteId = event.commuteId,
+                attractionId = event.attractionId,
+                userId = event.userId,
+                seat = event.seat,
+                correlationId = event.correlationId,
+            )
+        }
+
+        coEvery { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) } answers {
+            val event = firstArg<TravelOfferBookingCanceledEvent>()
+            TravelOfferBookingCanceledCompensatedEvent(
                 travelOfferId = event.travelOfferId,
                 accommodationId = event.accommodationId,
                 commuteId = event.commuteId,
@@ -70,9 +96,26 @@ class BookingSagaTest {
             )
         }
 
+        coEvery { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) } answers {
+            val command = firstArg<CancelAttractionBookingCommand>()
+            AttractionBookingCanceledEvent(
+                attractionId = command.attractionId,
+                userId = command.userId,
+            )
+        }
+
         coEvery { attractionCommandHandler.compensate(any<AttractionBookedEvent>()) } answers {
             val event = firstArg<AttractionBookedEvent>()
             AttractionBookedCompensatedEvent(
+                attractionId = event.attractionId,
+                userId = event.userId,
+                correlationId = event.correlationId,
+            )
+        }
+
+        coEvery { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) } answers {
+            val event = firstArg<AttractionBookingCanceledEvent>()
+            AttractionBookingCanceledCompensatedEvent(
                 attractionId = event.attractionId,
                 userId = event.userId,
                 correlationId = event.correlationId,
@@ -83,7 +126,16 @@ class BookingSagaTest {
             val command = firstArg<AttractionCommand>()
             when (command) {
                 is BookAttractionCommand -> attractionCommandHandler.handle(command as BookAttractionCommand)
-                else -> throw IllegalArgumentException("Unknown command")
+                is CancelAttractionBookingCommand -> attractionCommandHandler.handle(command as CancelAttractionBookingCommand)
+                else -> fail("Unexpected command $command")
+            }
+        }
+
+        coEvery { attractionCommandHandler.compensate(any<AttractionEvent>()) } coAnswers {
+            val event = firstArg<AttractionEvent>()
+            when (event) {
+                is AttractionBookedEvent -> attractionCommandHandler.compensate(event as AttractionBookedEvent)
+                is AttractionBookingCanceledEvent -> attractionCommandHandler.compensate(event as AttractionBookingCanceledEvent)
             }
         }
     }
@@ -92,6 +144,15 @@ class BookingSagaTest {
         coEvery { commuteCommandHandler.handle(any<BookCommuteCommand>()) } answers {
             val command = firstArg<BookCommuteCommand>()
             CommuteBookedEvent(
+                commuteId = command.commuteId,
+                userId = command.userId,
+                seat = command.seat,
+            )
+        }
+
+        coEvery { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) } answers {
+            val command = firstArg<CancelCommuteBookingCommand>()
+            CommuteBookingCanceledEvent(
                 commuteId = command.commuteId,
                 userId = command.userId,
                 seat = command.seat,
@@ -108,11 +169,30 @@ class BookingSagaTest {
             )
         }
 
+        coEvery { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) } answers {
+            val event = firstArg<CommuteBookingCanceledEvent>()
+            CommuteBookingCanceledCompensatedEvent(
+                commuteId = event.commuteId,
+                userId = event.userId,
+                seat = event.seat,
+                correlationId = event.correlationId,
+            )
+        }
+
         coEvery { commuteCommandHandler.handle(any<CommuteCommand>()) } coAnswers {
             val command = firstArg<CommuteCommand>()
             when (command) {
                 is BookCommuteCommand -> commuteCommandHandler.handle(command as BookCommuteCommand)
-                else -> throw IllegalArgumentException("Unknown command")
+                is CancelCommuteBookingCommand -> commuteCommandHandler.handle(command as CancelCommuteBookingCommand)
+                else -> fail("Unexpected command $command")
+            }
+        }
+
+        coEvery { commuteCommandHandler.compensate(any<CommuteEvent>()) } coAnswers {
+            val event = firstArg<CommuteEvent>()
+            when (event) {
+                is CommuteBookedEvent -> commuteCommandHandler.compensate(event as CommuteBookedEvent)
+                is CommuteBookingCanceledEvent -> commuteCommandHandler.compensate(event as CommuteBookingCanceledEvent)
             }
         }
     }
@@ -121,6 +201,14 @@ class BookingSagaTest {
         coEvery { accommodationCommandHandler.handle(any<BookAccommodationCommand>()) } answers {
             val command = firstArg<BookAccommodationCommand>()
             AccommodationBookedEvent(
+                accommodationId = command.accommodationId,
+                userId = command.userId,
+            )
+        }
+
+        coEvery { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) } answers {
+            val command = firstArg<CancelAccommodationBookingCommand>()
+            AccommodationBookingCanceledEvent(
                 accommodationId = command.accommodationId,
                 userId = command.userId,
             )
@@ -135,14 +223,31 @@ class BookingSagaTest {
             )
         }
 
+        coEvery { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) } answers {
+            val event = firstArg<AccommodationBookingCanceledEvent>()
+            AccommodationBookingCanceledCompensatedEvent(
+                accommodationId = event.accommodationId,
+                userId = event.userId,
+                correlationId = event.correlationId,
+            )
+        }
+
         coEvery { accommodationCommandHandler.handle(any<AccommodationCommand>()) } coAnswers {
             val command = firstArg<AccommodationCommand>()
             when (command) {
                 is BookAccommodationCommand -> accommodationCommandHandler.handle(command as BookAccommodationCommand)
-                else -> throw IllegalArgumentException("Unknown command")
+                is CancelAccommodationBookingCommand -> accommodationCommandHandler.handle(command as CancelAccommodationBookingCommand)
+                else -> fail("Unexpected command $command")
             }
         }
 
+        coEvery { accommodationCommandHandler.compensate(any<AccommodationEvent>()) } coAnswers {
+            val event = firstArg<AccommodationEvent>()
+            when (event) {
+                is AccommodationBookedEvent -> accommodationCommandHandler.compensate(event as AccommodationBookedEvent)
+                is AccommodationBookingCanceledEvent -> accommodationCommandHandler.compensate(event as AccommodationBookingCanceledEvent)
+            }
+        }
     }
 
     @BeforeTest
@@ -160,7 +265,7 @@ class BookingSagaTest {
         mockCommuteCommandHandler()
         mockAccommodationCommandHandler()
 
-        triggeringEvent =
+        triggeringBookedEvent =
             TravelOfferBookedEvent(
                 travelOfferId = travelOfferId,
                 accommodationId = accommodationId,
@@ -171,19 +276,30 @@ class BookingSagaTest {
                 correlationId = correlationId,
             )
 
-        saga =
-            BookingSaga(
-                travelOfferCommandHandler,
-                attractionCommandHandler,
-                commuteCommandHandler,
-                accommodationCommandHandler,
-                triggeringEvent,
+        triggeringCanceledEvent =
+            TravelOfferBookingCanceledEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                userId = userId,
+                seat = seat,
+                correlationId = correlationId,
             )
     }
 
     @Test
     fun `execute should succeed when all commands succeed`() =
         runTest {
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringBookedEvent,
+                )
+
             saga.execute()
 
             coVerify(exactly = 1) { commuteCommandHandler.handle(any<BookCommuteCommand>()) }
@@ -201,6 +317,15 @@ class BookingSagaTest {
         runTest {
             coEvery { commuteCommandHandler.handle(any<BookCommuteCommand>()) } throws
                 IllegalArgumentException("Commute cannot be booked")
+
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringBookedEvent,
+                )
 
             saga.execute()
 
@@ -220,6 +345,15 @@ class BookingSagaTest {
             coEvery { accommodationCommandHandler.handle(any<BookAccommodationCommand>()) } throws
                 IllegalArgumentException("Accommodation cannot be booked")
 
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringBookedEvent,
+                )
+
             saga.execute()
 
             coVerify(exactly = 1) { commuteCommandHandler.handle(any<BookCommuteCommand>()) }
@@ -237,6 +371,15 @@ class BookingSagaTest {
         runTest {
             coEvery { attractionCommandHandler.handle(any<BookAttractionCommand>()) } throws
                 IllegalArgumentException("Attraction cannot be booked")
+
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringBookedEvent,
+                )
 
             saga.execute()
 
@@ -259,7 +402,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
-                    triggeringEvent.copy(attractionId = null),
+                    triggeringBookedEvent.copy(attractionId = null),
                 )
 
             saga.execute()
@@ -286,7 +429,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
-                    triggeringEvent.copy(attractionId = null),
+                    triggeringBookedEvent.copy(attractionId = null),
                 )
 
             saga.execute()
@@ -299,5 +442,161 @@ class BookingSagaTest {
             coVerify(exactly = 1) { accommodationCommandHandler.compensate(any<AccommodationBookedEvent>()) }
             coVerify(exactly = 0) { attractionCommandHandler.compensate(any<AttractionBookedEvent>()) }
             coVerify(exactly = 1) { travelOfferCommandHandler.compensate(any<TravelOfferBookedEvent>()) }
+        }
+
+    @Test
+    fun `execute of cancel event should succeed when all commands succeed`() =
+        runTest {
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringCanceledEvent,
+                )
+
+            saga.execute()
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) }
+
+            coVerify(exactly = 0) { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
+        }
+
+    @Test
+    fun `execute of cancel event should compensate when commute command fails`() =
+        runTest {
+            coEvery { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) } throws
+                    IllegalArgumentException("Commute booking cannot be canceled")
+
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringCanceledEvent,
+                )
+
+            saga.execute()
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) }
+
+            coVerify(exactly = 0) { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
+        }
+
+    @Test
+    fun `execute of cancel event should compensate when accommodation command fails`() =
+        runTest {
+            coEvery { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) } throws
+                    IllegalArgumentException("Accommodation booking cannot be canceled")
+
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringCanceledEvent,
+                )
+
+            saga.execute()
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) }
+
+            coVerify(exactly = 1) { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
+        }
+
+    @Test
+    fun `execute of cancel event should compensate when attraction command fails`() =
+        runTest {
+            coEvery { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) } throws
+                    IllegalArgumentException("Attraction booking cannot be canceled")
+
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringCanceledEvent,
+                )
+
+            saga.execute()
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) }
+
+            coVerify(exactly = 1) { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
+        }
+
+    @Test
+    fun `execute of cancel event should not call attraction command handler when attractionId is null`() =
+        runTest {
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringCanceledEvent.copy(attractionId = null),
+                )
+
+            saga.execute()
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) }
+
+            coVerify(exactly = 0) { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
+        }
+
+    @Test
+    fun `execute of cancel event should compensate when one command fails and attractionId is null`() =
+        runTest {
+            coEvery { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) } throws
+                    IllegalArgumentException("Commute booking cannot be canceled")
+
+            val saga =
+                BookingSaga(
+                    travelOfferCommandHandler,
+                    attractionCommandHandler,
+                    commuteCommandHandler,
+                    accommodationCommandHandler,
+                    triggeringCanceledEvent.copy(attractionId = null),
+                )
+
+            saga.execute()
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) }
+
+            coVerify(exactly = 0) { commuteCommandHandler.compensate(any<CommuteBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { accommodationCommandHandler.compensate(any<AccommodationBookingCanceledEvent>()) }
+            coVerify(exactly = 0) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
+            coVerify(exactly = 1) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
         }
 }

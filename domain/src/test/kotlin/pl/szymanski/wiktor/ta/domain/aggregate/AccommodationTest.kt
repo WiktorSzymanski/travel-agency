@@ -38,10 +38,13 @@ class AccommodationTest {
     fun book_should_succeed_when_available() {
         val event = accommodation.book(userId)
 
-        assertEventEquals(AccommodationBookedEvent(
-            accommodationId = accommodationId,
-            userId = userId
-        ), event)
+        assertEventEquals(
+            AccommodationBookedEvent(
+                accommodationId = accommodationId,
+                userId = userId,
+            ),
+            event,
+        )
         assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
         assertEquals(userId, accommodation.booking?.userId)
     }
@@ -63,10 +66,13 @@ class AccommodationTest {
         accommodation.book(userId)
         val event = accommodation.cancelBooking(userId)
 
-        assertEventEquals(AccommodationBookingCanceledEvent(
-            accommodationId = accommodationId,
-            userId = userId
-        ), event)
+        assertEventEquals(
+            AccommodationBookingCanceledEvent(
+                accommodationId = accommodationId,
+                userId = userId,
+            ),
+            event,
+        )
         assertNull(accommodation.booking)
     }
 
@@ -97,9 +103,12 @@ class AccommodationTest {
         val accommodation = accommodation.copy(rent = rentPast)
         val event = accommodation.expire()
 
-        assertEventEquals(AccommodationExpiredEvent(
-            accommodationId = accommodationId
-        ), event)
+        assertEventEquals(
+            AccommodationExpiredEvent(
+                accommodationId = accommodationId,
+            ),
+            event,
+        )
         assertEquals(AccommodationStatusEnum.EXPIRED, accommodation.status)
     }
 

@@ -1,11 +1,14 @@
 package pl.szymanski.wiktor.ta.command.travelOffer
 
 import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
+import java.util.UUID
 
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
@@ -15,6 +18,8 @@ class TravelOfferCommandHandler(
             when (command) {
                 is BookTravelOfferCommand -> handle(command)
                 is CancelBookTravelOfferCommand -> handle(command)
+                is CreateTravelOfferCommand -> handle(command)
+                is ExpireTravelOfferCommand -> handle(command)
             }.apply { correlationId = command.correlationId }
 
         EventBus.publish(event)
@@ -37,6 +42,18 @@ class TravelOfferCommandHandler(
         )
     }
 
+    suspend fun handle(command: CreateTravelOfferCommand): TravelOfferEvent =
+        TravelOffer.create(
+            command.name,
+            command.commuteId,
+            command.accommodationId,
+            command.attractionId,
+        ).let { (travelOffer, event) ->
+            travelOfferRepository.save(travelOffer)
+            event
+        }
+
+
     suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
@@ -52,6 +69,15 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .cancelBooking(command.userId, command.seat)
+                    .also { travelOfferRepository.update(travelOffer) }
+            }.apply { correlationId = command.correlationId }
+
+    suspend fun handle(command: ExpireTravelOfferCommand): TravelOfferEvent =
+        travelOfferRepository
+            .findById(command.travelOfferId)
+            .let { travelOffer ->
+                travelOffer
+                    .expire()
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 }

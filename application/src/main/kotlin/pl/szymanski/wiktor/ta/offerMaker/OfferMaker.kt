@@ -13,7 +13,8 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
+import pl.szymanski.wiktor.ta.command.travelOffer.CreateTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.timeMet
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -22,7 +23,7 @@ fun makeOffers(
     commutes: List<Commute>,
     accommodations: List<Accommodation>,
     attractions: List<Attraction>,
-): List<TravelOffer> {
+): List<CreateTravelOfferCommand> {
     val commuteGroups = commutes.groupBy { it.arrival.location }
     val accommodationGroups = accommodations.groupBy { it.location }
     val attractionGroups = attractions.groupBy { it.location }
@@ -41,21 +42,23 @@ fun makeOffers(
 
             validCommutes.flatMap { commute ->
                 val basicOffer =
-                    TravelOffer(
-                        UUID.randomUUID(),
-                        "${commute.name} ${accommodation.name}",
-                        commute._id,
-                        accommodation._id,
+                    CreateTravelOfferCommand(
+                        travelOfferId = UUID.randomUUID(),
+                        correlationId = UUID.randomUUID(),
+                        name = "${commute.name} ${accommodation.name}",
+                        commuteId = commute._id,
+                        accommodationId = accommodation._id,
                     )
 
                 val offersWithAttractions =
                     validAttractions.map { attraction ->
-                        TravelOffer(
-                            UUID.randomUUID(),
-                            "${commute.name} ${accommodation.name} ${attraction.name}",
-                            commute._id,
-                            accommodation._id,
-                            attraction._id,
+                        CreateTravelOfferCommand(
+                            travelOfferId = UUID.randomUUID(),
+                            correlationId = UUID.randomUUID(),
+                            name = "${commute.name} ${accommodation.name} ${attraction.name}",
+                            commuteId = commute._id,
+                            accommodationId = accommodation._id,
+                            attractionId = attraction._id,
                         )
                     }
 
@@ -71,7 +74,7 @@ suspend fun offerMaker(
     accommodationRepository: AccommodationRepository,
     attractionRepository: AttractionRepository,
     commuteRepository: CommuteRepository,
-    travelOfferRepository: TravelOfferRepository,
+    travelOfferCommandHandler: TravelOfferCommandHandler,
 ) = coroutineScope {
     val accommodations =
         async {
@@ -94,5 +97,9 @@ suspend fun offerMaker(
     if (expiredCommutes.isNotEmpty()) launch { commuteRepository.updateAllStatus(expiredCommutes) }
 
     val offers = makeOffers(validCommutes, validAccommodations, validAttractions)
-    if (offers.isNotEmpty()) launch { travelOfferRepository.saveAll(offers) }
+    if (offers.isNotEmpty()) {
+        offers.forEach { offer ->
+            launch { travelOfferCommandHandler.handle(offer) }
+        }
+    }
 }

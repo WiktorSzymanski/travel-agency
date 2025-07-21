@@ -5,6 +5,7 @@ import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import java.time.LocalDateTime
@@ -19,6 +20,33 @@ data class TravelOffer(
     var booking: Booking? = null,
     var status: OfferStatusEnum = OfferStatusEnum.AVAILABLE,
 ) {
+    companion object {
+        fun create(
+            name: String,
+            commuteId: UUID,
+            accommodationId: UUID,
+            attractionId: UUID? = null,
+        ): Pair<TravelOffer, TravelOfferCreatedEvent> {
+            val travelOffer = TravelOffer(
+                _id = UUID.randomUUID(),
+                name = name,
+                commuteId = commuteId,
+                accommodationId = accommodationId,
+                attractionId = attractionId,
+            )
+
+            val event = TravelOfferCreatedEvent(
+                travelOfferId = travelOffer._id,
+                name = name,
+                commuteId = commuteId,
+                accommodationId = accommodationId,
+                attractionId = attractionId,
+            )
+
+            return travelOffer to event
+        }
+    }
+
     fun expire(): TravelOfferEvent {
         require(status == OfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id cannot be cancelled when not in AVAILABLE status"

@@ -1,6 +1,7 @@
 package pl.szymanski.wiktor.ta.command.commute
 
 import pl.szymanski.wiktor.ta.command.Command
+import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
@@ -21,3 +22,18 @@ data class CancelCommuteBookingCommand(
     val userId: UUID,
     val seat: Seat,
 ) : CommuteCommand
+
+data class CreateCommuteCommand(
+    override val commuteId: UUID,
+    override val correlationId: UUID,
+    val name: String,
+    val departure: LocationAndTime,
+    val arrival: LocationAndTime,
+    val seats: List<Seat>,
+) : CommuteCommand
+
+data class ExpireCommuteCommand(
+    override val commuteId: UUID,
+    override val correlationId: UUID,
+) : CommuteCommand
+

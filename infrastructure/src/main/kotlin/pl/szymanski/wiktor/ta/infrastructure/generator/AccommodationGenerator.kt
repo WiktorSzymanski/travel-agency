@@ -1,20 +1,21 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
+import pl.szymanski.wiktor.ta.command.accommodation.CreateAccommodationCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
-import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import java.time.Clock
 import java.time.LocalDateTime
+import java.util.UUID
 
 class AccommodationGenerator(
     private val inAdvanceSeconds: Long,
     private val creationWindowSeconds: Long,
     private val templates: List<AccommodationTemplate>,
     private val clock: Clock = Clock.systemDefaultZone(),
-) : Generator<AccommodationTemplate, Accommodation> {
-    override fun generate(): List<Accommodation> = templates.map { toDomainModel(it) }
+) : Generator<AccommodationTemplate, CreateAccommodationCommand> {
+    override fun generate(): List<CreateAccommodationCommand> = templates.map { toCommand(it) }
 
-    override fun toDomainModel(template: AccommodationTemplate): Accommodation {
+    override fun toCommand(template: AccommodationTemplate): CreateAccommodationCommand {
         val fromTime =
             randomDateTimeBetween(
                 LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
@@ -27,14 +28,15 @@ class AccommodationGenerator(
                 LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
             )
 
-        return Accommodation(
+        return CreateAccommodationCommand(
             name = template.name,
             location = LocationEnum.valueOf(template.location.uppercase()),
-            rent =
-                Rent(
-                    from = fromTime,
-                    till = tillTime,
-                ),
+            rent = Rent(
+                from = fromTime,
+                till = tillTime,
+            ),
+            accommodationId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
         )
     }
 }

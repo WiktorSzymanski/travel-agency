@@ -5,6 +5,7 @@ import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import java.time.LocalDateTime
@@ -19,6 +20,32 @@ data class Attraction(
     val bookings: MutableList<Booking> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
 ) {
+    companion object {
+        fun create(
+            name: String,
+            location: LocationEnum,
+            date: LocalDateTime,
+            capacity: Int,
+        ): Pair<Attraction, AttractionCreatedEvent> {
+            val attraction = Attraction(
+                name = name,
+                location = location,
+                date = date,
+                capacity = capacity,
+            )
+
+            val event = AttractionCreatedEvent(
+                attractionId = attraction._id,
+                name = name,
+                location = location,
+                date = date,
+                capacity = capacity,
+            )
+
+            return attraction to event
+        }
+    }
+
     fun expire(): AttractionEvent {
         require(LocalDateTime.now().isAfter(date)) {
             "Attraction $_id cannot expire before its date"

@@ -37,10 +37,14 @@ class CommuteTest {
     fun book_seat_successfully() {
         val event = commute.bookSeat(seat1, userId)
 
-        assertEventEquals(CommuteBookedEvent(
-            commuteId = commute._id,
-            userId = userId,
-            seat = seat1), event)
+        assertEventEquals(
+            CommuteBookedEvent(
+                commuteId = commute._id,
+                userId = userId,
+                seat = seat1,
+            ),
+            event,
+        )
         assertEquals(1, commute.bookings.size)
         assertEquals(userId, commute.bookings[seat1.toString()]?.userId)
     }
@@ -84,15 +88,22 @@ class CommuteTest {
         val bEvent = commute.bookSeat(seat1, userId)
         val cEvent = commute.cancelBookedSeat(seat1, userId)
 
-        assertEventEquals(CommuteBookedEvent(
-            commuteId = commute._id,
-            userId = userId,
-            seat = seat1), bEvent)
-        assertEventEquals(CommuteBookingCanceledEvent(
-            commuteId = commute._id,
-            userId = userId,
-            seat = seat1,
-        ), cEvent)
+        assertEventEquals(
+            CommuteBookedEvent(
+                commuteId = commute._id,
+                userId = userId,
+                seat = seat1,
+            ),
+            bEvent,
+        )
+        assertEventEquals(
+            CommuteBookingCanceledEvent(
+                commuteId = commute._id,
+                userId = userId,
+                seat = seat1,
+            ),
+            cEvent,
+        )
         assertFalse(commute.bookings.containsKey(seat1.toString()))
     }
 

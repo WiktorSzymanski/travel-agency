@@ -45,14 +45,17 @@ class TravelOfferTest {
     fun book_should_succeed_when_offer_is_available() {
         val event = offer.book(userId, seat)
 
-        assertEventEquals(TravelOfferBookedEvent(
-            travelOfferId = travelOfferId,
-            accommodationId = accommodationId,
-            commuteId = commuteId,
-            attractionId = attractionId,
-            userId = userId,
-            seat = seat
-        ), event)
+        assertEventEquals(
+            TravelOfferBookedEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                userId = userId,
+                seat = seat,
+            ),
+            event,
+        )
         assertEquals(OfferStatusEnum.BOOKED, offer.status)
         assertEquals(userId, offer.booking?.userId)
     }
@@ -76,9 +79,12 @@ class TravelOfferTest {
     fun expire_should_change_status_to_expired() {
         val event = offer.expire()
 
-        assertEventEquals(TravelOfferExpiredEvent(
-            travelOfferId = travelOfferId
-        ), event)
+        assertEventEquals(
+            TravelOfferExpiredEvent(
+                travelOfferId = travelOfferId,
+            ),
+            event,
+        )
         assertEquals(OfferStatusEnum.EXPIRED, offer.status)
     }
 
@@ -86,9 +92,12 @@ class TravelOfferTest {
     fun expire_should_succeed_if_status_available() {
         val event = offer.expire()
 
-        assertEventEquals(TravelOfferExpiredEvent(
-            travelOfferId = travelOfferId
-        ), event)
+        assertEventEquals(
+            TravelOfferExpiredEvent(
+                travelOfferId = travelOfferId,
+            ),
+            event,
+        )
         assertEquals(OfferStatusEnum.EXPIRED, offer.status)
     }
 
@@ -118,14 +127,17 @@ class TravelOfferTest {
 
         val event = offer.cancelBooking(userId, seat)
 
-        assertEventEquals(TravelOfferBookingCanceledEvent(
-            travelOfferId = travelOfferId,
-            accommodationId = accommodationId,
-            commuteId = commuteId,
-            attractionId = attractionId,
-            userId = userId,
-            seat = seat
-        ), event)
+        assertEventEquals(
+            TravelOfferBookingCanceledEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                userId = userId,
+                seat = seat,
+            ),
+            event,
+        )
         assertNull(offer.booking)
     }
 

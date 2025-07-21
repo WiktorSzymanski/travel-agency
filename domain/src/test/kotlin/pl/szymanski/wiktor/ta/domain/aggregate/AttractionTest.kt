@@ -35,10 +35,13 @@ class AttractionTest {
     fun book_successfully() {
         val event = attraction.book(userId)
         
-        assertEventEquals(AttractionBookedEvent(
-            attractionId = attraction._id,
-            userId = userId
-        ), event)
+        assertEventEquals(
+            AttractionBookedEvent(
+                attractionId = attraction._id,
+                userId = userId,
+            ),
+            event,
+        )
         assertEquals(1, attraction.bookings.size)
         assertEquals(userId, attraction.bookings.first().userId)
     }
@@ -80,10 +83,13 @@ class AttractionTest {
         attraction.book(userId)
         val event = attraction.cancelBooking(userId)
         
-        assertEventEquals(AttractionBookingCanceledEvent(
-            attractionId = attraction._id,
-            userId = userId
-        ), event)
+        assertEventEquals(
+            AttractionBookingCanceledEvent(
+                attractionId = attraction._id,
+                userId = userId,
+            ),
+            event,
+        )
         assertTrue(attraction.bookings.none { it.userId == userId })
     }
 
@@ -114,9 +120,12 @@ class AttractionTest {
         attraction = attraction.copy(date = LocalDateTime.now().minusMinutes(1))
         val event = attraction.expire()
         
-        assertEventEquals(AttractionExpiredEvent(
-            attractionId = attraction._id
-        ), event)
+        assertEventEquals(
+            AttractionExpiredEvent(
+                attractionId = attraction._id,
+            ),
+            event,
+        )
         assertEquals(AttractionStatusEnum.EXPIRED, attraction.status)
     }
 

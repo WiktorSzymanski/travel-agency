@@ -1,8 +1,10 @@
 package pl.szymanski.wiktor.ta.command.attraction
 
 import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
@@ -15,6 +17,8 @@ class AttractionCommandHandler(
             when (command) {
                 is BookAttractionCommand -> handle(command)
                 is CancelAttractionBookingCommand -> handle(command)
+                is CreateAttractionCommand -> handle(command)
+                is ExpireAttractionCommand -> handle(command)
             }.apply { correlationId = command.correlationId }
 
         EventBus.publish(event)
@@ -46,6 +50,26 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .cancelBooking(command.userId)
+                    .also { attractionRepository.update(attraction) }
+            }.apply { correlationId = command.correlationId }
+
+    suspend fun handle(command: CreateAttractionCommand): AttractionEvent =
+        Attraction.create(
+            command.name,
+            command.location,
+            command.date,
+            command.capacity,
+        ).let { (attraction, event) ->
+            attractionRepository.save(attraction)
+            event
+        }
+
+    suspend fun handle(command: ExpireAttractionCommand): AttractionEvent =
+        attractionRepository
+            .findById(command.attractionId)
+            .let { attraction ->
+                attraction
+                    .expire()
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
 }

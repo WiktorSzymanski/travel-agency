@@ -5,6 +5,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
@@ -18,7 +19,7 @@ object OfferScheduler {
     private lateinit var accommodationRepository: AccommodationRepository
     private lateinit var attractionRepository: AttractionRepository
     private lateinit var commuteRepository: CommuteRepository
-    private lateinit var travelOfferRepository: TravelOfferRepository
+    private lateinit var travelOfferCommandHandler: TravelOfferCommandHandler
 
     private var job: Job? = null
 
@@ -29,12 +30,12 @@ object OfferScheduler {
         accommodationRepository: AccommodationRepository,
         attractionRepository: AttractionRepository,
         commuteRepository: CommuteRepository,
-        travelOfferRepository: TravelOfferRepository,
+        travelOfferCommandHandler: TravelOfferCommandHandler,
     ) {
         this.accommodationRepository = accommodationRepository
         this.attractionRepository = attractionRepository
         this.commuteRepository = commuteRepository
-        this.travelOfferRepository = travelOfferRepository
+        this.travelOfferCommandHandler = travelOfferCommandHandler
 
         this.config = config
     }
@@ -52,7 +53,7 @@ object OfferScheduler {
                             accommodationRepository,
                             attractionRepository,
                             commuteRepository,
-                            travelOfferRepository,
+                            travelOfferCommandHandler,
                         )
                         delay(config.intervalSeconds * MILLIS_IN_SECOND)
                     }

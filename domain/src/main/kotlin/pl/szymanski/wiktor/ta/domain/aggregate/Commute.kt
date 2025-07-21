@@ -6,6 +6,7 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import java.time.LocalDateTime
@@ -20,6 +21,32 @@ data class Commute(
     val bookings: MutableMap<String, Booking> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
 ) {
+    companion object {
+        fun create(
+            name: String,
+            departure: LocationAndTime,
+            arrival: LocationAndTime,
+            seats: List<Seat>,
+        ): Pair<Commute, CommuteCreatedEvent> {
+            val commute = Commute(
+                name = name,
+                departure = departure,
+                arrival = arrival,
+                seats = seats,
+            )
+
+            val event = CommuteCreatedEvent(
+                commuteId = commute._id,
+                name = name,
+                departure = departure,
+                arrival = arrival,
+                seats = seats,
+            )
+
+            return commute to event
+        }
+    }
+
     fun expire(): CommuteEvent {
         require(LocalDateTime.now().isAfter(this.departure.time)) {
             "Commute $_id cannot expire before its departure time"
