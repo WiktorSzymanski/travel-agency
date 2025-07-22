@@ -82,6 +82,9 @@ class TravelOfferTest {
         assertEventEquals(
             TravelOfferExpiredEvent(
                 travelOfferId = travelOfferId,
+                commuteId = commuteId,
+                accommodationId = accommodationId,
+                attractionId = attractionId,
             ),
             event,
         )
@@ -95,6 +98,9 @@ class TravelOfferTest {
         assertEventEquals(
             TravelOfferExpiredEvent(
                 travelOfferId = travelOfferId,
+                commuteId = commuteId,
+                accommodationId = accommodationId,
+                attractionId = attractionId,
             ),
             event,
         )

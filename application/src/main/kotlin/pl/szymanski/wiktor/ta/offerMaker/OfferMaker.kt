@@ -1,8 +1,11 @@
 package pl.szymanski.wiktor.ta.offerMaker
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
@@ -11,6 +14,7 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
@@ -26,6 +30,22 @@ class OfferMaker(
 ) {
     private val offerHashes = mutableListOf<Int>()
 
+    init {
+        popExpiredHashes()
+    }
+
+    private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
+        scope.launch {
+            EventBus.subscribe<TravelOfferExpiredEvent> {
+                offerHashes.remove(Triple(
+                    it.commuteId,
+                    it.accommodationId,
+                    it.attractionId,
+                ).hashCode())
+            }
+        }
+    }
+
     suspend fun makeOffers() =
         coroutineScope {
             val (commutes, accommodations, attractions) = collectData()
@@ -33,7 +53,7 @@ class OfferMaker(
 
             if (offerTriples.isNotEmpty()) {
                 offerTriples.forEach { offerTriple ->
-                    val offerMatchHash = offerTriple.hashCode()
+                    val offerMatchHash = offerTriple.toIds().hashCode()
                     if (!offerHashes.contains(offerMatchHash)) {
                         launch {
                             try {
@@ -114,5 +134,10 @@ class OfferMaker(
             accommodationId = accommodation._id,
             attractionId = attraction?._id,
         )
+    }
+
+    private fun Triple<Commute, Accommodation, Attraction?>.toIds(): Triple<UUID, UUID, UUID?>{
+        val (commute, accommodation, attraction) = this
+        return Triple(commute._id, accommodation._id, attraction?._id)
     }
 }

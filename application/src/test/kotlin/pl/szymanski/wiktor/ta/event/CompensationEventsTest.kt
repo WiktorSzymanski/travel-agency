@@ -268,6 +268,9 @@ class CompensationEventsTest {
             TravelOfferExpiredEvent(
                 correlationId = correlationId,
                 travelOfferId = travelOfferId,
+                commuteId = commuteId,
+                accommodationId = accommodationId,
+                attractionId = attractionId,
             )
 
         // When/Then

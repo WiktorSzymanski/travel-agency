@@ -29,6 +29,9 @@ data class TravelOfferExpiredEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
+    val accommodationId: UUID,
+    val commuteId: UUID,
+    val attractionId: UUID?,
 ) : TravelOfferEvent
 
 data class TravelOfferCreatedEvent(

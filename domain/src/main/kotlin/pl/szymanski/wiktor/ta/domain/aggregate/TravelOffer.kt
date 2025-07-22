@@ -58,6 +58,9 @@ data class TravelOffer(
 
         return TravelOfferExpiredEvent(
             travelOfferId = _id,
+            commuteId = commuteId,
+            accommodationId = accommodationId,
+            attractionId = attractionId,
         )
     }
 

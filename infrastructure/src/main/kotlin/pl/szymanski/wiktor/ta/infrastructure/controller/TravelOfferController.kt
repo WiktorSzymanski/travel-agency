@@ -26,6 +26,8 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.TravelOfferRepositoryImp
 import pl.szymanski.wiktor.ta.query.TravelOfferQuery
 import java.util.UUID
 
+// THIS SHOULD BE IN PROJECTION LAYER
+
 fun Application.travelOfferController(
     travelOfferRepository: TravelOfferRepositoryImpl,
     commuteRepository: CommuteRepositoryImpl,
