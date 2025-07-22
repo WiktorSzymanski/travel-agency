@@ -59,17 +59,16 @@ object DataGenerationScheduler {
             )
     }
 
-    fun start(
-        scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
-    ) {
+    fun start(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         if (job != null) return
-        job = scope.launch {
-            generate()
-            while (isActive) {
-                delay(config.intervalSeconds * MILLIS_IN_SECOND)
+        job =
+            scope.launch {
                 generate()
+                while (isActive) {
+                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                    generate()
+                }
             }
-        }
     }
 
     fun stop() = job?.cancel().also { job = null }

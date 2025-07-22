@@ -14,15 +14,16 @@ class TravelOfferQuery(
     private val accommodationRepository: AccommodationRepository,
     private val attractionRepository: AttractionRepository,
 ) {
-    suspend fun getTravelOffers(): List<TravelOfferDto> = coroutineScope {
-        travelOfferRepository.findAll()
-            .map {
-                val accommodation = async { accommodationRepository.findById(it.accommodationId) }
-                val attraction =
-                    if (it.attractionId != null) async { attractionRepository.findById(it.attractionId!!) } else null
-                val commute = async { commuteRepository.findById(it.commuteId) }
+    suspend fun getTravelOffers(): List<TravelOfferDto> =
+        coroutineScope {
+            travelOfferRepository.findAll()
+                .map {
+                    val accommodation = async { accommodationRepository.findById(it.accommodationId) }
+                    val attraction =
+                        if (it.attractionId != null) async { attractionRepository.findById(it.attractionId!!) } else null
+                    val commute = async { commuteRepository.findById(it.commuteId) }
 
-                TravelOfferDto.fromDomain(it, commute.await(), accommodation.await(), attraction?.await())
-            }
-    }
+                    TravelOfferDto.fromDomain(it, commute.await(), accommodation.await(), attraction?.await())
+                }
+        }
 }

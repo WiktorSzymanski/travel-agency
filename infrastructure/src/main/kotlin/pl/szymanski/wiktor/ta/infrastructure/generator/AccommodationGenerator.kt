@@ -31,10 +31,11 @@ class AccommodationGenerator(
         return CreateAccommodationCommand(
             name = template.name,
             location = LocationEnum.valueOf(template.location.uppercase()),
-            rent = Rent(
-                from = fromTime,
-                till = tillTime,
-            ),
+            rent =
+                Rent(
+                    from = fromTime,
+                    till = tillTime,
+                ),
             accommodationId = UUID.randomUUID(),
             correlationId = UUID.randomUUID(),
         )

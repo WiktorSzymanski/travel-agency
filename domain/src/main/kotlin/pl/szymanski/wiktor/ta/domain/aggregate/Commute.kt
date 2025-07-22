@@ -28,20 +28,22 @@ data class Commute(
             arrival: LocationAndTime,
             seats: List<Seat>,
         ): Pair<Commute, CommuteCreatedEvent> {
-            val commute = Commute(
-                name = name,
-                departure = departure,
-                arrival = arrival,
-                seats = seats,
-            )
+            val commute =
+                Commute(
+                    name = name,
+                    departure = departure,
+                    arrival = arrival,
+                    seats = seats,
+                )
 
-            val event = CommuteCreatedEvent(
-                commuteId = commute._id,
-                name = name,
-                departure = departure,
-                arrival = arrival,
-                seats = seats,
-            )
+            val event =
+                CommuteCreatedEvent(
+                    commuteId = commute._id,
+                    name = name,
+                    departure = departure,
+                    arrival = arrival,
+                    seats = seats,
+                )
 
             return commute to event
         }

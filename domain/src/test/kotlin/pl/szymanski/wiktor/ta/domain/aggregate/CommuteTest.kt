@@ -8,7 +8,6 @@ import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
-import java.lang.Thread.sleep
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest

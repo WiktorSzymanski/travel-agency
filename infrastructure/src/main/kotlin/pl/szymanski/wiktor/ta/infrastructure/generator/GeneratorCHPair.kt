@@ -4,10 +4,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
-import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.command.CommuteCommand
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
@@ -31,9 +31,9 @@ class GeneratorCHPair<T, U>(
                             EventBus.publish(
                                 AccommodationDateMetEvent(
                                     event.accommodationId,
-                                    UUID.randomUUID()
+                                    UUID.randomUUID(),
                                 ),
-                                event.rent.from
+                                event.rent.from,
                             )
                         }
                         is AttractionCommandHandler -> {
@@ -41,9 +41,9 @@ class GeneratorCHPair<T, U>(
                             EventBus.publish(
                                 AttractionDateMetEvent(
                                     event.attractionId,
-                                    UUID.randomUUID()
+                                    UUID.randomUUID(),
                                 ),
-                                event.date
+                                event.date,
                             )
                         }
                         is CommuteCommandHandler -> {
@@ -51,9 +51,9 @@ class GeneratorCHPair<T, U>(
                             EventBus.publish(
                                 CommuteDateMetEvent(
                                     event.commuteId,
-                                    UUID.randomUUID()
+                                    UUID.randomUUID(),
                                 ),
-                                event.departure.time
+                                event.departure.time,
                             )
                         }
                     }
@@ -61,4 +61,3 @@ class GeneratorCHPair<T, U>(
             }
         }
 }
-

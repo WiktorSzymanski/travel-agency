@@ -27,21 +27,23 @@ data class TravelOffer(
             accommodationId: UUID,
             attractionId: UUID? = null,
         ): Pair<TravelOffer, TravelOfferCreatedEvent> {
-            val travelOffer = TravelOffer(
-                _id = UUID.randomUUID(),
-                name = name,
-                commuteId = commuteId,
-                accommodationId = accommodationId,
-                attractionId = attractionId,
-            )
+            val travelOffer =
+                TravelOffer(
+                    _id = UUID.randomUUID(),
+                    name = name,
+                    commuteId = commuteId,
+                    accommodationId = accommodationId,
+                    attractionId = attractionId,
+                )
 
-            val event = TravelOfferCreatedEvent(
-                travelOfferId = travelOffer._id,
-                name = name,
-                commuteId = commuteId,
-                accommodationId = accommodationId,
-                attractionId = attractionId,
-            )
+            val event =
+                TravelOfferCreatedEvent(
+                    travelOfferId = travelOffer._id,
+                    name = name,
+                    commuteId = commuteId,
+                    accommodationId = accommodationId,
+                    attractionId = attractionId,
+                )
 
             return travelOffer to event
         }

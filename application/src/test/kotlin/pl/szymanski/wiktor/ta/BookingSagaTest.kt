@@ -5,16 +5,16 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
-import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.BookAttractionCommand
-import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
+import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
@@ -485,7 +485,7 @@ class BookingSagaTest {
     fun `execute of cancel event should compensate when commute command fails`() =
         runTest {
             coEvery { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) } throws
-                    IllegalArgumentException("Commute booking cannot be canceled")
+                IllegalArgumentException("Commute booking cannot be canceled")
 
             val saga =
                 BookingSaga(
@@ -512,7 +512,7 @@ class BookingSagaTest {
     fun `execute of cancel event should compensate when accommodation command fails`() =
         runTest {
             coEvery { accommodationCommandHandler.handle(any<CancelAccommodationBookingCommand>()) } throws
-                    IllegalArgumentException("Accommodation booking cannot be canceled")
+                IllegalArgumentException("Accommodation booking cannot be canceled")
 
             val saga =
                 BookingSaga(
@@ -539,7 +539,7 @@ class BookingSagaTest {
     fun `execute of cancel event should compensate when attraction command fails`() =
         runTest {
             coEvery { attractionCommandHandler.handle(any<CancelAttractionBookingCommand>()) } throws
-                    IllegalArgumentException("Attraction booking cannot be canceled")
+                IllegalArgumentException("Attraction booking cannot be canceled")
 
             val saga =
                 BookingSaga(
@@ -590,7 +590,7 @@ class BookingSagaTest {
     fun `execute of cancel event should compensate when one command fails and attractionId is null`() =
         runTest {
             coEvery { commuteCommandHandler.handle(any<CancelCommuteBookingCommand>()) } throws
-                    IllegalArgumentException("Commute booking cannot be canceled")
+                IllegalArgumentException("Commute booking cannot be canceled")
 
             val saga =
                 BookingSaga(

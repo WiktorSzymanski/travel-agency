@@ -3,6 +3,8 @@ package pl.szymanski.wiktor.ta.offerMaker
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
+import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
@@ -12,8 +14,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
-import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.timeMet
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -26,45 +26,48 @@ class OfferMaker(
 ) {
     private val offerHashes = mutableListOf<Int>()
 
-    suspend fun makeOffers() = coroutineScope {
-        val (commutes, accommodations, attractions) = collectData()
-        val offerTriples = createOfferTriples(commutes, accommodations, attractions)
+    suspend fun makeOffers() =
+        coroutineScope {
+            val (commutes, accommodations, attractions) = collectData()
+            val offerTriples = createOfferTriples(commutes, accommodations, attractions)
 
-        if (offerTriples.isNotEmpty()) {
-            offerTriples.forEach { offerTriple ->
-                val offerMatchHash = offerTriple.hashCode()
-                if (!offerHashes.contains(offerMatchHash)) {
-                    launch {
-                        try {
-                            travelOfferCommandHandler.handle(offerTriple.toCommand())
-                        } catch (e: Exception) {
-                            println("ERROR HANDLED: $e")
-                        } }
-                    offerHashes.add(offerMatchHash)
+            if (offerTriples.isNotEmpty()) {
+                offerTriples.forEach { offerTriple ->
+                    val offerMatchHash = offerTriple.hashCode()
+                    if (!offerHashes.contains(offerMatchHash)) {
+                        launch {
+                            try {
+                                travelOfferCommandHandler.handle(offerTriple.toCommand())
+                            } catch (e: Exception) {
+                                println("ERROR HANDLED: $e")
+                            }
+                        }
+                        offerHashes.add(offerMatchHash)
+                    }
                 }
             }
         }
-    }
 
-    private suspend fun collectData() = coroutineScope {
-        val accommodations =
-            async {
-                accommodationRepository.findAll()
-                    .filter { it.status == AccommodationStatusEnum.AVAILABLE }
-            }
-        val attractions = async { attractionRepository.findAll().filter { it.status == AttractionStatusEnum.SCHEDULED } }
-        val commutes = async { commuteRepository.findAll().filter { it.status == CommuteStatusEnum.SCHEDULED } }
+    private suspend fun collectData() =
+        coroutineScope {
+            val accommodations =
+                async {
+                    accommodationRepository.findAll()
+                        .filter { it.status == AccommodationStatusEnum.AVAILABLE }
+                }
+            val attractions = async { attractionRepository.findAll().filter { it.status == AttractionStatusEnum.SCHEDULED } }
+            val commutes = async { commuteRepository.findAll().filter { it.status == CommuteStatusEnum.SCHEDULED } }
 
-        val accommodationPairs = async { accommodations.await().partition { it.timeMet() } }
-        val attractionPairs = async { attractions.await().partition { it.timeMet() } }
-        val commutePairs = async { commutes.await().partition { it.timeMet() } }
+            val accommodationPairs = async { accommodations.await().partition { it.timeMet() } }
+            val attractionPairs = async { attractions.await().partition { it.timeMet() } }
+            val commutePairs = async { commutes.await().partition { it.timeMet() } }
 
-        val (_, validAccommodations) = accommodationPairs.await()
-        val (_, validAttractions) = attractionPairs.await()
-        val (_, validCommutes) = commutePairs.await()
+            val (_, validAccommodations) = accommodationPairs.await()
+            val (_, validAttractions) = attractionPairs.await()
+            val (_, validCommutes) = commutePairs.await()
 
-        return@coroutineScope Triple(validCommutes, validAccommodations, validAttractions)
-    }
+            return@coroutineScope Triple(validCommutes, validAccommodations, validAttractions)
+        }
 
     private fun createOfferTriples(
         commutes: List<Commute>,
@@ -84,7 +87,7 @@ class OfferMaker(
                 val validCommutes =
                     nearbyCommutes.filter {
                         it.arrival.time.truncatedTo(ChronoUnit.MINUTES) ==
-                                accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
+                            accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
                     }
 
                 validCommutes.flatMap { commute ->
@@ -109,7 +112,7 @@ class OfferMaker(
             name = "${commute.name} ${accommodation.name}${attraction?.name?.let { " $it" } ?: ""}",
             commuteId = commute._id,
             accommodationId = accommodation._id,
-            attractionId = attraction?._id
+            attractionId = attraction?._id,
         )
     }
 }

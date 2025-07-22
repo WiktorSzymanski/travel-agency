@@ -27,20 +27,22 @@ data class Attraction(
             date: LocalDateTime,
             capacity: Int,
         ): Pair<Attraction, AttractionCreatedEvent> {
-            val attraction = Attraction(
-                name = name,
-                location = location,
-                date = date,
-                capacity = capacity,
-            )
+            val attraction =
+                Attraction(
+                    name = name,
+                    location = location,
+                    date = date,
+                    capacity = capacity,
+                )
 
-            val event = AttractionCreatedEvent(
-                attractionId = attraction._id,
-                name = name,
-                location = location,
-                date = date,
-                capacity = capacity,
-            )
+            val event =
+                AttractionCreatedEvent(
+                    attractionId = attraction._id,
+                    name = name,
+                    location = location,
+                    date = date,
+                    capacity = capacity,
+                )
 
             return attraction to event
         }

@@ -30,14 +30,16 @@ class CommuteGenerator(
 
         return CreateCommuteCommand(
             name = template.name,
-            departure = LocationAndTime(
-                LocationEnum.valueOf(template.departureLocation.uppercase()),
-                dTime,
-            ),
-            arrival = LocationAndTime(
-                LocationEnum.valueOf(template.arrivalLocation.uppercase()),
-                aTime,
-            ),
+            departure =
+                LocationAndTime(
+                    LocationEnum.valueOf(template.departureLocation.uppercase()),
+                    dTime,
+                ),
+            arrival =
+                LocationAndTime(
+                    LocationEnum.valueOf(template.arrivalLocation.uppercase()),
+                    aTime,
+                ),
             seats = template.seats,
             commuteId = UUID.randomUUID(),
             correlationId = UUID.randomUUID(),

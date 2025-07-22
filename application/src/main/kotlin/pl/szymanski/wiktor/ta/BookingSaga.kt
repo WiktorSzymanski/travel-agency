@@ -5,16 +5,16 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
-import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.BookAttractionCommand
-import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
+import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
@@ -35,30 +35,58 @@ class BookingSaga(
     private lateinit var commuteCommand: CommuteCommand
     private var attractionCommand: AttractionCommand? = null
 
-
-    fun prepareCommands() = when (triggeringEvent) {
-        is TravelOfferBookedEvent -> {
-            accommodationCommand =
-                BookAccommodationCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
-            commuteCommand =
-                BookCommuteCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
-            attractionCommand =
-                triggeringEvent.attractionId?.let {
-                    BookAttractionCommand(it, triggeringEvent.correlationId!!, triggeringEvent.userId)
-                }
-        }
-        is TravelOfferBookingCanceledEvent -> {
-            accommodationCommand =
-                CancelAccommodationBookingCommand(triggeringEvent.accommodationId, triggeringEvent.correlationId!!, triggeringEvent.userId)
-            commuteCommand =
-                CancelCommuteBookingCommand(triggeringEvent.commuteId, triggeringEvent.correlationId!!, triggeringEvent.userId, triggeringEvent.seat)
-            attractionCommand =
-                triggeringEvent.attractionId?.let {
-                    CancelAttractionBookingCommand(it, triggeringEvent.correlationId!!, triggeringEvent.userId)
+    fun prepareCommands() =
+        when (triggeringEvent) {
+            is TravelOfferBookedEvent -> {
+                accommodationCommand =
+                    BookAccommodationCommand(
+                        triggeringEvent.accommodationId,
+                        triggeringEvent.correlationId!!,
+                        triggeringEvent.userId,
+                    )
+                commuteCommand =
+                    BookCommuteCommand(
+                        triggeringEvent.commuteId,
+                        triggeringEvent.correlationId!!,
+                        triggeringEvent.userId,
+                        triggeringEvent.seat,
+                    )
+                attractionCommand =
+                    triggeringEvent.attractionId?.let {
+                        BookAttractionCommand(
+                            it,
+                            triggeringEvent.correlationId!!,
+                            triggeringEvent.userId,
+                        )
+                    }
+            }
+            is TravelOfferBookingCanceledEvent -> {
+                accommodationCommand =
+                    CancelAccommodationBookingCommand(
+                        triggeringEvent.accommodationId,
+                        triggeringEvent.correlationId!!,
+                        triggeringEvent.userId,
+                    )
+                commuteCommand =
+                    CancelCommuteBookingCommand(
+                        triggeringEvent.commuteId,
+                        triggeringEvent.correlationId!!,
+                        triggeringEvent.userId,
+                        triggeringEvent.seat,
+                    )
+                attractionCommand =
+                    triggeringEvent.attractionId?.let {
+                        CancelAttractionBookingCommand(
+                            it,
+                            triggeringEvent.correlationId!!,
+                            triggeringEvent.userId,
+                        )
+                    }
+            }
+            else -> {
+                throw IllegalArgumentException("Invalid event for BookingSaga: $triggeringEvent")
             }
         }
-        else -> { throw IllegalArgumentException("Invalid event for BookingSaga: $triggeringEvent") }
-    }
 
     suspend fun execute() =
         coroutineScope {

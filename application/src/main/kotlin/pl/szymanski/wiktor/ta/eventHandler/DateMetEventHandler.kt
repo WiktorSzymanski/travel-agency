@@ -2,7 +2,6 @@ package pl.szymanski.wiktor.ta.eventHandler
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
@@ -37,7 +36,7 @@ class DateMetEventHandler(
                     ExpireCommuteCommand(
                         commuteId = it.commuteId,
                         correlationId = it.correlationId,
-                    ) as CommuteCommand
+                    ) as CommuteCommand,
                 )
             } catch (e: IllegalArgumentException) {
                 println("ERROR HANDLE: $e")
@@ -53,7 +52,7 @@ class DateMetEventHandler(
                     ExpireAccommodationCommand(
                         accommodationId = it.accommodationId,
                         correlationId = it.correlationId,
-                    ) as AccommodationCommand
+                    ) as AccommodationCommand,
                 )
             } catch (e: IllegalArgumentException) {
                 println("ERROR HANDLE: $e")
@@ -69,7 +68,7 @@ class DateMetEventHandler(
                     ExpireAttractionCommand(
                         attractionId = it.attractionId,
                         correlationId = it.correlationId,
-                    ) as AttractionCommand
+                    ) as AttractionCommand,
                 )
             } catch (e: IllegalArgumentException) {
                 println("ERROR HANDLE: $e")

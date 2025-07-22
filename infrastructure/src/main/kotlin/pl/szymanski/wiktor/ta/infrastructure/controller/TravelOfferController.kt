@@ -31,7 +31,7 @@ fun Application.travelOfferController(
     commuteRepository: CommuteRepositoryImpl,
     accommodationRepository: AccommodationRepositoryImpl,
     attractionRepository: AttractionRepositoryImpl,
-    travelOfferCommandHandler: TravelOfferCommandHandler
+    travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
     install(AsyncApiPlugin) {
         extension =
@@ -65,12 +65,13 @@ fun Application.travelOfferController(
         return Triple(offerId, userId, seat)
     }
 
-    val travelOfferQuery = TravelOfferQuery(
-        travelOfferRepository = travelOfferRepository,
-        commuteRepository = commuteRepository,
-        accommodationRepository = accommodationRepository,
-        attractionRepository = attractionRepository
-    )
+    val travelOfferQuery =
+        TravelOfferQuery(
+            travelOfferRepository = travelOfferRepository,
+            commuteRepository = commuteRepository,
+            accommodationRepository = accommodationRepository,
+            attractionRepository = attractionRepository,
+        )
 
     routing {
         get("/travelOffers") {
@@ -87,8 +88,8 @@ fun Application.travelOfferController(
                         offerId,
                         UUID.randomUUID(),
                         userId,
-                        seat
-                    ) as TravelOfferCommand
+                        seat,
+                    ) as TravelOfferCommand,
                 )
             } catch (e: Exception) {
                 println(e)
@@ -101,7 +102,9 @@ fun Application.travelOfferController(
         post("/cancelTravelOffer") {
             val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
             try {
-                travelOfferCommandHandler.handle(CancelBookTravelOfferCommand(offerId, UUID.randomUUID(), userId, seat) as TravelOfferCommand)
+                travelOfferCommandHandler.handle(
+                    CancelBookTravelOfferCommand(offerId, UUID.randomUUID(), userId, seat) as TravelOfferCommand,
+                )
             } catch (e: Exception) {
                 println(e)
                 call.response.status(HttpStatusCode.BadRequest)

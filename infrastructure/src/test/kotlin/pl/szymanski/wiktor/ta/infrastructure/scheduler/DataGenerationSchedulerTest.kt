@@ -6,31 +6,28 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.advanceTimeBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
-import pl.szymanski.wiktor.ta.domain.LocationAndTime
-import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.command.CreateAccommodationCommand
+import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
+import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.infrastructure.config.DataGenerationSchedulerConfig
 import pl.szymanski.wiktor.ta.infrastructure.generator.AccommodationTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteTemplate
-import pl.szymanski.wiktor.ta.command.CreateAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
-import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
-import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
 import java.util.UUID
 import kotlin.test.Test
 
@@ -44,7 +41,6 @@ class DataGenerationSchedulerTest {
     @BeforeEach
     fun setup() {
         coEvery { mockAccommodationCommandHandler.handle(any<AccommodationCommand>()) } answers {
-            
             val command = firstArg<CreateAccommodationCommand>()
 
             AccommodationCreatedEvent(
@@ -53,11 +49,10 @@ class DataGenerationSchedulerTest {
                 accommodationId = command.accommodationId,
                 name = command.name,
                 location = command.location,
-                rent = command.rent
+                rent = command.rent,
             )
         }
         coEvery { mockAttractionCommandHandler.handle(any<AttractionCommand>()) } answers {
-            
             val command = firstArg<CreateAttractionCommand>()
 
             AttractionCreatedEvent(
@@ -67,11 +62,10 @@ class DataGenerationSchedulerTest {
                 name = command.name,
                 location = command.location,
                 date = command.date,
-                capacity = command.capacity
+                capacity = command.capacity,
             )
         }
         coEvery { mockCommuteCommandHandler.handle(any<CommuteCommand>()) } answers {
-            
             val command = firstArg<CreateCommuteCommand>()
 
             CommuteCreatedEvent(
@@ -81,7 +75,7 @@ class DataGenerationSchedulerTest {
                 name = command.name,
                 departure = LocationAndTime(command.departure.location, command.departure.time),
                 arrival = LocationAndTime(command.arrival.location, command.arrival.time),
-                seats = command.seats
+                seats = command.seats,
             )
         }
 

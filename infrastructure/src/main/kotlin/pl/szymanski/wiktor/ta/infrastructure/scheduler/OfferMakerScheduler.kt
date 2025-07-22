@@ -30,24 +30,24 @@ object OfferMakerScheduler {
     ) {
         this.config = config
 
-        this.offerMaker = OfferMaker(
-            accommodationRepository,
-            attractionRepository,
-            commuteRepository,
-            travelOfferCommandHandler
-        )
+        this.offerMaker =
+            OfferMaker(
+                accommodationRepository,
+                attractionRepository,
+                commuteRepository,
+                travelOfferCommandHandler,
+            )
     }
 
-    fun start(
-        scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
-    ) {
+    fun start(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         if (job != null) return
-        job = scope.launch {
-            while (isActive) {
-                offerMaker.makeOffers()
-                delay(config.intervalSeconds * MILLIS_IN_SECOND)
+        job =
+            scope.launch {
+                while (isActive) {
+                    offerMaker.makeOffers()
+                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                }
             }
-        }
     }
 
     fun stop() = job?.cancel().also { job = null }

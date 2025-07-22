@@ -26,18 +26,20 @@ data class Accommodation(
             location: LocationEnum,
             rent: Rent,
         ): Pair<Accommodation, AccommodationCreatedEvent> {
-            val accommodation = Accommodation(
-                name = name,
-                location = location,
-                rent = rent,
-            )
+            val accommodation =
+                Accommodation(
+                    name = name,
+                    location = location,
+                    rent = rent,
+                )
 
-            val event = AccommodationCreatedEvent(
-                accommodationId = accommodation._id,
-                name = name,
-                location = location,
-                rent = rent,
-            )
+            val event =
+                AccommodationCreatedEvent(
+                    accommodationId = accommodation._id,
+                    name = name,
+                    location = location,
+                    rent = rent,
+                )
 
             return accommodation to event
         }

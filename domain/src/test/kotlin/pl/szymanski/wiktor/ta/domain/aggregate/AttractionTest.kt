@@ -34,7 +34,7 @@ class AttractionTest {
     @Test
     fun book_successfully() {
         val event = attraction.book(userId)
-        
+
         assertEventEquals(
             AttractionBookedEvent(
                 attractionId = attraction._id,
@@ -82,7 +82,7 @@ class AttractionTest {
     fun cancel_booking_successfully() {
         attraction.book(userId)
         val event = attraction.cancelBooking(userId)
-        
+
         assertEventEquals(
             AttractionBookingCanceledEvent(
                 attractionId = attraction._id,
@@ -119,7 +119,7 @@ class AttractionTest {
     fun expire_successfully_after_date() {
         attraction = attraction.copy(date = LocalDateTime.now().minusMinutes(1))
         val event = attraction.expire()
-        
+
         assertEventEquals(
             AttractionExpiredEvent(
                 attractionId = attraction._id,

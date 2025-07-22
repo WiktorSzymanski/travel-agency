@@ -58,6 +58,6 @@ fun Application.application() {
         commuteRepository = commuteRepository,
         accommodationRepository = accommodationRepository,
         attractionRepository = attractionRepository,
-        travelOfferCommandHandler = travelOfferCommandHandler
+        travelOfferCommandHandler = travelOfferCommandHandler,
     )
 }

@@ -8,9 +8,12 @@ import java.util.UUID
 
 class TravelOfferExpireService(
     private val travelOfferRepository: TravelOfferRepository,
-    private val travelOfferCommandHandler: TravelOfferCommandHandler
+    private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
-    suspend fun expireTravelOfferByCommute(commuteId: UUID, correlationId: UUID) {
+    suspend fun expireTravelOfferByCommute(
+        commuteId: UUID,
+        correlationId: UUID,
+    ) {
         travelOfferRepository
             .findByCommuteId(commuteId)
             .map {
@@ -19,7 +22,7 @@ class TravelOfferExpireService(
                         ExpireTravelOfferCommand(
                             travelOfferId = it._id,
                             correlationId = correlationId,
-                        ) as TravelOfferCommand
+                        ) as TravelOfferCommand,
                     )
                 } catch (e: IllegalArgumentException) {
                     println("ERROR HANDLED: $e")
@@ -27,22 +30,30 @@ class TravelOfferExpireService(
             }
     }
 
-    suspend fun expireTravelOfferByAttraction(attractionId: UUID, correlationId: UUID) {
+    suspend fun expireTravelOfferByAttraction(
+        attractionId: UUID,
+        correlationId: UUID,
+    ) {
         travelOfferRepository
             .findByAttractionId(attractionId)
-            .map { try {
-                travelOfferCommandHandler.handle(
-                    ExpireTravelOfferCommand(
-                        travelOfferId = it._id,
-                        correlationId = correlationId,
-                    ) as TravelOfferCommand
-                ) } catch (e: IllegalArgumentException) {
+            .map {
+                try {
+                    travelOfferCommandHandler.handle(
+                        ExpireTravelOfferCommand(
+                            travelOfferId = it._id,
+                            correlationId = correlationId,
+                        ) as TravelOfferCommand,
+                    )
+                } catch (e: IllegalArgumentException) {
                     println("ERROR HANDLED: $e")
                 }
             }
     }
 
-    suspend fun expireTravelOfferByAccommodation(accommodationId: UUID, correlationId: UUID) {
+    suspend fun expireTravelOfferByAccommodation(
+        accommodationId: UUID,
+        correlationId: UUID,
+    ) {
         travelOfferRepository
             .findByAccommodationId(accommodationId)
             .map {
@@ -51,7 +62,7 @@ class TravelOfferExpireService(
                         ExpireTravelOfferCommand(
                             travelOfferId = it._id,
                             correlationId = correlationId,
-                        ) as TravelOfferCommand
+                        ) as TravelOfferCommand,
                     )
                 } catch (e: IllegalArgumentException) {
                     println("ERROR HANDLED: $e")

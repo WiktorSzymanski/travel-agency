@@ -33,4 +33,3 @@ data class ExpireAttractionCommand(
     override val attractionId: UUID,
     override val correlationId: UUID,
 ) : AttractionCommand
-

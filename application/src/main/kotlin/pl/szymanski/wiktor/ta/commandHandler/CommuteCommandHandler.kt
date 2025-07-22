@@ -10,7 +10,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 
@@ -63,7 +62,6 @@ class CommuteCommandHandler(
                     .also { commuteRepository.update(commute) }
             }.apply { correlationId = command.correlationId }
 
-
     suspend fun compensate(event: CommuteEvent): CommuteEvent =
         when (event) {
             is CommuteBookedEvent -> compensate(event)
@@ -80,6 +78,7 @@ class CommuteCommandHandler(
                 event.seat,
             ),
         )
+
     private suspend fun compensate(event: CommuteBookingCanceledEvent): CommuteEvent =
         handle(
             CancelCommuteBookingCommand(

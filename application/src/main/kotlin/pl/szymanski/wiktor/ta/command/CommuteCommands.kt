@@ -35,4 +35,3 @@ data class ExpireCommuteCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
 ) : CommuteCommand
-

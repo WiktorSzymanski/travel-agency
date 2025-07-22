@@ -7,14 +7,11 @@ import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
-import java.util.UUID
 
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
@@ -78,7 +75,7 @@ class TravelOfferCommandHandler(
                 event.travelOfferId,
                 event.correlationId!!,
                 event.userId,
-                event.seat
+                event.seat,
             ),
         )
 
@@ -88,6 +85,7 @@ class TravelOfferCommandHandler(
                 event.travelOfferId,
                 event.correlationId!!,
                 event.userId,
-                event.seat),
+                event.seat,
+            ),
         )
 }

@@ -63,7 +63,6 @@ class AttractionCommandHandler(
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
 
-
     suspend fun compensate(event: AttractionEvent): AttractionEvent =
         when (event) {
             is AttractionBookedEvent -> compensate(event)
@@ -76,16 +75,16 @@ class AttractionCommandHandler(
             CancelAttractionBookingCommand(
                 event.attractionId,
                 event.correlationId!!,
-                event.userId
-            )
+                event.userId,
+            ),
         )
 
     private suspend fun compensate(event: AttractionBookingCanceledEvent): AttractionEvent =
         handle(
             BookAttractionCommand(
-            event.attractionId,
-            event.correlationId!!,
-            event.userId
-            )
+                event.attractionId,
+                event.correlationId!!,
+                event.userId,
+            ),
         )
 }

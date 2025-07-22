@@ -73,7 +73,8 @@ class AccommodationCommandHandler(
             CancelAccommodationBookingCommand(
                 event.accommodationId,
                 event.correlationId!!,
-                event.userId),
+                event.userId,
+            ),
         )
 
     private suspend fun compensate(event: AccommodationBookingCanceledEvent): AccommodationEvent =
@@ -81,6 +82,7 @@ class AccommodationCommandHandler(
             BookAccommodationCommand(
                 event.accommodationId,
                 event.correlationId!!,
-                event.userId),
+                event.userId,
+            ),
         )
 }
