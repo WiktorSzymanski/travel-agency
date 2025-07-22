@@ -95,10 +95,10 @@ suspend fun offerMaker(
 //    if (expiredAttractions.isNotEmpty()) launch { attractionRepository.updateAllStatus(expiredAttractions) }
 //    if (expiredCommutes.isNotEmpty()) launch { commuteRepository.updateAllStatus(expiredCommutes) }
 
-    val offers = makeOffers(validCommutes, validAccommodations, validAttractions)
-    if (offers.isNotEmpty()) {
-        offers.forEach { offer ->
-            launch { travelOfferCommandHandler.handle(offer) }
+    val offerCommands = makeOffers(validCommutes, validAccommodations, validAttractions)
+    if (offerCommands.isNotEmpty()) {
+        offerCommands.forEach { offerCommand ->
+            launch { travelOfferCommandHandler.handle(offerCommand) }
         }
     }
 }

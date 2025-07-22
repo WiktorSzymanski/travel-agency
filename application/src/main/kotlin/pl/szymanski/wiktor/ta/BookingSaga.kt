@@ -68,18 +68,18 @@ class BookingSaga(
 
             handleJobs +=
                 async {
-                    runCatching { commuteCommandHandler.handle(commuteCommand as CommuteCommand) }
+                    runCatching { commuteCommandHandler.handle(commuteCommand) }
                 }
 
             handleJobs +=
                 async {
-                    runCatching { accommodationCommandHandler.handle(accommodationCommand as AccommodationCommand) }
+                    runCatching { accommodationCommandHandler.handle(accommodationCommand) }
                 }
 
             attractionCommand?.let {
                 handleJobs +=
                     async {
-                        runCatching { attractionCommandHandler.handle(it as AttractionCommand) }
+                        runCatching { attractionCommandHandler.handle(it) }
                     }
             }
 

@@ -5,6 +5,7 @@ val coroutinesVersion = "1.7.3"
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization") version "2.1.10"
 }
 
 group = "pl.szymanski.wiktor"
@@ -19,6 +20,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:$mokkVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesTestVersion")

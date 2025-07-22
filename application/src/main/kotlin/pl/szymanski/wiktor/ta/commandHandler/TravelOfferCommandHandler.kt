@@ -11,6 +11,7 @@ import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import java.util.UUID
@@ -26,7 +27,7 @@ class TravelOfferCommandHandler(
             is ExpireTravelOfferCommand -> handle(command)
         }.apply { correlationId = command.correlationId }.also { EventBus.publish(it) }
 
-    suspend fun handle(command: CreateTravelOfferCommand): TravelOfferEvent =
+    private suspend fun handle(command: CreateTravelOfferCommand): TravelOfferEvent =
         TravelOffer.create(
             command.name,
             command.commuteId,
@@ -37,7 +38,7 @@ class TravelOfferCommandHandler(
             event
         }
 
-    suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =
+    private suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
@@ -46,7 +47,7 @@ class TravelOfferCommandHandler(
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 
-    suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
+    private suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
@@ -55,7 +56,7 @@ class TravelOfferCommandHandler(
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 
-    suspend fun handle(command: ExpireTravelOfferCommand): TravelOfferEvent =
+    private suspend fun handle(command: ExpireTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
@@ -71,7 +72,7 @@ class TravelOfferCommandHandler(
             else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
         }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
 
-    suspend fun compensate(event: TravelOfferBookedEvent): TravelOfferEvent =
+    private suspend fun compensate(event: TravelOfferBookedEvent): TravelOfferEvent =
         handle(
             CancelBookTravelOfferCommand(
                 event.travelOfferId,
@@ -81,7 +82,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    suspend fun compensate(event: TravelOfferBookingCanceledEvent): TravelOfferEvent =
+    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): TravelOfferEvent =
         handle(
             BookTravelOfferCommand(
                 event.travelOfferId,

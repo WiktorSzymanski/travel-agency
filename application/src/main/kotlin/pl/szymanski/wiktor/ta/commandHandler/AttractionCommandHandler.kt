@@ -25,7 +25,7 @@ class AttractionCommandHandler(
         }.apply { correlationId = command.correlationId }
             .also { EventBus.publish(it) }
 
-    suspend fun handle(command: BookAttractionCommand): AttractionEvent =
+    private suspend fun handle(command: BookAttractionCommand): AttractionEvent =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
@@ -34,7 +34,7 @@ class AttractionCommandHandler(
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
 
-    suspend fun handle(command: CancelAttractionBookingCommand): AttractionEvent =
+    private suspend fun handle(command: CancelAttractionBookingCommand): AttractionEvent =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
@@ -43,7 +43,7 @@ class AttractionCommandHandler(
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
 
-    suspend fun handle(command: CreateAttractionCommand): AttractionEvent =
+    private suspend fun handle(command: CreateAttractionCommand): AttractionEvent =
         Attraction.Companion.create(
             command.name,
             command.location,
@@ -54,7 +54,7 @@ class AttractionCommandHandler(
             event
         }
 
-    suspend fun handle(command: ExpireAttractionCommand): AttractionEvent =
+    private suspend fun handle(command: ExpireAttractionCommand): AttractionEvent =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
@@ -71,7 +71,7 @@ class AttractionCommandHandler(
             else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
         }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
 
-    suspend fun compensate(event: AttractionBookedEvent): AttractionEvent =
+    private suspend fun compensate(event: AttractionBookedEvent): AttractionEvent =
         handle(
             CancelAttractionBookingCommand(
                 event.attractionId,
@@ -80,7 +80,7 @@ class AttractionCommandHandler(
             )
         )
 
-    suspend fun compensate(event: AttractionBookingCanceledEvent): AttractionEvent =
+    private suspend fun compensate(event: AttractionBookingCanceledEvent): AttractionEvent =
         handle(
             BookAttractionCommand(
             event.attractionId,

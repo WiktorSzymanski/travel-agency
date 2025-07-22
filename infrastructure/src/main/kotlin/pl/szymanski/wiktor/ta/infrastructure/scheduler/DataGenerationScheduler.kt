@@ -1,7 +1,8 @@
 package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -58,25 +59,20 @@ object DataGenerationScheduler {
             )
     }
 
-    suspend fun start() =
-        coroutineScope {
-            if (job != null) {
-                return@coroutineScope
+    fun start(
+        scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    ) {
+        if (job != null) return
+        job = scope.launch {
+            generate()
+            while (isActive) {
+                delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                generate()
             }
-
-            job =
-                launch {
-                    while (isActive) {
-                        generate()
-                        delay(config.intervalSeconds * MILLIS_IN_SECOND)
-                    }
-                }
         }
-
-    fun stop() {
-        job?.cancel()
-        job = null
     }
+
+    fun stop() = job?.cancel().also { job = null }
 
     private suspend fun generate() {
         generators.forEach { it.process() }

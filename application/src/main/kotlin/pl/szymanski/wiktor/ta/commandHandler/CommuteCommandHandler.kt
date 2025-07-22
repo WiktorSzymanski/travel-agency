@@ -25,7 +25,7 @@ class CommuteCommandHandler(
             is ExpireCommuteCommand -> handle(command)
         }.apply { correlationId = command.correlationId }.also { EventBus.publish(it) }
 
-    suspend fun handle(command: CreateCommuteCommand): CommuteEvent =
+    private suspend fun handle(command: CreateCommuteCommand): CommuteEvent =
         Commute.Companion.create(
             command.name,
             command.departure,
@@ -36,7 +36,7 @@ class CommuteCommandHandler(
             event
         }
 
-    suspend fun handle(command: BookCommuteCommand): CommuteEvent =
+    private suspend fun handle(command: BookCommuteCommand): CommuteEvent =
         commuteRepository
             .findById(command.commuteId)
             .let { commute ->
@@ -45,7 +45,7 @@ class CommuteCommandHandler(
                     .also { commuteRepository.update(commute) }
             }.apply { correlationId = command.correlationId }
 
-    suspend fun handle(command: CancelCommuteBookingCommand): CommuteEvent =
+    private suspend fun handle(command: CancelCommuteBookingCommand): CommuteEvent =
         commuteRepository
             .findById(command.commuteId)
             .let { commute ->
@@ -54,7 +54,7 @@ class CommuteCommandHandler(
                     .also { commuteRepository.update(commute) }
             }.apply { correlationId = command.correlationId }
 
-    suspend fun handle(command: ExpireCommuteCommand): CommuteEvent =
+    private suspend fun handle(command: ExpireCommuteCommand): CommuteEvent =
         commuteRepository
             .findById(command.commuteId)
             .let { commute ->
@@ -71,7 +71,7 @@ class CommuteCommandHandler(
             else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
         }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
 
-    suspend fun compensate(event: CommuteBookedEvent): CommuteEvent =
+    private suspend fun compensate(event: CommuteBookedEvent): CommuteEvent =
         handle(
             BookCommuteCommand(
                 event.commuteId,
@@ -80,7 +80,7 @@ class CommuteCommandHandler(
                 event.seat,
             ),
         )
-    suspend fun compensate(event: CommuteBookingCanceledEvent): CommuteEvent =
+    private suspend fun compensate(event: CommuteBookingCanceledEvent): CommuteEvent =
         handle(
             CancelCommuteBookingCommand(
                 event.commuteId,

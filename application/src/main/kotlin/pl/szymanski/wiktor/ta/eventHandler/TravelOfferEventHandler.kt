@@ -1,5 +1,7 @@
 package pl.szymanski.wiktor.ta.eventHandler
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.BookingSaga
@@ -22,12 +24,12 @@ class TravelOfferEventHandler(
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
 ) {
-    suspend fun setup() = coroutineScope {
-        launch { travelOfferBookedEventHandler() }
-        launch { travelOfferBookingCanceledEventHandler() }
-        launch { commuteExpiredEventHandler() }
-        launch { accommodationExpiredEventHandler() }
-        launch { attractionExpiredEventHandler() }
+    fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
+        scope.launch { travelOfferBookedEventHandler() }
+        scope.launch { travelOfferBookingCanceledEventHandler() }
+        scope.launch { commuteExpiredEventHandler() }
+        scope.launch { accommodationExpiredEventHandler() }
+        scope.launch { attractionExpiredEventHandler() }
     }
 
     suspend fun travelOfferBookedEventHandler() =
