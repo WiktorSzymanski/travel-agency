@@ -1,14 +1,20 @@
-package pl.szymanski.wiktor.ta.event
+package pl.szymanski.wiktor.ta.eventHandler
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
-import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.command.accommodation.ExpireAccommodationCommand
-import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.command.attraction.ExpireAttractionCommand
-import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.command.commute.ExpireCommuteCommand
+import pl.szymanski.wiktor.ta.command.AccommodationCommand
+import pl.szymanski.wiktor.ta.command.AttractionCommand
+import pl.szymanski.wiktor.ta.command.CommuteCommand
+import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
+import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
+import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
+import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
+import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
 
 class DateMetEventHandler(
     private val attractionCommandHandler: AttractionCommandHandler,
@@ -28,7 +34,7 @@ class DateMetEventHandler(
                 ExpireCommuteCommand(
                     commuteId = it.commuteId,
                     correlationId = it.correlationId,
-                )
+                ) as CommuteCommand
             )
 
         }
@@ -41,7 +47,7 @@ class DateMetEventHandler(
                 ExpireAccommodationCommand(
                     accommodationId = it.accommodationId,
                     correlationId = it.correlationId,
-                )
+                ) as AccommodationCommand
             )
         }
     }
@@ -53,7 +59,7 @@ class DateMetEventHandler(
                 ExpireAttractionCommand(
                     attractionId = it.attractionId,
                     correlationId = it.correlationId,
-                )
+                ) as AttractionCommand
             )
         }
     }

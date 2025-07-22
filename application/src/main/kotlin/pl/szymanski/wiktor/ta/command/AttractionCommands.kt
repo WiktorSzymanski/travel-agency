@@ -1,6 +1,5 @@
-package pl.szymanski.wiktor.ta.command.attraction
+package pl.szymanski.wiktor.ta.command
 
-import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 import java.util.UUID

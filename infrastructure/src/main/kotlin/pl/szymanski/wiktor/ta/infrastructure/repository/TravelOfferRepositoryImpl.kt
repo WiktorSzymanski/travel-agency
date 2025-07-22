@@ -45,4 +45,13 @@ class TravelOfferRepositoryImpl(
             if (!e.writeErrors.all { it.code == DUPLICATE_ERROR_CODE }) throw e
         }
     }
+
+    override suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer> =
+        collection.find(org.bson.Document("commuteId", commuteId)).toList()
+
+    override suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer> =
+        collection.find(org.bson.Document("accommodationId", accommodationId)).toList()
+
+    override suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer> =
+        collection.find(org.bson.Document("attractionId", attractionId)).toList()
 }

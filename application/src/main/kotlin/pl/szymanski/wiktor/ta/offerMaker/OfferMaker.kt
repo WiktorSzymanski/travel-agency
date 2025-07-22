@@ -9,12 +9,11 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.command.travelOffer.CreateTravelOfferCommand
-import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
+import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.timeMet
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -92,9 +91,9 @@ suspend fun offerMaker(
     val (expiredAttractions, validAttractions) = attractionPairs.await()
     val (expiredCommutes, validCommutes) = commutePairs.await()
 
-    if (expiredAccommodations.isNotEmpty()) launch { accommodationRepository.updateAllStatus(expiredAccommodations) }
-    if (expiredAttractions.isNotEmpty()) launch { attractionRepository.updateAllStatus(expiredAttractions) }
-    if (expiredCommutes.isNotEmpty()) launch { commuteRepository.updateAllStatus(expiredCommutes) }
+//    if (expiredAccommodations.isNotEmpty()) launch { accommodationRepository.updateAllStatus(expiredAccommodations) }
+//    if (expiredAttractions.isNotEmpty()) launch { attractionRepository.updateAllStatus(expiredAttractions) }
+//    if (expiredCommutes.isNotEmpty()) launch { commuteRepository.updateAllStatus(expiredCommutes) }
 
     val offers = makeOffers(validCommutes, validAccommodations, validAttractions)
     if (offers.isNotEmpty()) {

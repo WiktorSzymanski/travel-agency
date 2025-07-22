@@ -17,7 +17,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.infrastructure.config.SchedulerConfig
+import pl.szymanski.wiktor.ta.infrastructure.config.DataGenerationSchedulerConfig
 import pl.szymanski.wiktor.ta.infrastructure.generator.AccommodationTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteTemplate
@@ -36,7 +36,7 @@ class SchedulerTest {
     private val mockAttractionGenerator = mockk<Generator<Any, Attraction>>()
     private val mockCommuteGenerator = mockk<Generator<Any, Commute>>()
 
-    private val scheduler = Scheduler
+    private val scheduler = DataGenerationScheduler
 
     @BeforeEach
     fun setup() {
@@ -49,7 +49,7 @@ class SchedulerTest {
         coEvery { mockCommuteRepository.save(any()) } coAnswers { firstArg() }
 
         scheduler.init(
-            SchedulerConfig(
+            DataGenerationSchedulerConfig(
                 5,
                 5,
                 5,

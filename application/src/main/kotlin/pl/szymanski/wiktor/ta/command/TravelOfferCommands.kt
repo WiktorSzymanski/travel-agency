@@ -1,6 +1,5 @@
-package pl.szymanski.wiktor.ta.command.travelOffer
+package pl.szymanski.wiktor.ta.command
 
-import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 

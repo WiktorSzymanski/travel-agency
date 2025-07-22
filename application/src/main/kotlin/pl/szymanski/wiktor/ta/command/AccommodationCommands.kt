@@ -1,6 +1,5 @@
-package pl.szymanski.wiktor.ta.command.accommodation
+package pl.szymanski.wiktor.ta.command
 
-import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.util.UUID

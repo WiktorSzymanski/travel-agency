@@ -1,6 +1,5 @@
-package pl.szymanski.wiktor.ta.command.commute
+package pl.szymanski.wiktor.ta.command
 
-import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID

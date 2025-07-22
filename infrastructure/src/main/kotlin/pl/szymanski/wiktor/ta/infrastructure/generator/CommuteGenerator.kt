@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
-import pl.szymanski.wiktor.ta.command.commute.CreateCommuteCommand
+import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.Clock

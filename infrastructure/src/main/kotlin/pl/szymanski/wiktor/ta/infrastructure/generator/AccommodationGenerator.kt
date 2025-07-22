@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
-import pl.szymanski.wiktor.ta.command.accommodation.CreateAccommodationCommand
+import pl.szymanski.wiktor.ta.command.CreateAccommodationCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.time.Clock

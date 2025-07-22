@@ -15,16 +15,17 @@ import io.ktor.server.routing.routing
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.command.travelOffer.BookTravelOfferCommand
-import pl.szymanski.wiktor.ta.command.travelOffer.CancelBookTravelOfferCommand
-import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommand
-import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.TravelOfferCommand
+import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 import pl.szymanski.wiktor.ta.domain.Seat
-import pl.szymanski.wiktor.ta.event.DateMetEventHandler
-import pl.szymanski.wiktor.ta.event.TravelOfferEventHandler
+import pl.szymanski.wiktor.ta.eventHandler.DateMetEventHandler
+import pl.szymanski.wiktor.ta.eventHandler.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 import pl.szymanski.wiktor.ta.infrastructure.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryImpl
@@ -58,7 +59,7 @@ fun Application.travelOfferController() {
 
     MongoDbProvider.init(property<DatabaseConfig>("database"))
     val travelOfferRepository = TravelOfferRepositoryImpl(MongoDbProvider.database)
-    val travelOfferService = TravelOfferQuery(travelOfferRepository)
+    val travelOfferQuery = TravelOfferQuery(travelOfferRepository)
 
     val accommodationRepository = AccommodationRepositoryImpl(MongoDbProvider.database)
     val attractionRepository = AttractionRepositoryImpl(MongoDbProvider.database)
@@ -66,8 +67,14 @@ fun Application.travelOfferController() {
 
     val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
 
+    val travelOfferExpireService = TravelOfferExpireService(
+        travelOfferRepository,
+        travelOfferCommandHandler
+    )
+
     launch {
         TravelOfferEventHandler(
+            travelOfferExpireService = travelOfferExpireService,
             travelOfferCommandHandler = travelOfferCommandHandler,
             attractionCommandHandler = AttractionCommandHandler(attractionRepository),
             commuteCommandHandler = CommuteCommandHandler(commuteRepository),
@@ -86,7 +93,7 @@ fun Application.travelOfferController() {
     routing {
         get("/travelOffers") {
             val offerDtos =
-                travelOfferService.getTravelOffers().map {
+                travelOfferQuery.getTravelOffers().map {
                     val accommodation = async { accommodationRepository.findById(it.accommodationId) }
                     val attraction = if (it.attractionId != null) async { attractionRepository.findById(it.attractionId!!) } else null
                     val commute = async { commuteRepository.findById(it.commuteId) }

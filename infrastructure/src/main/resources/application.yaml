@@ -15,9 +15,9 @@ offerScheduler:
   intervalSeconds: 10
 
 scheduler:
-    intervalSeconds: 100000
-    inAdvanceSeconds: 500000
-    creationWindowSeconds: 2
+    intervalSeconds: 1
+    inAdvanceSeconds: 5
+    creationWindowSeconds: 5
     accommodations:
         - name: "Hotel"
           location: "London"

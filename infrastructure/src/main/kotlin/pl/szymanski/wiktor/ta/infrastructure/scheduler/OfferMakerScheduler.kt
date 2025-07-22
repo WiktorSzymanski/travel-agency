@@ -5,16 +5,15 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
-import pl.szymanski.wiktor.ta.infrastructure.config.OfferSchedulerConfig
+import pl.szymanski.wiktor.ta.infrastructure.config.OfferMakerSchedulerConfig
 import pl.szymanski.wiktor.ta.offerMaker.offerMaker
 
-object OfferScheduler {
-    private lateinit var config: OfferSchedulerConfig
+object OfferMakerScheduler {
+    private lateinit var config: OfferMakerSchedulerConfig
 
     private lateinit var accommodationRepository: AccommodationRepository
     private lateinit var attractionRepository: AttractionRepository
@@ -26,7 +25,7 @@ object OfferScheduler {
     const val MILLIS_IN_SECOND = 1000
 
     fun init(
-        config: OfferSchedulerConfig,
+        config: OfferMakerSchedulerConfig,
         accommodationRepository: AccommodationRepository,
         attractionRepository: AttractionRepository,
         commuteRepository: CommuteRepository,

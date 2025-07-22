@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
-import pl.szymanski.wiktor.ta.command.attraction.CreateAttractionCommand
+import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.Clock
 import java.time.LocalDateTime

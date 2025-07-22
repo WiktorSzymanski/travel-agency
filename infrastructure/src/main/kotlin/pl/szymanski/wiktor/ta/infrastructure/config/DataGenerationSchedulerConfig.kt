@@ -6,7 +6,7 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteTemplate
 
 @Serializable
-data class SchedulerConfig(
+data class DataGenerationSchedulerConfig(
     val intervalSeconds: Long,
     val inAdvanceSeconds: Long,
     val creationWindowSeconds: Long,

@@ -4,19 +4,19 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommand
-import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.command.accommodation.BookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.accommodation.CancelAccommodationBookingCommand
-import pl.szymanski.wiktor.ta.command.attraction.AttractionCommand
-import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.command.attraction.BookAttractionCommand
-import pl.szymanski.wiktor.ta.command.attraction.CancelAttractionBookingCommand
-import pl.szymanski.wiktor.ta.command.commute.BookCommuteCommand
-import pl.szymanski.wiktor.ta.command.commute.CancelCommuteBookingCommand
-import pl.szymanski.wiktor.ta.command.commute.CommuteCommand
-import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.command.travelOffer.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.command.AccommodationCommand
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
+import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
+import pl.szymanski.wiktor.ta.command.AttractionCommand
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.command.BookAttractionCommand
+import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
+import pl.szymanski.wiktor.ta.command.CommuteCommand
+import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
@@ -29,6 +29,7 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.event.AttractionBookedCompensatedEvent
@@ -85,6 +86,15 @@ class BookingSagaTest {
                 correlationId = event.correlationId,
             )
         }
+
+        coEvery { travelOfferCommandHandler.compensate(any<TravelOfferEvent>()) } coAnswers {
+            val event = firstArg<TravelOfferEvent>()
+            when (event) {
+                is TravelOfferBookedEvent -> travelOfferCommandHandler.compensate(event)
+                is TravelOfferBookingCanceledEvent -> travelOfferCommandHandler.compensate(event)
+                else -> fail("Unexpected event: $event")
+            }
+        }
     }
 
     fun mockAttractionCommandHandler() {
@@ -104,6 +114,24 @@ class BookingSagaTest {
             )
         }
 
+        coEvery { attractionCommandHandler.handle(any<AttractionCommand>()) } coAnswers {
+            val command = firstArg<AttractionCommand>()
+            when (command) {
+                is BookAttractionCommand -> attractionCommandHandler.handle(command)
+                is CancelAttractionBookingCommand -> attractionCommandHandler.handle(command)
+                else -> fail("Unexpected command $command")
+            }
+        }
+
+        coEvery { attractionCommandHandler.compensate(any<AttractionEvent>()) } coAnswers {
+            val event = firstArg<AttractionEvent>()
+            when (event) {
+                is AttractionBookedEvent -> attractionCommandHandler.compensate(event)
+                is AttractionBookingCanceledEvent -> attractionCommandHandler.compensate(event)
+                else -> fail("Unexpected event $event")
+            }
+        }
+
         coEvery { attractionCommandHandler.compensate(any<AttractionBookedEvent>()) } answers {
             val event = firstArg<AttractionBookedEvent>()
             AttractionBookedCompensatedEvent(
@@ -120,23 +148,6 @@ class BookingSagaTest {
                 userId = event.userId,
                 correlationId = event.correlationId,
             )
-        }
-
-        coEvery { attractionCommandHandler.handle(any<AttractionCommand>()) } coAnswers {
-            val command = firstArg<AttractionCommand>()
-            when (command) {
-                is BookAttractionCommand -> attractionCommandHandler.handle(command as BookAttractionCommand)
-                is CancelAttractionBookingCommand -> attractionCommandHandler.handle(command as CancelAttractionBookingCommand)
-                else -> fail("Unexpected command $command")
-            }
-        }
-
-        coEvery { attractionCommandHandler.compensate(any<AttractionEvent>()) } coAnswers {
-            val event = firstArg<AttractionEvent>()
-            when (event) {
-                is AttractionBookedEvent -> attractionCommandHandler.compensate(event as AttractionBookedEvent)
-                is AttractionBookingCanceledEvent -> attractionCommandHandler.compensate(event as AttractionBookingCanceledEvent)
-            }
         }
     }
 
@@ -182,8 +193,8 @@ class BookingSagaTest {
         coEvery { commuteCommandHandler.handle(any<CommuteCommand>()) } coAnswers {
             val command = firstArg<CommuteCommand>()
             when (command) {
-                is BookCommuteCommand -> commuteCommandHandler.handle(command as BookCommuteCommand)
-                is CancelCommuteBookingCommand -> commuteCommandHandler.handle(command as CancelCommuteBookingCommand)
+                is BookCommuteCommand -> commuteCommandHandler.handle(command)
+                is CancelCommuteBookingCommand -> commuteCommandHandler.handle(command)
                 else -> fail("Unexpected command $command")
             }
         }
@@ -191,8 +202,9 @@ class BookingSagaTest {
         coEvery { commuteCommandHandler.compensate(any<CommuteEvent>()) } coAnswers {
             val event = firstArg<CommuteEvent>()
             when (event) {
-                is CommuteBookedEvent -> commuteCommandHandler.compensate(event as CommuteBookedEvent)
-                is CommuteBookingCanceledEvent -> commuteCommandHandler.compensate(event as CommuteBookingCanceledEvent)
+                is CommuteBookedEvent -> commuteCommandHandler.compensate(event)
+                is CommuteBookingCanceledEvent -> commuteCommandHandler.compensate(event)
+                else -> fail("Unexpected event $event")
             }
         }
     }
@@ -235,8 +247,8 @@ class BookingSagaTest {
         coEvery { accommodationCommandHandler.handle(any<AccommodationCommand>()) } coAnswers {
             val command = firstArg<AccommodationCommand>()
             when (command) {
-                is BookAccommodationCommand -> accommodationCommandHandler.handle(command as BookAccommodationCommand)
-                is CancelAccommodationBookingCommand -> accommodationCommandHandler.handle(command as CancelAccommodationBookingCommand)
+                is BookAccommodationCommand -> accommodationCommandHandler.handle(command)
+                is CancelAccommodationBookingCommand -> accommodationCommandHandler.handle(command)
                 else -> fail("Unexpected command $command")
             }
         }
@@ -244,8 +256,9 @@ class BookingSagaTest {
         coEvery { accommodationCommandHandler.compensate(any<AccommodationEvent>()) } coAnswers {
             val event = firstArg<AccommodationEvent>()
             when (event) {
-                is AccommodationBookedEvent -> accommodationCommandHandler.compensate(event as AccommodationBookedEvent)
-                is AccommodationBookingCanceledEvent -> accommodationCommandHandler.compensate(event as AccommodationBookingCanceledEvent)
+                is AccommodationBookedEvent -> accommodationCommandHandler.compensate(event)
+                is AccommodationBookingCanceledEvent -> accommodationCommandHandler.compensate(event)
+                else -> fail("Unexpected event $event")
             }
         }
     }

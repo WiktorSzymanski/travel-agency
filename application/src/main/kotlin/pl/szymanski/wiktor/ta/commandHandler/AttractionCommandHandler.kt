@@ -1,10 +1,14 @@
-package pl.szymanski.wiktor.ta.command.attraction
+package pl.szymanski.wiktor.ta.commandHandler
 
 import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.command.AttractionCommand
+import pl.szymanski.wiktor.ta.command.BookAttractionCommand
+import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
+import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
@@ -12,28 +16,14 @@ import pl.szymanski.wiktor.ta.event.toCompensation
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
-    suspend fun handle(command: AttractionCommand): AttractionEvent {
-        val event =
-            when (command) {
-                is BookAttractionCommand -> handle(command)
-                is CancelAttractionBookingCommand -> handle(command)
-                is CreateAttractionCommand -> handle(command)
-                is ExpireAttractionCommand -> handle(command)
-            }.apply { correlationId = command.correlationId }
-
-        EventBus.publish(event)
-        return event
-    }
-
-    suspend fun compensate(event: AttractionEvent) {
-        EventBus.publish(
-            when (event) {
-                is AttractionBookedEvent -> handle(CancelAttractionBookingCommand(event.attractionId, event.correlationId!!, event.userId))
-                is AttractionBookingCanceledEvent -> handle(BookAttractionCommand(event.attractionId, event.correlationId!!, event.userId))
-                else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
-            }.apply { correlationId = event.correlationId }.toCompensation(),
-        )
-    }
+    suspend fun handle(command: AttractionCommand): AttractionEvent =
+        when (command) {
+            is BookAttractionCommand -> handle(command)
+            is CancelAttractionBookingCommand -> handle(command)
+            is CreateAttractionCommand -> handle(command)
+            is ExpireAttractionCommand -> handle(command)
+        }.apply { correlationId = command.correlationId }
+            .also { EventBus.publish(it) }
 
     suspend fun handle(command: BookAttractionCommand): AttractionEvent =
         attractionRepository
@@ -54,7 +44,7 @@ class AttractionCommandHandler(
             }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CreateAttractionCommand): AttractionEvent =
-        Attraction.create(
+        Attraction.Companion.create(
             command.name,
             command.location,
             command.date,
@@ -72,4 +62,30 @@ class AttractionCommandHandler(
                     .expire()
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
+
+
+    suspend fun compensate(event: AttractionEvent): AttractionEvent =
+        when (event) {
+            is AttractionBookedEvent -> compensate(event)
+            is AttractionBookingCanceledEvent -> compensate(event)
+            else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
+        }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
+
+    suspend fun compensate(event: AttractionBookedEvent): AttractionEvent =
+        handle(
+            CancelAttractionBookingCommand(
+                event.attractionId,
+                event.correlationId!!,
+                event.userId
+            )
+        )
+
+    suspend fun compensate(event: AttractionBookingCanceledEvent): AttractionEvent =
+        handle(
+            BookAttractionCommand(
+            event.attractionId,
+            event.correlationId!!,
+            event.userId
+            )
+        )
 }

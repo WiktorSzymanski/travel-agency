@@ -13,4 +13,10 @@ interface TravelOfferRepository {
     suspend fun findAll(): List<TravelOffer>
 
     suspend fun saveAll(travelOffers: List<TravelOffer>)
+
+    suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer>
+
+    suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer>
+
+    suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer>
 }

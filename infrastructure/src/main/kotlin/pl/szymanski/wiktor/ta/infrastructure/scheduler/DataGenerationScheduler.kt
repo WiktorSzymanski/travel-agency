@@ -5,17 +5,17 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import pl.szymanski.wiktor.ta.command.accommodation.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.command.attraction.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.command.commute.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.infrastructure.config.SchedulerConfig
+import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.infrastructure.config.DataGenerationSchedulerConfig
 import pl.szymanski.wiktor.ta.infrastructure.generator.AccommodationGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteGenerator
 import pl.szymanski.wiktor.ta.infrastructure.generator.GeneratorCHPair
 
-object Scheduler {
-    private lateinit var config: SchedulerConfig
+object DataGenerationScheduler {
+    private lateinit var config: DataGenerationSchedulerConfig
     private lateinit var generators: List<GeneratorCHPair<*, *>>
 
     private var job: Job? = null
@@ -23,7 +23,7 @@ object Scheduler {
     const val MILLIS_IN_SECOND = 1000
 
     fun init(
-        config: SchedulerConfig,
+        config: DataGenerationSchedulerConfig,
         accommodationCommandHandler: AccommodationCommandHandler,
         attractionCommandHandler: AttractionCommandHandler,
         commuteCommandHandler: CommuteCommandHandler,
