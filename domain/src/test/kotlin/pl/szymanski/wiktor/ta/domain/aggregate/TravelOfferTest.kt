@@ -113,7 +113,7 @@ class TravelOfferTest {
                 offer.expire()
             }
 
-        assertEquals("TravelOffer $travelOfferId cannot be cancelled when not in AVAILABLE status", ex.message)
+        assertEquals("TravelOffer $travelOfferId cannot be expired when not in AVAILABLE status", ex.message)
     }
 
     @Test

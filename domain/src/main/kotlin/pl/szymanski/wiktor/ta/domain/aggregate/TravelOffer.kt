@@ -49,7 +49,7 @@ data class TravelOffer(
 
     fun expire(): TravelOfferEvent {
         require(status == OfferStatusEnum.AVAILABLE) {
-            "TravelOffer $_id cannot be cancelled when not in AVAILABLE status"
+            "TravelOffer $_id cannot be expired when not in AVAILABLE status"
         }
 
         this.status = OfferStatusEnum.EXPIRED
