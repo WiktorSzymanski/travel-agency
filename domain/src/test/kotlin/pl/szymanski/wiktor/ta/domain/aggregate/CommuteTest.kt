@@ -4,7 +4,10 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
-import java.lang.Thread.sleep
+import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -31,14 +34,23 @@ class CommuteTest {
 
     @Test
     fun book_seat_successfully() {
-        commute.bookSeat(seat1, userId)
+        val event = commute.bookSeat(seat1, userId)
+
+        assertEventEquals(
+            CommuteBookedEvent(
+                commuteId = commute._id,
+                userId = userId,
+                seat = seat1,
+            ),
+            event,
+        )
         assertEquals(1, commute.bookings.size)
         assertEquals(userId, commute.bookings[seat1.toString()]?.userId)
     }
 
     @Test
-    fun booking_not_allowed_when_not_scheduled() {
-        commute.status = CommuteStatusEnum.CANCELLED
+    fun booking_not_allowed_when_expired() {
+        commute.status = CommuteStatusEnum.EXPIRED
         val ex =
             assertFailsWith<IllegalArgumentException> {
                 commute.bookSeat(seat1, userId)
@@ -72,8 +84,25 @@ class CommuteTest {
 
     @Test
     fun can_cancel_own_booking() {
-        commute.bookSeat(seat1, userId)
-        commute.cancelBookedSeat(seat1, userId)
+        val bEvent = commute.bookSeat(seat1, userId)
+        val cEvent = commute.cancelBookedSeat(seat1, userId)
+
+        assertEventEquals(
+            CommuteBookedEvent(
+                commuteId = commute._id,
+                userId = userId,
+                seat = seat1,
+            ),
+            bEvent,
+        )
+        assertEventEquals(
+            CommuteBookingCanceledEvent(
+                commuteId = commute._id,
+                userId = userId,
+                seat = seat1,
+            ),
+            cEvent,
+        )
         assertFalse(commute.bookings.containsKey(seat1.toString()))
     }
 
@@ -98,47 +127,25 @@ class CommuteTest {
     }
 
     @Test
-    fun can_cancel_commute_if_less_than_half_booked() {
-        commute.bookSeat(seat1, userId)
-        sleep(10000)
-        commute.cancel()
-        assertEquals(CommuteStatusEnum.CANCELLED, commute.status)
-    }
-
-    @Test
-    fun cannot_cancel_commute_if_half_or_more_booked() {
-        commute.bookSeat(seat1, userId)
-        commute.bookSeat(seat2, UUID.randomUUID())
-        sleep(10000)
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.cancel()
-            }
-        assertEquals(
-            "Commute ${commute._id} cannot be cancelled when more than half of seats are booked",
-            ex.message,
-        )
-    }
-
-    @Test
-    fun commute_can_depart_after_departure_time() {
+    fun commute_expire_after_departure_time() {
         val commute =
             commute.copy(
                 departure =
                     LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(1)),
             )
-        commute.depart()
-        assertEquals(CommuteStatusEnum.DEPARTED, commute.status)
+        val event = commute.expire()
+
+        assertEventEquals(CommuteExpiredEvent(commuteId = commute._id), event)
+        assertEquals(CommuteStatusEnum.EXPIRED, commute.status)
     }
 
     @Test
-    fun cannot_depart_before_departure_time() {
+    fun cannot_expire_before_departure_time() {
         commute = commute.copy(departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusMinutes(5)))
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                commute.depart()
+                commute.expire()
             }
-        assertTrue(ex.message!!.contains("cannot depart"))
-        assertEquals("Commute ${commute._id} cannot depart before its departure time", ex.message)
+        assertEquals("Commute ${commute._id} cannot expire before its departure time", ex.message)
     }
 }

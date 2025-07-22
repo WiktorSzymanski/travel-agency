@@ -3,6 +3,10 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
+import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -32,8 +36,15 @@ class AccommodationTest {
 
     @Test
     fun book_should_succeed_when_available() {
-        accommodation.book(userId)
+        val event = accommodation.book(userId)
 
+        assertEventEquals(
+            AccommodationBookedEvent(
+                accommodationId = accommodationId,
+                userId = userId,
+            ),
+            event,
+        )
         assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
         assertEquals(userId, accommodation.booking?.userId)
     }
@@ -53,8 +64,15 @@ class AccommodationTest {
     @Test
     fun cancelBooking_should_clear_booking_if_user_matches() {
         accommodation.book(userId)
-        accommodation.cancelBooking(userId)
+        val event = accommodation.cancelBooking(userId)
 
+        assertEventEquals(
+            AccommodationBookingCanceledEvent(
+                accommodationId = accommodationId,
+                userId = userId,
+            ),
+            event,
+        )
         assertNull(accommodation.booking)
     }
 
@@ -83,19 +101,25 @@ class AccommodationTest {
     @Test
     fun expire_should_succeed_if_available_and_from_is_past() {
         val accommodation = accommodation.copy(rent = rentPast)
-        accommodation.expire()
+        val event = accommodation.expire()
 
+        assertEventEquals(
+            AccommodationExpiredEvent(
+                accommodationId = accommodationId,
+            ),
+            event,
+        )
         assertEquals(AccommodationStatusEnum.EXPIRED, accommodation.status)
     }
 
     @Test
-    fun expire_should_fail_if_available_but_from_in_future() {
+    fun expire_should_fail_if_available_but_rent_date_not_met() {
         val ex =
             assertFailsWith<IllegalArgumentException> {
                 accommodation.expire()
             }
 
-        assertEquals("Accommodation $accommodationId cannot be expired before its from date", ex.message)
+        assertEquals("Accommodation $accommodationId cannot be expired before its rent start", ex.message)
     }
 
     @Test

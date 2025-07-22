@@ -2,6 +2,10 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -29,14 +33,22 @@ class AttractionTest {
 
     @Test
     fun book_successfully() {
-        attraction.book(userId)
+        val event = attraction.book(userId)
+
+        assertEventEquals(
+            AttractionBookedEvent(
+                attractionId = attraction._id,
+                userId = userId,
+            ),
+            event,
+        )
         assertEquals(1, attraction.bookings.size)
         assertEquals(userId, attraction.bookings.first().userId)
     }
 
     @Test
-    fun cannot_book_when_not_scheduled() {
-        attraction.status = AttractionStatusEnum.CANCELLED
+    fun cannot_book_when_expired() {
+        attraction.status = AttractionStatusEnum.EXPIRED
         val ex =
             assertFailsWith<IllegalArgumentException> {
                 attraction.book(userId)
@@ -69,13 +81,21 @@ class AttractionTest {
     @Test
     fun cancel_booking_successfully() {
         attraction.book(userId)
-        attraction.cancelBooking(userId)
+        val event = attraction.cancelBooking(userId)
+
+        assertEventEquals(
+            AttractionBookingCanceledEvent(
+                attractionId = attraction._id,
+                userId = userId,
+            ),
+            event,
+        )
         assertTrue(attraction.bookings.none { it.userId == userId })
     }
 
     @Test
-    fun cannot_cancel_booking_when_not_scheduled() {
-        attraction.status = AttractionStatusEnum.CANCELLED
+    fun cannot_cancel_booking_when_expired() {
+        attraction.status = AttractionStatusEnum.EXPIRED
         val ex =
             assertFailsWith<IllegalArgumentException> {
                 attraction.cancelBooking(userId)
@@ -96,57 +116,17 @@ class AttractionTest {
     }
 
     @Test
-    fun cancel_attraction_successfully_when_less_than_half_booked() {
-        attraction.book(userId)
-        attraction.cancel()
-        assertEquals(AttractionStatusEnum.CANCELLED, attraction.status)
-    }
-
-    @Test
-    fun cannot_cancel_attraction_when_not_scheduled() {
-        attraction.status = AttractionStatusEnum.EXPIRED
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.cancel()
-            }
-        assertEquals(
-            "Attraction ${attraction._id} cannot be cancelled when not in SCHEDULED status",
-            ex.message,
-        )
-    }
-
-    @Test
-    fun cannot_cancel_attraction_when_half_or_more_booked() {
-        attraction.book(UUID.randomUUID())
-        attraction.book(UUID.randomUUID())
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.cancel()
-            }
-        assertEquals(
-            "Attraction ${attraction._id} cannot be cancelled when more than half of seats are booked",
-            ex.message,
-        )
-    }
-
-    @Test
     fun expire_successfully_after_date() {
         attraction = attraction.copy(date = LocalDateTime.now().minusMinutes(1))
-        attraction.expire()
-        assertEquals(AttractionStatusEnum.EXPIRED, attraction.status)
-    }
+        val event = attraction.expire()
 
-    @Test
-    fun cannot_expire_when_not_scheduled() {
-        attraction.status = AttractionStatusEnum.CANCELLED
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.expire()
-            }
-        assertEquals(
-            "Attraction ${attraction._id} cannot be cancelled when not in SCHEDULED status",
-            ex.message,
+        assertEventEquals(
+            AttractionExpiredEvent(
+                attractionId = attraction._id,
+            ),
+            event,
         )
+        assertEquals(AttractionStatusEnum.EXPIRED, attraction.status)
     }
 
     @Test

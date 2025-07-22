@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.infrastructure.repository
 
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.client.model.InsertManyOptions
+import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
@@ -18,10 +19,21 @@ class TravelOfferRepositoryImpl(
 
     private val collection: MongoCollection<TravelOffer> = database.getCollection("travelOffer")
 
-    override suspend fun findById(travelOfferId: UUID): TravelOffer? =
-        collection.find(org.bson.Document("_id", travelOfferId)).toList().firstOrNull()
+    override suspend fun findById(travelOfferId: UUID): TravelOffer =
+        collection.find(org.bson.Document("_id", travelOfferId)).toList().first()
 
     override suspend fun save(travelOffer: TravelOffer): TravelOffer? = collection.insertOne(travelOffer).insertedId?.let { travelOffer }
+
+    override suspend fun update(travelOffer: TravelOffer) {
+        val filter = org.bson.Document("_id", travelOffer._id)
+        val update =
+            Updates.combine(
+                Updates.set("booking", travelOffer.booking),
+                Updates.set("status", "${travelOffer.status}"),
+            )
+
+        collection.updateOne(filter, update)
+    }
 
     override suspend fun findAll(): List<TravelOffer> = collection.find().toList()
 
@@ -33,4 +45,13 @@ class TravelOfferRepositoryImpl(
             if (!e.writeErrors.all { it.code == DUPLICATE_ERROR_CODE }) throw e
         }
     }
+
+    override suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer> =
+        collection.find(org.bson.Document("commuteId", commuteId)).toList()
+
+    override suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer> =
+        collection.find(org.bson.Document("accommodationId", accommodationId)).toList()
+
+    override suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer> =
+        collection.find(org.bson.Document("attractionId", attractionId)).toList()
 }
