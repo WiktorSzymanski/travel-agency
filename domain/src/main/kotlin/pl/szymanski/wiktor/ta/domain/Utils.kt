@@ -59,7 +59,7 @@ enum class AttractionStatusEnum {
     EXPIRED,
 }
 
-enum class OfferStatusEnum {
+enum class TravelOfferStatusEnum {
     AVAILABLE,
     BOOKED,
     EXPIRED,

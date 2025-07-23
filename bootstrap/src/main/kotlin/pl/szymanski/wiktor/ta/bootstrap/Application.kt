@@ -1,9 +1,10 @@
-package pl.szymanski.wiktor.ta.infrastructure
+package pl.szymanski.wiktor.ta.bootstrap
 
 import io.ktor.server.application.Application
 import io.ktor.server.cio.EngineMain
 import io.ktor.server.config.property
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.presentation.controller.travelOfferController
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
@@ -11,7 +12,6 @@ import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.eventHandler.DateMetEventHandler
 import pl.szymanski.wiktor.ta.eventHandler.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
-import pl.szymanski.wiktor.ta.infrastructure.controller.travelOfferController
 import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.AttractionRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.CommuteRepositoryImpl

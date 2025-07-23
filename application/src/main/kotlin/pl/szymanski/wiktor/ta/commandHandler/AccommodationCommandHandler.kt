@@ -24,7 +24,7 @@ class AccommodationCommandHandler(
             is ExpireAccommodationCommand -> handle(command)
         }.apply { correlationId = command.correlationId }.also { EventBus.publish(it) }
 
-    private suspend fun handle(command: BookAccommodationCommand): AccommodationEvent =
+    suspend fun handle(command: BookAccommodationCommand): AccommodationEvent =
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
@@ -33,7 +33,7 @@ class AccommodationCommandHandler(
                     .also { accommodationRepository.update(accommodation) }
             }.apply { correlationId = command.correlationId }
 
-    private suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
+    suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
@@ -42,7 +42,7 @@ class AccommodationCommandHandler(
                     .also { accommodationRepository.update(accommodation) }
             }.apply { correlationId = command.correlationId }
 
-    private suspend fun handle(command: CreateAccommodationCommand): AccommodationEvent =
+    suspend fun handle(command: CreateAccommodationCommand): AccommodationEvent =
         Accommodation.Companion.create(
             command.name,
             command.location,
@@ -52,7 +52,7 @@ class AccommodationCommandHandler(
             event
         }
 
-    private suspend fun handle(command: ExpireAccommodationCommand): AccommodationEvent =
+    suspend fun handle(command: ExpireAccommodationCommand): AccommodationEvent =
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
@@ -68,7 +68,7 @@ class AccommodationCommandHandler(
             else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
         }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
 
-    private suspend fun compensate(event: AccommodationBookedEvent): AccommodationEvent =
+    suspend fun compensate(event: AccommodationBookedEvent): AccommodationEvent =
         handle(
             CancelAccommodationBookingCommand(
                 event.accommodationId,
@@ -77,7 +77,7 @@ class AccommodationCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: AccommodationBookingCanceledEvent): AccommodationEvent =
+    suspend fun compensate(event: AccommodationBookingCanceledEvent): AccommodationEvent =
         handle(
             BookAccommodationCommand(
                 event.accommodationId,

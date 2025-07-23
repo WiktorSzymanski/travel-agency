@@ -1,11 +1,10 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository
 
-import com.mongodb.MongoBulkWriteException
-import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import java.util.UUID
@@ -13,6 +12,7 @@ import java.util.UUID
 class TravelOfferRepositoryImpl(
     database: MongoDatabase,
 ) : TravelOfferRepository {
+    // db.travelOffer.createIndex( {commuteId: 1, attractionId: 1, accommodationId: 1 }, {unique: true} )
     companion object {
         const val DUPLICATE_ERROR_CODE = 11000
     }
@@ -37,14 +37,8 @@ class TravelOfferRepositoryImpl(
 
     override suspend fun findAll(): List<TravelOffer> = collection.find().toList()
 
-    // db.travelOffer.createIndex( {commuteId: 1, attractionId: 1, accommodationId: 1 }, {unique: true} )
-    override suspend fun saveAll(travelOffers: List<TravelOffer>) {
-        try {
-            collection.insertMany(travelOffers, InsertManyOptions().ordered(false))
-        } catch (e: MongoBulkWriteException) {
-            if (!e.writeErrors.all { it.code == DUPLICATE_ERROR_CODE }) throw e
-        }
-    }
+    override suspend fun findByStatus(status: TravelOfferStatusEnum): List<TravelOffer> =
+        collection.find(org.bson.Document("status", status)).toList()
 
     override suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer> =
         collection.find(org.bson.Document("commuteId", commuteId)).toList()

@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.controller
+package pl.szymanski.wiktor.ta.presentation.controller
 
 import com.asyncapi.kotlinasyncapi.context.service.AsyncApiExtension
 import com.asyncapi.kotlinasyncapi.ktor.AsyncApiPlugin
@@ -19,20 +19,22 @@ import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
-import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.AttractionRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.CommuteRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.TravelOfferRepositoryImpl
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
+import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.query.TravelOfferQuery
 import java.util.UUID
+import kotlin.io.extension
 
 // THIS SHOULD BE IN PROJECTION LAYER
 
 fun Application.travelOfferController(
-    travelOfferRepository: TravelOfferRepositoryImpl,
-    commuteRepository: CommuteRepositoryImpl,
-    accommodationRepository: AccommodationRepositoryImpl,
-    attractionRepository: AttractionRepositoryImpl,
+    travelOfferRepository: TravelOfferRepository,
+    commuteRepository: CommuteRepository,
+    accommodationRepository: AccommodationRepository,
+    attractionRepository: AttractionRepository,
     travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
     install(AsyncApiPlugin) {
@@ -82,9 +84,33 @@ fun Application.travelOfferController(
             call.respond(resp)
         }
 
+        get("/travelOffer/{id}") {
+            val travelOfferId = call.parameters["id"]?.let { UUID.fromString(it) }
+
+            requireNotNull(travelOfferId) {
+                "Invalid travel offer Id: ${call.parameters["id"]}"
+            }
+
+            val resp = travelOfferQuery.getTravelOfferById(travelOfferId)
+            call.response.status(HttpStatusCode.OK)
+            call.respond(resp)
+        }
+
+        get("/travelOffers/{status}") {
+            val status = call.parameters["status"]?.let { TravelOfferStatusEnum.valueOf(it) }
+
+            requireNotNull(status) {
+                "Invalid travel offer status ${call.parameters["status"]}"
+            }
+
+            val resp = travelOfferQuery.getTravelOffersByStatus(status)
+            call.response.status(HttpStatusCode.OK)
+            call.respond(resp)
+        }
+
         post("/bookTravelOffer") {
-            val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
             try {
+                val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
                 travelOfferCommandHandler.handle(
                     BookTravelOfferCommand(
                         offerId,
@@ -93,24 +119,24 @@ fun Application.travelOfferController(
                         seat,
                     ) as TravelOfferCommand,
                 )
+                call.respond(HttpStatusCode.OK, "Travel offer booked successfully")
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid input parameters")
             } catch (e: Exception) {
-                println(e)
-                call.response.status(HttpStatusCode.BadRequest)
-                call.respond(e.message ?: "Error while processing request")
+                call.respond(HttpStatusCode.InternalServerError, e.message ?: "An unexpected error occurred")
             }
-            call.response.status(HttpStatusCode.OK)
-            call.respond("OK")
         }
         post("/cancelTravelOffer") {
-            val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
             try {
+                val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
                 travelOfferCommandHandler.handle(
                     CancelBookTravelOfferCommand(offerId, UUID.randomUUID(), userId, seat) as TravelOfferCommand,
                 )
+                call.respond(HttpStatusCode.OK, "Travel offer booking cancelled successfully")
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid input parameters")
             } catch (e: Exception) {
-                println(e)
-                call.response.status(HttpStatusCode.BadRequest)
-                call.respond(e.message ?: "Error while processing request")
+                call.respond(HttpStatusCode.InternalServerError, e.message ?: "An unexpected error occurred")
             }
         }
     }

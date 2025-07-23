@@ -49,44 +49,44 @@ paths:
             type: string
       responses:
         '200':
-          description: Booking successful
+          description: Travel offer booked successfully
         '400':
           description: Invalid input parameters
-        '404':
-          description: Travel offer not found
+        '500':
+          description: Internal server error
   /cancelTravelOffer:
     post:
       summary: Cancel travel offer booking
-      description: Books a travel offer for a specific user with a selected seat
-      operationId: bookTravelOffer
+      description: Cancels a travel offer booking for a specific user and seat
+      operationId: cancelTravelOffer
       parameters:
         - name: offerId
           in: query
-          description: ID of the travel offer to book
+          description: ID of the travel offer to cancel
           required: true
           schema:
             type: string
             format: uuid
         - name: userId
           in: query
-          description: ID of the user making the booking
+          description: ID of the user who made the booking
           required: true
           schema:
             type: string
             format: uuid
         - name: seat
           in: query
-          description: Seat to book in format "row/column" (e.g., "1/A")
+          description: Seat to cancel in format "row/column" (e.g., "1/A")
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Booking successful
+          description: Travel offer booking cancelled successfully
         '400':
           description: Invalid input parameters
-        '404':
-          description: Travel offer not found
+        '500':
+          description: Internal server error
 components:
   schemas:
     TravelOfferDto:

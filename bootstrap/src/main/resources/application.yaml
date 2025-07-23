@@ -3,7 +3,7 @@ ktor:
         port: 8080
     application:
         modules:
-            - pl.szymanski.wiktor.ta.infrastructure.ApplicationKt.application
+            - pl.szymanski.wiktor.ta.bootstrap.ApplicationKt.application
             - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
             - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
 

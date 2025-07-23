@@ -24,7 +24,7 @@ class TravelOfferCommandHandler(
             is ExpireTravelOfferCommand -> handle(command)
         }.apply { correlationId = command.correlationId }.also { EventBus.publish(it) }
 
-    private suspend fun handle(command: CreateTravelOfferCommand): TravelOfferEvent =
+    suspend fun handle(command: CreateTravelOfferCommand): TravelOfferEvent =
         TravelOffer.create(
             command.name,
             command.commuteId,
@@ -35,7 +35,7 @@ class TravelOfferCommandHandler(
             event
         }
 
-    private suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =
+    suspend fun handle(command: BookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
@@ -44,7 +44,7 @@ class TravelOfferCommandHandler(
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 
-    private suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
+    suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
@@ -53,7 +53,7 @@ class TravelOfferCommandHandler(
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 
-    private suspend fun handle(command: ExpireTravelOfferCommand): TravelOfferEvent =
+    suspend fun handle(command: ExpireTravelOfferCommand): TravelOfferEvent =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
@@ -69,7 +69,7 @@ class TravelOfferCommandHandler(
             else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
         }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
 
-    private suspend fun compensate(event: TravelOfferBookedEvent): TravelOfferEvent =
+    suspend fun compensate(event: TravelOfferBookedEvent): TravelOfferEvent =
         handle(
             CancelBookTravelOfferCommand(
                 event.travelOfferId,
@@ -79,7 +79,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): TravelOfferEvent =
+    suspend fun compensate(event: TravelOfferBookingCanceledEvent): TravelOfferEvent =
         handle(
             BookTravelOfferCommand(
                 event.travelOfferId,

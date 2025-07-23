@@ -1,7 +1,7 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.Booking
-import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
@@ -56,7 +56,7 @@ class TravelOfferTest {
             ),
             event,
         )
-        assertEquals(OfferStatusEnum.BOOKED, offer.status)
+        assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
         assertEquals(userId, offer.booking?.userId)
     }
 
@@ -64,7 +64,7 @@ class TravelOfferTest {
     fun book_should_fail_when_offer_not_available() {
         val offer =
             offer.copy(
-                status = OfferStatusEnum.BOOKED,
+                status = TravelOfferStatusEnum.BOOKED,
             )
 
         val ex =
@@ -88,7 +88,7 @@ class TravelOfferTest {
             ),
             event,
         )
-        assertEquals(OfferStatusEnum.EXPIRED, offer.status)
+        assertEquals(TravelOfferStatusEnum.EXPIRED, offer.status)
     }
 
     @Test
@@ -104,14 +104,14 @@ class TravelOfferTest {
             ),
             event,
         )
-        assertEquals(OfferStatusEnum.EXPIRED, offer.status)
+        assertEquals(TravelOfferStatusEnum.EXPIRED, offer.status)
     }
 
     @Test
     fun expire_should_fail_if_status_not_available() {
         val offer =
             offer.copy(
-                status = OfferStatusEnum.BOOKED,
+                status = TravelOfferStatusEnum.BOOKED,
             )
 
         val ex =
@@ -128,7 +128,7 @@ class TravelOfferTest {
         val offer =
             offer.copy(
                 booking = booking,
-                status = OfferStatusEnum.BOOKED,
+                status = TravelOfferStatusEnum.BOOKED,
             )
 
         val event = offer.cancelBooking(userId, seat)
@@ -151,7 +151,7 @@ class TravelOfferTest {
     fun cancelBooking_should_fail_if_status_not_booked() {
         val offer =
             offer.copy(
-                status = OfferStatusEnum.AVAILABLE,
+                status = TravelOfferStatusEnum.AVAILABLE,
             )
 
         val ex =
@@ -168,7 +168,7 @@ class TravelOfferTest {
         val offer =
             offer.copy(
                 booking = booking,
-                status = OfferStatusEnum.BOOKED,
+                status = TravelOfferStatusEnum.BOOKED,
             )
 
         val ex =

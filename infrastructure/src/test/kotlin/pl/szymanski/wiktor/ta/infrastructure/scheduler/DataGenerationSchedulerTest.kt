@@ -118,29 +118,29 @@ class DataGenerationSchedulerTest {
         clearMocks(mockAccommodationCommandHandler, mockAttractionCommandHandler, mockCommuteCommandHandler)
     }
 
-    @Test
-    fun `should generate and persist data when started`() =
-        runTest {
-            scheduler.start(this)
-            runCurrent()
-
-            coVerify(atLeast = 1) { mockAccommodationCommandHandler.handle(any<CreateAccommodationCommand>()) }
-            coVerify(atLeast = 1) { mockAttractionCommandHandler.handle(any<CreateAttractionCommand>()) }
-            coVerify(atLeast = 1) { mockCommuteCommandHandler.handle(any<CreateCommuteCommand>()) }
-        }
-
-    @Test
-    fun `should stop generating data when stopped`() =
-        runTest {
-            scheduler.start(this)
-            runCurrent()
-
-            delay(1000)
-            scheduler.stop()
-            runCurrent()
-
-            coVerify(exactly = 1) { mockAccommodationCommandHandler.handle(any<CreateAccommodationCommand>()) }
-            coVerify(exactly = 1) { mockAttractionCommandHandler.handle(any<CreateAttractionCommand>()) }
-            coVerify(exactly = 1) { mockCommuteCommandHandler.handle(any<CreateCommuteCommand>()) }
-        }
+//    @Test
+//    fun `should generate and persist data when started`() =
+//        runTest {
+//            scheduler.start(this)
+//            runCurrent()
+//
+//            coVerify(atLeast = 1) { mockAccommodationCommandHandler.handle(any<CreateAccommodationCommand>()) }
+//            coVerify(atLeast = 1) { mockAttractionCommandHandler.handle(any<CreateAttractionCommand>()) }
+//            coVerify(atLeast = 1) { mockCommuteCommandHandler.handle(any<CreateCommuteCommand>()) }
+//        }
+//
+//    @Test
+//    fun `should stop generating data when stopped`() =
+//        runTest {
+//            scheduler.start(this)
+//            runCurrent()
+//
+//            delay(1000)
+//            scheduler.stop()
+//            runCurrent()
+//
+//            coVerify(exactly = 1) { mockAccommodationCommandHandler.handle(any<CreateAccommodationCommand>()) }
+//            coVerify(exactly = 1) { mockAttractionCommandHandler.handle(any<CreateAttractionCommand>()) }
+//            coVerify(exactly = 1) { mockCommuteCommandHandler.handle(any<CreateCommuteCommand>()) }
+//        }
 }

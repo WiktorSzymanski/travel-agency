@@ -1,7 +1,7 @@
 package pl.szymanski.wiktor.ta.dto
 
 import kotlinx.serialization.Serializable
-import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
@@ -15,7 +15,7 @@ data class TravelOfferDto(
     val accommodation: AccommodationDto,
     val attraction: AttractionDto? = null,
     val booking: BookingDto? = null,
-    val status: String = OfferStatusEnum.AVAILABLE.name,
+    val status: String = TravelOfferStatusEnum.AVAILABLE.name,
 ) {
     companion object {
         fun fromDomain(

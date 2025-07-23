@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.domain.repository
 
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
@@ -12,7 +13,7 @@ interface TravelOfferRepository {
 
     suspend fun findAll(): List<TravelOffer>
 
-    suspend fun saveAll(travelOffers: List<TravelOffer>)
+    suspend fun findByStatus(status: TravelOfferStatusEnum): List<TravelOffer>
 
     suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer>
 

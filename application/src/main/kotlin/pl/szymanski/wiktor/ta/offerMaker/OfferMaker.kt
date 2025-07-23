@@ -37,11 +37,13 @@ class OfferMaker(
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch {
             EventBus.subscribe<TravelOfferExpiredEvent> {
-                offerHashes.remove(Triple(
-                    it.commuteId,
-                    it.accommodationId,
-                    it.attractionId,
-                ).hashCode())
+                offerHashes.remove(
+                    Triple(
+                        it.commuteId,
+                        it.accommodationId,
+                        it.attractionId,
+                    ).hashCode(),
+                )
             }
         }
     }
@@ -58,7 +60,7 @@ class OfferMaker(
                         launch {
                             try {
                                 travelOfferCommandHandler.handle(offerTriple.toCommand())
-                            } catch (e: Exception) {
+                            } catch (e: Throwable) {
                                 println("ERROR HANDLED: $e")
                             }
                         }
@@ -136,7 +138,7 @@ class OfferMaker(
         )
     }
 
-    private fun Triple<Commute, Accommodation, Attraction?>.toIds(): Triple<UUID, UUID, UUID?>{
+    private fun Triple<Commute, Accommodation, Attraction?>.toIds(): Triple<UUID, UUID, UUID?> {
         val (commute, accommodation, attraction) = this
         return Triple(commute._id, accommodation._id, attraction?._id)
     }

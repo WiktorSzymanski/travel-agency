@@ -1,7 +1,7 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.Booking
-import pl.szymanski.wiktor.ta.domain.OfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
@@ -18,7 +18,7 @@ data class TravelOffer(
     val accommodationId: UUID,
     val attractionId: UUID? = null,
     var booking: Booking? = null,
-    var status: OfferStatusEnum = OfferStatusEnum.AVAILABLE,
+    var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
 ) {
     companion object {
         fun create(
@@ -50,11 +50,11 @@ data class TravelOffer(
     }
 
     fun expire(): TravelOfferEvent {
-        require(status == OfferStatusEnum.AVAILABLE) {
+        require(status == TravelOfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id cannot be expired when not in AVAILABLE status"
         }
 
-        this.status = OfferStatusEnum.EXPIRED
+        this.status = TravelOfferStatusEnum.EXPIRED
 
         return TravelOfferExpiredEvent(
             travelOfferId = _id,
@@ -68,11 +68,11 @@ data class TravelOffer(
         userId: UUID,
         seat: Seat,
     ): TravelOfferEvent {
-        require(status == OfferStatusEnum.AVAILABLE) {
+        require(status == TravelOfferStatusEnum.AVAILABLE) {
             "TravelOffer $_id is not open for booking"
         }
 
-        this.status = OfferStatusEnum.BOOKED
+        this.status = TravelOfferStatusEnum.BOOKED
         this.booking = Booking(userId, LocalDateTime.now())
 
         return TravelOfferBookedEvent(
@@ -89,7 +89,7 @@ data class TravelOffer(
         userId: UUID,
         seat: Seat,
     ): TravelOfferEvent {
-        require(status == OfferStatusEnum.BOOKED) {
+        require(status == TravelOfferStatusEnum.BOOKED) {
             "Cannot cancel booking for TravelOffer $_id when not in BOOKED status"
         }
 
@@ -98,7 +98,7 @@ data class TravelOffer(
         }
 
         this.booking = null
-        this.status = OfferStatusEnum.AVAILABLE
+        this.status = TravelOfferStatusEnum.AVAILABLE
 
         return TravelOfferBookingCanceledEvent(
             travelOfferId = _id,
