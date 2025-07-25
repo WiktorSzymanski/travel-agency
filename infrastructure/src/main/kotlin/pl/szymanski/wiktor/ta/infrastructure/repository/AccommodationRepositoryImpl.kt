@@ -1,14 +1,14 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
+import org.bson.Document
+import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import java.util.UUID
+import java.util.*
 
 class AccommodationRepositoryImpl(
     database: MongoDatabase,
@@ -16,12 +16,12 @@ class AccommodationRepositoryImpl(
     private val collection: MongoCollection<Accommodation> = database.getCollection("accommodation")
 
     override suspend fun findById(accommodationId: UUID): Accommodation =
-        collection.find(org.bson.Document("_id", accommodationId)).toList().first()
+        collection.find(Document("_id", accommodationId)).toList().first()
 
     override suspend fun save(entity: Accommodation): Accommodation? = collection.insertOne(entity).insertedId?.let { entity }
 
     override suspend fun update(entity: Accommodation) {
-        val filter = org.bson.Document("_id", entity._id)
+        val filter = Document("_id", entity._id)
         val update =
             Updates.combine(
                 Updates.set("booking", entity.booking),
@@ -31,16 +31,6 @@ class AccommodationRepositoryImpl(
         collection.updateOne(filter, update)
     }
 
-    override suspend fun findAll(): List<Accommodation> = collection.find().toList()
-
-    override suspend fun updateAllStatus(accommodations: List<Accommodation>) {
-        collection.bulkWrite(
-            accommodations.map { accommodation ->
-                UpdateOneModel(
-                    Filters.eq("_id", accommodation._id),
-                    Updates.set("status", "${accommodation.status}"),
-                )
-            },
-        )
-    }
+    override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> =
+        collection.find(Document("status", status.toString())).toList()
 }

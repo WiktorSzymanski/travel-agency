@@ -1,60 +1,32 @@
 package pl.szymanski.wiktor.ta.presentation.controller
 
-import com.asyncapi.kotlinasyncapi.context.service.AsyncApiExtension
-import com.asyncapi.kotlinasyncapi.ktor.AsyncApiPlugin
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.Parameters
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.install
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.swagger.swaggerUI
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
-import kotlinx.serialization.json.Json
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.plugins.swagger.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import pl.szymanski.wiktor.ta.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.query.TravelOfferQuery
-import java.util.UUID
-import kotlin.io.extension
-
-// THIS SHOULD BE IN PROJECTION LAYER
+import java.util.*
 
 fun Application.travelOfferController(
-    travelOfferRepository: TravelOfferRepository,
-    commuteRepository: CommuteRepository,
-    accommodationRepository: AccommodationRepository,
-    attractionRepository: AttractionRepository,
+    travelOfferQueryRepository: TravelOfferQueryRepository,
+    accommodationQueryRepository: AccommodationQueryRepository,
     travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
-    install(AsyncApiPlugin) {
-        extension =
-            AsyncApiExtension.builder {
-                info {
-                    title("Sample API")
-                    version("1.0.0")
-                }
-            }
-    }
+    fun extractPaginationParams(queryParams: Parameters): Pair<Int, Int> {
+        val page = queryParams["page"]?.toIntOrNull() ?: 1
+        val size = queryParams["size"]?.toIntOrNull() ?: 20
 
-    install(ContentNegotiation) {
-        json(
-            Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            },
-        )
+        return Pair(page, size)
     }
 
     fun extractQueryParams(queryParams: Parameters): Triple<UUID, UUID, Seat> {
@@ -71,16 +43,36 @@ fun Application.travelOfferController(
 
     val travelOfferQuery =
         TravelOfferQuery(
-            travelOfferRepository = travelOfferRepository,
-            commuteRepository = commuteRepository,
-            accommodationRepository = accommodationRepository,
-            attractionRepository = attractionRepository,
+            travelOfferRepository = travelOfferQueryRepository,
+            accommodationRepository = accommodationQueryRepository
         )
 
     routing {
         get("/travelOffers") {
-            val resp = travelOfferQuery.getTravelOffers()
+            val (page, size) = extractPaginationParams(call.request.queryParameters)
+            val resp = travelOfferQuery.getTravelOffers(page, size)
             call.response.status(HttpStatusCode.OK)
+            call.respond(resp)
+        }
+
+        get("/travelOffersUser/{userId}") {
+            val (page, size) = extractPaginationParams(call.request.queryParameters)
+            val userId = call.parameters["userId"]?.let { UUID.fromString(it) }
+
+            requireNotNull(userId)
+            val resp = travelOfferQuery.getTravelOfferByUserId(page, size, userId)
+            call.response.status(HttpStatusCode.OK)
+            call.respond(resp)
+        }
+
+        get("/travelOffers/location/{location}") {
+            val (page, size) = extractPaginationParams(call.request.queryParameters)
+            val location = call.parameters["location"]?.let { LocationEnum.valueOf(it) }
+            val status = call.request.queryParameters["status"]?.let { TravelOfferStatusEnum.valueOf(it) }
+            requireNotNull(location)
+            requireNotNull(status)
+            val resp = travelOfferQuery.getTravelOfferByLocation(page, size, location, status)
+                call.response.status(HttpStatusCode.OK)
             call.respond(resp)
         }
 
@@ -98,12 +90,17 @@ fun Application.travelOfferController(
 
         get("/travelOffers/{status}") {
             val status = call.parameters["status"]?.let { TravelOfferStatusEnum.valueOf(it) }
+            val (page, size) = extractPaginationParams(call.request.queryParameters)
 
             requireNotNull(status) {
                 "Invalid travel offer status ${call.parameters["status"]}"
             }
 
-            val resp = travelOfferQuery.getTravelOffersByStatus(status)
+            val resp = travelOfferQuery.getTravelOffersByStatus(
+                status,
+                page,
+                size,
+            )
             call.response.status(HttpStatusCode.OK)
             call.respond(resp)
         }

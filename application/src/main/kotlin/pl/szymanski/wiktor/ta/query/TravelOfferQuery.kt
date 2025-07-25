@@ -1,41 +1,37 @@
 package pl.szymanski.wiktor.ta.query
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import pl.szymanski.wiktor.ta.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.TravelOfferQueryRepository
+import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import java.util.UUID
 
 class TravelOfferQuery(
-    private val travelOfferRepository: TravelOfferRepository,
-    private val commuteRepository: CommuteRepository,
-    private val accommodationRepository: AccommodationRepository,
-    private val attractionRepository: AttractionRepository,
+    private val travelOfferRepository: TravelOfferQueryRepository,
+    private val accommodationRepository: AccommodationQueryRepository
 ) {
-    suspend fun getTravelOffers(): List<TravelOfferDto> =
-        travelOfferRepository.findAll()
-            .map { it.toDto() }
+    suspend fun getTravelOffers(page: Int, size: Int): List<TravelOfferDto> =
+        travelOfferRepository.findTravelOfferDto(page, size)
 
-    suspend fun getTravelOffersByStatus(status: TravelOfferStatusEnum): List<TravelOfferDto> =
-        travelOfferRepository.findByStatus(status)
-            .map { it.toDto() }
+    suspend fun getTravelOffersByStatus(status: TravelOfferStatusEnum, page: Int, size: Int): List<TravelOfferDto> =
+        travelOfferRepository.findTravelOfferDto(page, size, status)
 
     suspend fun getTravelOfferById(travelOfferId: UUID): TravelOfferDto =
-        travelOfferRepository.findById(travelOfferId).toDto()
+        travelOfferRepository.findTravelOfferDto(travelOfferId = travelOfferId)[0]
 
-    private suspend fun TravelOffer.toDto(): TravelOfferDto = coroutineScope {
-        this@toDto.let {
-            val accommodation = async { accommodationRepository.findById(this@toDto.accommodationId) }
-            val attraction =
-                if (this@toDto.attractionId != null) async { attractionRepository.findById(this@toDto.attractionId!!) } else null
-            val commute = async { commuteRepository.findById(this@toDto.commuteId) }
+    suspend fun getTravelOfferByLocation(page: Int, size: Int, location: LocationEnum, status: TravelOfferStatusEnum): List<TravelOfferDto> =
+        accommodationRepository.findTravelOfferByLocation(
+            page = page,
+            size = size,
+            location = location,
+            status = status
+        )
 
-            TravelOfferDto.fromDomain(this@toDto, commute.await(), accommodation.await(), attraction?.await())
-        }
-    }
+    suspend fun getTravelOfferByUserId(page: Int, size: Int, userId: UUID): List<TravelOfferDto> =
+        travelOfferRepository.findTravelOfferDto(
+            page = page,
+            size = size,
+            userId = userId
+        )
 }

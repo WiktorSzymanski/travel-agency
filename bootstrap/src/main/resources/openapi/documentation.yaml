@@ -11,6 +11,113 @@ paths:
       summary: Get all travel offers
       description: Returns a list of all available travel offers with related accommodation, attraction, and commute details
       operationId: getTravelOffers
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
+  /travelOffersUser/{userId}:
+    get:
+      summary: Get travel offers by user ID
+      description: Returns a list of travel offers for a specific user
+      operationId: getTravelOffersByUserId
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
+  /travelOffer/{id}:
+    get:
+      summary: Get travel offer by ID
+      description: Returns a single travel offer
+      operationId: getTravelOfferById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the travel offer
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelOfferDto'
+  /travelOffers/{status}:
+    get:
+      summary: Get travel offers by status
+      description: Returns a list of travel offers with a specific status
+      operationId: getTravelOffersByStatus
+      parameters:
+        - name: status
+          in: path
+          description: Status of the travel offer
+          required: true
+          schema:
+            type: string
+            enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
       responses:
         '200':
           description: Successful operation
@@ -87,6 +194,35 @@ paths:
           description: Invalid input parameters
         '500':
           description: Internal server error
+  /commuteStatistics:
+    get:
+      summary: Get commute statistics
+      description: Returns statistics about commutes within a given date range
+      operationId: getCommuteStatistics
+      parameters:
+        - name: start
+          in: query
+          description: Start of the date range (defaults to 1 hour ago)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          description: End of the date range (defaults to now)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommuteStatisticDto'
 components:
   schemas:
     TravelOfferDto:
@@ -112,7 +248,6 @@ components:
           type: string
           description: Current status of the travel offer
           enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
-      $ref:
 
     CommuteDto:
       type: object
@@ -210,3 +345,25 @@ components:
         column:
           type: string
           description: Column of the seat
+
+    CommuteStatisticDto:
+      type: object
+      properties:
+        time:
+          type: string
+        arrivalLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArrivalLocationDto'
+
+    ArrivalLocationDto:
+      type: object
+      properties:
+        location:
+          type: string
+        commutesNumber:
+          type: integer
+          format: int64
+        passengersNumber:
+          type: integer
+          format: int64

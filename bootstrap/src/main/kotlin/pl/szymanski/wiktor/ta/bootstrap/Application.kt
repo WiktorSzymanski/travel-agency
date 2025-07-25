@@ -12,11 +12,16 @@ import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.eventHandler.DateMetEventHandler
 import pl.szymanski.wiktor.ta.eventHandler.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
+import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.AttractionRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.CommuteQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.CommuteRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
+import pl.szymanski.wiktor.ta.infrastructure.repository.TravelOfferQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.TravelOfferRepositoryImpl
+import pl.szymanski.wiktor.ta.presentation.controller.commuteStatisticsController
+import pl.szymanski.wiktor.ta.query.CommuteStatisticsQuery
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 
 fun main(args: Array<String>) {
@@ -34,6 +39,10 @@ fun Application.application() {
 
     val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
     val travelOfferExpireService = TravelOfferExpireService(travelOfferRepository, travelOfferCommandHandler)
+
+    val travelOfferQueryRepository = TravelOfferQueryRepositoryImpl(MongoDbProvider.database)
+    val accommodationQueryRepository = AccommodationQueryRepositoryImpl(MongoDbProvider.database)
+    val commuteQueryRepository = CommuteQueryRepositoryImpl(MongoDbProvider.database)
 
     launch {
         TravelOfferEventHandler(
@@ -54,10 +63,12 @@ fun Application.application() {
     }
 
     travelOfferController(
-        travelOfferRepository = travelOfferRepository,
-        commuteRepository = commuteRepository,
-        accommodationRepository = accommodationRepository,
-        attractionRepository = attractionRepository,
+        travelOfferQueryRepository = travelOfferQueryRepository,
         travelOfferCommandHandler = travelOfferCommandHandler,
+        accommodationQueryRepository = accommodationQueryRepository,
+    )
+
+    commuteStatisticsController(
+        commuteStatisticsQuery = CommuteStatisticsQuery(commuteQueryRepository),
     )
 }

@@ -11,10 +11,6 @@ interface TravelOfferRepository {
 
     suspend fun update(travelOffer: TravelOffer)
 
-    suspend fun findAll(): List<TravelOffer>
-
-    suspend fun findByStatus(status: TravelOfferStatusEnum): List<TravelOffer>
-
     suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer>
 
     suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer>
