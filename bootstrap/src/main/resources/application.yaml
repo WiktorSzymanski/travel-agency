@@ -15,7 +15,7 @@ offerScheduler:
   intervalSeconds: 1
 
 scheduler:
-    intervalSeconds: 30
+    intervalSeconds: 3000
     inAdvanceSeconds: 30
     creationWindowSeconds: 10
     accommodations:

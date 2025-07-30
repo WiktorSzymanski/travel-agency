@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.repository
+package pl.szymanski.wiktor.ta.infrastructure.repository.query
 
 import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
@@ -11,6 +11,7 @@ import pl.szymanski.wiktor.ta.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
 import java.util.*
 
 class TravelOfferQueryRepositoryImpl(

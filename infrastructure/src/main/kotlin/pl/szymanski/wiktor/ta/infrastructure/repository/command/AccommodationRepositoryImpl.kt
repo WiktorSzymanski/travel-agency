@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.repository
+package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection

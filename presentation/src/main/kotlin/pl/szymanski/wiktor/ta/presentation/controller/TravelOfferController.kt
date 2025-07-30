@@ -116,7 +116,7 @@ fun Application.travelOfferController(
                         seat,
                     ) as TravelOfferCommand,
                 )
-                call.respond(HttpStatusCode.OK, "Travel offer booked successfully")
+                call.respond(HttpStatusCode.Accepted, "Book request accepted")
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid input parameters")
             } catch (e: Exception) {
@@ -129,7 +129,7 @@ fun Application.travelOfferController(
                 travelOfferCommandHandler.handle(
                     CancelBookTravelOfferCommand(offerId, UUID.randomUUID(), userId, seat) as TravelOfferCommand,
                 )
-                call.respond(HttpStatusCode.OK, "Travel offer booking cancelled successfully")
+                call.respond(HttpStatusCode.OK, "Cancel request accepted")
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.BadRequest, e.message ?: "Invalid input parameters")
             } catch (e: Exception) {

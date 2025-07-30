@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.service
 
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
@@ -10,6 +11,10 @@ class TravelOfferExpireService(
     private val travelOfferRepository: TravelOfferRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(TravelOfferExpireService::class.java)
+    }
+
     suspend fun expireTravelOfferByCommute(
         commuteId: UUID,
         correlationId: UUID,
@@ -25,7 +30,7 @@ class TravelOfferExpireService(
                         ) as TravelOfferCommand,
                     )
                 } catch (e: IllegalArgumentException) {
-                    println("ERROR HANDLED: $e")
+                    log.error("ERROR HANDLED: {}", e.message)
                 }
             }
     }
@@ -45,7 +50,7 @@ class TravelOfferExpireService(
                         ) as TravelOfferCommand,
                     )
                 } catch (e: IllegalArgumentException) {
-                    println("ERROR HANDLED: $e")
+                    log.error("ERROR HANDLED: {}", e.message)
                 }
             }
     }
@@ -65,7 +70,7 @@ class TravelOfferExpireService(
                         ) as TravelOfferCommand,
                     )
                 } catch (e: IllegalArgumentException) {
-                    println("ERROR HANDLED: $e")
+                    log.error("ERROR HANDLED: {}", e.message)
                 }
             }
     }

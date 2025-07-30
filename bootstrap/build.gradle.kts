@@ -26,7 +26,6 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:${ktorVersion}")
     implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
     implementation("org.openfolder:kotlin-asyncapi-ktor:3.1.1")
-    implementation("ch.qos.logback:logback-classic:${logbackVersion}")
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:${mongoVersion}")
     implementation(project(":domain"))
     implementation(project(":application"))

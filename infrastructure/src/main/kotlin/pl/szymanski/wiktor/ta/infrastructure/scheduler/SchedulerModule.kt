@@ -7,9 +7,9 @@ import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
-import pl.szymanski.wiktor.ta.infrastructure.repository.AccommodationRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.AttractionRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.CommuteRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.command.AccommodationRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.command.AttractionRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
 
 fun Application.scheduler() {

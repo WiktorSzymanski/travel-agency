@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.repository
+package pl.szymanski.wiktor.ta.infrastructure.repository.query
 
 import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
@@ -13,6 +13,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
 
 class AccommodationQueryRepositoryImpl (
     database: MongoDatabase,

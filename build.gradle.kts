@@ -18,14 +18,18 @@ repositories {
 }
 
 dependencies {
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
     ktlint("com.pinterest.ktlint:ktlint-cli:$ktlintVersion")
 }
 
 subprojects {
+    apply(plugin = "kotlin")
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    dependencies {
+        implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    }
 
     ktlint {
         version.set("1.2.1")

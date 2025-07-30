@@ -4,6 +4,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
@@ -34,6 +35,15 @@ class BookingSaga(
     private lateinit var accommodationCommand: AccommodationCommand
     private lateinit var commuteCommand: CommuteCommand
     private var attractionCommand: AttractionCommand? = null
+
+    init {
+        log.info("New BookingSaga created for event: {}", triggeringEvent)
+        prepareCommands()
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(BookingSaga::class.java)
+    }
 
     fun prepareCommands() =
         when (triggeringEvent) {
@@ -90,7 +100,7 @@ class BookingSaga(
 
     suspend fun execute() =
         coroutineScope {
-            prepareCommands()
+            log.info("Executing BookingSaga for event: {}", triggeringEvent)
 
             val handleJobs = mutableListOf<Deferred<Result<Any>>>()
 
@@ -114,13 +124,15 @@ class BookingSaga(
             val results = handleJobs.awaitAll()
 
             if (results.any { it.isFailure }) {
-                println("Saga Failed — running compensations")
+                log.error("Saga result for travelOfferId ${triggeringEvent.travelOfferId}: Failed — running compensations")
 
                 val successfulEvents =
                     results
                         .filter { it.isSuccess }
                         .mapNotNull { it.getOrNull() }
                         .reversed()
+
+                // SHOULD CHECK IF COMPENSATION SUCCEDED
 
                 successfulEvents.forEach { event ->
                     when (event) {
@@ -132,7 +144,7 @@ class BookingSaga(
 
                 travelOfferCommandHandler.compensate(triggeringEvent)
             } else {
-                println("Saga Succeeded")
+                log.info("Saga result for travelOfferId ${triggeringEvent.travelOfferId}: Succeeded")
             }
         }
 }

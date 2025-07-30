@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.eventHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
@@ -22,6 +23,10 @@ class DateMetEventHandler(
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(DateMetEventHandler::class.java)
+    }
+
     fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch { commuteDateMetEventHandler() }
         scope.launch { accommodationDateMetEventHandler() }
@@ -30,7 +35,7 @@ class DateMetEventHandler(
 
     suspend fun commuteDateMetEventHandler() {
         EventBus.subscribe<CommuteDateMetEvent> {
-            println("Commute date met event: $it")
+            log.info("Commute date met event: {}", it)
             try {
                 commuteCommandHandler.handle(
                     ExpireCommuteCommand(
@@ -39,14 +44,14 @@ class DateMetEventHandler(
                     ) as CommuteCommand,
                 )
             } catch (e: IllegalArgumentException) {
-                println("ERROR HANDLE: $e")
+                log.error("ERROR HANDLE: {}", e.message)
             }
         }
     }
 
     suspend fun accommodationDateMetEventHandler() {
         EventBus.subscribe<AccommodationDateMetEvent> {
-            println("Accommodation date met event: $it")
+            log.info("Accommodation date met event: {}", it)
             try {
                 accommodationCommandHandler.handle(
                     ExpireAccommodationCommand(
@@ -55,14 +60,14 @@ class DateMetEventHandler(
                     ) as AccommodationCommand,
                 )
             } catch (e: IllegalArgumentException) {
-                println("ERROR HANDLE: $e")
+                log.error("ERROR HANDLE: {}", e.message)
             }
         }
     }
 
     suspend fun attractionDateMetEventHandler() {
         EventBus.subscribe<AttractionDateMetEvent> {
-            println("Attraction date met event: $it")
+            log.info("Attraction date met event: {}", it)
             try {
                 attractionCommandHandler.handle(
                     ExpireAttractionCommand(
@@ -71,7 +76,7 @@ class DateMetEventHandler(
                     ) as AttractionCommand,
                 )
             } catch (e: IllegalArgumentException) {
-                println("ERROR HANDLE: $e")
+                log.error("ERROR HANDLE: {}", e.message)
             }
         }
     }

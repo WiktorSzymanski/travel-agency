@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.domain.event.Event
 import java.time.Duration
 import java.time.LocalDateTime
@@ -16,11 +17,12 @@ import java.time.ZoneId
 import java.util.UUID
 
 object EventBus {
+    private val log = LoggerFactory.getLogger(EventBus::class.java)
     private val _events = MutableSharedFlow<Any>()
     val events = _events.asSharedFlow()
 
     suspend fun publish(event: Any) {
-        println("Publishing event: $event")
+        log.info("Publishing event: {}", event)
         _events.emit(event)
     }
 
@@ -30,7 +32,7 @@ object EventBus {
         scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ) {
-        println("Event $event set to be published at: $date")
+        log.info("Event {} set to be published at: {}", event, date)
         scope.launch {
             Duration.between(LocalDateTime.now(zoneId), date).toMillis().let {
                 if (it > 0) delay(it)

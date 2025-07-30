@@ -5,8 +5,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
@@ -29,6 +31,10 @@ class OfferMaker(
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
     private val offerHashes = mutableListOf<Int>()
+
+    companion object {
+        private val log = LoggerFactory.getLogger(OfferMaker::class.java)
+    }
 
     init {
         popExpiredHashes()
@@ -59,9 +65,9 @@ class OfferMaker(
                     if (!offerHashes.contains(offerMatchHash)) {
                         launch {
                             try {
-                                travelOfferCommandHandler.handle(offerTriple.toCommand())
+                                travelOfferCommandHandler.handle(offerTriple.toCommand() as TravelOfferCommand)
                             } catch (e: Throwable) {
-                                println("ERROR HANDLED: $e")
+                                log.info("ERROR HANDLED: $e")
                             }
                         }
                         offerHashes.add(offerMatchHash)

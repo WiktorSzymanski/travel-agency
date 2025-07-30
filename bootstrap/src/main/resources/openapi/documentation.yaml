@@ -150,7 +150,7 @@ paths:
             format: uuid
         - name: seat
           in: query
-          description: Seat to book in format "row/column" (e.g., "1/A")
+          description: Seat to book in format "row/column" (e.g., "1|A")
           required: true
           schema:
             type: string
@@ -183,7 +183,7 @@ paths:
             format: uuid
         - name: seat
           in: query
-          description: Seat to cancel in format "row/column" (e.g., "1/A")
+          description: Seat to cancel in format "row/column" (e.g., "1|A")
           required: true
           schema:
             type: string

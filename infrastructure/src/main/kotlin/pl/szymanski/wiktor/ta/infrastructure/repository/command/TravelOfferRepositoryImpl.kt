@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.repository
+package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
@@ -35,11 +35,11 @@ class TravelOfferRepositoryImpl(
     }
 
     override suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer> =
-        collection.find(org.bson.Document("commuteId", commuteId)).toList()
+        collection.find(Document("commuteId", commuteId)).toList()
 
     override suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer> =
-        collection.find(org.bson.Document("accommodationId", accommodationId)).toList()
+        collection.find(Document("accommodationId", accommodationId)).toList()
 
     override suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer> =
-        collection.find(org.bson.Document("attractionId", attractionId)).toList()
+        collection.find(Document("attractionId", attractionId)).toList()
 }
