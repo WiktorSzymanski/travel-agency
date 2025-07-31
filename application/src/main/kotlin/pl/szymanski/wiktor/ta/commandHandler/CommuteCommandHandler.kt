@@ -71,7 +71,7 @@ class CommuteCommandHandler(
 
     suspend fun compensate(event: CommuteBookedEvent): CommuteEvent =
         handle(
-            BookCommuteCommand(
+            CancelCommuteBookingCommand(
                 event.commuteId,
                 event.correlationId!!,
                 event.userId,
@@ -81,7 +81,7 @@ class CommuteCommandHandler(
 
     suspend fun compensate(event: CommuteBookingCanceledEvent): CommuteEvent =
         handle(
-            CancelCommuteBookingCommand(
+            BookCommuteCommand(
                 event.commuteId,
                 event.correlationId!!,
                 event.userId,

@@ -20,6 +20,7 @@ data class Commute(
     val seats: List<Seat>,
     val bookings: MutableMap<String, Booking> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
+    val version: Int = 1
 ) {
     companion object {
         fun create(
@@ -71,7 +72,7 @@ data class Commute(
     ): CommuteEvent {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Seat cannot be booked when Commute $_id not in SCHEDULED status"
+            "Seat cannot be booked when Commute $_id not in SCHEDULED status, current status is $status"
         }
 
         require(this.seats.contains(seat)) {
@@ -97,7 +98,7 @@ data class Commute(
     ): CommuteEvent {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Cannot cancel seat $seat when Commute $_id not in SCHEDULED status"
+            "Cannot cancel seat $seat when Commute $_id not in SCHEDULED status, current status is $status"
         }
 
         this.bookings

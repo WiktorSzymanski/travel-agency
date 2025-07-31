@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
+import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
@@ -8,6 +9,7 @@ import org.bson.Document
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import java.util.*
+import kotlin.ConcurrentModificationException
 
 class TravelOfferRepositoryImpl(
     database: MongoDatabase,
@@ -25,13 +27,19 @@ class TravelOfferRepositoryImpl(
     override suspend fun save(travelOffer: TravelOffer): TravelOffer? = collection.insertOne(travelOffer).insertedId?.let { travelOffer }
 
     override suspend fun update(travelOffer: TravelOffer) {
-        val filter = Document("_id", travelOffer._id)
+        val filter = Filters.and(
+            Filters.eq("_id", travelOffer._id),
+            Filters.eq("version", travelOffer.version),
+        )
         val update =
             Updates.combine(
                 Updates.set("booking", travelOffer.booking),
                 Updates.set("status", "${travelOffer.status}"),
+                Updates.set("version", travelOffer.version + 1),
             )
-        collection.updateOne(filter, update)
+        if (collection.updateOne(filter, update).matchedCount == 0L) {
+            throw ConcurrentModificationException("Concurrent modification detected for ${travelOffer._id}")
+        }
     }
 
     override suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer> =

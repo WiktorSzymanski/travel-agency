@@ -19,6 +19,7 @@ data class TravelOffer(
     val attractionId: UUID? = null,
     var booking: Booking? = null,
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
+    val version: Int = 1
 ) {
     companion object {
         fun create(
@@ -51,7 +52,7 @@ data class TravelOffer(
 
     fun expire(): TravelOfferEvent {
         require(status == TravelOfferStatusEnum.AVAILABLE) {
-            "TravelOffer $_id cannot be expired when not in AVAILABLE status"
+            "TravelOffer $_id cannot be expired when in $status status"
         }
 
         this.status = TravelOfferStatusEnum.EXPIRED
@@ -69,7 +70,7 @@ data class TravelOffer(
         seat: Seat,
     ): TravelOfferEvent {
         require(status == TravelOfferStatusEnum.AVAILABLE) {
-            "TravelOffer $_id is not open for booking"
+            "TravelOffer $_id is not open for booking, current status is $status"
         }
 
         this.status = TravelOfferStatusEnum.BOOKED
@@ -90,7 +91,7 @@ data class TravelOffer(
         seat: Seat,
     ): TravelOfferEvent {
         require(status == TravelOfferStatusEnum.BOOKED) {
-            "Cannot cancel booking for TravelOffer $_id when not in BOOKED status"
+            "Cannot cancel booking for TravelOffer $_id when in $status status"
         }
 
         require(this.booking?.userId == userId) {

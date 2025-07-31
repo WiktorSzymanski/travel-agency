@@ -19,6 +19,7 @@ data class Accommodation(
     val rent: Rent,
     var booking: Booking? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
+    val version: Int = 1
 ) {
     companion object {
         fun create(
@@ -66,7 +67,7 @@ data class Accommodation(
     fun book(userId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
-            "Accommodation $_id is not AVAILABLE"
+            "Accommodation $_id cannot be booked when in status $status"
         }
 
         this.status = AccommodationStatusEnum.BOOKED
@@ -81,7 +82,7 @@ data class Accommodation(
     fun cancelBooking(userId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.BOOKED) {
-            "Accommodation $_id is not BOOKED"
+            "Accommodation $_id booking cannot be canceled when in status $status"
         }
 
         require(this.booking?.userId == userId) {

@@ -37,23 +37,26 @@ class TravelOfferEventHandler(
         scope.launch { attractionExpiredEventHandler() }
     }
 
-    suspend fun travelOfferBookedEventHandler() =
+    suspend fun travelOfferBookedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<TravelOfferBookedEvent> {
-                log.info("New travel offer booked: {}", it.travelOfferId)
-                BookingSaga(
-                    travelOfferCommandHandler,
-                    attractionCommandHandler,
-                    commuteCommandHandler,
-                    accommodationCommandHandler,
-                    it,
-                ).execute()
+                scope.launch {
+                    log.info("New travel offer booked: {}", it.travelOfferId)
+                    BookingSaga(
+                        travelOfferCommandHandler,
+                        attractionCommandHandler,
+                        commuteCommandHandler,
+                        accommodationCommandHandler,
+                        it,
+                    ).execute()
+                }
             }
         }
 
-    suspend fun travelOfferBookingCanceledEventHandler() =
+    suspend fun travelOfferBookingCanceledEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<TravelOfferBookingCanceledEvent> {
+                scope.launch {
                 log.info("Travel offer booking canceled: {}", it.travelOfferId)
                 BookingSaga(
                     travelOfferCommandHandler,
@@ -62,30 +65,38 @@ class TravelOfferEventHandler(
                     accommodationCommandHandler,
                     it,
                 ).execute()
+                }
             }
         }
 
-    suspend fun commuteExpiredEventHandler() =
+    suspend fun commuteExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<CommuteExpiredEvent> {
-                log.info("TravelOffer expire due to commute expired event: {}", it)
-                travelOfferExpireService.expireTravelOfferByCommute(it.commuteId, it.correlationId!!)
+                scope.launch {
+                    log.info("TravelOffer expire due to commute expired event: {}", it)
+                    travelOfferExpireService.expireTravelOfferByCommute(it.commuteId, it.correlationId!!)
+                }
             }
         }
 
-    suspend fun accommodationExpiredEventHandler() =
+    suspend fun accommodationExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<AccommodationExpiredEvent> {
-                log.info("TravelOffer expire due to accommodation expired event: {}", it)
-                travelOfferExpireService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
+                scope.launch {
+                    log.info("TravelOffer expire due to accommodation expired event: {}", it)
+                    travelOfferExpireService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
+                }
+
             }
         }
 
-    suspend fun attractionExpiredEventHandler() =
+    suspend fun attractionExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<AttractionExpiredEvent> {
-                log.info("TravelOffer expire due to attraction expired event: {}", it)
-                travelOfferExpireService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
+                scope.launch {
+                    log.info("TravelOffer expire due to attraction expired event: {}", it)
+                    travelOfferExpireService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
+                }
+                }
             }
-        }
 }

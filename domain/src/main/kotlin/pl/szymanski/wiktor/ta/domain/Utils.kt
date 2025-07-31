@@ -9,6 +9,16 @@ enum class LocationEnum {
     LONDON,
     PARIS,
     BERLIN,
+    ROME,
+    AMSTERDAM,
+    ZERMATT,
+    VIENNA,
+    BARCELONA,
+    VENICE,
+    ZURICH,
+    BUDAPEST,
+    MADRID,
+    LYON
 }
 
 data class LocationAndTime(
