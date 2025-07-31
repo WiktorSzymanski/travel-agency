@@ -1,10 +1,11 @@
 val exposedVersion = "0.50.1"
-val mokkVersion = "1.13.7"
+val mokkVersion = "1.14.5"
 val kotlinxCoroutinesTestVersion = "1.10.2"
 val coroutinesVersion = "1.7.3"
 
 plugins {
     kotlin("jvm")
+    kotlin("plugin.serialization") version "2.1.10"
 }
 
 group = "pl.szymanski.wiktor"
@@ -18,9 +19,11 @@ dependencies {
     implementation(project(":domain"))
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("io.github.nomisrev:Saga:1.0.1")
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:$mokkVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesTestVersion")
 }
 

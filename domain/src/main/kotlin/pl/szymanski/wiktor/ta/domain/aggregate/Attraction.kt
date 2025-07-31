@@ -3,6 +3,11 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -14,40 +19,49 @@ data class Attraction(
     val capacity: Int,
     val bookings: MutableList<Booking> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
+    val version: Int = 1
 ) {
     companion object {
-        const val MINIMUM_REQUIRED_BOOKINGS_RATIO = 0.5
+        fun create(
+            name: String,
+            location: LocationEnum,
+            date: LocalDateTime,
+            capacity: Int,
+        ): Pair<Attraction, AttractionCreatedEvent> {
+            val attraction =
+                Attraction(
+                    name = name,
+                    location = location,
+                    date = date,
+                    capacity = capacity,
+                )
+
+            val event =
+                AttractionCreatedEvent(
+                    attractionId = attraction._id,
+                    name = name,
+                    location = location,
+                    date = date,
+                    capacity = capacity,
+                )
+
+            return attraction to event
+        }
     }
 
-    fun cancel() {
-        require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $_id cannot be cancelled when not in SCHEDULED status"
-        }
-
-        require(bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * capacity) {
-            "Attraction $_id cannot be cancelled when more than half of seats are booked"
-        }
-
-        this.status = AttractionStatusEnum.CANCELLED
-
-        // EVENT or something
-    }
-
-    fun expire() {
-        require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $_id cannot be cancelled when not in SCHEDULED status"
-        }
-
+    fun expire(): AttractionEvent {
         require(LocalDateTime.now().isAfter(date)) {
             "Attraction $_id cannot expire before its date"
         }
 
         this.status = AttractionStatusEnum.EXPIRED
 
-        // EVENT or something
+        return AttractionExpiredEvent(
+            attractionId = _id,
+        )
     }
 
-    fun book(userId: UUID) {
+    fun book(userId: UUID): AttractionEvent {
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
@@ -64,10 +78,13 @@ data class Attraction(
 
         bookings.add(Booking(userId, LocalDateTime.now()))
 
-        // EVENT or something
+        return AttractionBookedEvent(
+            attractionId = _id,
+            userId = userId,
+        )
     }
 
-    fun cancelBooking(userId: UUID) {
+    fun cancelBooking(userId: UUID): AttractionEvent {
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
@@ -80,18 +97,16 @@ data class Attraction(
             "User $userId has no booking for Attraction $_id"
         }
 
-        // EVENT or something
+        return AttractionBookingCanceledEvent(
+            attractionId = _id,
+            userId = userId,
+        )
     }
 
     private fun statusCheck() {
-        if (this.status == AttractionStatusEnum.SCHEDULED) {
-            if (LocalDateTime.now().isAfter(date)) {
-                if (bookings.size < MINIMUM_REQUIRED_BOOKINGS_RATIO * capacity) {
-                    this.status = AttractionStatusEnum.CANCELLED
-                } else {
-                    this.status = AttractionStatusEnum.EXPIRED
-                }
-            }
-        }
+        if (!listOf(AttractionStatusEnum.SCHEDULED, AttractionStatusEnum.FULL).contains(this.status)) return
+        if (LocalDateTime.now().isBefore(date)) return
+
+        this.status = AttractionStatusEnum.EXPIRED
     }
 }

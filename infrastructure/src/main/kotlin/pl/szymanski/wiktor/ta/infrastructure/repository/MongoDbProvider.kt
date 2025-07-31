@@ -12,6 +12,8 @@ object MongoDbProvider {
     private lateinit var settings: MongoClientSettings
 
     fun init(config: DatabaseConfig) {
+        if (this::settings.isInitialized) return
+
         this.settings =
             MongoClientSettings
                 .builder()

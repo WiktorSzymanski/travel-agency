@@ -1,9 +1,8 @@
 val jacksonVersion = "2.15.2"
-val coroutinesVersion = "1.7.3"
-val mockkVersion = "1.13.5"
-val ktorVersion = "3.2.0"
+val coroutinesVersion = "1.9.0-RC"
+val mockkVersion = "1.14.5"
 val mongoVersion = "5.1.0"
-val logbackVersion = "1.4.14"
+val ktorVersion = "3.2.0"
 
 plugins {
     kotlin("jvm")
@@ -24,28 +23,19 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
-    implementation("io.ktor:ktor-server-openapi")
-
-    implementation("io.ktor:ktor-server-swagger")
-
     implementation(project(":domain"))
     implementation(project(":application"))
+    implementation("io.ktor:ktor-server-core:${ktorVersion}")
+    implementation("io.ktor:ktor-server-cio:${ktorVersion}")
+    implementation("io.ktor:ktor-server-config-yaml:${ktorVersion}")
+    implementation("io.ktor:ktor-server-content-negotiation:${ktorVersion}")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-server-cio:$ktorVersion")
-    implementation("io.ktor:ktor-server-config-yaml:$ktorVersion")
-
-    implementation("ch.qos.logback:logback-classic:$logbackVersion")
-
     implementation("org.mongodb:bson-kotlinx:5.2.0")
 
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:$mongoVersion")
-    implementation("org.openfolder:kotlin-asyncapi-ktor:3.1.1")
 
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")

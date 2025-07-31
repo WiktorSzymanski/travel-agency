@@ -9,6 +9,16 @@ enum class LocationEnum {
     LONDON,
     PARIS,
     BERLIN,
+    ROME,
+    AMSTERDAM,
+    ZERMATT,
+    VIENNA,
+    BARCELONA,
+    VENICE,
+    ZURICH,
+    BUDAPEST,
+    MADRID,
+    LYON
 }
 
 data class LocationAndTime(
@@ -26,7 +36,14 @@ data class Seat(
     val row: String,
     val column: String,
 ) {
-    override fun toString(): String = "$row$column"
+    override fun toString(): String = "$row|$column"
+
+    companion object {
+        fun fromString(seat: String): Seat {
+            val (row, column) = seat.split("|")
+            return Seat(row, column)
+        }
+    }
 }
 
 data class Rent(
@@ -36,8 +53,8 @@ data class Rent(
 
 enum class CommuteStatusEnum {
     SCHEDULED,
-    CANCELLED,
-    DEPARTED,
+    FULL,
+    EXPIRED,
 }
 
 enum class AccommodationStatusEnum {
@@ -48,13 +65,12 @@ enum class AccommodationStatusEnum {
 
 enum class AttractionStatusEnum {
     SCHEDULED,
-    CANCELLED,
+    FULL,
     EXPIRED,
 }
 
-enum class OfferStatusEnum {
+enum class TravelOfferStatusEnum {
     AVAILABLE,
     BOOKED,
     EXPIRED,
-    CANCELLED,
 }

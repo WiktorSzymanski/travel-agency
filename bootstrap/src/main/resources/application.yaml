@@ -1,0 +1,191 @@
+ktor:
+    deployment:
+        port: 8080
+    application:
+        modules:
+            - pl.szymanski.wiktor.ta.bootstrap.ApplicationKt.application
+            - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
+            - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
+
+database:
+    uri: "mongodb://localhost:27017"
+    dbName: "travel_agency"
+
+offerScheduler:
+  intervalSeconds: 1
+
+scheduler:
+    intervalSeconds: 3000
+    inAdvanceSeconds: 30
+    creationWindowSeconds: 10
+    accommodations:
+      - name: "Hotel"
+        location: "London"
+      - name: "Hostel"
+        location: "Berlin"
+      - name: "Grand Palace Hotel"
+        location: "Rome"
+      - name: "Cozy Apartment"
+        location: "Amsterdam"
+      - name: "Mountain Cabin"
+        location: "Zermatt"
+      - name: "City Center Inn"
+        location: "Vienna"
+      - name: "Beachside Resort"
+        location: "Barcelona"
+      - name: "Boutique Hotel"
+        location: "Paris"
+
+    attractions:
+      - name: "Big Ben tour"
+        location: "London"
+        capacity: 10
+      - name: "City tour by boat"
+        location: "Berlin"
+        capacity: 30
+      - name: "Colosseum Visit"
+        location: "Rome"
+        capacity: 25
+      - name: "Canals Bike Tour"
+        location: "Amsterdam"
+        capacity: 15
+      - name: "Alpine Hiking"
+        location: "Zermatt"
+        capacity: 12
+      - name: "Vienna Opera House"
+        location: "Vienna"
+        capacity: 100
+      - name: "Barcelona Beach Festival"
+        location: "Barcelona"
+        capacity: 50
+      - name: "Eiffel Tower Visit"
+        location: "Paris"
+        capacity: 80
+
+    commutes:
+      - name: "London to Paris"
+        departureLocation: "Paris"
+        arrivalLocation: "London"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Paris to Berlin"
+        departureLocation: "Paris"
+        arrivalLocation: "Berlin"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Rome to Venice"
+        departureLocation: "Rome"
+        arrivalLocation: "Venice"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Venice to Amsterdam"
+        departureLocation: "Venice"
+        arrivalLocation: "Amsterdam"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Amsterdam to Zurich"
+        departureLocation: "Amsterdam"
+        arrivalLocation: "Zurich"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Vienna to Budapest"
+        departureLocation: "Vienna"
+        arrivalLocation: "Budapest"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Barcelona to Madrid"
+        departureLocation: "Barcelona"
+        arrivalLocation: "Madrid"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+      - name: "Paris to Lyon"
+        departureLocation: "Paris"
+        arrivalLocation: "Lyon"
+        seats:
+          - row: "1"
+            column: "A"
+          - row: "3"
+            column: "A"
+          - row: "4"
+            column: "A"
+          - row: "5"
+            column: "A"
+
+#    accommodations:
+#        - name: "Hotel"
+#          location: "London"
+#        - name: "Hostel"
+#          location: "Berlin"
+#    attractions:
+#        - name: "Big Ben tour"
+#          location: "London"
+#          capacity: 10
+#        - name: "City tour by boat"
+#          location: "Berlin"
+#          capacity: 30
+#    commutes:
+#        - name: "London to Paris"
+#          departureLocation: "Paris"
+#          arrivalLocation: "London"
+#          seats:
+#              - row: "1"
+#                column: "A"
+#              - row: "2"
+#                column: "A"
+#        - name: "Paris to Berlin"
+#          departureLocation: "Paris"
+#          arrivalLocation: "Berlin"
+#          seats:
+#              - row: "3"
+#                column: "B"
+#              - row: "4"
+#                column: "B"

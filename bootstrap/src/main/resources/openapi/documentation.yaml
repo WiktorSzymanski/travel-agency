@@ -1,0 +1,369 @@
+openapi: "3.0.3"
+info:
+  title: "Travel Agency API"
+  description: "API for managing travel offers, bookings, and related services"
+  version: "1.0.0"
+servers:
+  - url: "http://0.0.0.0:8080"
+paths:
+  /travelOffers:
+    get:
+      summary: Get all travel offers
+      description: Returns a list of all available travel offers with related accommodation, attraction, and commute details
+      operationId: getTravelOffers
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
+  /travelOffersUser/{userId}:
+    get:
+      summary: Get travel offers by user ID
+      description: Returns a list of travel offers for a specific user
+      operationId: getTravelOffersByUserId
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
+  /travelOffer/{id}:
+    get:
+      summary: Get travel offer by ID
+      description: Returns a single travel offer
+      operationId: getTravelOfferById
+      parameters:
+        - name: id
+          in: path
+          description: ID of the travel offer
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TravelOfferDto'
+  /travelOffers/{status}:
+    get:
+      summary: Get travel offers by status
+      description: Returns a list of travel offers with a specific status
+      operationId: getTravelOffersByStatus
+      parameters:
+        - name: status
+          in: path
+          description: Status of the travel offer
+          required: true
+          schema:
+            type: string
+            enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
+
+  /bookTravelOffer:
+    post:
+      summary: Book a travel offer
+      description: Books a travel offer for a specific user with a selected seat
+      operationId: bookTravelOffer
+      parameters:
+        - name: offerId
+          in: query
+          description: ID of the travel offer to book
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          description: ID of the user making the booking
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: seat
+          in: query
+          description: Seat to book in format "row/column" (e.g., "1|A")
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Travel offer booked successfully
+        '400':
+          description: Invalid input parameters
+        '500':
+          description: Internal server error
+  /cancelTravelOffer:
+    post:
+      summary: Cancel travel offer booking
+      description: Cancels a travel offer booking for a specific user and seat
+      operationId: cancelTravelOffer
+      parameters:
+        - name: offerId
+          in: query
+          description: ID of the travel offer to cancel
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          description: ID of the user who made the booking
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: seat
+          in: query
+          description: Seat to cancel in format "row/column" (e.g., "1|A")
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Travel offer booking cancelled successfully
+        '400':
+          description: Invalid input parameters
+        '500':
+          description: Internal server error
+  /commuteStatistics:
+    get:
+      summary: Get commute statistics
+      description: Returns statistics about commutes within a given date range
+      operationId: getCommuteStatistics
+      parameters:
+        - name: start
+          in: query
+          description: Start of the date range (defaults to 1 hour ago)
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          description: End of the date range (defaults to now)
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommuteStatisticDto'
+components:
+  schemas:
+    TravelOfferDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the travel offer
+        name:
+          type: string
+          description: Name of the travel offer
+        commute:
+          $ref: '#/components/schemas/CommuteDto'
+        accommodation:
+          $ref: '#/components/schemas/AccommodationDto'
+        attraction:
+          $ref: '#/components/schemas/AttractionDto'
+          nullable: true
+        booking:
+          $ref: '#/components/schemas/BookingDto'
+          nullable: true
+        status:
+          type: string
+          description: Current status of the travel offer
+          enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
+
+    CommuteDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the commute
+        name:
+          type: string
+          description: Name of the commute
+        departure:
+          $ref: '#/components/schemas/LocationAndTimeDto'
+        arrival:
+          $ref: '#/components/schemas/LocationAndTimeDto'
+
+    AccommodationDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the accommodation
+        name:
+          type: string
+          description: Name of the accommodation
+        location:
+          type: string
+          description: Location of the accommodation
+        rent:
+          $ref: '#/components/schemas/RentDto'
+        booking:
+          $ref: '#/components/schemas/BookingDto'
+          nullable: true
+        status:
+          type: string
+          description: Current status of the accommodation
+          enum: [ AVAILABLE, BOOKED, EXPIRED ]
+
+    AttractionDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the attraction
+        name:
+          type: string
+          description: Name of the attraction
+        location:
+          type: string
+          description: Location of the attraction
+        date:
+          type: string
+          format: date-time
+          description: Date and time of the attraction
+
+    BookingDto:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ID of the user who made the booking
+        timestamp:
+          type: string
+          format: date-time
+          description: Time when the booking was made
+
+    LocationAndTimeDto:
+      type: object
+      properties:
+        location:
+          type: string
+          description: Name of the location
+        time:
+          type: string
+          format: date-time
+          description: Time at the location
+
+    RentDto:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: Start date of the rent
+        till:
+          type: string
+          format: date-time
+          description: End date of the rent
+
+    SeatDto:
+      type: object
+      properties:
+        row:
+          type: string
+          description: Row of the seat
+        column:
+          type: string
+          description: Column of the seat
+
+    CommuteStatisticDto:
+      type: object
+      properties:
+        time:
+          type: string
+        arrivalLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArrivalLocationDto'
+
+    ArrivalLocationDto:
+      type: object
+      properties:
+        location:
+          type: string
+        commutesNumber:
+          type: integer
+          format: int64
+        passengersNumber:
+          type: integer
+          format: int64
