@@ -22,10 +22,11 @@ class AttractionRepositoryImpl(
     override suspend fun save(entity: Attraction): Attraction? = collection.insertOne(entity).insertedId?.let { entity }
 
     override suspend fun update(entity: Attraction) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("version", entity.version),
-        )
+        val filter =
+            Filters.and(
+                Filters.eq("_id", entity._id),
+                Filters.eq("version", entity.version),
+            )
         val update =
             Updates.combine(
                 Updates.set("bookings", entity.bookings),
@@ -39,7 +40,6 @@ class AttractionRepositoryImpl(
 
     override suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction> =
         collection.find(Document("status", status.toString())).toList()
-
 
     // All used by command side
 }

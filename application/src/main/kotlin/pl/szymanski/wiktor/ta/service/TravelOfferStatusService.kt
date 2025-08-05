@@ -23,15 +23,13 @@ class TravelOfferStatusService(
         private val log = LoggerFactory.getLogger(TravelOfferStatusService::class.java)
     }
 
-    suspend fun checkTravelOfferComponentsAvailability(
-        travelOfferId: UUID,
-    ): Boolean {
+    suspend fun checkTravelOfferComponentsAvailability(travelOfferId: UUID): Boolean {
         return travelOfferRepository.findStatusesOfComponents(
-            travelOfferId
+            travelOfferId,
         )?.let { (commuteStatus, accommodationStatus, attractionStatus) ->
             commuteStatus == CommuteStatusEnum.SCHEDULED &&
-                    accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
-                    (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
+                accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
+                (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
         } ?: throw IllegalArgumentException("Invalid travel offer id: $travelOfferId")
     }
 
@@ -79,27 +77,26 @@ class TravelOfferStatusService(
             }.awaitAll()
     }
 
-
-suspend fun makeTravelOfferUnavailableByAccommodation(
+    suspend fun makeTravelOfferUnavailableByAccommodation(
         accommodationId: UUID,
         correlationId: UUID,
     ) = coroutineScope {
-    travelOfferRepository
-        .findByAccommodationId(accommodationId)
-        .map {
-            async {
-                runCatching {
-                    withRetry(3) {
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it._id,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }.exceptionOrNull()?.let { log.error("ERROR HANDLED: {}", it.message) }
-            }
-        }.awaitAll()
+        travelOfferRepository
+            .findByAccommodationId(accommodationId)
+            .map {
+                async {
+                    runCatching {
+                        withRetry(3) {
+                            travelOfferCommandHandler.handle(
+                                MakeTravelOfferUnavailableCommand(
+                                    travelOfferId = it._id,
+                                    correlationId = correlationId,
+                                ) as TravelOfferCommand,
+                            )
+                        }
+                    }.exceptionOrNull()?.let { log.error("ERROR HANDLED: {}", it.message) }
+                }
+            }.awaitAll()
     }
 
     suspend fun makeTravelOfferAvailableByCommute(
@@ -174,7 +171,7 @@ suspend fun makeTravelOfferUnavailableByAccommodation(
     suspend fun <T> withRetry(
         maxRetries: Int,
         onException: KClass<out Exception> = Exception::class,
-        action: suspend () -> T
+        action: suspend () -> T,
     ): T {
         var lastException: Throwable? = null
         repeat(maxRetries) {

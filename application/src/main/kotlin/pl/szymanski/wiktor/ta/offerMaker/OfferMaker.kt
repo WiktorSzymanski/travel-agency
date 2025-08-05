@@ -78,7 +78,7 @@ class OfferMaker(
 
     private suspend fun collectData() =
         coroutineScope {
-            val accommodations = async { accommodationRepository.findAllByStatus(AccommodationStatusEnum.AVAILABLE ) }
+            val accommodations = async { accommodationRepository.findAllByStatus(AccommodationStatusEnum.AVAILABLE) }
             val attractions = async { attractionRepository.findAllByStatus(AttractionStatusEnum.SCHEDULED) }
             val commutes = async { commuteRepository.findAllByStatus(CommuteStatusEnum.SCHEDULED) }
 

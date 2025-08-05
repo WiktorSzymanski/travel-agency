@@ -18,9 +18,7 @@ import kotlinx.serialization.json.Json
 import pl.szymanski.wiktor.ta.query.CommuteStatisticsQuery
 import java.time.LocalDateTime
 
-fun Application.commuteStatisticsController(
-    commuteStatisticsQuery: CommuteStatisticsQuery
-) {
+fun Application.commuteStatisticsController(commuteStatisticsQuery: CommuteStatisticsQuery) {
     install(AsyncApiPlugin) {
         extension =
             AsyncApiExtension.builder {

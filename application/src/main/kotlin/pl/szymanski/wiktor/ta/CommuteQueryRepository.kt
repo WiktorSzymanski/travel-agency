@@ -8,6 +8,6 @@ interface CommuteQueryRepository {
         page: Int = 1,
         size: Int = 20,
         startDate: LocalDateTime,
-        endDate: LocalDateTime
+        endDate: LocalDateTime,
     ): List<CommuteStatisticDto>
 }

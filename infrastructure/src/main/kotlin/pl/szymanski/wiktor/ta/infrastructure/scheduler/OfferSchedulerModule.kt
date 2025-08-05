@@ -5,10 +5,10 @@ import io.ktor.server.config.property
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
+import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AccommodationRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AttractionRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepositoryImpl
 
 fun Application.offerScheduler() {

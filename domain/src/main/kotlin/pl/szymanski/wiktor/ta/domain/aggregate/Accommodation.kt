@@ -19,7 +19,7 @@ data class Accommodation(
     val rent: Rent,
     var booking: Booking? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
-    val version: Int = 1
+    val version: Int = 1,
 ) {
     companion object {
         fun create(

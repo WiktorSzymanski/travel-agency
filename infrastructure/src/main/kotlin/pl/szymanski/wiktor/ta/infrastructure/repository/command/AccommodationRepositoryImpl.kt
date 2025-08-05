@@ -9,23 +9,23 @@ import org.bson.Document
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import java.util.*
+import java.util.UUID
 
 class AccommodationRepositoryImpl(
     database: MongoDatabase,
 ) : AccommodationRepository {
     private val collection: MongoCollection<Accommodation> = database.getCollection("accommodation")
 
-    override suspend fun findById(accommodationId: UUID): Accommodation =
-        collection.find(Document("_id", accommodationId)).toList().first()
+    override suspend fun findById(accommodationId: UUID): Accommodation = collection.find(Document("_id", accommodationId)).toList().first()
 
     override suspend fun save(entity: Accommodation): Accommodation? = collection.insertOne(entity).insertedId?.let { entity }
 
     override suspend fun update(entity: Accommodation) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("version", entity.version),
-        )
+        val filter =
+            Filters.and(
+                Filters.eq("_id", entity._id),
+                Filters.eq("version", entity.version),
+            )
         val update =
             Updates.combine(
                 Updates.set("booking", entity.booking),

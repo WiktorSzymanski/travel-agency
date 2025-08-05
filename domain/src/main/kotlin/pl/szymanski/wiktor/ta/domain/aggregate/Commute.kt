@@ -20,7 +20,7 @@ data class Commute(
     val seats: List<Seat>,
     val bookings: MutableMap<String, Booking> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
-    val version: Int = 1
+    val version: Int = 1,
 ) {
     companion object {
         fun create(

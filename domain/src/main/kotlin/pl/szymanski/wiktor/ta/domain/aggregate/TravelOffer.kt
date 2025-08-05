@@ -1,8 +1,8 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.Booking
-import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
@@ -24,7 +24,7 @@ data class TravelOffer(
     val attractionId: UUID? = null,
     var booking: Booking? = null,
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
-    val version: Int = 1
+    val version: Int = 1,
 ) {
     companion object {
         fun create(
@@ -187,7 +187,7 @@ data class TravelOffer(
             seat = seat,
         )
     }
-    
+
     fun completeRelease(
         userId: UUID,
         seat: Seat,

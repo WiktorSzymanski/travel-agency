@@ -23,11 +23,8 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
-import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 
@@ -70,19 +67,21 @@ class TravelOfferEventHandler(
                         travelOfferStatusService,
                         it,
                     ).execute().let { bool ->
-                        if (bool) travelOfferCommandHandler.handle(
-                            BookTravelOfferCommand(
-                                correlationId = it.correlationId!!,
-                                travelOfferId = it.travelOfferId,
-                                userId = it.userId,
-                                seat = it.seat,
-                            ) as TravelOfferCommand
-                        )
+                        if (bool) {
+                            travelOfferCommandHandler.handle(
+                                BookTravelOfferCommand(
+                                    correlationId = it.correlationId!!,
+                                    travelOfferId = it.travelOfferId,
+                                    userId = it.userId,
+                                    seat = it.seat,
+                                ) as TravelOfferCommand,
+                            )
+                        }
                     }
                 }
             }
         }
-        
+
     suspend fun travelOfferReleaseEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<TravelOfferReleaseEvent> {
@@ -96,14 +95,16 @@ class TravelOfferEventHandler(
                         travelOfferStatusService,
                         it,
                     ).execute().let { bool ->
-                        if (bool) travelOfferCommandHandler.handle(
-                            CancelBookTravelOfferCommand(
-                                correlationId = it.correlationId!!,
-                                travelOfferId = it.travelOfferId,
-                                userId = it.userId,
-                                seat = it.seat,
-                            ) as TravelOfferCommand
-                        )
+                        if (bool) {
+                            travelOfferCommandHandler.handle(
+                                CancelBookTravelOfferCommand(
+                                    correlationId = it.correlationId!!,
+                                    travelOfferId = it.travelOfferId,
+                                    userId = it.userId,
+                                    seat = it.seat,
+                                ) as TravelOfferCommand,
+                            )
+                        }
                     }
                 }
             }
@@ -126,7 +127,6 @@ class TravelOfferEventHandler(
                     log.info("TravelOffer expire due to accommodation expired event: {}", it)
                     travelOfferExpireService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
                 }
-
             }
         }
 
@@ -137,8 +137,8 @@ class TravelOfferEventHandler(
                     log.info("TravelOffer expire due to attraction expired event: {}", it)
                     travelOfferExpireService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
                 }
-                }
             }
+        }
 
     suspend fun commuteBookedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
@@ -182,7 +182,6 @@ class TravelOfferEventHandler(
                 scope.launch {
                     travelOfferStatusService.makeTravelOfferAvailableByAccommodation(it.accommodationId, it.correlationId!!)
                 }
-
             }
         }
 

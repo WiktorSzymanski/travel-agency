@@ -88,4 +88,3 @@ data class TravelOfferMadeAvailableEvent(
     override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
 ) : TravelOfferEvent
-

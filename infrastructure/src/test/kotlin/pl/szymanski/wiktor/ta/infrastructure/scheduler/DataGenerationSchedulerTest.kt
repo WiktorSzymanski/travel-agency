@@ -2,12 +2,8 @@ package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
 import io.mockk.clearMocks
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
@@ -29,7 +25,6 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.AccommodationTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.AttractionTemplate
 import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteTemplate
 import java.util.UUID
-import kotlin.test.Test
 
 @ExperimentalCoroutinesApi
 class DataGenerationSchedulerTest {

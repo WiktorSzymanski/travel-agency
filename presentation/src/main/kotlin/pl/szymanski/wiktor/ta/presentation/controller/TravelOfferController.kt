@@ -1,10 +1,13 @@
 package pl.szymanski.wiktor.ta.presentation.controller
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.plugins.swagger.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
+import io.ktor.server.application.Application
+import io.ktor.server.plugins.swagger.swaggerUI
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
 import pl.szymanski.wiktor.ta.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
@@ -15,7 +18,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.query.TravelOfferQuery
-import java.util.*
+import java.util.UUID
 
 fun Application.travelOfferController(
     travelOfferQueryRepository: TravelOfferQueryRepository,
@@ -44,7 +47,7 @@ fun Application.travelOfferController(
     val travelOfferQuery =
         TravelOfferQuery(
             travelOfferRepository = travelOfferQueryRepository,
-            accommodationRepository = accommodationQueryRepository
+            accommodationRepository = accommodationQueryRepository,
         )
 
     routing {
@@ -72,7 +75,7 @@ fun Application.travelOfferController(
             requireNotNull(location)
             requireNotNull(status)
             val resp = travelOfferQuery.getTravelOfferByLocation(page, size, location, status)
-                call.response.status(HttpStatusCode.OK)
+            call.response.status(HttpStatusCode.OK)
             call.respond(resp)
         }
 
@@ -96,11 +99,12 @@ fun Application.travelOfferController(
                 "Invalid travel offer status ${call.parameters["status"]}"
             }
 
-            val resp = travelOfferQuery.getTravelOffersByStatus(
-                status,
-                page,
-                size,
-            )
+            val resp =
+                travelOfferQuery.getTravelOffersByStatus(
+                    status,
+                    page,
+                    size,
+                )
             call.response.status(HttpStatusCode.OK)
             call.respond(resp)
         }

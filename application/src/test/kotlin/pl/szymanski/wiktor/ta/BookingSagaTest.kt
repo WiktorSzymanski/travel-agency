@@ -314,7 +314,6 @@ class BookingSagaTest {
                     accommodationCommandHandler,
                     travelOfferStatusService,
                     triggeringBookedEvent,
-
                 )
 
             saga.execute()

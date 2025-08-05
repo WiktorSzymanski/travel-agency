@@ -43,9 +43,7 @@ class BookingSaga(
     private lateinit var commuteCommand: CommuteCommand
     private var attractionCommand: AttractionCommand? = null
 
-    val successJobs = mutableListOf<Result<Any>>()
-
-    private val MAX_RETRIES = 3
+    private val maxRetries = 3
 
     init {
         log.info("New BookingSaga created for correlationId: {}", triggeringEvent.correlationId)
@@ -132,30 +130,6 @@ class BookingSaga(
             }
         }
 
-    suspend fun runJobs(
-        runCommutes: Boolean = true,
-        runAccommodations: Boolean = true,
-        runAttractions: Boolean = attractionCommand != null
-    ): List<Result<Any>> = coroutineScope {
-        val handleJobs = mutableListOf<Deferred<Result<Any>>>()
-        if (runCommutes) handleJobs +=
-            async {
-                runCatching { commuteCommandHandler.handle(commuteCommand) }
-            }
-
-        if (runAccommodations) handleJobs +=
-            async {
-                runCatching { accommodationCommandHandler.handle(accommodationCommand) }
-            }
-
-        if (runAttractions) handleJobs +=
-            async {
-                runCatching { attractionCommandHandler.handle(attractionCommand!!) }
-            }
-
-        return@coroutineScope handleJobs.awaitAll()
-    }
-
 //    suspend fun <T> sagaStep(
 //        action: suspend (action: Any) -> Result<T>,
 //        compensation: suspend (action: Any) -> Result<T>,
@@ -182,44 +156,99 @@ class BookingSaga(
 //        } while (attempts < MAX_RETRIES)
 //    }
 
-    suspend fun execute() : Boolean {
-            log.info("BookingSaga ${triggeringEvent.correlationId} status: executing")
+    suspend fun execute(): Boolean {
+        log.info("BookingSaga ${triggeringEvent.correlationId} status: executing")
 
-            var attempts = 0
-            val sJobs = mutableListOf<Event>()
-            var lastJob: Result<Any>
+        var attempts = 0
+        val sJobs = mutableListOf<Event>()
+        var lastJob: Result<Any>
 
-            do {
-                attempts++
-                val res = runCatching { commuteCommandHandler.handle(commuteCommand) }
-                lastJob = res
+        do {
+            attempts++
+            val res = runCatching { commuteCommandHandler.handle(commuteCommand) }
+            lastJob = res
 
-                if (res.isSuccess) {
-                    sJobs.add(res.getOrNull() as CommuteEvent)
-                    break
-                }
-
-                if (res.exceptionOrNull() !is ConcurrentModificationException) {
-                    break
-                }
-
-                log.info("BookingSaga ${triggeringEvent.correlationId} status: retrying commute command execution due to ConcurrentModificationException, attempt: $attempts")
-            } while (attempts < MAX_RETRIES)
-
-            if (sJobs.isEmpty()) {
-                log.error("BookingSaga ${triggeringEvent.correlationId} status: Finished, result: Failed due to ${lastJob.exceptionOrNull()} — running compensating actions")
-                compensateTriggeringEvent()
-                return false
+            if (res.isSuccess) {
+                sJobs.add(res.getOrNull() as CommuteEvent)
+                break
             }
 
+            if (res.exceptionOrNull() !is ConcurrentModificationException) {
+                break
+            }
+
+            log.info(
+                "BookingSaga ${triggeringEvent.correlationId} status: retrying commute" +
+                    "command execution due to ConcurrentModificationException, attempt: $attempts",
+            )
+        } while (attempts < maxRetries)
+
+        if (sJobs.isEmpty()) {
+            log.error(
+                "BookingSaga ${triggeringEvent.correlationId} status: Finished, result:" +
+                    "Failed due to ${lastJob.exceptionOrNull()} — running compensating actions",
+            )
+            compensateTriggeringEvent()
+            return false
+        }
+
+        attempts = 0
+        do {
+            attempts++
+            val res = runCatching { accommodationCommandHandler.handle(accommodationCommand) }
+            lastJob = res
+
+            if (res.isSuccess) {
+                sJobs.add(res.getOrNull() as AccommodationEvent)
+                break
+            }
+
+            if (res.exceptionOrNull() !is ConcurrentModificationException) {
+                break
+            }
+
+            log.info(
+                "BookingSaga ${triggeringEvent.correlationId} status: retrying accommodation" +
+                    "command execution due to ConcurrentModificationException, attempt: $attempts",
+            )
+        } while (attempts < maxRetries)
+
+        if (sJobs.size < 2) {
+            log.error(
+                "BookingSaga ${triggeringEvent.correlationId} status: Finished, result:" +
+                    "Failed due to ${lastJob.exceptionOrNull()} — running compensating actions",
+            )
             attempts = 0
             do {
                 attempts++
-                val res = runCatching { accommodationCommandHandler.handle(accommodationCommand) }
+                val res = runCatching { commuteCommandHandler.compensate(sJobs.first() as CommuteEvent) }
+
+                if (res.isFailure) {
+                    if (attempts == maxRetries) {
+                        log.error(
+                            "BookingSaga ${triggeringEvent.correlationId} status:" +
+                                "Failed to compensate commute command, result: $res",
+                        )
+                    }
+                    continue
+                }
+
+                sJobs.removeAt(0)
+                break
+            } while (attempts < maxRetries)
+            compensateTriggeringEvent()
+            return false
+        }
+
+        if (attractionCommand != null) {
+            attempts = 0
+            do {
+                attempts++
+                val res = runCatching { attractionCommandHandler.handle(attractionCommand!!) }
                 lastJob = res
 
                 if (res.isSuccess) {
-                    sJobs.add(res.getOrNull() as AccommodationEvent)
+                    sJobs.add(res.getOrNull() as AttractionEvent)
                     break
                 }
 
@@ -227,119 +256,89 @@ class BookingSaga(
                     break
                 }
 
-                log.info("BookingSaga ${triggeringEvent.correlationId} status: retrying accommodation command execution due to ConcurrentModificationException, attempt: $attempts")
-            } while (attempts < MAX_RETRIES)
+                log.info(
+                    "BookingSaga ${triggeringEvent.correlationId} status: retrying attraction" +
+                        "command execution due to ConcurrentModificationException, attempt: $attempts",
+                )
+            } while (attempts < maxRetries)
 
-            if (sJobs.size < 2) {
-                log.error("BookingSaga ${triggeringEvent.correlationId} status: Finished, result: Failed due to ${lastJob.exceptionOrNull()} — running compensating actions")
+            if (sJobs.size < 3) {
+                log.error(
+                    "BookingSaga ${triggeringEvent.correlationId} status: Finished, result:" +
+                        "Failed due to ${lastJob.exceptionOrNull()} — running compensating actions",
+                )
+                attempts = 0
+                do {
+                    attempts++
+                    val res = runCatching { accommodationCommandHandler.compensate(sJobs[1] as AccommodationEvent) }
+
+                    if (res.isFailure) {
+                        if (attempts == maxRetries) {
+                            log.error(
+                                "BookingSaga ${triggeringEvent.correlationId} status: Failed" +
+                                    "to compensate accommodation command, result: $res",
+                            )
+                        }
+                        continue
+                    }
+
+                    sJobs.removeAt(1)
+                    break
+                } while (attempts < maxRetries)
+
                 attempts = 0
                 do {
                     attempts++
                     val res = runCatching { commuteCommandHandler.compensate(sJobs.first() as CommuteEvent) }
 
                     if (res.isFailure) {
-                        if (attempts == MAX_RETRIES) log.error("BookingSaga ${triggeringEvent.correlationId} status: Failed to compensate commute command, result: $res")
+                        if (attempts == maxRetries) {
+                            log.error(
+                                "BookingSaga ${triggeringEvent.correlationId} status: Failed" +
+                                    "to compensate commute command, result: $res",
+                            )
+                        }
                         continue
                     }
 
                     sJobs.removeAt(0)
                     break
-                } while (attempts < MAX_RETRIES)
+                } while (attempts < maxRetries)
                 compensateTriggeringEvent()
                 return false
             }
-
-            if (attractionCommand != null) {
-                attempts = 0
-                do {
-                    attempts++
-                    val res = runCatching { attractionCommandHandler.handle(attractionCommand!!) }
-                    lastJob = res
-
-                    if (res.isSuccess) {
-                        sJobs.add(res.getOrNull() as AttractionEvent)
-                        break
-                    }
-
-                    if (res.exceptionOrNull() !is ConcurrentModificationException) {
-                        break
-                    }
-
-                    log.info("BookingSaga ${triggeringEvent.correlationId} status: retrying attraction command execution due to ConcurrentModificationException, attempt: $attempts")
-                } while (attempts < MAX_RETRIES)
-
-                if (sJobs.size < 3) {
-                    log.error("BookingSaga ${triggeringEvent.correlationId} status: Finished, result: Failed due to ${lastJob.exceptionOrNull()} — running compensating actions")
-                    attempts = 0
-                    do {
-                        attempts++
-                        val res = runCatching { accommodationCommandHandler.compensate(sJobs[1] as AccommodationEvent) }
-
-                        if (res.isFailure) {
-                            if (attempts == MAX_RETRIES) log.error("BookingSaga ${triggeringEvent.correlationId} status: Failed to compensate accommodation command, result: $res")
-                            continue
-                        }
-
-                        sJobs.removeAt(1)
-                        break
-                    } while (attempts < MAX_RETRIES)
-
-                    attempts = 0
-                    do {
-                        attempts++
-                        val res = runCatching { commuteCommandHandler.compensate(sJobs.first() as CommuteEvent) }
-
-                        if (res.isFailure) {
-                            if (attempts == MAX_RETRIES) log.error("BookingSaga ${triggeringEvent.correlationId} status: Failed to compensate commute command, result: $res")
-                            continue
-                        }
-
-                        sJobs.removeAt(0)
-                        break
-                    } while (attempts < MAX_RETRIES)
-                    compensateTriggeringEvent()
-                    return false
-                }
-            }
-
-            return true
         }
+
+        return true
+    }
 
     suspend fun <T> withRetry(
         maxRetries: Int,
         onException: KClass<out Exception> = Exception::class,
-        action: suspend () -> T
+        action: suspend () -> T,
     ): T {
         var lastException: Throwable? = null
         repeat(maxRetries) {
-            try {
-                return action()
-            } catch (e: Exception) {
-                if (!onException.isInstance(e)) {
-                    throw e
-                }
-                lastException = e
-            }
+            val res = runCatching { action() }
+            if (res.isSuccess) return res.getOrThrow()
+
+            lastException = res.exceptionOrNull()
+            if (!onException.isInstance(lastException)) throw lastException!!
         }
         throw lastException ?: IllegalStateException("No attempt made")
     }
 
     suspend fun compensateTriggeringEvent() =
         coroutineScope {
-            var attempts = 0
-            do {
-                attempts++
-                val res = runCatching { travelOfferCommandHandler.compensate(triggeringEvent) }
+            runCatching {
+                withRetry(3) { travelOfferCommandHandler.compensate(triggeringEvent) }
+            }.exceptionOrNull()?.let { log.error(
+                "BookingSaga ${triggeringEvent.correlationId} status: Failed" +
+                        "to compensate travelOfferBooked event, result: $it") }
 
-                if (res.isFailure) {
-                    if (attempts == MAX_RETRIES) log.error("BookingSaga ${triggeringEvent.correlationId} status: Failed to compensate travelOfferBooked event, result: $res")
-                    continue
-                }
-
-                break
-            } while (attempts < MAX_RETRIES)
-
-            if (!travelOfferStatusService.checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)) {
+            if (!travelOfferStatusService
+                    .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
+            ) {
                 runCatching {
                     withRetry(3) {
                         travelOfferCommandHandler.handle(

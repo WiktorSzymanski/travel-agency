@@ -19,7 +19,7 @@ data class Attraction(
     val capacity: Int,
     val bookings: MutableList<Booking> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
-    val version: Int = 1
+    val version: Int = 1,
 ) {
     companion object {
         fun create(

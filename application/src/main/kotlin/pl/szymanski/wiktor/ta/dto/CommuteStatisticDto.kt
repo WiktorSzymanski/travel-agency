@@ -7,7 +7,7 @@ data class CommuteStatisticDto(
     val time: String,
     val totalCommuteCount: Int,
     val totalBookingsCount: Int,
-    val arrivalLocations: List<ArrivalLocationDto>
+    val arrivalLocations: List<ArrivalLocationDto>,
 )
 
 @Serializable

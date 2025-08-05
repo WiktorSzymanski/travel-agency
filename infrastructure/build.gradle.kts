@@ -25,11 +25,11 @@ dependencies {
 
     implementation(project(":domain"))
     implementation(project(":application"))
-    implementation("io.ktor:ktor-server-core:${ktorVersion}")
-    implementation("io.ktor:ktor-server-cio:${ktorVersion}")
-    implementation("io.ktor:ktor-server-config-yaml:${ktorVersion}")
-    implementation("io.ktor:ktor-server-content-negotiation:${ktorVersion}")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:${ktorVersion}")
+    implementation("io.ktor:ktor-server-core:$ktorVersion")
+    implementation("io.ktor:ktor-server-cio:$ktorVersion")
+    implementation("io.ktor:ktor-server-config-yaml:$ktorVersion")
+    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 

@@ -1,8 +1,8 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.Booking
-import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
@@ -74,14 +74,17 @@ class TravelOfferTest {
                 offer.reserve(userId, seat)
             }
 
-        assertEquals("TravelOffer $travelOfferId is not open for reservation, current status is ${TravelOfferStatusEnum.BOOKED}", ex.message)
+        assertEquals(
+            "TravelOffer $travelOfferId is not open for reservation, current status is ${TravelOfferStatusEnum.BOOKED}",
+            ex.message,
+        )
     }
 
     @Test
     fun book_should_succeed_when_offer_is_reserved_by_same_user() {
         // First reserve the offer
         offer.reserve(userId, seat)
-        
+
         // Then book it
         val event = offer.book(userId, seat)
 
@@ -114,15 +117,15 @@ class TravelOfferTest {
 
         assertEquals("TravelOffer $travelOfferId is not open for booking, current status is ${TravelOfferStatusEnum.AVAILABLE}", ex.message)
     }
-    
+
     @Test
     fun book_should_fail_when_offer_reserved_by_different_user() {
         val differentUserId = UUID.randomUUID()
-        
+
         // First reserve the offer for a different user
         val reservedOffer = offer.copy()
         reservedOffer.reserve(differentUserId, seat)
-        
+
         val ex =
             assertFailsWith<IllegalArgumentException> {
                 reservedOffer.book(userId, seat)

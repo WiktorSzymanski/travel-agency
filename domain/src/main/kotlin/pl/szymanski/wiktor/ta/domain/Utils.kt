@@ -18,7 +18,7 @@ enum class LocationEnum {
     ZURICH,
     BUDAPEST,
     MADRID,
-    LYON
+    LYON,
 }
 
 data class LocationAndTime(

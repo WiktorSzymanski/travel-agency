@@ -9,7 +9,7 @@ import org.bson.Document
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import java.util.*
+import java.util.UUID
 
 class CommuteRepositoryImpl(
     database: MongoDatabase,
@@ -21,10 +21,11 @@ class CommuteRepositoryImpl(
     override suspend fun save(entity: Commute): Commute? = collection.insertOne(entity).insertedId?.let { entity }
 
     override suspend fun update(entity: Commute) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("version", entity.version),
-        )
+        val filter =
+            Filters.and(
+                Filters.eq("_id", entity._id),
+                Filters.eq("version", entity.version),
+            )
         val update =
             Updates.combine(
                 Updates.set("bookings", entity.bookings),
