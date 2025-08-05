@@ -71,6 +71,9 @@ enum class AttractionStatusEnum {
 
 enum class TravelOfferStatusEnum {
     AVAILABLE,
+    RESERVED,
     BOOKED,
+    UNAVAILABLE,
     EXPIRED,
+    RELEASING,
 }

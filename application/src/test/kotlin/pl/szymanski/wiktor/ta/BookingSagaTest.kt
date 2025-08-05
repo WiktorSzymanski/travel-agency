@@ -38,6 +38,7 @@ import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -48,6 +49,7 @@ class BookingSagaTest {
     private val attractionCommandHandler = mockk<AttractionCommandHandler>(relaxed = true)
     private val commuteCommandHandler = mockk<CommuteCommandHandler>(relaxed = true)
     private val accommodationCommandHandler = mockk<AccommodationCommandHandler>(relaxed = true)
+    private val travelOfferStatusService = mockk<TravelOfferStatusService>(relaxed = true)
 
     private lateinit var travelOfferId: UUID
     private lateinit var accommodationId: UUID
@@ -310,7 +312,9 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringBookedEvent,
+
                 )
 
             saga.execute()
@@ -337,6 +341,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringBookedEvent,
                 )
 
@@ -364,6 +369,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringBookedEvent,
                 )
 
@@ -391,6 +397,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringBookedEvent,
                 )
 
@@ -415,6 +422,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringBookedEvent.copy(attractionId = null),
                 )
 
@@ -442,6 +450,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringBookedEvent.copy(attractionId = null),
                 )
 
@@ -466,6 +475,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringCanceledEvent,
                 )
 
@@ -493,6 +503,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringCanceledEvent,
                 )
 
@@ -520,6 +531,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringCanceledEvent,
                 )
 
@@ -547,6 +559,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringCanceledEvent,
                 )
 
@@ -571,6 +584,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringCanceledEvent.copy(attractionId = null),
                 )
 
@@ -598,6 +612,7 @@ class BookingSagaTest {
                     attractionCommandHandler,
                     commuteCommandHandler,
                     accommodationCommandHandler,
+                    travelOfferStatusService,
                     triggeringCanceledEvent.copy(attractionId = null),
                 )
 

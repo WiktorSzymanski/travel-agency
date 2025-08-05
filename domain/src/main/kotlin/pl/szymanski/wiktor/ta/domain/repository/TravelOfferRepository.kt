@@ -1,6 +1,8 @@
 package pl.szymanski.wiktor.ta.domain.repository
 
-import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
+import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
@@ -16,4 +18,6 @@ interface TravelOfferRepository {
     suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer>
 
     suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer>
+
+    suspend fun findStatusesOfComponents(travelOfferId: UUID): Triple<CommuteStatusEnum, AccommodationStatusEnum, AttractionStatusEnum?>?
 }

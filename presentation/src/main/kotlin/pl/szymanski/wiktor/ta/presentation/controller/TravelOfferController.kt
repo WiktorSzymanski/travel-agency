@@ -7,8 +7,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import pl.szymanski.wiktor.ta.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.TravelOfferQueryRepository
-import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.LocationEnum
@@ -109,7 +109,7 @@ fun Application.travelOfferController(
             try {
                 val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
                 travelOfferCommandHandler.handle(
-                    BookTravelOfferCommand(
+                    ReserveTravelOfferCommand(
                         offerId,
                         UUID.randomUUID(),
                         userId,

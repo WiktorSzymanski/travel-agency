@@ -16,7 +16,7 @@ offerScheduler:
 
 scheduler:
     intervalSeconds: 3000
-    inAdvanceSeconds: 30
+    inAdvanceSeconds: 120
     creationWindowSeconds: 10
     accommodations:
       - name: "Hotel"

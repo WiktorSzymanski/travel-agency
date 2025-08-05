@@ -23,6 +23,7 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepos
 import pl.szymanski.wiktor.ta.presentation.controller.commuteStatisticsController
 import pl.szymanski.wiktor.ta.query.CommuteStatisticsQuery
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
+import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 
 fun main(args: Array<String>) {
     EngineMain
@@ -39,6 +40,7 @@ fun Application.application() {
 
     val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
     val travelOfferExpireService = TravelOfferExpireService(travelOfferRepository, travelOfferCommandHandler)
+    val travelOfferStatusService = TravelOfferStatusService(travelOfferRepository, travelOfferCommandHandler)
 
     val travelOfferQueryRepository = TravelOfferQueryRepositoryImpl(MongoDbProvider.database)
     val accommodationQueryRepository = AccommodationQueryRepositoryImpl(MongoDbProvider.database)
@@ -47,6 +49,7 @@ fun Application.application() {
     launch {
         TravelOfferEventHandler(
             travelOfferExpireService = travelOfferExpireService,
+            travelOfferStatusService = travelOfferStatusService,
             travelOfferCommandHandler = travelOfferCommandHandler,
             attractionCommandHandler = AttractionCommandHandler(attractionRepository),
             commuteCommandHandler = CommuteCommandHandler(commuteRepository),

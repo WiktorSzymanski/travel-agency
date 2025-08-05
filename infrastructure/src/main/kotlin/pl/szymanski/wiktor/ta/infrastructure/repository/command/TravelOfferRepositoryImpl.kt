@@ -1,11 +1,16 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
+import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
+import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
+import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import java.util.*
@@ -50,4 +55,53 @@ class TravelOfferRepositoryImpl(
 
     override suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer> =
         collection.find(Document("attractionId", attractionId)).toList()
+
+    override suspend fun findStatusesOfComponents(travelOfferId: UUID): Triple<CommuteStatusEnum, AccommodationStatusEnum, AttractionStatusEnum?>? {
+        val idMatcher = Aggregates.match(Filters.eq("_id", travelOfferId))
+
+        val accommodationLookup = Aggregates.lookup(
+            "accommodation",
+            "accommodationId",
+            "_id",
+            "accommodation"
+        )
+
+        val attractionLookup = Aggregates.lookup(
+            "attraction",
+            "attractionId",
+            "_id",
+            "attraction"
+        )
+
+        val commuteLookup = Aggregates.lookup(
+            "commute",
+            "commuteId",
+            "_id",
+            "commute"
+        )
+
+        val projection = Aggregates.project(
+            Projections.fields(
+                Projections.computed("accommodationStatus", Document("\$arrayElemAt", listOf("\$accommodation.status", 0))),
+                Projections.computed("attractionStatus", Document("\$arrayElemAt", listOf("\$attraction.status", 0))),
+                Projections.computed("commuteStatus", Document("\$arrayElemAt", listOf("\$commute.status", 0)))
+            )
+        )
+
+        val pipeline = listOfNotNull(
+            idMatcher,
+            accommodationLookup,
+            attractionLookup,
+            commuteLookup,
+            projection
+        )
+
+        return collection.aggregate<Document>(pipeline).toList().firstOrNull()?.let { doc ->
+            Triple(
+                CommuteStatusEnum.valueOf(doc.getString("commuteStatus")),
+                AccommodationStatusEnum.valueOf(doc.getString("accommodationStatus")),
+                doc.getString("attractionStatus")?.let { AttractionStatusEnum.valueOf(it) }
+            )
+        }
+    }
 }

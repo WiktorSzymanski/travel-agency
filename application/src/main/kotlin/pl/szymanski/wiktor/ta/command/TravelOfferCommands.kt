@@ -21,6 +21,20 @@ data class CancelBookTravelOfferCommand(
     val seat: Seat,
 ) : TravelOfferCommand
 
+data class ReserveTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    val userId: UUID,
+    val seat: Seat,
+) : TravelOfferCommand
+
+data class CancelReserveTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    val userId: UUID,
+    val seat: Seat,
+) : TravelOfferCommand
+
 data class CreateTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
@@ -31,6 +45,16 @@ data class CreateTravelOfferCommand(
 ) : TravelOfferCommand
 
 data class ExpireTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+) : TravelOfferCommand
+
+data class MakeTravelOfferUnavailableCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+) : TravelOfferCommand
+
+data class MakeTravelOfferAvailableCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
 ) : TravelOfferCommand

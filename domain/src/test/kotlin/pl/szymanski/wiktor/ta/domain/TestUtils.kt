@@ -17,6 +17,8 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
@@ -99,6 +101,22 @@ private fun assertTravelOfferEventEquals(
     assertEquals(expected.travelOfferId, actual.travelOfferId, message ?: "travelOfferId differs")
 
     when (expected) {
+        is TravelOfferReservedEvent -> {
+            actual as TravelOfferReservedEvent
+            assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
+            assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
+            assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
+            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
+        }
+        is TravelOfferReleaseEvent -> {
+            actual as TravelOfferReleaseEvent
+            assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
+            assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
+            assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
+            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
+        }
         is TravelOfferBookedEvent -> {
             actual as TravelOfferBookedEvent
             assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
