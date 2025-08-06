@@ -71,6 +71,50 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TravelOfferDto'
+                  
+  /travelOffers/location/{location}:
+    get:
+      summary: Get travel offers by location and status
+      description: Returns a list of travel offers for a specific location and status
+      operationId: getTravelOffersByLocation
+      parameters:
+        - name: location
+          in: path
+          description: Location of the travel offers
+          required: true
+          schema:
+            type: string
+            enum: [WARSAW, KRAKOW, GDANSK, WROCLAW, POZNAN, LODZ]
+        - name: status
+          in: query
+          description: Status of the travel offers
+          required: true
+          schema:
+            type: string
+            enum: [AVAILABLE, BOOKED, EXPIRED, CANCELLED]
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TravelOfferDto'
   /travelOffer/{id}:
     get:
       summary: Get travel offer by ID
@@ -91,6 +135,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TravelOfferDto'
+                
+  /booking/{bookingId}:
+    get:
+      summary: Get booking by ID
+      description: Returns a single booking by its ID
+      operationId: getBookingById
+      parameters:
+        - name: bookingId
+          in: path
+          description: ID of the booking
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingDto'
   /travelOffers/{status}:
     get:
       summary: Get travel offers by status

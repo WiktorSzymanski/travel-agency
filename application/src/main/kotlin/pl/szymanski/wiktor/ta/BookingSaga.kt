@@ -1,8 +1,5 @@
 package pl.szymanski.wiktor.ta
 
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
@@ -10,16 +7,21 @@ import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.BookAttractionCommand
 import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
 import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferUnavailableCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
+import pl.szymanski.wiktor.ta.command.UpdateBookingStateCommand
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
@@ -29,6 +31,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import java.util.UUID
 import kotlin.reflect.KClass
 
 class BookingSaga(
@@ -37,11 +40,14 @@ class BookingSaga(
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
     private val travelOfferStatusService: TravelOfferStatusService,
+    private val bookingCommandHandler: BookingCommandHandler,
     private val triggeringEvent: TravelOfferEvent,
 ) {
     private lateinit var accommodationCommand: AccommodationCommand
     private lateinit var commuteCommand: CommuteCommand
     private var attractionCommand: AttractionCommand? = null
+
+    private lateinit var finCommand: TravelOfferCommand
 
     private val maxRetries = 3
 
@@ -61,13 +67,13 @@ class BookingSaga(
                     BookAccommodationCommand(
                         triggeringEvent.accommodationId,
                         triggeringEvent.correlationId!!,
-                        triggeringEvent.userId,
+                        triggeringEvent.bookingId,
                     )
                 commuteCommand =
                     BookCommuteCommand(
                         triggeringEvent.commuteId,
                         triggeringEvent.correlationId!!,
-                        triggeringEvent.userId,
+                        triggeringEvent.bookingId,
                         triggeringEvent.seat,
                     )
                 attractionCommand =
@@ -75,30 +81,36 @@ class BookingSaga(
                         BookAttractionCommand(
                             it,
                             triggeringEvent.correlationId!!,
-                            triggeringEvent.userId,
+                            triggeringEvent.bookingId,
                         )
                     }
+                finCommand =
+                    BookTravelOfferCommand(
+                        correlationId = triggeringEvent.correlationId!!,
+                        travelOfferId = triggeringEvent.travelOfferId,
+                        bookingId = triggeringEvent.bookingId,
+                        seat = triggeringEvent.seat,
+                    ) as TravelOfferCommand
             }
             is TravelOfferReleaseEvent -> {
                 accommodationCommand =
                     CancelAccommodationBookingCommand(
                         triggeringEvent.accommodationId,
                         triggeringEvent.correlationId!!,
-                        triggeringEvent.userId,
+                        triggeringEvent.bookingId,
                     )
                 commuteCommand =
                     CancelCommuteBookingCommand(
                         triggeringEvent.commuteId,
                         triggeringEvent.correlationId!!,
-                        triggeringEvent.userId,
-                        triggeringEvent.seat,
+                        triggeringEvent.bookingId,
                     )
                 attractionCommand =
                     triggeringEvent.attractionId?.let {
                         CancelAttractionBookingCommand(
                             it,
                             triggeringEvent.correlationId!!,
-                            triggeringEvent.userId,
+                            triggeringEvent.bookingId,
                         )
                     }
             }
@@ -107,23 +119,29 @@ class BookingSaga(
                     CancelAccommodationBookingCommand(
                         triggeringEvent.accommodationId,
                         triggeringEvent.correlationId!!,
-                        triggeringEvent.userId,
+                        triggeringEvent.bookingId,
                     )
                 commuteCommand =
                     CancelCommuteBookingCommand(
                         triggeringEvent.commuteId,
                         triggeringEvent.correlationId!!,
-                        triggeringEvent.userId,
-                        triggeringEvent.seat,
+                        triggeringEvent.bookingId,
                     )
                 attractionCommand =
                     triggeringEvent.attractionId?.let {
                         CancelAttractionBookingCommand(
                             it,
                             triggeringEvent.correlationId!!,
-                            triggeringEvent.userId,
+                            triggeringEvent.bookingId,
                         )
                     }
+                finCommand =
+                    CancelBookTravelOfferCommand(
+                        correlationId = triggeringEvent.correlationId!!,
+                        travelOfferId = triggeringEvent.travelOfferId,
+                        bookingId = triggeringEvent.bookingId,
+                        seat = triggeringEvent.seat,
+                    ) as TravelOfferCommand
             }
             else -> {
                 throw IllegalArgumentException("Invalid event for BookingSaga: $triggeringEvent")
@@ -156,8 +174,27 @@ class BookingSaga(
 //        } while (attempts < MAX_RETRIES)
 //    }
 
+    suspend fun bookingUpdate(bookingId: UUID, status: BookingState, message: String? = null) {
+        bookingCommandHandler.handle(
+            UpdateBookingStateCommand(
+                bookingId,
+                triggeringEvent.correlationId!!,
+                status,
+                message,
+            )
+        )
+    }
+
     suspend fun execute(): Boolean {
         log.info("BookingSaga ${triggeringEvent.correlationId} status: executing")
+
+        val bookingId = when (triggeringEvent) {
+            is TravelOfferReservedEvent -> triggeringEvent.bookingId
+            is TravelOfferBookingCanceledEvent -> triggeringEvent.bookingId
+            else -> throw IllegalArgumentException("Invalid event for BookingSaga: $triggeringEvent")
+        }
+
+        bookingUpdate(bookingId, BookingState.PROCESSING)
 
         var attempts = 0
         val sJobs = mutableListOf<Event>()
@@ -188,6 +225,7 @@ class BookingSaga(
                 "BookingSaga ${triggeringEvent.correlationId} status: Finished, result:" +
                     "Failed due to ${lastJob.exceptionOrNull()} — running compensating actions",
             )
+            bookingUpdate(bookingId, BookingState.FAILED, lastJob.exceptionOrNull()?.message)
             compensateTriggeringEvent()
             return false
         }
@@ -218,6 +256,7 @@ class BookingSaga(
                 "BookingSaga ${triggeringEvent.correlationId} status: Finished, result:" +
                     "Failed due to ${lastJob.exceptionOrNull()} — running compensating actions",
             )
+            bookingUpdate(bookingId, BookingState.FAILED, lastJob.exceptionOrNull()?.message)
             attempts = 0
             do {
                 attempts++
@@ -267,6 +306,7 @@ class BookingSaga(
                     "BookingSaga ${triggeringEvent.correlationId} status: Finished, result:" +
                         "Failed due to ${lastJob.exceptionOrNull()} — running compensating actions",
                 )
+                bookingUpdate(bookingId, BookingState.FAILED, lastJob.exceptionOrNull()?.message)
                 attempts = 0
                 do {
                     attempts++
@@ -309,6 +349,20 @@ class BookingSaga(
             }
         }
 
+        val res = runCatching {
+            withRetry(3) {
+                travelOfferCommandHandler.handle(finCommand)
+            }
+        }
+
+        if (res.isFailure) {
+            //compensation here for all
+            log.error("WHAT THE HELLY: {}", res.exceptionOrNull()?.message)
+            bookingUpdate(bookingId, BookingState.FAILED, res.exceptionOrNull()?.message)
+            return false
+        }
+
+        bookingUpdate(bookingId, BookingState.SUCCEEDED)
         return true
     }
 

@@ -22,7 +22,7 @@ class CommuteTest {
     private val seat1 = Seat("1", "A")
     private val seat2 = Seat("1", "B")
     private val seat3 = Seat("1", "C")
-    private val userId = UUID.randomUUID()
+    private val bookingId = UUID.randomUUID()
 
     @BeforeTest
     fun setup() {
@@ -34,18 +34,18 @@ class CommuteTest {
 
     @Test
     fun book_seat_successfully() {
-        val event = commute.bookSeat(seat1, userId)
+        val event = commute.bookSeat(bookingId, seat1)
 
         assertEventEquals(
             CommuteBookedEvent(
                 commuteId = commute._id,
-                userId = userId,
+                bookingId = bookingId,
                 seat = seat1,
             ),
             event,
         )
         assertEquals(1, commute.bookings.size)
-        assertEquals(userId, commute.bookings[seat1.toString()]?.userId)
+        assertTrue(commute.bookings.contains(bookingId))
     }
 
     @Test
@@ -53,7 +53,7 @@ class CommuteTest {
         commute.status = CommuteStatusEnum.EXPIRED
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                commute.bookSeat(seat1, userId)
+                commute.bookSeat(bookingId, seat1)
             }
         assertEquals(
             "Seat cannot be booked when Commute ${commute._id} not in SCHEDULED status",
@@ -66,17 +66,17 @@ class CommuteTest {
         val unknownSeat = Seat("99", "Z")
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                commute.bookSeat(unknownSeat, userId)
+                commute.bookSeat(bookingId, unknownSeat)
             }
         assertEquals("Seat $unknownSeat not found in Commute ${commute._id}", ex.message)
     }
 
     @Test
     fun cannot_book_same_seat_twice() {
-        commute.bookSeat(seat1, userId)
+        commute.bookSeat(bookingId, seat1)
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                commute.bookSeat(seat1, UUID.randomUUID())
+                commute.bookSeat(UUID.randomUUID(), seat1)
             }
         assertTrue(ex.message!!.contains("already booked"))
         assertEquals("Seat $seat1 already booked in Commute ${commute._id}", ex.message)
@@ -84,13 +84,13 @@ class CommuteTest {
 
     @Test
     fun can_cancel_own_booking() {
-        val bEvent = commute.bookSeat(seat1, userId)
-        val cEvent = commute.cancelBookedSeat(seat1, userId)
+        val bEvent = commute.bookSeat(bookingId, seat1)
+        val cEvent = commute.cancelBookedSeat(bookingId)
 
         assertEventEquals(
             CommuteBookedEvent(
                 commuteId = commute._id,
-                userId = userId,
+                bookingId = bookingId,
                 seat = seat1,
             ),
             bEvent,
@@ -98,30 +98,30 @@ class CommuteTest {
         assertEventEquals(
             CommuteBookingCanceledEvent(
                 commuteId = commute._id,
-                userId = userId,
+                bookingId = bookingId,
                 seat = seat1,
             ),
             cEvent,
         )
-        assertFalse(commute.bookings.containsKey(seat1.toString()))
+        assertFalse(commute.bookings.containsKey(bookingId))
     }
 
     @Test
     fun cannot_cancel_non_booked_seats() {
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                commute.cancelBookedSeat(seat1, userId)
+                commute.cancelBookedSeat(bookingId)
             }
         assertEquals("Booking for seat $seat1 not found in Commute ${commute._id}", ex.message)
     }
 
     @Test
     fun cannot_cancel_others_booking() {
-        commute.bookSeat(seat1, userId)
+        commute.bookSeat(bookingId, seat1)
         val otherUser = UUID.randomUUID()
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                commute.cancelBookedSeat(seat1, otherUser)
+                commute.cancelBookedSeat(otherUser)
             }
         assertEquals("Booking for seat $seat1 in Commute ${commute._id} is owned by other user", ex.message)
     }

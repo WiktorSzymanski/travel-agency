@@ -19,35 +19,35 @@ data class AccommodationBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val accommodationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val accommodationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AttractionBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val attractionId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AttractionEvent
 
 data class AttractionBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val attractionId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AttractionEvent
 
 data class CommuteBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val commuteId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : CommuteEvent
 
@@ -55,7 +55,7 @@ data class CommuteBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     override val commuteId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : CommuteEvent
 
@@ -66,7 +66,7 @@ data class TravelOfferBookedCompensatedEvent(
     val accommodationId: UUID,
     val commuteId: UUID,
     val attractionId: UUID?,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : TravelOfferEvent
 
@@ -77,7 +77,7 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val accommodationId: UUID,
     val commuteId: UUID,
     val attractionId: UUID?,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : TravelOfferEvent
 
@@ -87,13 +87,13 @@ fun AccommodationEvent.toCompensation(): AccommodationEvent =
             AccommodationBookedCompensatedEvent(
                 correlationId = this.correlationId,
                 accommodationId = this.accommodationId,
-                userId = this.userId,
+                bookingId = this.bookingId,
             )
         is AccommodationBookingCanceledEvent ->
             AccommodationBookingCanceledCompensatedEvent(
                 correlationId = this.correlationId,
                 accommodationId = this.accommodationId,
-                userId = this.userId,
+                bookingId = this.bookingId,
             )
         else -> throw IllegalArgumentException("Unsupported AccommodationEvent type: ${this.javaClass.simpleName}")
     }
@@ -104,13 +104,13 @@ fun AttractionEvent.toCompensation(): AttractionEvent =
             AttractionBookedCompensatedEvent(
                 correlationId = this.correlationId,
                 attractionId = this.attractionId,
-                userId = this.userId,
+                bookingId = this.bookingId,
             )
         is AttractionBookingCanceledEvent ->
             AttractionBookingCanceledCompensatedEvent(
                 correlationId = this.correlationId,
                 attractionId = this.attractionId,
-                userId = this.userId,
+                bookingId = this.bookingId,
             )
         else -> throw IllegalArgumentException("Unsupported AttractionEvent type: ${this.javaClass.simpleName}")
     }
@@ -121,14 +121,14 @@ fun CommuteEvent.toCompensation(): CommuteEvent =
             CommuteBookedCompensatedEvent(
                 correlationId = this.correlationId,
                 commuteId = this.commuteId,
-                userId = this.userId,
+                bookingId = this.bookingId,
                 seat = this.seat,
             )
         is CommuteBookingCanceledEvent ->
             CommuteBookingCanceledCompensatedEvent(
                 correlationId = this.correlationId,
                 commuteId = this.commuteId,
-                userId = this.userId,
+                bookingId = this.bookingId,
                 seat = this.seat,
             )
         else -> throw IllegalArgumentException("Unsupported CommuteEvent type: ${this.javaClass.simpleName}")
@@ -143,7 +143,7 @@ fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
                 accommodationId = this.accommodationId,
                 commuteId = this.commuteId,
                 attractionId = this.attractionId,
-                userId = this.userId,
+                bookingId = this.bookingId,
                 seat = this.seat,
             )
         is TravelOfferBookingCanceledEvent ->
@@ -153,7 +153,7 @@ fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
                 accommodationId = this.accommodationId,
                 commuteId = this.commuteId,
                 attractionId = this.attractionId,
-                userId = this.userId,
+                bookingId = this.bookingId,
                 seat = this.seat,
             )
         else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: ${this.javaClass.simpleName}")

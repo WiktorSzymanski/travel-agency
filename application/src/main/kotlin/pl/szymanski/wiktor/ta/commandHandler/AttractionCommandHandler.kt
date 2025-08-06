@@ -30,7 +30,7 @@ class AttractionCommandHandler(
             .findById(command.attractionId)
             .let { attraction ->
                 attraction
-                    .book(command.userId)
+                    .book(command.bookingId)
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
 
@@ -39,7 +39,7 @@ class AttractionCommandHandler(
             .findById(command.attractionId)
             .let { attraction ->
                 attraction
-                    .cancelBooking(command.userId)
+                    .cancelBooking(command.bookingId)
                     .also { attractionRepository.update(attraction) }
             }.apply { correlationId = command.correlationId }
 
@@ -75,7 +75,7 @@ class AttractionCommandHandler(
             CancelAttractionBookingCommand(
                 event.attractionId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
             ),
         )
 
@@ -84,7 +84,7 @@ class AttractionCommandHandler(
             BookAttractionCommand(
                 event.attractionId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
             ),
         )
 }

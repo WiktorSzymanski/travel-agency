@@ -38,7 +38,7 @@ class TravelOfferRepositoryImpl(
             )
         val update =
             Updates.combine(
-                Updates.set("booking", travelOffer.booking),
+                Updates.set("bookingId", travelOffer.bookingId),
                 Updates.set("status", "${travelOffer.status}"),
                 Updates.set("version", travelOffer.version + 1),
             )

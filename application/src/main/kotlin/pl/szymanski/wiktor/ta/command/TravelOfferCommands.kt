@@ -10,28 +10,28 @@ sealed interface TravelOfferCommand : Command {
 data class BookTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : TravelOfferCommand
 
 data class CancelBookTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : TravelOfferCommand
 
 data class ReserveTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : TravelOfferCommand
 
 data class CancelReserveTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : TravelOfferCommand
 

@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
-import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
@@ -18,7 +17,7 @@ data class Commute(
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
     val seats: List<Seat>,
-    val bookings: MutableMap<String, Booking> = mutableMapOf(),
+    val bookings: MutableMap<String, String> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
     val version: Int = 1,
 ) {
@@ -67,8 +66,8 @@ data class Commute(
     }
 
     fun bookSeat(
-        seat: Seat,
-        userId: UUID,
+        bookingId: UUID,
+        seat: Seat
     ): CommuteEvent {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
@@ -79,43 +78,34 @@ data class Commute(
             "Seat $seat not found in Commute $_id"
         }
 
-        require(!this.bookings.containsKey(seat.toString())) {
+        require(!this.bookings.containsValue(seat.toString())) {
             "Seat $seat already booked in Commute $_id"
         }
 
-        this.bookings.put(seat.toString(), Booking(userId, LocalDateTime.now()))
+        this.bookings.put(bookingId.toString(), seat.toString())
 
         return CommuteBookedEvent(
             commuteId = _id,
-            userId = userId,
-            seat = seat,
+            bookingId = bookingId,
+            seat = seat
         )
     }
 
     fun cancelBookedSeat(
-        seat: Seat,
-        userId: UUID,
+        bookingId: UUID,
     ): CommuteEvent {
         statusCheck()
         require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Cannot cancel seat $seat when Commute $_id not in SCHEDULED status, current status is $status"
+            "Cannot cancel seat booking for booking $bookingId when Commute $_id not in SCHEDULED status, current status is $status"
         }
 
-        this.bookings
-            .getOrElse(seat.toString(), {
-                throw IllegalArgumentException("Booking for seat $seat not found in Commute $_id")
-            })
-            .let {
-                require(it.userId == userId) {
-                    "Booking for seat $seat in Commute $_id is owned by other user"
-                }
-                this.bookings.remove(seat.toString())
-            }
+        val seat = this.bookings.remove(bookingId.toString())
+            ?: throw IllegalArgumentException("No seat assigned for booking $bookingId in Commute $_id")
 
         return CommuteBookingCanceledEvent(
             commuteId = _id,
-            userId = userId,
-            seat = seat,
+            bookingId = bookingId,
+            seat = Seat.fromString(seat)
         )
     }
 

@@ -28,7 +28,7 @@ class AccommodationRepositoryImpl(
             )
         val update =
             Updates.combine(
-                Updates.set("booking", entity.booking),
+                Updates.set("bookingId", entity.bookingId),
                 Updates.set("status", "${entity.status}"),
                 Updates.set("version", entity.version + 1),
             )

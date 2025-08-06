@@ -18,7 +18,7 @@ data class CommuteDto(
                 name = commute.name,
                 departure = LocationAndTimeDto.fromDomain(commute.departure),
                 arrival = LocationAndTimeDto.fromDomain(commute.arrival),
-                availableSeats = commute.seats.map { it.toString() }.filter { !commute.bookings.containsKey(it) },
+                availableSeats = commute.seats.map { it.toString() }.toList() - commute.bookings.values,
             )
     }
 }

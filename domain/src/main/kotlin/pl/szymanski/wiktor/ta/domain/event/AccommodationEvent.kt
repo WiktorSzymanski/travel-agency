@@ -8,14 +8,14 @@ data class AccommodationBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val accommodationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val accommodationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationExpiredEvent(

@@ -40,7 +40,7 @@ class CommuteCommandHandler(
             .findById(command.commuteId)
             .let { commute ->
                 commute
-                    .bookSeat(command.seat, command.userId)
+                    .bookSeat(command.bookingId, command.seat)
                     .also { commuteRepository.update(commute) }
             }.apply { correlationId = command.correlationId }
 
@@ -49,7 +49,7 @@ class CommuteCommandHandler(
             .findById(command.commuteId)
             .let { commute ->
                 commute
-                    .cancelBookedSeat(command.seat, command.userId)
+                    .cancelBookedSeat(command.bookingId)
                     .also { commuteRepository.update(commute) }
             }.apply { correlationId = command.correlationId }
 
@@ -74,8 +74,7 @@ class CommuteCommandHandler(
             CancelCommuteBookingCommand(
                 event.commuteId,
                 event.correlationId!!,
-                event.userId,
-                event.seat,
+                event.bookingId,
             ),
         )
 
@@ -84,7 +83,7 @@ class CommuteCommandHandler(
             BookCommuteCommand(
                 event.commuteId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
                 event.seat,
             ),
         )

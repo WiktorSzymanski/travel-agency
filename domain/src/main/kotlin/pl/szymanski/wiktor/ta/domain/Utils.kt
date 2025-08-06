@@ -26,11 +26,6 @@ data class LocationAndTime(
     val time: LocalDateTime,
 )
 
-data class Booking(
-    val userId: UUID,
-    val timestamp: LocalDateTime,
-)
-
 @Serializable
 data class Seat(
     val row: String,

@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 
 class AttractionTest {
     private lateinit var attraction: Attraction
-    private lateinit var userId: UUID
+    private lateinit var bookingId: UUID
 
     @BeforeTest
     fun setup() {
@@ -28,22 +28,22 @@ class AttractionTest {
                 date = LocalDateTime.now().plusHours(1),
                 capacity = 3,
             )
-        userId = UUID.randomUUID()
+        bookingId = UUID.randomUUID()
     }
 
     @Test
     fun book_successfully() {
-        val event = attraction.book(userId)
+        val event = attraction.book(bookingId)
 
         assertEventEquals(
             AttractionBookedEvent(
                 attractionId = attraction._id,
-                userId = userId,
+                bookingId = bookingId,
             ),
             event,
         )
         assertEquals(1, attraction.bookings.size)
-        assertEquals(userId, attraction.bookings.first().userId)
+        assertEquals(bookingId, attraction.bookings.first())
     }
 
     @Test
@@ -51,19 +51,19 @@ class AttractionTest {
         attraction.status = AttractionStatusEnum.EXPIRED
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                attraction.book(userId)
+                attraction.book(bookingId)
             }
         assertEquals("Attraction ${attraction._id} is not open for booking", ex.message)
     }
 
     @Test
     fun cannot_book_twice_by_same_user() {
-        attraction.book(userId)
+        attraction.book(bookingId)
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                attraction.book(userId)
+                attraction.book(bookingId)
             }
-        assertEquals("User $userId already booked Attraction ${attraction._id}", ex.message)
+        assertEquals("User $bookingId already booked Attraction ${attraction._id}", ex.message)
     }
 
     @Test
@@ -73,24 +73,24 @@ class AttractionTest {
         attraction.book(UUID.randomUUID())
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                attraction.book(userId)
+                attraction.book(bookingId)
             }
         assertEquals("Attraction ${attraction._id} is fully booked", ex.message)
     }
 
     @Test
     fun cancel_booking_successfully() {
-        attraction.book(userId)
-        val event = attraction.cancelBooking(userId)
+        attraction.book(bookingId)
+        val event = attraction.cancelBooking(bookingId)
 
         assertEventEquals(
             AttractionBookingCanceledEvent(
                 attractionId = attraction._id,
-                userId = userId,
+                bookingId = bookingId,
             ),
             event,
         )
-        assertTrue(attraction.bookings.none { it.userId == userId })
+        assertTrue(attraction.bookings.none { it == bookingId })
     }
 
     @Test
@@ -98,7 +98,7 @@ class AttractionTest {
         attraction.status = AttractionStatusEnum.EXPIRED
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                attraction.cancelBooking(userId)
+                attraction.cancelBooking(bookingId)
             }
         assertEquals(
             "Cannot cancel booking for Attraction ${attraction._id} not in SCHEDULED status",
@@ -110,9 +110,9 @@ class AttractionTest {
     fun cannot_cancel_nonexistent_booking() {
         val ex =
             assertFailsWith<IllegalArgumentException> {
-                attraction.cancelBooking(userId)
+                attraction.cancelBooking(bookingId)
             }
-        assertEquals("User $userId has no booking for Attraction ${attraction._id}", ex.message)
+        assertEquals("User $bookingId has no booking for Attraction ${attraction._id}", ex.message)
     }
 
     @Test

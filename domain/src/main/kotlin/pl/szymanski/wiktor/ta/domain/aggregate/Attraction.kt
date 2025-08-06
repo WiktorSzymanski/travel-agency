@@ -1,7 +1,6 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
-import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
@@ -17,7 +16,7 @@ data class Attraction(
     val location: LocationEnum,
     val date: LocalDateTime,
     val capacity: Int,
-    val bookings: MutableList<Booking> = mutableListOf(),
+    val bookings: MutableList<UUID> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
     val version: Int = 1,
 ) {
@@ -61,45 +60,45 @@ data class Attraction(
         )
     }
 
-    fun book(userId: UUID): AttractionEvent {
+    fun book(bookingId: UUID): AttractionEvent {
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
             "Attraction $_id is not open for booking"
         }
 
-        require(bookings.none { it.userId == userId }) {
-            "User $userId already booked Attraction $_id"
+        require(bookings.none { it == bookingId }) {
+            "Booking $bookingId already signed for Attraction $_id"
         }
 
         require(bookings.size < capacity) {
             "Attraction $_id is fully booked"
         }
 
-        bookings.add(Booking(userId, LocalDateTime.now()))
+        bookings.add(bookingId)
 
         return AttractionBookedEvent(
             attractionId = _id,
-            userId = userId,
+            bookingId = bookingId,
         )
     }
 
-    fun cancelBooking(userId: UUID): AttractionEvent {
+    fun cancelBooking(bookingId: UUID): AttractionEvent {
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
             "Cannot cancel booking for Attraction $_id not in SCHEDULED status"
         }
 
-        val removed = bookings.removeIf { it.userId == userId }
+        val removed = bookings.removeIf { it == bookingId }
 
         require(removed) {
-            "User $userId has no booking for Attraction $_id"
+            "Booking $bookingId was not signed for Attraction $_id"
         }
 
         return AttractionBookingCanceledEvent(
             attractionId = _id,
-            userId = userId,
+            bookingId = bookingId,
         )
     }
 

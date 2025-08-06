@@ -1,7 +1,6 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
-import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
@@ -17,7 +16,7 @@ data class Accommodation(
     val name: String,
     val location: LocationEnum,
     val rent: Rent,
-    var booking: Booking? = null,
+    var bookingId: UUID? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
     val version: Int = 1,
 ) {
@@ -64,37 +63,37 @@ data class Accommodation(
         )
     }
 
-    fun book(userId: UUID): AccommodationEvent {
+    fun book(bookingId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
             "Accommodation $_id cannot be booked when in status $status"
         }
 
         this.status = AccommodationStatusEnum.BOOKED
-        this.booking = Booking(userId, LocalDateTime.now())
+        this.bookingId = bookingId
 
         return AccommodationBookedEvent(
             accommodationId = _id,
-            userId = userId,
+            bookingId = bookingId,
         )
     }
 
-    fun cancelBooking(userId: UUID): AccommodationEvent {
+    fun cancelBooking(bookingId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.BOOKED) {
             "Accommodation $_id booking cannot be canceled when in status $status"
         }
 
-        require(this.booking?.userId == userId) {
-            "Accommodation $_id is not BOOKED by user $userId"
+        require(this.bookingId == bookingId) {
+            "Accommodation $_id is not BOOKED by bookingId $bookingId"
         }
 
-        this.booking = null
+        this.bookingId = null
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return AccommodationBookingCanceledEvent(
             accommodationId = _id,
-            userId = userId,
+            bookingId = bookingId,
         )
     }
 

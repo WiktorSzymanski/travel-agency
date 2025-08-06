@@ -29,7 +29,7 @@ class AccommodationCommandHandler(
             .findById(command.accommodationId)
             .let { accommodation ->
                 accommodation
-                    .book(command.userId)
+                    .book(command.bookingId)
                     .also { accommodationRepository.update(accommodation) }
             }.apply { correlationId = command.correlationId }
 
@@ -38,7 +38,7 @@ class AccommodationCommandHandler(
             .findById(command.accommodationId)
             .let { accommodation ->
                 accommodation
-                    .cancelBooking(command.userId)
+                    .cancelBooking(command.bookingId)
                     .also { accommodationRepository.update(accommodation) }
             }.apply { correlationId = command.correlationId }
 
@@ -73,7 +73,7 @@ class AccommodationCommandHandler(
             CancelAccommodationBookingCommand(
                 event.accommodationId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
             ),
         )
 
@@ -82,7 +82,7 @@ class AccommodationCommandHandler(
             BookAccommodationCommand(
                 event.accommodationId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
             ),
         )
 }

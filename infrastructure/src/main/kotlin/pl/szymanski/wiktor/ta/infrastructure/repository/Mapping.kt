@@ -5,7 +5,7 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.dto.AccommodationDto
 import pl.szymanski.wiktor.ta.dto.AttractionDto
-import pl.szymanski.wiktor.ta.dto.BookingDto
+//import pl.szymanski.wiktor.ta.dto.BookingDto
 import pl.szymanski.wiktor.ta.dto.CommuteDto
 import pl.szymanski.wiktor.ta.dto.LocationAndTimeDto
 import pl.szymanski.wiktor.ta.dto.RentDto
@@ -26,11 +26,11 @@ fun Document.toLocationAndTimeDto(): LocationAndTimeDto =
         time = get("time", LocalDateTime::class).toString(),
     )
 
-fun Document.toBookingDto(): BookingDto =
-    BookingDto(
-        userId = get("userId", UUID::class).toString(),
-        timestamp = get("timestamp", LocalDateTime::class).toString(),
-    )
+//fun Document.toBookingDto(): BookingDto =
+//    BookingDto(
+//        userId = get("userId", UUID::class).toString(),
+//        timestamp = get("timestamp", LocalDateTime::class).toString(),
+//    )
 
 fun Document.toCommuteDto(): CommuteDto =
     CommuteDto(
@@ -50,7 +50,7 @@ fun Document.toAccommodationDto(): AccommodationDto =
         name = getString("name"),
         location = getString("location"),
         rent = (get("rent") as Document).toRentDto(),
-        booking = (get("booking") as? Document)?.toBookingDto(),
+        booking = getString("booking"),
         status = getString("status"),
     )
 
@@ -60,7 +60,7 @@ fun Document.toAttractionDto(): AttractionDto =
         name = getString("name"),
         location = getString("location"),
         date = get("date", LocalDateTime::class).toString(),
-        availableSlots = getInteger("capacity") - getList("bookings", Document::class.java).size,
+        availableSlots = getInteger("capacity") - getList("bookings", String::class.java).size,
     )
 
 fun Document.toTravelOfferDto(): TravelOfferDto =
@@ -70,6 +70,6 @@ fun Document.toTravelOfferDto(): TravelOfferDto =
         commute = (get("commute") as Document).toCommuteDto(),
         accommodation = (get("accommodation") as Document).toAccommodationDto(),
         attraction = (get("attraction") as? Document)?.toAttractionDto(),
-        booking = (get("booking") as? Document)?.toBookingDto(),
+        booking = getString("booking"),
         status = getString("status") ?: TravelOfferStatusEnum.AVAILABLE.name,
     )

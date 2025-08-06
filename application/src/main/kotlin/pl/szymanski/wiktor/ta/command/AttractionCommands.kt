@@ -11,13 +11,13 @@ sealed interface AttractionCommand : Command {
 data class BookAttractionCommand(
     override val attractionId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AttractionCommand
 
 data class CancelAttractionBookingCommand(
     override val attractionId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AttractionCommand
 
 data class CreateAttractionCommand(

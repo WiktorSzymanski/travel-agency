@@ -8,25 +8,34 @@ import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.BookingSaga
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
+import pl.szymanski.wiktor.ta.command.UpdateBookingStateCommand
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import java.util.UUID
 
 class TravelOfferEventHandler(
     private val travelOfferExpireService: TravelOfferExpireService,
@@ -35,6 +44,7 @@ class TravelOfferEventHandler(
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
+    private val bookingCommandHandler: BookingCommandHandler,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(TravelOfferEventHandler::class.java)
@@ -52,11 +62,14 @@ class TravelOfferEventHandler(
         scope.launch { commuteBookingCanceledEventHandler() }
         scope.launch { accommodationBookingCanceledEventHandler() }
         scope.launch { attractionBookingCanceledEventHandler() }
+        scope.launch { bookingCreatedEventHandler() }
+        scope.launch { travelOfferFailedEventHandler() }
     }
 
     suspend fun travelOfferReservedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<TravelOfferReservedEvent> {
+                // If BookTravelOfferCommand fails saga should be compensated so it propably should be in saga
                 scope.launch {
                     log.info("New travel offer reserved: {}", it.travelOfferId)
                     BookingSaga(
@@ -65,19 +78,9 @@ class TravelOfferEventHandler(
                         commuteCommandHandler,
                         accommodationCommandHandler,
                         travelOfferStatusService,
+                        bookingCommandHandler,
                         it,
-                    ).execute().let { bool ->
-                        if (bool) {
-                            travelOfferCommandHandler.handle(
-                                BookTravelOfferCommand(
-                                    correlationId = it.correlationId!!,
-                                    travelOfferId = it.travelOfferId,
-                                    userId = it.userId,
-                                    seat = it.seat,
-                                ) as TravelOfferCommand,
-                            )
-                        }
-                    }
+                    ).execute()
                 }
             }
         }
@@ -93,19 +96,9 @@ class TravelOfferEventHandler(
                         commuteCommandHandler,
                         accommodationCommandHandler,
                         travelOfferStatusService,
+                        bookingCommandHandler,
                         it,
-                    ).execute().let { bool ->
-                        if (bool) {
-                            travelOfferCommandHandler.handle(
-                                CancelBookTravelOfferCommand(
-                                    correlationId = it.correlationId!!,
-                                    travelOfferId = it.travelOfferId,
-                                    userId = it.userId,
-                                    seat = it.seat,
-                                ) as TravelOfferCommand,
-                            )
-                        }
-                    }
+                    ).execute()
                 }
             }
         }
@@ -193,4 +186,38 @@ class TravelOfferEventHandler(
                 }
             }
         }
+
+    suspend fun bookingCreatedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<BookingCreatedEvent> {
+            scope.launch {
+                try {
+                    travelOfferCommandHandler.handle(
+                        ReserveTravelOfferCommand(
+                            it.travelOfferId,
+                            it.correlationId!!,
+                            it.bookingId,
+                            it.seat,
+                        ) as TravelOfferCommand,
+                    )
+                } catch (e: Exception) {
+                    log.error("ERROR HANDLED: {}", e.message)
+                }
+            }
+        }
+    }
+
+    suspend fun travelOfferFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<TravelOfferReserveFailedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        it.bookingId,
+                        it.correlationId!!,
+                        BookingState.FAILED,
+                        it.message
+                    ) as BookingCommand,
+                )
+            }
+        }
+    }
 }

@@ -14,6 +14,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
@@ -50,8 +51,11 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
-                    .book(command.userId, command.seat)
-                    .also { travelOfferRepository.update(travelOffer) }
+                    .book(command.bookingId, command.seat)
+                    .also {
+                        if (it !is TravelOfferFailedEvent)
+                            travelOfferRepository.update(travelOffer)
+                    }
             }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
@@ -59,7 +63,7 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
-                    .cancelBooking(command.userId, command.seat)
+                    .cancelBooking(command.bookingId, command.seat)
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 
@@ -95,8 +99,11 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
-                    .reserve(command.userId, command.seat)
-                    .also { travelOfferRepository.update(travelOffer) }
+                    .reserve(command.bookingId, command.seat)
+                    .also {
+                        if (it !is TravelOfferFailedEvent)
+                            travelOfferRepository.update(travelOffer)
+                    }
             }.apply { correlationId = command.correlationId }
 
     suspend fun handle(command: CancelReserveTravelOfferCommand): TravelOfferEvent =
@@ -104,7 +111,7 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
-                    .cancelReservation(command.userId, command.seat)
+                    .cancelReservation(command.bookingId, command.seat)
                     .also { travelOfferRepository.update(travelOffer) }
             }.apply { correlationId = command.correlationId }
 
@@ -122,7 +129,7 @@ class TravelOfferCommandHandler(
             CancelBookTravelOfferCommand(
                 event.travelOfferId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
                 event.seat,
             ),
         )
@@ -132,7 +139,7 @@ class TravelOfferCommandHandler(
             BookTravelOfferCommand(
                 event.travelOfferId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
                 event.seat,
             ),
         )
@@ -142,7 +149,7 @@ class TravelOfferCommandHandler(
             CancelReserveTravelOfferCommand(
                 event.travelOfferId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
                 event.seat,
             ),
         )
@@ -152,7 +159,7 @@ class TravelOfferCommandHandler(
             ReserveTravelOfferCommand(
                 event.travelOfferId,
                 event.correlationId!!,
-                event.userId,
+                event.bookingId,
                 event.seat,
             ),
         )

@@ -6,6 +6,7 @@ import io.ktor.server.config.property
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.eventHandler.DateMetEventHandler
@@ -14,6 +15,7 @@ import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AccommodationRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AttractionRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.command.BookingRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.AccommodationQueryRepositoryImpl
@@ -37,6 +39,7 @@ fun Application.application() {
     val accommodationRepository = AccommodationRepositoryImpl(MongoDbProvider.database)
     val attractionRepository = AttractionRepositoryImpl(MongoDbProvider.database)
     val commuteRepository = CommuteRepositoryImpl(MongoDbProvider.database)
+    val bookingRepository = BookingRepositoryImpl(MongoDbProvider.database)
 
     val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
     val travelOfferExpireService = TravelOfferExpireService(travelOfferRepository, travelOfferCommandHandler)
@@ -45,6 +48,7 @@ fun Application.application() {
     val travelOfferQueryRepository = TravelOfferQueryRepositoryImpl(MongoDbProvider.database)
     val accommodationQueryRepository = AccommodationQueryRepositoryImpl(MongoDbProvider.database)
     val commuteQueryRepository = CommuteQueryRepositoryImpl(MongoDbProvider.database)
+    val bookingCommandHandler = BookingCommandHandler(bookingRepository)
 
     launch {
         TravelOfferEventHandler(
@@ -54,6 +58,7 @@ fun Application.application() {
             attractionCommandHandler = AttractionCommandHandler(attractionRepository),
             commuteCommandHandler = CommuteCommandHandler(commuteRepository),
             accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository),
+            bookingCommandHandler = bookingCommandHandler,
         ).setup()
     }
 
@@ -69,6 +74,8 @@ fun Application.application() {
         travelOfferQueryRepository = travelOfferQueryRepository,
         travelOfferCommandHandler = travelOfferCommandHandler,
         accommodationQueryRepository = accommodationQueryRepository,
+        bookingCommandHandler = bookingCommandHandler,
+        bookingRepository = bookingRepository
     )
 
     commuteStatisticsController(

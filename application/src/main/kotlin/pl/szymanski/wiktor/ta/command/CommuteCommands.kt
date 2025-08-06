@@ -11,15 +11,14 @@ sealed interface CommuteCommand : Command {
 data class BookCommuteCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
     val seat: Seat,
 ) : CommuteCommand
 
 data class CancelCommuteBookingCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
-    val seat: Seat,
+    val bookingId: UUID,
 ) : CommuteCommand
 
 data class CreateCommuteCommand(

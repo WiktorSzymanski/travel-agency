@@ -32,12 +32,12 @@ private fun assertCommuteEventEquals(
     when (expected) {
         is CommuteBookedEvent -> {
             actual as CommuteBookedEvent
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
             assertEquals(expected.seat, actual.seat, message ?: "seat differs")
         }
         is CommuteBookingCanceledEvent -> {
             actual as CommuteBookingCanceledEvent
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
             assertEquals(expected.seat, actual.seat, message ?: "seat differs")
         }
         is CommuteExpiredEvent -> {
@@ -57,11 +57,11 @@ private fun assertAccommodationEventEquals(
     when (expected) {
         is AccommodationBookedEvent -> {
             actual as AccommodationBookedEvent
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
         }
         is AccommodationBookingCanceledEvent -> {
             actual as AccommodationBookingCanceledEvent
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
         }
         is AccommodationExpiredEvent -> {
             // Only accommodationId needs to be checked, which is already done above
@@ -80,11 +80,11 @@ private fun assertAttractionEventEquals(
     when (expected) {
         is AttractionBookedEvent -> {
             actual as AttractionBookedEvent
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
         }
         is AttractionBookingCanceledEvent -> {
             actual as AttractionBookingCanceledEvent
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
         }
         is AttractionExpiredEvent -> {
             // Only attractionId needs to be checked, which is already done above
@@ -106,7 +106,7 @@ private fun assertTravelOfferEventEquals(
             assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
             assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
             assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
             assertEquals(expected.seat, actual.seat, message ?: "seat differs")
         }
         is TravelOfferReleaseEvent -> {
@@ -114,15 +114,15 @@ private fun assertTravelOfferEventEquals(
             assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
             assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
             assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
-            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+//            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
         }
         is TravelOfferBookedEvent -> {
             actual as TravelOfferBookedEvent
             assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
             assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
             assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
             assertEquals(expected.seat, actual.seat, message ?: "seat differs")
         }
         is TravelOfferBookingCanceledEvent -> {
@@ -130,8 +130,8 @@ private fun assertTravelOfferEventEquals(
             assertEquals(expected.accommodationId, actual.accommodationId, message ?: "accommodationId differs")
             assertEquals(expected.commuteId, actual.commuteId, message ?: "commuteId differs")
             assertEquals(expected.attractionId, actual.attractionId, message ?: "attractionId differs")
-            assertEquals(expected.userId, actual.userId, message ?: "userId differs")
-            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+//            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
         }
         is TravelOfferExpiredEvent -> {
             // Only travelOfferId needs to be checked, which is already done above

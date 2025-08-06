@@ -14,7 +14,7 @@ data class TravelOfferDto(
     val commute: CommuteDto,
     val accommodation: AccommodationDto,
     val attraction: AttractionDto? = null,
-    val booking: BookingDto? = null,
+    val booking: String? = null,
     val status: String = TravelOfferStatusEnum.AVAILABLE.name,
 ) {
     companion object {
@@ -30,7 +30,7 @@ data class TravelOfferDto(
                 commute = CommuteDto.fromDomain(commute),
                 accommodation = AccommodationDto.fromDomain(accommodation),
                 attraction = if (attraction != null) AttractionDto.fromDomain(attraction) else null,
-                booking = travelOffer.booking?.let { BookingDto.fromDomain(it) },
+                booking = travelOffer.bookingId?.toString(),
                 status = travelOffer.status.name,
             )
         }

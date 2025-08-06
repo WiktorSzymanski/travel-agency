@@ -11,13 +11,13 @@ sealed interface AccommodationCommand : Command {
 data class BookAccommodationCommand(
     override val accommodationId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AccommodationCommand
 
 data class CancelAccommodationBookingCommand(
     override val accommodationId: UUID,
     override val correlationId: UUID,
-    val userId: UUID,
+    val bookingId: UUID,
 ) : AccommodationCommand
 
 data class CreateAccommodationCommand(
