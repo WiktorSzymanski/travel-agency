@@ -9,7 +9,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
-import pl.szymanski.wiktor.ta.CommuteQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.dto.ArrivalLocationDto
 import pl.szymanski.wiktor.ta.dto.CommuteStatisticDto

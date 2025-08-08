@@ -7,32 +7,42 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
-import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.queryRepository.BookingQueryRepository
+import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
 import java.util.UUID
 
-class TravelOfferQueryRepositoryImpl(
+class BookingQueryRepositoryImpl(
     database: MongoDatabase,
-) : TravelOfferQueryRepository {
-    private val collection: MongoCollection<TravelOffer> = database.getCollection("travelOffer")
+) : BookingQueryRepository {
+    private val collection: MongoCollection<Booking> = database.getCollection("booking")
 
-    override suspend fun findTravelOfferDto(
+    override suspend fun findTravelOfferDtoByUserId(
         page: Int,
         size: Int,
-        status: TravelOfferStatusEnum?,
-        travelOfferId: UUID?,
+        userId: UUID
     ): List<TravelOfferDto> {
-        val entryFilters =
-            listOfNotNull(
-                travelOfferId?.let { Filters.eq("_id", it) },
-                status?.let { Filters.eq("status", it.name) },
+        val matchStage = Aggregates.match(
+            Filters.and(
+                Filters.eq("status", "SUCCEEDED"),
+                Filters.eq("userId", userId),
             )
+        )
 
         val paginationSkip = Aggregates.skip((page - 1) * size)
         val paginationLimit = Aggregates.limit(size)
+
+        val travelOfferLookup = Aggregates.lookup(
+            "travelOffer",
+            "travelOfferId",
+            "_id",
+            "travelOffer"
+        )
+
+        val replaceRootStage = Aggregates.replaceRoot(
+            Document("\$arrayElemAt", listOf("\$travelOffer", 0))
+        )
 
         val accommodationLookup =
             Aggregates.lookup(
@@ -68,26 +78,33 @@ class TravelOfferQueryRepositoryImpl(
                 ),
             )
 
-        val pipeline =
-            listOfNotNull(
-                entryFilters.takeIf { it.isNotEmpty() }?.let {
-                    Aggregates.match(Filters.and(it))
-                },
-                paginationSkip,
-                paginationLimit,
-                accommodationLookup,
-                attractionLookup,
-                commuteLookup,
-                projection,
-            )
+
+        val pipeline = listOf(
+            matchStage,
+            paginationSkip,
+            paginationLimit,
+            travelOfferLookup,
+            replaceRootStage,
+            accommodationLookup,
+            attractionLookup,
+            commuteLookup,
+            projection,
+        )
 
         return collection.aggregate<Document>(pipeline)
             .toList()
             .map { it.toTravelOfferDto() }
     }
-    
-    override suspend fun countTravelOffersByStatus(status: TravelOfferStatusEnum): Int {
-        val filter = Filters.eq("status", status.name)
-        return collection.countDocuments(filter).toInt()
-    }
+
+    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).toList().first()
+
+    override suspend fun findByUserId(
+        page: Int,
+        size: Int,
+        userId: UUID): List<Booking> =
+        collection
+            .find(Document("userId", userId))
+            .skip((page - 1) * size)
+            .limit(size)
+            .toList()
 }

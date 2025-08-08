@@ -13,6 +13,8 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import java.util.UUID
 
 data class AccommodationBookedCompensatedEvent(
@@ -95,7 +97,7 @@ fun AccommodationEvent.toCompensation(): AccommodationEvent =
                 accommodationId = this.accommodationId,
                 bookingId = this.bookingId,
             )
-        else -> throw IllegalArgumentException("Unsupported AccommodationEvent type: ${this.javaClass.simpleName}")
+        else -> throw IllegalArgumentException("Unsupported AccommodationEvent type: $this")
     }
 
 fun AttractionEvent.toCompensation(): AttractionEvent =
@@ -112,7 +114,7 @@ fun AttractionEvent.toCompensation(): AttractionEvent =
                 attractionId = this.attractionId,
                 bookingId = this.bookingId,
             )
-        else -> throw IllegalArgumentException("Unsupported AttractionEvent type: ${this.javaClass.simpleName}")
+        else -> throw IllegalArgumentException("Unsupported AttractionEvent type: $this")
     }
 
 fun CommuteEvent.toCompensation(): CommuteEvent =
@@ -131,7 +133,7 @@ fun CommuteEvent.toCompensation(): CommuteEvent =
                 bookingId = this.bookingId,
                 seat = this.seat,
             )
-        else -> throw IllegalArgumentException("Unsupported CommuteEvent type: ${this.javaClass.simpleName}")
+        else -> throw IllegalArgumentException("Unsupported CommuteEvent type: $this")
     }
 
 fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
@@ -156,5 +158,7 @@ fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
                 bookingId = this.bookingId,
                 seat = this.seat,
             )
-        else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: ${this.javaClass.simpleName}")
+        is TravelOfferRebookedEvent ->
+            this
+        else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: $this")
     }

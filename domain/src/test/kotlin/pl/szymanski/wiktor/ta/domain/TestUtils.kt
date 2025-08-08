@@ -1,26 +1,52 @@
 package pl.szymanski.wiktor.ta.domain
 
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookSeatFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCancelBookedSeatFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.FailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMakeAvailableFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMakeUnavailableFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseCompleteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCancelFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import kotlin.test.assertEquals
 import kotlin.test.fail
+
+private fun assertFailedEventEquals(
+    expected: FailedEvent,
+    actual: FailedEvent,
+    message: String?,
+) {
+    assertEquals(expected.message, actual.message, message ?: "message differs")
+}
 
 private fun assertCommuteEventEquals(
     expected: CommuteEvent,
@@ -42,6 +68,20 @@ private fun assertCommuteEventEquals(
         }
         is CommuteExpiredEvent -> {
             // Only commuteId needs to be checked, which is already done above
+        }
+        is CommuteExpireFailedEvent -> {
+            assertFailedEventEquals(expected, actual as CommuteExpireFailedEvent, message)
+        }
+        is CommuteBookSeatFailedEvent -> {
+            actual as CommuteBookSeatFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertEquals(expected.seat, actual.seat, message ?: "seat differs")
+            assertFailedEventEquals(expected, actual, message)
+        }
+        is CommuteCancelBookedSeatFailedEvent -> {
+            actual as CommuteCancelBookedSeatFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
         }
         else -> throw IllegalArgumentException("Unsupported CommuteEvent type: ${expected::class}")
     }
@@ -66,6 +106,19 @@ private fun assertAccommodationEventEquals(
         is AccommodationExpiredEvent -> {
             // Only accommodationId needs to be checked, which is already done above
         }
+        is AccommodationExpireFailedEvent -> {
+            assertFailedEventEquals(expected, actual as FailedEvent, message)
+        }
+        is AccommodationBookFailedEvent -> {
+            actual as AccommodationBookFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual as FailedEvent, message)
+        }
+        is AccommodationBookingCancelFailedEvent -> {
+            actual as AccommodationBookingCancelFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual as FailedEvent, message)
+        }
         else -> throw IllegalArgumentException("Unsupported AccommodationEvent type: ${expected::class}")
     }
 }
@@ -88,6 +141,19 @@ private fun assertAttractionEventEquals(
         }
         is AttractionExpiredEvent -> {
             // Only attractionId needs to be checked, which is already done above
+        }
+        is AttractionExpireFailedEvent -> {
+            assertFailedEventEquals(expected, actual as AttractionExpireFailedEvent, message)
+        }
+        is AttractionBookFailedEvent -> {
+            actual as AttractionBookFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
+        }
+        is AttractionBookingCancelFailedEvent -> {
+            actual as AttractionBookingCancelFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
         }
         else -> throw IllegalArgumentException("Unsupported AttractionEvent type: ${expected::class}")
     }
@@ -135,6 +201,40 @@ private fun assertTravelOfferEventEquals(
         }
         is TravelOfferExpiredEvent -> {
             // Only travelOfferId needs to be checked, which is already done above
+        }
+        is TravelOfferBookFailedEvent -> {
+            actual as TravelOfferBookFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
+        }
+        is TravelOfferReserveFailedEvent -> {
+            actual as TravelOfferReserveFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
+        }
+        is TravelOfferMakeUnavailableFailedEvent -> {
+            assertFailedEventEquals(expected, actual as TravelOfferMakeUnavailableFailedEvent, message)
+        }
+        is TravelOfferMakeAvailableFailedEvent -> {
+            assertFailedEventEquals(expected, actual as TravelOfferMakeAvailableFailedEvent, message)
+        }
+        is TravelOfferExpireFailedEvent -> {
+            assertFailedEventEquals(expected, actual as TravelOfferExpireFailedEvent, message)
+        }
+        is TravelOfferReservationCancelFailedEvent -> {
+            actual as TravelOfferReservationCancelFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
+        }
+        is TravelOfferBookingCancelFailedEvent -> {
+            actual as TravelOfferBookingCancelFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
+        }
+        is TravelOfferReleaseCompleteFailedEvent -> {
+            actual as TravelOfferReleaseCompleteFailedEvent
+            assertEquals(expected.bookingId, actual.bookingId, message ?: "bookingId differs")
+            assertFailedEventEquals(expected, actual, message)
         }
         else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: ${expected::class}")
     }

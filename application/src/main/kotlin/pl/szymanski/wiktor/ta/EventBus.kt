@@ -22,7 +22,7 @@ object EventBus {
     val events = _events.asSharedFlow()
 
     suspend fun publish(event: Any) {
-        log.info("Publishing event: {}", event)
+//        log.info("Publishing event: {}", event)
         _events.emit(event)
     }
 
@@ -32,7 +32,7 @@ object EventBus {
         scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ) {
-        log.info("Event {} set to be published at: {}", event, date)
+//        log.info("Event {} set to be published at: {}", event, date)
         scope.launch {
             Duration.between(LocalDateTime.now(zoneId), date).toMillis().let {
                 if (it > 0) delay(it)

@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.EventBus
@@ -43,6 +44,7 @@ class OfferMaker(
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch {
             EventBus.subscribe<TravelOfferExpiredEvent> {
+                delay(2000)
                 offerHashes.remove(
                     Triple(
                         it.commuteId,
@@ -64,10 +66,12 @@ class OfferMaker(
                     val offerMatchHash = offerTriple.toIds().hashCode()
                     if (!offerHashes.contains(offerMatchHash)) {
                         launch {
-                            try {
+                            runCatching {
                                 travelOfferCommandHandler.handle(offerTriple.toCommand() as TravelOfferCommand)
-                            } catch (e: Throwable) {
-                                log.info("ERROR HANDLED: $e")
+                            }.exceptionOrNull()?.let{
+                                if (it.message?.contains("E11000 duplicate key error collection") ?: false)
+                                    log.info("ERROR: E11000 duplicate key error collection while creating offer for $offerTriple triple. Maybe should save offers in bulk?")
+                                else throw it
                             }
                         }
                         offerHashes.add(offerMatchHash)

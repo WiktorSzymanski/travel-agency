@@ -3,11 +3,16 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookSeatFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCancelBookedSeatFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -27,7 +32,7 @@ data class Commute(
             departure: LocationAndTime,
             arrival: LocationAndTime,
             seats: List<Seat>,
-        ): Pair<Commute, CommuteCreatedEvent> {
+        ): Pair<Commute, List<CommuteCreatedEvent>> {
             val commute =
                 Commute(
                     name = name,
@@ -45,68 +50,188 @@ data class Commute(
                     seats = seats,
                 )
 
-            return commute to event
+            return commute to listOf(event)
         }
     }
 
-    fun expire(): CommuteEvent {
-        require(LocalDateTime.now().isAfter(this.departure.time)) {
-            "Commute $_id cannot expire before its departure time"
+    fun expire(): List<CommuteEvent> {
+        if (LocalDateTime.now().isBefore(this.departure.time)) {
+            return listOf(CommuteExpireFailedEvent(
+                commuteId = _id,
+                message = "Commute $_id cannot expire before its departure time"
+            ))
         }
 
-        require(listOf(CommuteStatusEnum.SCHEDULED, CommuteStatusEnum.FULL).contains(this.status)) {
-            "Commute $_id cannot expire when not in SCHEDULED or FULL status"
+        if (this.status == CommuteStatusEnum.EXPIRED) {
+            return listOf(CommuteExpireFailedEvent(
+                commuteId = _id,
+                message = "Commute $_id cannot expire when not in $status status"
+            ))
         }
 
         this.status = CommuteStatusEnum.EXPIRED
 
-        return CommuteExpiredEvent(
+        return listOf(CommuteExpiredEvent(
             commuteId = _id,
-        )
+        ))
     }
 
     fun bookSeat(
         bookingId: UUID,
         seat: Seat
-    ): CommuteEvent {
+    ): List<CommuteEvent> {
         statusCheck()
-        require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Seat cannot be booked when Commute $_id not in SCHEDULED status, current status is $status"
+        if (this.status != CommuteStatusEnum.SCHEDULED) {
+            return listOf(CommuteBookSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = seat,
+                message = "Seat cannot be booked when Commute $_id not in SCHEDULED status, current status is $status"
+            ))
         }
 
-        require(this.seats.contains(seat)) {
-            "Seat $seat not found in Commute $_id"
+        if (!this.seats.contains(seat)) {
+            return listOf(CommuteBookSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = seat,
+                message = "Seat $seat not found in Commute $_id"
+            ))
         }
 
-        require(!this.bookings.containsValue(seat.toString())) {
-            "Seat $seat already booked in Commute $_id"
+        if (this.bookings.containsValue(seat.toString())) {
+            return listOf(CommuteBookSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = seat,
+                message = "Seat $seat already booked in Commute $_id"
+            ))
         }
 
-        this.bookings.put(bookingId.toString(), seat.toString())
+        this.bookings[bookingId.toString()] = seat.toString()
 
-        return CommuteBookedEvent(
-            commuteId = _id,
-            bookingId = bookingId,
-            seat = seat
+        return listOfNotNull(
+            CommuteBookedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = seat
+            ),
+            takeIf {seatsCheck()}?.let {
+                CommuteFullEvent(
+                    commuteId = _id,
+                )
+            }
         )
     }
 
     fun cancelBookedSeat(
         bookingId: UUID,
-    ): CommuteEvent {
+    ): List<CommuteEvent> {
         statusCheck()
-        require(this.status == CommuteStatusEnum.SCHEDULED) {
-            "Cannot cancel seat booking for booking $bookingId when Commute $_id not in SCHEDULED status, current status is $status"
+        if (!listOf(CommuteStatusEnum.SCHEDULED, CommuteStatusEnum.FULL).contains(this.status)) {
+            return listOf(CommuteCancelBookedSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                message = "Cannot cancel seat booking for booking $bookingId when Commute $_id not in SCHEDULED status, current status is $status"
+            ))
         }
 
         val seat = this.bookings.remove(bookingId.toString())
-            ?: throw IllegalArgumentException("No seat assigned for booking $bookingId in Commute $_id")
+            ?: return listOf(CommuteCancelBookedSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                message = "No seat assigned for booking $bookingId in Commute $_id"
+            ))
 
-        return CommuteBookingCanceledEvent(
+        return listOfNotNull(
+            CommuteBookingCanceledEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = Seat.fromString(seat)
+            ),
+            takeIf {seatsCheck()}?.let {
+                CommuteAvailableEvent(
+                    commuteId = _id
+                )
+            }
+        )
+    }
+
+    fun compensateCancelBookedSeat(
+        bookingId: UUID,
+        seat: Seat
+    ): List<CommuteEvent> {
+        if (!this.seats.contains(seat)) {
+            return listOf(CommuteBookSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = seat,
+                message = "Seat $seat not found in Commute $_id"
+            ))
+        }
+
+        if (this.bookings.containsValue(seat.toString())) {
+            return listOf(CommuteBookSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = seat,
+                message = "Seat $seat already booked in Commute $_id"
+            ))
+        }
+
+        this.bookings[bookingId.toString()] = seat.toString()
+
+        return listOfNotNull(CommuteBookedEvent(
             commuteId = _id,
             bookingId = bookingId,
-            seat = Seat.fromString(seat)
+            seat = seat
+        ),
+            takeIf {seatsCheck()}?.let {
+                CommuteFullEvent(
+                    commuteId = _id,
+                )
+            }
         )
+    }
+
+    fun compensateBookSeat(
+        bookingId: UUID
+    ): List<CommuteEvent> {
+        val seat = this.bookings.remove(bookingId.toString())
+            ?: return listOf(CommuteCancelBookedSeatFailedEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                message = "No seat assigned for booking $bookingId in Commute $_id"
+            ))
+
+        return listOfNotNull(
+            CommuteBookingCanceledEvent(
+                commuteId = _id,
+                bookingId = bookingId,
+                seat = Seat.fromString(seat)
+            ),
+            takeIf {seatsCheck()}?.let {
+                CommuteAvailableEvent(
+                    commuteId = _id
+                )
+            }
+        )
+    }
+
+    private fun seatsCheck() : Boolean {
+        return when (this.seats.size == this.bookings.size) {
+            true -> {
+                this.status = CommuteStatusEnum.FULL
+                true
+            }
+            false -> {
+                if (this.status == CommuteStatusEnum.FULL) {
+                    this.status = CommuteStatusEnum.SCHEDULED
+                    return true
+                }
+                false
+            }
+        }
     }
 
     private fun statusCheck() {

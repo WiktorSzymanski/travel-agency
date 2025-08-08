@@ -3,15 +3,17 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class AttractionTest {
@@ -49,21 +51,31 @@ class AttractionTest {
     @Test
     fun cannot_book_when_expired() {
         attraction.status = AttractionStatusEnum.EXPIRED
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.book(bookingId)
-            }
-        assertEquals("Attraction ${attraction._id} is not open for booking", ex.message)
+        val event = attraction.book(bookingId)
+
+        assertEventEquals(
+            AttractionBookFailedEvent(
+                attractionId = attraction._id,
+                bookingId = bookingId,
+                message = "Attraction ${attraction._id} is not open for booking",
+            ),
+            event,
+        )
     }
 
     @Test
     fun cannot_book_twice_by_same_user() {
         attraction.book(bookingId)
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.book(bookingId)
-            }
-        assertEquals("User $bookingId already booked Attraction ${attraction._id}", ex.message)
+        val event = attraction.book(bookingId)
+
+        assertEventEquals(
+            AttractionBookFailedEvent(
+                attractionId = attraction._id,
+                bookingId = bookingId,
+                message = "Booking $bookingId already signed for Attraction ${attraction._id}",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -71,11 +83,16 @@ class AttractionTest {
         attraction.book(UUID.randomUUID())
         attraction.book(UUID.randomUUID())
         attraction.book(UUID.randomUUID())
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.book(bookingId)
-            }
-        assertEquals("Attraction ${attraction._id} is fully booked", ex.message)
+        val event = attraction.book(bookingId)
+
+        assertEventEquals(
+            AttractionBookFailedEvent(
+                attractionId = attraction._id,
+                bookingId = bookingId,
+                message = "Attraction ${attraction._id} is fully booked",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -96,23 +113,30 @@ class AttractionTest {
     @Test
     fun cannot_cancel_booking_when_expired() {
         attraction.status = AttractionStatusEnum.EXPIRED
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.cancelBooking(bookingId)
-            }
-        assertEquals(
-            "Cannot cancel booking for Attraction ${attraction._id} not in SCHEDULED status",
-            ex.message,
+        val event = attraction.cancelBooking(bookingId)
+
+        assertEventEquals(
+            AttractionBookingCancelFailedEvent(
+                attractionId = attraction._id,
+                bookingId = bookingId,
+                message = "Cannot cancel booking for Attraction ${attraction._id} not in SCHEDULED status",
+            ),
+            event,
         )
     }
 
     @Test
     fun cannot_cancel_nonexistent_booking() {
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.cancelBooking(bookingId)
-            }
-        assertEquals("User $bookingId has no booking for Attraction ${attraction._id}", ex.message)
+        val event = attraction.cancelBooking(bookingId)
+
+        assertEventEquals(
+            AttractionBookingCancelFailedEvent(
+                attractionId = attraction._id,
+                bookingId = bookingId,
+                message = "Booking $bookingId was not signed for Attraction ${attraction._id}",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -132,13 +156,14 @@ class AttractionTest {
     @Test
     fun cannot_expire_before_date() {
         attraction = attraction.copy(date = LocalDateTime.now().plusMinutes(5))
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                attraction.expire()
-            }
-        assertEquals(
-            "Attraction ${attraction._id} cannot expire before its date",
-            ex.message,
+        val event = attraction.expire()
+
+        assertEventEquals(
+            AttractionExpireFailedEvent(
+                attractionId = attraction._id,
+                message = "Attraction ${attraction._id} cannot expire before its date",
+            ),
+            event,
         )
     }
 }

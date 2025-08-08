@@ -22,3 +22,8 @@ data class UpdateBookingStateCommand(
     val state: BookingState,
     val message: String? = null,
 ) : BookingCommand
+
+data class BookingRequestCancelCommand(
+    override val bookingId: UUID,
+    override val correlationId: UUID,
+) : BookingCommand

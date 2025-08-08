@@ -47,6 +47,13 @@ data class TravelOfferReleaseEvent(
     val seat: Seat,
 ) : TravelOfferEvent
 
+data class TravelOfferRebookedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    val bookingId: UUID,
+) : TravelOfferEvent
+
 data class TravelOfferBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -109,5 +116,51 @@ data class TravelOfferMakeUnavailableFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
+    override val message: String,
+) : TravelOfferFailedEvent
+
+data class TravelOfferMakeAvailableFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    override val message: String,
+) : TravelOfferFailedEvent
+
+data class TravelOfferExpireFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    override val message: String,
+) : TravelOfferFailedEvent
+
+data class TravelOfferReservationCancelFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    val bookingId: UUID,
+    override val message: String,
+) : TravelOfferFailedEvent
+
+data class TravelOfferBookingCancelFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    val bookingId: UUID,
+    override val message: String,
+) : TravelOfferFailedEvent
+
+data class TravelOfferReleaseCompleteFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    val bookingId: UUID,
+    override val message: String,
+) : TravelOfferFailedEvent
+
+data class TravelOfferRebookCompleteFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val travelOfferId: UUID,
+    val bookingId: UUID,
     override val message: String,
 ) : TravelOfferFailedEvent

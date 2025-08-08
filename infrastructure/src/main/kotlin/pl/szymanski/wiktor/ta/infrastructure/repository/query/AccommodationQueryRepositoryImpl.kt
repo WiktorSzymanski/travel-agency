@@ -7,7 +7,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
-import pl.szymanski.wiktor.ta.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum

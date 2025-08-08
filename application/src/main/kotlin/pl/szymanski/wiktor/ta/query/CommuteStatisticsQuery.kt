@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.query
 
-import pl.szymanski.wiktor.ta.CommuteQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.dto.CommuteStatisticDto
 import java.time.LocalDateTime
 

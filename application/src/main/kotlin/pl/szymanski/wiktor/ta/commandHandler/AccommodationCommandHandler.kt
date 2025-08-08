@@ -12,16 +12,19 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
+import pl.szymanski.wiktor.ta.withRetry
 
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
     suspend fun handle(command: AccommodationCommand): AccommodationEvent =
-        when (command) {
-            is BookAccommodationCommand -> handle(command)
-            is CancelAccommodationBookingCommand -> handle(command)
-            is CreateAccommodationCommand -> handle(command)
-            is ExpireAccommodationCommand -> handle(command)
+        withRetry (3) {
+            when (command) {
+                is BookAccommodationCommand -> handle(command)
+                is CancelAccommodationBookingCommand -> handle(command)
+                is CreateAccommodationCommand -> handle(command)
+                is ExpireAccommodationCommand -> handle(command)
+            }
         }.apply { correlationId = command.correlationId }.also { EventBus.publish(it) }
 
     suspend fun handle(command: BookAccommodationCommand): AccommodationEvent =

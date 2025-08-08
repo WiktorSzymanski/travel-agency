@@ -9,7 +9,7 @@ paths:
   /travelOffers:
     get:
       summary: Get all travel offers
-      description: Returns a list of all available travel offers with related accommodation, attraction, and commute details
+      description: Returns a paginated list of all available travel offers with related accommodation, attraction, and commute details. Use page and size parameters to control pagination.
       operationId: getTravelOffers
       parameters:
         - name: page
@@ -84,7 +84,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [WARSAW, KRAKOW, GDANSK, WROCLAW, POZNAN, LODZ]
+            enum: [POZNAN, LONDON, PARIS, BERLIN, ROME, AMSTERDAM, ZERMATT, VIENNA, BARCELONA, VENICE, ZURICH, BUDAPEST, MADRID, LYON,]
         - name: status
           in: query
           description: Status of the travel offers
@@ -156,6 +156,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/BookingDto'
+                
+  /userBookings/{userId}:
+    get:
+      summary: Get bookings by user ID
+      description: Returns a list of bookings for a specific user
+      operationId: getBookingsByUserId
+      parameters:
+        - name: userId
+          in: path
+          description: ID of the user
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingDto'
   /travelOffers/{status}:
     get:
       summary: Get travel offers by status
@@ -192,11 +229,36 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TravelOfferDto'
+                  
+  /travelOffers/{status}/count:
+    get:
+      summary: Get count of travel offers by status
+      description: Returns the number of travel offers with a specific status
+      operationId: countTravelOffersByStatus
+      parameters:
+        - name: status
+          in: path
+          description: Status of the travel offer
+          required: true
+          schema:
+            type: string
+            enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of travel offers with the specified status
 
   /bookTravelOffer:
     post:
       summary: Book a travel offer
-      description: Books a travel offer for a specific user with a selected seat
+      description: Books a travel offer for a specific user with a selected seat. This is an asynchronous operation that returns a booking ID immediately while processing continues in the background.
       operationId: bookTravelOffer
       parameters:
         - name: offerId
@@ -220,8 +282,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        '202':
           description: Travel offer booked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookingId:
+                    type: string
+                    format: uuid
+                    description: ID of the created booking
         '400':
           description: Invalid input parameters
         '500':
@@ -229,29 +300,16 @@ paths:
   /cancelTravelOffer:
     post:
       summary: Cancel travel offer booking
-      description: Cancels a travel offer booking for a specific user and seat
+      description: Cancels a travel offer booking for a specific user and seat. This operation frees up the seat for other users to book.
       operationId: cancelTravelOffer
       parameters:
-        - name: offerId
+        - name: bookingId
           in: query
-          description: ID of the travel offer to cancel
+          description: ID of the booking to cancel
           required: true
           schema:
             type: string
             format: uuid
-        - name: userId
-          in: query
-          description: ID of the user who made the booking
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: seat
-          in: query
-          description: Seat to cancel in format "row/column" (e.g., "1|A")
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: Travel offer booking cancelled successfully
@@ -262,7 +320,7 @@ paths:
   /commuteStatistics:
     get:
       summary: Get commute statistics
-      description: Returns statistics about commutes within a given date range
+      description: Returns statistics about commutes within a given date range. This endpoint provides aggregated data about commute patterns, including the number of commutes and passengers for each arrival location.
       operationId: getCommuteStatistics
       parameters:
         - name: start
@@ -279,6 +337,20 @@ paths:
           schema:
             type: string
             format: date-time
+        - name: page
+          in: query
+          description: Page number
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            default: 20
       responses:
         '200':
           description: Successful operation
@@ -312,7 +384,7 @@ components:
         status:
           type: string
           description: Current status of the travel offer
-          enum: [ AVAILABLE, BOOKED, EXPIRED, CANCELLED ]
+          enum: [ AVAILABLE, BOOKED, EXPIRED ]
 
     CommuteDto:
       type: object
@@ -370,9 +442,28 @@ components:
     BookingDto:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier of the booking
         userId:
           type: string
+          format: uuid
           description: ID of the user who made the booking
+        travelOfferId:
+          type: string
+          format: uuid
+          description: ID of the travel offer that was booked
+        seat:
+          $ref: '#/components/schemas/SeatDto'
+          description: Seat that was booked
+        status:
+          type: string
+          description: Current status of the booking
+        message:
+          type: string
+          description: Optional message related to the booking
+          nullable: true
         timestamp:
           type: string
           format: date-time
@@ -416,8 +507,18 @@ components:
       properties:
         time:
           type: string
+          description: Time slot for the statistics
+        totalCommuteCount:
+          type: integer
+          format: int32
+          description: Total number of commutes in this time slot
+        totalBookingsCount:
+          type: integer
+          format: int32
+          description: Total number of bookings across all commutes in this time slot
         arrivalLocations:
           type: array
+          description: Statistics broken down by arrival location
           items:
             $ref: '#/components/schemas/ArrivalLocationDto'
 
@@ -426,9 +527,12 @@ components:
       properties:
         location:
           type: string
+          description: Name of the arrival location
         commutesNumber:
           type: integer
           format: int64
+          description: Number of commutes arriving at this location
         passengersNumber:
           type: integer
           format: int64
+          description: Total number of passengers arriving at this location

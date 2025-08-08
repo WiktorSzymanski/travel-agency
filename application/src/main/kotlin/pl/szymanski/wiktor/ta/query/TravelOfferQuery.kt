@@ -1,7 +1,7 @@
 package pl.szymanski.wiktor.ta.query
 
-import pl.szymanski.wiktor.ta.AccommodationQueryRepository
-import pl.szymanski.wiktor.ta.TravelOfferQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
@@ -37,15 +37,10 @@ class TravelOfferQuery(
             location = location,
             status = status,
         )
-
-    suspend fun getTravelOfferByUserId(
-        page: Int,
-        size: Int,
-        userId: UUID,
-    ): List<TravelOfferDto> =
-        travelOfferRepository.findTravelOfferDto(
-            page = page,
-            size = size,
-            userId = userId,
-        )
+        
+    suspend fun countTravelOffersByStatus(
+        status: TravelOfferStatusEnum,
+    ): Int {
+        return travelOfferRepository.countTravelOffersByStatus(status)
+    }
 }

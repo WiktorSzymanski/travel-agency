@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta
+package pl.szymanski.wiktor.ta.queryRepository
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum

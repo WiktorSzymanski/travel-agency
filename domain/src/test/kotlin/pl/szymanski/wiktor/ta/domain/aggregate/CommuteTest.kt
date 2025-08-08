@@ -5,15 +5,17 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookSeatFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCancelBookedSeatFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -45,41 +47,56 @@ class CommuteTest {
             event,
         )
         assertEquals(1, commute.bookings.size)
-        assertTrue(commute.bookings.contains(bookingId))
+        assertTrue(commute.bookings.contains(bookingId.toString()))
     }
 
     @Test
     fun booking_not_allowed_when_expired() {
         commute.status = CommuteStatusEnum.EXPIRED
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.bookSeat(bookingId, seat1)
-            }
-        assertEquals(
-            "Seat cannot be booked when Commute ${commute._id} not in SCHEDULED status",
-            ex.message,
+        val event = commute.bookSeat(bookingId, seat1)
+
+        assertEventEquals(
+            CommuteBookSeatFailedEvent(
+                commuteId = commute._id,
+                bookingId = bookingId,
+                seat = seat1,
+                message = "Seat cannot be booked when Commute ${commute._id} not in SCHEDULED status, current status is ${commute.status}",
+            ),
+            event,
         )
     }
 
     @Test
     fun cannot_book_unknown_seat() {
         val unknownSeat = Seat("99", "Z")
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.bookSeat(bookingId, unknownSeat)
-            }
-        assertEquals("Seat $unknownSeat not found in Commute ${commute._id}", ex.message)
+        val event = commute.bookSeat(bookingId, unknownSeat)
+
+        assertEventEquals(
+            CommuteBookSeatFailedEvent(
+                commuteId = commute._id,
+                bookingId = bookingId,
+                seat = unknownSeat,
+                message = "Seat $unknownSeat not found in Commute ${commute._id}",
+            ),
+            event,
+        )
     }
 
     @Test
     fun cannot_book_same_seat_twice() {
+        val otherBookingId = UUID.randomUUID()
         commute.bookSeat(bookingId, seat1)
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.bookSeat(UUID.randomUUID(), seat1)
-            }
-        assertTrue(ex.message!!.contains("already booked"))
-        assertEquals("Seat $seat1 already booked in Commute ${commute._id}", ex.message)
+        val event = commute.bookSeat(otherBookingId, seat1)
+
+        assertEventEquals(
+            CommuteBookSeatFailedEvent(
+                commuteId = commute._id,
+                bookingId = otherBookingId,
+                seat = seat1,
+                message = "Seat $seat1 already booked in Commute ${commute._id}",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -103,27 +120,37 @@ class CommuteTest {
             ),
             cEvent,
         )
-        assertFalse(commute.bookings.containsKey(bookingId))
+        assertFalse(commute.bookings.containsKey(bookingId.toString()))
     }
 
     @Test
     fun cannot_cancel_non_booked_seats() {
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.cancelBookedSeat(bookingId)
-            }
-        assertEquals("Booking for seat $seat1 not found in Commute ${commute._id}", ex.message)
+        val event = commute.cancelBookedSeat(bookingId)
+
+        assertEventEquals(
+            CommuteCancelBookedSeatFailedEvent(
+                commuteId = commute._id,
+                bookingId = bookingId,
+                message = "No seat assigned for booking $bookingId in Commute ${commute._id}",
+            ),
+            event,
+        )
     }
 
     @Test
     fun cannot_cancel_others_booking() {
         commute.bookSeat(bookingId, seat1)
         val otherUser = UUID.randomUUID()
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.cancelBookedSeat(otherUser)
-            }
-        assertEquals("Booking for seat $seat1 in Commute ${commute._id} is owned by other user", ex.message)
+        val event = commute.cancelBookedSeat(otherUser)
+
+        assertEventEquals(
+            CommuteCancelBookedSeatFailedEvent(
+                commuteId = commute._id,
+                bookingId = otherUser,
+                message = "No seat assigned for booking $otherUser in Commute ${commute._id}",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -142,10 +169,14 @@ class CommuteTest {
     @Test
     fun cannot_expire_before_departure_time() {
         commute = commute.copy(departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusMinutes(5)))
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                commute.expire()
-            }
-        assertEquals("Commute ${commute._id} cannot expire before its departure time", ex.message)
+        val event = commute.expire()
+
+        assertEventEquals(
+            CommuteExpireFailedEvent(
+                commuteId = commute._id,
+                message = "Commute ${commute._id} cannot expire before its departure time",
+            ),
+            event,
+        )
     }
 }

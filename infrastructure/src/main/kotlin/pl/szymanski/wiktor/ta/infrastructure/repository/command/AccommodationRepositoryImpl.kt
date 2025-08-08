@@ -38,6 +38,5 @@ class AccommodationRepositoryImpl(
         }
     }
 
-    override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> =
-        collection.find(Document("status", status.toString())).toList()
+    override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> = collection.find(Document("status", status.toString())).toList()
 }

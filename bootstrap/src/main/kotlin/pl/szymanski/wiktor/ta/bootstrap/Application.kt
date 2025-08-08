@@ -19,10 +19,12 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.command.BookingRepositor
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.AccommodationQueryRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.query.BookingQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.CommuteQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.TravelOfferQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.presentation.controller.commuteStatisticsController
 import pl.szymanski.wiktor.ta.presentation.controller.travelOfferController
+import pl.szymanski.wiktor.ta.query.BookingQuery
 import pl.szymanski.wiktor.ta.query.CommuteStatisticsQuery
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
@@ -46,9 +48,12 @@ fun Application.application() {
     val travelOfferStatusService = TravelOfferStatusService(travelOfferRepository, travelOfferCommandHandler)
 
     val travelOfferQueryRepository = TravelOfferQueryRepositoryImpl(MongoDbProvider.database)
+    val bookingQueryRepository = BookingQueryRepositoryImpl(MongoDbProvider.database)
     val accommodationQueryRepository = AccommodationQueryRepositoryImpl(MongoDbProvider.database)
     val commuteQueryRepository = CommuteQueryRepositoryImpl(MongoDbProvider.database)
     val bookingCommandHandler = BookingCommandHandler(bookingRepository)
+
+    val bookingQuery = BookingQuery(bookingQueryRepository)
 
     launch {
         TravelOfferEventHandler(
@@ -75,7 +80,7 @@ fun Application.application() {
         travelOfferCommandHandler = travelOfferCommandHandler,
         accommodationQueryRepository = accommodationQueryRepository,
         bookingCommandHandler = bookingCommandHandler,
-        bookingRepository = bookingRepository
+        bookingQuery = bookingQuery
     )
 
     commuteStatisticsController(

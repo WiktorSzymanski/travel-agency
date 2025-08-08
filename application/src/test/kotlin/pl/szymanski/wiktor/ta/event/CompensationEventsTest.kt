@@ -22,6 +22,7 @@ import kotlin.test.assertTrue
 class CompensationEventsTest {
     private val correlationId = UUID.randomUUID()
     private val userId = UUID.randomUUID()
+    private val bookingId = UUID.randomUUID()
     private val accommodationId = UUID.randomUUID()
     private val attractionId = UUID.randomUUID()
     private val commuteId = UUID.randomUUID()
@@ -35,7 +36,7 @@ class CompensationEventsTest {
             AccommodationBookedEvent(
                 correlationId = correlationId,
                 accommodationId = accommodationId,
-                userId = userId,
+                bookingId = bookingId,
             )
 
         // When
@@ -46,28 +47,7 @@ class CompensationEventsTest {
         compensationEvent
         assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(accommodationId, compensationEvent.accommodationId)
-        assertEquals(userId, compensationEvent.userId)
-    }
-
-    @Test
-    fun `AccommodationBookingCanceledEvent toCompensation should return AccommodationBookingCanceledCompensatedEvent`() {
-        // Given
-        val event =
-            AccommodationBookingCanceledEvent(
-                correlationId = correlationId,
-                accommodationId = accommodationId,
-                userId = userId,
-            )
-
-        // When
-        val compensationEvent = event.toCompensation()
-
-        // Then
-        assertTrue(compensationEvent is AccommodationBookingCanceledCompensatedEvent)
-        compensationEvent
-        assertEquals(correlationId, compensationEvent.correlationId)
-        assertEquals(accommodationId, compensationEvent.accommodationId)
-        assertEquals(userId, compensationEvent.userId)
+        assertEquals(bookingId, compensationEvent.bookingId)
     }
 
     @Test
@@ -92,7 +72,7 @@ class CompensationEventsTest {
             AttractionBookedEvent(
                 correlationId = correlationId,
                 attractionId = attractionId,
-                userId = userId,
+                bookingId = bookingId,
             )
 
         // When
@@ -113,7 +93,7 @@ class CompensationEventsTest {
             AttractionBookingCanceledEvent(
                 correlationId = correlationId,
                 attractionId = attractionId,
-                userId = userId,
+                bookingId = userId,
             )
 
         // When
@@ -149,7 +129,7 @@ class CompensationEventsTest {
             CommuteBookedEvent(
                 correlationId = correlationId,
                 commuteId = commuteId,
-                userId = userId,
+                bookingId = userId,
                 seat = seat,
             )
 
@@ -172,7 +152,7 @@ class CompensationEventsTest {
             CommuteBookingCanceledEvent(
                 correlationId = correlationId,
                 commuteId = commuteId,
-                userId = userId,
+                bookingId = userId,
                 seat = seat,
             )
 

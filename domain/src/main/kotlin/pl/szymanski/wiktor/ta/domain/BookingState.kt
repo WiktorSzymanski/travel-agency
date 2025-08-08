@@ -4,6 +4,8 @@ enum class BookingState {
     NEW,
     PROCESSING,
     SUCCEEDED,
+    CANCEL_REQUESTED,
+    PROCESSING_CANCELLATION,
     CANCELED,
     FAILED,
 }

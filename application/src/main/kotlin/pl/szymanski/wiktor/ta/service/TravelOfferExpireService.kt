@@ -22,16 +22,12 @@ class TravelOfferExpireService(
         travelOfferRepository
             .findByCommuteId(commuteId)
             .map {
-                try {
-                    travelOfferCommandHandler.handle(
-                        ExpireTravelOfferCommand(
-                            travelOfferId = it._id,
-                            correlationId = correlationId,
-                        ) as TravelOfferCommand,
-                    )
-                } catch (e: IllegalArgumentException) {
-                    log.error("ERROR HANDLED: {}", e.message)
-                }
+                travelOfferCommandHandler.handle(
+                    ExpireTravelOfferCommand(
+                        travelOfferId = it._id,
+                        correlationId = correlationId,
+                    ) as TravelOfferCommand,
+                )
             }
     }
 
@@ -42,16 +38,12 @@ class TravelOfferExpireService(
         travelOfferRepository
             .findByAttractionId(attractionId)
             .map {
-                try {
-                    travelOfferCommandHandler.handle(
-                        ExpireTravelOfferCommand(
-                            travelOfferId = it._id,
-                            correlationId = correlationId,
-                        ) as TravelOfferCommand,
-                    )
-                } catch (e: IllegalArgumentException) {
-                    log.error("ERROR HANDLED: {}", e.message)
-                }
+                travelOfferCommandHandler.handle(
+                    ExpireTravelOfferCommand(
+                        travelOfferId = it._id,
+                        correlationId = correlationId,
+                    ) as TravelOfferCommand,
+                )
             }
     }
 
@@ -62,16 +54,12 @@ class TravelOfferExpireService(
         travelOfferRepository
             .findByAccommodationId(accommodationId)
             .map {
-                try {
-                    travelOfferCommandHandler.handle(
-                        ExpireTravelOfferCommand(
-                            travelOfferId = it._id,
-                            correlationId = correlationId,
-                        ) as TravelOfferCommand,
-                    )
-                } catch (e: IllegalArgumentException) {
-                    log.error("ERROR HANDLED: {}", e.message)
-                }
+                travelOfferCommandHandler.handle(
+                    ExpireTravelOfferCommand(
+                        travelOfferId = it._id,
+                        correlationId = correlationId,
+                    ) as TravelOfferCommand,
+                )
             }
     }
 }

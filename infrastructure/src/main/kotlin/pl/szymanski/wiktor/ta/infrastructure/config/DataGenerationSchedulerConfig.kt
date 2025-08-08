@@ -7,7 +7,7 @@ import pl.szymanski.wiktor.ta.infrastructure.generator.CommuteTemplate
 
 @Serializable
 data class DataGenerationSchedulerConfig(
-    val intervalSeconds: Long,
+    val intervalSeconds: Double,
     val inAdvanceSeconds: Long,
     val creationWindowSeconds: Long,
     val accommodations: List<AccommodationTemplate>,

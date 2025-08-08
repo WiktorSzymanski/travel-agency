@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta
+package pl.szymanski.wiktor.ta.queryRepository
 
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
@@ -10,6 +10,7 @@ interface TravelOfferQueryRepository {
         size: Int = 20,
         status: TravelOfferStatusEnum? = null,
         travelOfferId: UUID? = null,
-        userId: UUID? = null,
     ): List<TravelOfferDto>
+    
+    suspend fun countTravelOffersByStatus(status: TravelOfferStatusEnum): Int
 }

@@ -3,17 +3,21 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseCompleteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class TravelOfferTest {
@@ -68,14 +72,15 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.reserve(bookingId, seat)
-            }
+        val event = offer.reserve(bookingId, seat)
 
-        assertEquals(
-            "TravelOffer $travelOfferId is not open for reservation, current status is ${TravelOfferStatusEnum.BOOKED}",
-            ex.message,
+        assertEventEquals(
+            TravelOfferReserveFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "TravelOffer is not open for reservation, current status is ${TravelOfferStatusEnum.BOOKED}",
+            ),
+            event,
         )
     }
 
@@ -109,12 +114,16 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.AVAILABLE,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.book(bookingId, seat)
-            }
+        val event = offer.book(bookingId, seat)
 
-        assertEquals("TravelOffer $travelOfferId is not open for booking, current status is ${TravelOfferStatusEnum.AVAILABLE}", ex.message)
+        assertEventEquals(
+            TravelOfferBookFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "TravelOffer can not be booked if not RESERVED prior, current status is ${TravelOfferStatusEnum.AVAILABLE}",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -125,12 +134,16 @@ class TravelOfferTest {
         val reservedOffer = offer.copy()
         reservedOffer.reserve(differentbookingId, seat)
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                reservedOffer.book(bookingId, seat)
-            }
+        val event = reservedOffer.book(bookingId, seat)
 
-        assertEquals("TravelOffer $travelOfferId is not RESERVED by user $bookingId", ex.message)
+        assertEventEquals(
+            TravelOfferBookFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "TravelOffer $travelOfferId is not RESERVED by booking $bookingId",
+            ),
+            event,
+        )
     }
 
     @Test
@@ -172,16 +185,19 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.expire()
-            }
+        val event = offer.expire()
 
-        assertEquals("TravelOffer $travelOfferId cannot be expired when in BOOKED status", ex.message)
+        assertEventEquals(
+            TravelOfferExpireFailedEvent(
+                travelOfferId = travelOfferId,
+                message = "TravelOffer $travelOfferId cannot be expired when in BOOKED status",
+            ),
+            event,
+        )
     }
 
     @Test
-    fun cancelBooking_should_succeed_when_booked_by_same_user() {
+    fun cancelBooking_2_should_succeed_when_booked_by_same_user() {
         val booking = bookingId
         val offer =
             offer.copy(
@@ -189,7 +205,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val event = offer.cancelBooking(bookingId)
+        val event = offer.releaseBooking(bookingId, seat)
 
         assertEventEquals(
             TravelOfferReleaseEvent(
@@ -198,6 +214,7 @@ class TravelOfferTest {
                 commuteId = commuteId,
                 attractionId = attractionId,
                 bookingId = bookingId,
+                seat = seat,
             ),
             event,
         )
@@ -205,22 +222,26 @@ class TravelOfferTest {
     }
 
     @Test
-    fun cancelBooking_should_fail_if_status_not_booked() {
+    fun cancelBooking_2_should_fail_if_status_not_booked() {
         val offer =
             offer.copy(
                 status = TravelOfferStatusEnum.AVAILABLE,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.cancelBooking(bookingId)
-            }
+        val event = offer.releaseBooking(bookingId, seat)
 
-        assertEquals("Cannot cancel booking for TravelOffer $travelOfferId when in AVAILABLE status", ex.message)
+        assertEventEquals(
+            TravelOfferBookingCancelFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "Cannot cancel booking for TravelOffer $travelOfferId when in AVAILABLE status",
+            ),
+            event,
+        )
     }
 
     @Test
-    fun cancelBooking_should_fail_if_wrong_user() {
+    fun cancelBooking_2_should_fail_if_wrong_user() {
         val booking = UUID.randomUUID()
         val offer =
             offer.copy(
@@ -228,16 +249,20 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.cancelBooking(bookingId)
-            }
+        val event = offer.releaseBooking(bookingId, seat)
 
-        assertEquals("TravelOffer $travelOfferId is not BOOKED by user $bookingId", ex.message)
+        assertEventEquals(
+            TravelOfferBookingCancelFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "TravelOffer $travelOfferId is not BOOKED for Booking $bookingId",
+            ),
+            event,
+        )
     }
 
     @Test
-    fun completeRelease_should_succeed_when_releasing_by_same_user() {
+    fun cancelBooking_should_succeed_when_releasing_by_same_user() {
         val booking = bookingId
         val offer =
             offer.copy(
@@ -245,7 +270,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.RELEASING,
             )
 
-        val event = offer.completeRelease(bookingId, seat)
+        val event = offer.cancelBooking(bookingId, seat)
 
         assertEventEquals(
             TravelOfferBookingCanceledEvent(
@@ -263,22 +288,26 @@ class TravelOfferTest {
     }
 
     @Test
-    fun completeRelease_should_fail_if_status_not_releasing() {
+    fun cancelBooking_should_fail_if_status_not_releasing() {
         val offer =
             offer.copy(
                 status = TravelOfferStatusEnum.AVAILABLE,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.completeRelease(bookingId, seat)
-            }
+        val event = offer.cancelBooking(bookingId, seat)
 
-        assertEquals("Cannot complete release for TravelOffer $travelOfferId when in AVAILABLE status", ex.message)
+        assertEventEquals(
+            TravelOfferReleaseCompleteFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "Cannot complete release for TravelOffer $travelOfferId when in AVAILABLE status",
+            ),
+            event,
+        )
     }
 
     @Test
-    fun completeRelease_should_fail_if_wrong_user() {
+    fun cancelBooking_should_fail_if_wrong_user() {
         val booking = UUID.randomUUID()
         val offer =
             offer.copy(
@@ -286,11 +315,15 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.RELEASING,
             )
 
-        val ex =
-            assertFailsWith<IllegalArgumentException> {
-                offer.completeRelease(bookingId, seat)
-            }
+        val event = offer.cancelBooking(bookingId, seat)
 
-        assertEquals("TravelOffer $travelOfferId is not being released by user $bookingId", ex.message)
+        assertEventEquals(
+            TravelOfferReleaseCompleteFailedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+                message = "TravelOffer $travelOfferId is not being released by Booking $bookingId",
+            ),
+            event,
+        )
     }
 }

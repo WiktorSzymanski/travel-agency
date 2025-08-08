@@ -38,6 +38,7 @@ import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.saga.BookingSaga
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -70,7 +71,7 @@ class BookingSagaTest {
                 accommodationId = event.accommodationId,
                 commuteId = event.commuteId,
                 attractionId = event.attractionId,
-                userId = event.userId,
+                bookingId = event.bookingId,
                 seat = event.seat,
                 correlationId = event.correlationId,
             )
@@ -83,7 +84,7 @@ class BookingSagaTest {
                 accommodationId = event.accommodationId,
                 commuteId = event.commuteId,
                 attractionId = event.attractionId,
-                userId = event.userId,
+                bookingId = event.bookingId,
                 seat = event.seat,
                 correlationId = event.correlationId,
             )
@@ -104,7 +105,7 @@ class BookingSagaTest {
             val command = firstArg<BookAttractionCommand>()
             AttractionBookedEvent(
                 attractionId = command.attractionId,
-                userId = command.userId,
+                bookingId = command.bookingId,
             )
         }
 
@@ -112,7 +113,7 @@ class BookingSagaTest {
             val command = firstArg<CancelAttractionBookingCommand>()
             AttractionBookingCanceledEvent(
                 attractionId = command.attractionId,
-                userId = command.userId,
+                bookingId = command.bookingId,
             )
         }
 
@@ -138,7 +139,7 @@ class BookingSagaTest {
             val event = firstArg<AttractionBookedEvent>()
             AttractionBookedCompensatedEvent(
                 attractionId = event.attractionId,
-                userId = event.userId,
+                bookingId = event.bookingId,
                 correlationId = event.correlationId,
             )
         }
@@ -147,7 +148,7 @@ class BookingSagaTest {
             val event = firstArg<AttractionBookingCanceledEvent>()
             AttractionBookingCanceledCompensatedEvent(
                 attractionId = event.attractionId,
-                userId = event.userId,
+                bookingId = event.bookingId,
                 correlationId = event.correlationId,
             )
         }
@@ -286,7 +287,7 @@ class BookingSagaTest {
                 accommodationId = accommodationId,
                 commuteId = commuteId,
                 attractionId = attractionId,
-                userId = userId,
+                bookingId = bookingId,
                 seat = seat,
                 correlationId = correlationId,
             )
@@ -297,7 +298,7 @@ class BookingSagaTest {
                 accommodationId = accommodationId,
                 commuteId = commuteId,
                 attractionId = attractionId,
-                userId = userId,
+                bookingId = bookingId,
                 seat = seat,
                 correlationId = correlationId,
             )

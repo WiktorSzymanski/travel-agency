@@ -2,11 +2,16 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -26,7 +31,7 @@ data class Attraction(
             location: LocationEnum,
             date: LocalDateTime,
             capacity: Int,
-        ): Pair<Attraction, AttractionCreatedEvent> {
+        ): Pair<Attraction, List<AttractionCreatedEvent>> {
             val attraction =
                 Attraction(
                     name = name,
@@ -44,62 +49,116 @@ data class Attraction(
                     capacity = capacity,
                 )
 
-            return attraction to event
+            return attraction to listOf(event)
         }
     }
 
-    fun expire(): AttractionEvent {
-        require(LocalDateTime.now().isAfter(date)) {
-            "Attraction $_id cannot expire before its date"
+    // SHOULD ADD COMPENSATING METHODS THAT IGNORE EXPIRED STATUS
+
+    fun expire(): List<AttractionEvent> {
+        if (LocalDateTime.now().isBefore(date)) {
+            return listOf(AttractionExpireFailedEvent(
+                attractionId = _id,
+                message = "Attraction $_id cannot expire before its date"
+            ))
         }
 
         this.status = AttractionStatusEnum.EXPIRED
 
-        return AttractionExpiredEvent(
+        return listOf(AttractionExpiredEvent(
             attractionId = _id,
-        )
+        ))
     }
 
-    fun book(bookingId: UUID): AttractionEvent {
+    fun book(bookingId: UUID): List<AttractionEvent> {
         statusCheck()
 
-        require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $_id is not open for booking"
+        if (status != AttractionStatusEnum.SCHEDULED) {
+            return listOf(AttractionBookFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Attraction $_id is not open for booking, current status is $status"
+            ))
         }
 
-        require(bookings.none { it == bookingId }) {
-            "Booking $bookingId already signed for Attraction $_id"
+        if (bookings.any { it == bookingId }) {
+            return listOf(AttractionBookFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Booking $bookingId already signed for Attraction $_id"
+            ))
         }
 
-        require(bookings.size < capacity) {
-            "Attraction $_id is fully booked"
+        // just in case
+        if (bookings.size >= capacity) {
+            return listOf(AttractionBookFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Attraction $_id is fully booked"
+            ))
         }
 
         bookings.add(bookingId)
 
-        return AttractionBookedEvent(
-            attractionId = _id,
-            bookingId = bookingId,
+        return listOfNotNull(
+            AttractionBookedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+            ),
+            takeIf { slotsCheck() }.let {
+                AttractionFullEvent(
+                    attractionId = _id,
+                )
+            }
         )
     }
 
-    fun cancelBooking(bookingId: UUID): AttractionEvent {
+    fun cancelBooking(bookingId: UUID): List<AttractionEvent> {
         statusCheck()
 
-        require(status == AttractionStatusEnum.SCHEDULED) {
-            "Cannot cancel booking for Attraction $_id not in SCHEDULED status"
+        if (!listOf(AttractionStatusEnum.SCHEDULED, AttractionStatusEnum.FULL).contains(this.status)) {
+            return listOf(AttractionBookingCancelFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Cannot cancel booking for Attraction $_id not in SCHEDULED status"
+            ))
         }
 
         val removed = bookings.removeIf { it == bookingId }
 
-        require(removed) {
-            "Booking $bookingId was not signed for Attraction $_id"
+        if (!removed) {
+            return listOf(AttractionBookingCancelFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Booking $bookingId was not signed for Attraction $_id"
+            ))
         }
 
-        return AttractionBookingCanceledEvent(
+        return listOfNotNull(AttractionBookingCanceledEvent(
             attractionId = _id,
             bookingId = bookingId,
-        )
+        ),
+            takeIf { slotsCheck() }.let {
+                AttractionAvailableEvent(
+                    attractionId = _id,
+                )
+            })
+    }
+
+    private fun slotsCheck(): Boolean {
+        return when (this.capacity == this.bookings.size) {
+            true -> {
+                this.status = AttractionStatusEnum.FULL
+                true
+            }
+            false -> {
+                if (this.status == AttractionStatusEnum.FULL) {
+                    this.status = AttractionStatusEnum.SCHEDULED
+                    return true
+                }
+                false
+            }
+        }
     }
 
     private fun statusCheck() {

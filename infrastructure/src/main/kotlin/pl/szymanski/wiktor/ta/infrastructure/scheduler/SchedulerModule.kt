@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
 import io.ktor.server.application.Application
 import io.ktor.server.config.property
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
@@ -22,6 +23,11 @@ fun Application.scheduler() {
         CommuteCommandHandler(CommuteRepositoryImpl(MongoDbProvider.database)),
     )
 
-    launch { DataGenerationScheduler.start() }
+    launch {
+        DataGenerationScheduler.start()
+        delay(600000)
+        DataGenerationScheduler.stop()
+    }
+
     Runtime.getRuntime().addShutdownHook(Thread { DataGenerationScheduler.stop() })
 }

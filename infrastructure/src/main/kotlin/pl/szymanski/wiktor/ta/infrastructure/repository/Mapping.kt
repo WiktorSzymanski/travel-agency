@@ -60,7 +60,7 @@ fun Document.toAttractionDto(): AttractionDto =
         name = getString("name"),
         location = getString("location"),
         date = get("date", LocalDateTime::class).toString(),
-        availableSlots = getInteger("capacity") - getList("bookings", String::class.java).size,
+        availableSlots = getInteger("capacity") - getList("bookings", UUID::class.java).size,
     )
 
 fun Document.toTravelOfferDto(): TravelOfferDto =

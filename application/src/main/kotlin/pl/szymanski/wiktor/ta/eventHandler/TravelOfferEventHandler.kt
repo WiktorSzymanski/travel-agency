@@ -5,11 +5,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
-import pl.szymanski.wiktor.ta.BookingSaga
+import pl.szymanski.wiktor.ta.saga.BookingSaga
+import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.command.UpdateBookingStateCommand
@@ -22,20 +24,30 @@ import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
+import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
+import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
+import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.event.CancelBookingSagaCompletedEvent
+import pl.szymanski.wiktor.ta.event.CancelBookingSagaFailedEvent
+import pl.szymanski.wiktor.ta.event.CancelBookingSagaStartedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
-import java.util.UUID
 
 class TravelOfferEventHandler(
     private val travelOfferExpireService: TravelOfferExpireService,
@@ -63,22 +75,29 @@ class TravelOfferEventHandler(
         scope.launch { accommodationBookingCanceledEventHandler() }
         scope.launch { attractionBookingCanceledEventHandler() }
         scope.launch { bookingCreatedEventHandler() }
-        scope.launch { travelOfferFailedEventHandler() }
+        scope.launch { travelOfferReserveFailedEventHandler() }
+        scope.launch { travelOfferBookFailedEventHandler() }
+        scope.launch { bookingSagaStartedEventHandler() }
+        scope.launch { bookingSagaCompletedEventHandler() }
+        scope.launch { bookingSagaCompletedEventHandler2() }
+        scope.launch { bookingSagaFailedEventHandler() }
+        scope.launch { cancelBookingSagaStartedEventHandler() }
+        scope.launch { cancelBookingSagaCompletedEventHandler() }
+        scope.launch { cancelBookingSagaCompletedEventHandler2() }
+        scope.launch { cancelBookingSagaFailedEventHandler() }
+        scope.launch { bookingCancelRequestedEventHandler() }
     }
 
     suspend fun travelOfferReservedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<TravelOfferReservedEvent> {
-                // If BookTravelOfferCommand fails saga should be compensated so it propably should be in saga
                 scope.launch {
-                    log.info("New travel offer reserved: {}", it.travelOfferId)
                     BookingSaga(
                         travelOfferCommandHandler,
                         attractionCommandHandler,
                         commuteCommandHandler,
                         accommodationCommandHandler,
                         travelOfferStatusService,
-                        bookingCommandHandler,
                         it,
                     ).execute()
                 }
@@ -89,14 +108,12 @@ class TravelOfferEventHandler(
         coroutineScope {
             EventBus.subscribe<TravelOfferReleaseEvent> {
                 scope.launch {
-                    log.info("Travel offer releasing: {}", it.travelOfferId)
-                    BookingSaga(
+                    CancelBookingSaga(
                         travelOfferCommandHandler,
                         attractionCommandHandler,
                         commuteCommandHandler,
                         accommodationCommandHandler,
                         travelOfferStatusService,
-                        bookingCommandHandler,
                         it,
                     ).execute()
                 }
@@ -107,7 +124,6 @@ class TravelOfferEventHandler(
         coroutineScope {
             EventBus.subscribe<CommuteExpiredEvent> {
                 scope.launch {
-                    log.info("TravelOffer expire due to commute expired event: {}", it)
                     travelOfferExpireService.expireTravelOfferByCommute(it.commuteId, it.correlationId!!)
                 }
             }
@@ -117,7 +133,6 @@ class TravelOfferEventHandler(
         coroutineScope {
             EventBus.subscribe<AccommodationExpiredEvent> {
                 scope.launch {
-                    log.info("TravelOffer expire due to accommodation expired event: {}", it)
                     travelOfferExpireService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
                 }
             }
@@ -127,7 +142,6 @@ class TravelOfferEventHandler(
         coroutineScope {
             EventBus.subscribe<AttractionExpiredEvent> {
                 scope.launch {
-                    log.info("TravelOffer expire due to attraction expired event: {}", it)
                     travelOfferExpireService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
                 }
             }
@@ -135,7 +149,7 @@ class TravelOfferEventHandler(
 
     suspend fun commuteBookedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<CommuteBookedEvent> {
+            EventBus.subscribe<CommuteFullEvent> {
                 scope.launch {
                     travelOfferStatusService.makeTravelOfferUnavailableByCommute(it.commuteId, it.correlationId!!)
                 }
@@ -153,7 +167,7 @@ class TravelOfferEventHandler(
 
     suspend fun attractionBookedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<AttractionBookedEvent> {
+            EventBus.subscribe<AttractionFullEvent> {
                 scope.launch {
                     travelOfferStatusService.makeTravelOfferUnavailableByAttraction(it.attractionId, it.correlationId!!)
                 }
@@ -162,7 +176,7 @@ class TravelOfferEventHandler(
 
     suspend fun commuteBookingCanceledEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<CommuteBookingCanceledEvent> {
+            EventBus.subscribe<CommuteAvailableEvent> {
                 scope.launch {
                     travelOfferStatusService.makeTravelOfferAvailableByCommute(it.commuteId, it.correlationId!!)
                 }
@@ -180,7 +194,7 @@ class TravelOfferEventHandler(
 
     suspend fun attractionBookingCanceledEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<AttractionBookingCanceledEvent> {
+            EventBus.subscribe<AttractionAvailableEvent> {
                 scope.launch {
                     travelOfferStatusService.makeTravelOfferAvailableByAttraction(it.attractionId, it.correlationId!!)
                 }
@@ -190,23 +204,19 @@ class TravelOfferEventHandler(
     suspend fun bookingCreatedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
         EventBus.subscribe<BookingCreatedEvent> {
             scope.launch {
-                try {
-                    travelOfferCommandHandler.handle(
-                        ReserveTravelOfferCommand(
-                            it.travelOfferId,
-                            it.correlationId!!,
-                            it.bookingId,
-                            it.seat,
-                        ) as TravelOfferCommand,
-                    )
-                } catch (e: Exception) {
-                    log.error("ERROR HANDLED: {}", e.message)
-                }
+                travelOfferCommandHandler.handle(
+                    ReserveTravelOfferCommand(
+                        it.travelOfferId,
+                        it.correlationId!!,
+                        it.bookingId,
+                        it.seat,
+                    ) as TravelOfferCommand,
+                )
             }
         }
     }
 
-    suspend fun travelOfferFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+    suspend fun travelOfferReserveFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
         EventBus.subscribe<TravelOfferReserveFailedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
@@ -220,4 +230,152 @@ class TravelOfferEventHandler(
             }
         }
     }
+
+    suspend fun travelOfferBookFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<TravelOfferBookFailedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        it.bookingId,
+                        it.correlationId!!,
+                        BookingState.FAILED,
+                        it.message
+                    ) as BookingCommand,
+                )
+            }
+        }
+    }
+
+    suspend fun bookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<BookingSagaStartedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        it.bookingId,
+                        it.correlationId!!,
+                        BookingState.PROCESSING,
+                    ) as BookingCommand,
+                )
+            }
+        }
+    }
+
+    suspend fun bookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<BookingSagaCompletedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        it.bookingId,
+                        it.correlationId!!,
+                        BookingState.SUCCEEDED,
+                    ) as BookingCommand,
+                )
+            }
+        }
+    }
+
+    suspend fun bookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<BookingSagaCompletedEvent> {
+            scope.launch {
+                travelOfferCommandHandler.handle(
+                    BookTravelOfferCommand(
+                        travelOfferId = it.travelOfferId,
+                        correlationId = it.correlationId!!,
+                        bookingId = it.bookingId,
+                        seat = it.seat
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun bookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<BookingSagaFailedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        bookingId = it.bookingId,
+                        correlationId = it.correlationId!!,
+                        state = BookingState.FAILED,
+                        message = it.message
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun cancelBookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<CancelBookingSagaStartedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        it.bookingId,
+                        it.correlationId!!,
+                        BookingState.PROCESSING_CANCELLATION,
+                    ) as BookingCommand,
+                )
+            }
+        }
+    }
+
+    suspend fun cancelBookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<CancelBookingSagaCompletedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        it.bookingId,
+                        it.correlationId!!,
+                        BookingState.CANCELED,
+                    ) as BookingCommand,
+                )
+            }
+        }
+    }
+
+    suspend fun cancelBookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<CancelBookingSagaCompletedEvent> {
+            scope.launch {
+                travelOfferCommandHandler.handle(
+                    CancelBookTravelOfferCommand(
+                        travelOfferId = it.travelOfferId,
+                        correlationId = it.correlationId!!,
+                        bookingId = it.bookingId,
+                        seat = it.seat
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun cancelBookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<CancelBookingSagaFailedEvent> {
+            scope.launch {
+                bookingCommandHandler.handle(
+                    UpdateBookingStateCommand(
+                        bookingId = it.bookingId,
+                        correlationId = it.correlationId!!,
+                        state = BookingState.SUCCEEDED,
+                        message = it.message
+                    )
+                )
+            }
+        }
+    }
+
+    suspend fun bookingCancelRequestedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
+        EventBus.subscribe<BookingCancelRequestedEvent> {
+            scope.launch {
+                travelOfferCommandHandler.handle(
+                    ReleaseTravelOfferCommand(
+                        it.travelOfferId,
+                        it.correlationId!!,
+                        it.bookingId,
+                        it.seat) as TravelOfferCommand,
+                )
+            }
+        }
+    }
+
+
+
 }

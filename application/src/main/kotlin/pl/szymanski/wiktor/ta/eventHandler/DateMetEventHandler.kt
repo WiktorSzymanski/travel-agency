@@ -35,49 +35,34 @@ class DateMetEventHandler(
 
     suspend fun commuteDateMetEventHandler() {
         EventBus.subscribe<CommuteDateMetEvent> {
-            log.info("Commute date met event: {}", it)
-            try {
-                commuteCommandHandler.handle(
-                    ExpireCommuteCommand(
-                        commuteId = it.commuteId,
-                        correlationId = it.correlationId,
-                    ) as CommuteCommand,
-                )
-            } catch (e: IllegalArgumentException) {
-                log.error("ERROR HANDLE: {}", e.message)
-            }
+            commuteCommandHandler.handle(
+                ExpireCommuteCommand(
+                    commuteId = it.commuteId,
+                    correlationId = it.correlationId,
+                ) as CommuteCommand,
+            )
         }
     }
 
     suspend fun accommodationDateMetEventHandler() {
         EventBus.subscribe<AccommodationDateMetEvent> {
-            log.info("Accommodation date met event: {}", it)
-            try {
-                accommodationCommandHandler.handle(
-                    ExpireAccommodationCommand(
-                        accommodationId = it.accommodationId,
-                        correlationId = it.correlationId,
-                    ) as AccommodationCommand,
-                )
-            } catch (e: IllegalArgumentException) {
-                log.error("ERROR HANDLE: {}", e.message)
-            }
+            accommodationCommandHandler.handle(
+                ExpireAccommodationCommand(
+                    accommodationId = it.accommodationId,
+                    correlationId = it.correlationId,
+                ) as AccommodationCommand,
+            )
         }
     }
 
     suspend fun attractionDateMetEventHandler() {
         EventBus.subscribe<AttractionDateMetEvent> {
-            log.info("Attraction date met event: {}", it)
-            try {
-                attractionCommandHandler.handle(
-                    ExpireAttractionCommand(
-                        attractionId = it.attractionId,
-                        correlationId = it.correlationId,
-                    ) as AttractionCommand,
-                )
-            } catch (e: IllegalArgumentException) {
-                log.error("ERROR HANDLE: {}", e.message)
-            }
+            attractionCommandHandler.handle(
+                ExpireAttractionCommand(
+                    attractionId = it.attractionId,
+                    correlationId = it.correlationId,
+                ) as AttractionCommand,
+            )
         }
     }
 }
