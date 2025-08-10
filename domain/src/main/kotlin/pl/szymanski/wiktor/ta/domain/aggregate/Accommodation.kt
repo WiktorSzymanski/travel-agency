@@ -1,9 +1,16 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
-import pl.szymanski.wiktor.ta.domain.Booking
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCancelFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationExpireFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -12,57 +19,143 @@ data class Accommodation(
     val name: String,
     val location: LocationEnum,
     val rent: Rent,
-    var booking: Booking? = null,
+    var bookingId: UUID? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
+    val version: Int = 1,
 ) {
-    fun expire() {
-        when (status) {
-            AccommodationStatusEnum.AVAILABLE ->
-                require(LocalDateTime.now().isAfter(rent.from)) {
-                    "Accommodation $_id cannot be expired before its from date"
-                }
-            else -> throw IllegalArgumentException(
-                "Accommodation $_id cannot expire in status $status",
+    companion object {
+        fun create(
+            name: String,
+            location: LocationEnum,
+            rent: Rent,
+        ): Pair<Accommodation, AccommodationCreatedEvent> {
+            val accommodation =
+                Accommodation(
+                    name = name,
+                    location = location,
+                    rent = rent,
+                )
+
+            val event =
+                AccommodationCreatedEvent(
+                    accommodationId = accommodation._id,
+                    name = name,
+                    location = location,
+                    rent = rent,
+                )
+
+            return accommodation to event
+        }
+    }
+
+    fun expire(): AccommodationEvent {
+        if (status != AccommodationStatusEnum.AVAILABLE) {
+            return AccommodationExpireFailedEvent(
+                accommodationId = _id,
+                message = "Accommodation $_id cannot expire in status $status"
+            )
+        }
+
+        if (LocalDateTime.now().isBefore(rent.from)) {
+            return AccommodationExpireFailedEvent(
+                accommodationId = _id,
+                message = "Accommodation $_id cannot be expired before its rent start"
             )
         }
 
         this.status = AccommodationStatusEnum.EXPIRED
 
-        // EVENT or something
+        return AccommodationExpiredEvent(
+            accommodationId = _id,
+        )
     }
 
-    fun book(userId: UUID) {
+    fun book(bookingId: UUID): AccommodationEvent {
         statusCheck()
-        require(this.status == AccommodationStatusEnum.AVAILABLE) {
-            "Accommodation $_id is not AVAILABLE"
+        if (this.status != AccommodationStatusEnum.AVAILABLE) {
+            return AccommodationBookFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id cannot be booked when in status $status"
+            )
         }
 
         this.status = AccommodationStatusEnum.BOOKED
-        this.booking = Booking(userId, LocalDateTime.now())
+        this.bookingId = bookingId
 
-        // EVENT or something
+        return AccommodationBookedEvent(
+            accommodationId = _id,
+            bookingId = bookingId,
+        )
     }
 
-    fun cancelBooking(userId: UUID) {
+    fun cancelBooking(bookingId: UUID): AccommodationEvent {
         statusCheck()
-        require(this.status == AccommodationStatusEnum.BOOKED) {
-            "Accommodation $_id is not BOOKED"
+        if (this.status != AccommodationStatusEnum.BOOKED) {
+            return AccommodationBookingCancelFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id booking cannot be canceled when in status $status"
+            )
         }
 
-        require(this.booking?.userId == userId) {
-            "Accommodation $_id is not BOOKED by user $userId"
+        if (this.bookingId != bookingId) {
+            return AccommodationBookingCancelFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id is not BOOKED by bookingId $bookingId"
+            )
         }
 
-        this.booking = null
+        this.bookingId = null
+        this.status = AccommodationStatusEnum.AVAILABLE
 
-        // EVENT or something
+        return AccommodationBookingCanceledEvent(
+            accommodationId = _id,
+            bookingId = bookingId,
+        )
     }
 
     private fun statusCheck() {
-        if (this.status == AccommodationStatusEnum.AVAILABLE) {
-            if (LocalDateTime.now().isAfter(rent.from)) {
-                this.status = AccommodationStatusEnum.EXPIRED
-            }
+        if (!listOf(AccommodationStatusEnum.AVAILABLE, AccommodationStatusEnum.BOOKED).contains(this.status)) return
+        if (LocalDateTime.now().isBefore(rent.from)) return
+
+        this.status = AccommodationStatusEnum.EXPIRED
+    }
+
+    fun compensateBook(bookingId: UUID): AccommodationEvent {
+        if (this.bookingId != bookingId) {
+            return AccommodationBookingCancelFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id is not BOOKED by bookingId $bookingId"
+            )
         }
+
+        this.bookingId = null
+        this.status = AccommodationStatusEnum.AVAILABLE
+
+        return AccommodationBookingCanceledEvent(
+            accommodationId = _id,
+            bookingId = bookingId,
+        )
+    }
+
+    fun compensateCancelBooking(bookingId: UUID): AccommodationEvent {
+        if (this.bookingId != null) {
+            return AccommodationBookFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id is already booked"
+            )
+        }
+
+        this.status = AccommodationStatusEnum.BOOKED
+        this.bookingId = bookingId
+
+        return AccommodationBookedEvent(
+            accommodationId = _id,
+            bookingId = bookingId,
+        )
     }
 }

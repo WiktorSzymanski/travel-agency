@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
-import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.Clock
 import java.time.LocalDateTime
@@ -41,8 +40,6 @@ class AttractionGeneratorTest {
         assertEquals("Big Ben tour", actual[0].name)
         assertEquals(LocationEnum.LONDON, actual[0].location)
         assertEquals(10, actual[0].capacity)
-        assertEquals(AttractionStatusEnum.SCHEDULED, actual[0].status)
-        assert(actual[0].bookings.isEmpty())
         assert(
             actual[0].date.isBetween(
                 fixedTime.plusSeconds(inAdvanceSeconds),
@@ -55,8 +52,6 @@ class AttractionGeneratorTest {
         assertEquals("City tour by boat", actual[1].name)
         assertEquals(LocationEnum.BERLIN, actual[1].location)
         assertEquals(30, actual[1].capacity)
-        assertEquals(AttractionStatusEnum.SCHEDULED, actual[1].status)
-        assert(actual[1].bookings.isEmpty())
         assert(
             actual[1].date.isBetween(
                 fixedTime.plusSeconds(inAdvanceSeconds),
