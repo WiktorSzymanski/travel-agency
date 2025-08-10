@@ -122,4 +122,40 @@ data class Accommodation(
 
         this.status = AccommodationStatusEnum.EXPIRED
     }
+
+    fun compensateBook(bookingId: UUID): AccommodationEvent {
+        if (this.bookingId != bookingId) {
+            return AccommodationBookingCancelFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id is not BOOKED by bookingId $bookingId"
+            )
+        }
+
+        this.bookingId = null
+        this.status = AccommodationStatusEnum.AVAILABLE
+
+        return AccommodationBookingCanceledEvent(
+            accommodationId = _id,
+            bookingId = bookingId,
+        )
+    }
+
+    fun compensateCancelBooking(bookingId: UUID): AccommodationEvent {
+        if (this.bookingId != null) {
+            return AccommodationBookFailedEvent(
+                accommodationId = _id,
+                bookingId = bookingId,
+                message = "Accommodation $_id is already booked"
+            )
+        }
+
+        this.status = AccommodationStatusEnum.BOOKED
+        this.bookingId = bookingId
+
+        return AccommodationBookedEvent(
+            accommodationId = _id,
+            bookingId = bookingId,
+        )
+    }
 }

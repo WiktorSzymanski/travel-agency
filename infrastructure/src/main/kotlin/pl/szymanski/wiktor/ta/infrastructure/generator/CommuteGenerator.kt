@@ -16,17 +16,17 @@ class CommuteGenerator(
     override fun generate(): List<CreateCommuteCommand> = templates.map { toCommand(it) }
 
     override fun toCommand(template: CommuteTemplate): CreateCommuteCommand {
-        val dTime =
-            randomDateTimeBetween(
-                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
-                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
-            )
+        val dTime = LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds)
+//            randomDateTimeBetween(
+//                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+//                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
+//            )
 
-        val aTime =
-            randomDateTimeBetween(
-                dTime,
-                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
-            )
+        val aTime = LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + 1)
+//            randomDateTimeBetween(
+//                dTime,
+//                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
+//            )
 
         return CreateCommuteCommand(
             name = template.name,

@@ -57,5 +57,6 @@ suspend fun <T> withRetry(
             currentDelay = (currentDelay * backoffMultiplier).toLong().coerceAtMost(maxDelayMs)
         }
     }
+    // TODO: WHEN THIS HAPPENS OPERATION SHOULD FAIL IN CONTROLLED MANER
     throw lastException ?: IllegalStateException("No attempt made")
 }

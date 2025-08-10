@@ -167,4 +167,59 @@ data class Attraction(
 
         this.status = AttractionStatusEnum.EXPIRED
     }
+
+    fun compensateBook(bookingId: UUID): List<AttractionEvent> {
+        val removed = bookings.removeIf { it == bookingId }
+
+        if (!removed) {
+            return listOf(AttractionBookingCancelFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Booking $bookingId was not signed for Attraction $_id"
+            ))
+        }
+
+        return listOfNotNull(AttractionBookingCanceledEvent(
+            attractionId = _id,
+            bookingId = bookingId,
+        ),
+            takeIf { slotsCheck() }.let {
+                AttractionAvailableEvent(
+                    attractionId = _id,
+                )
+            })
+    }
+
+    fun compensateCancelBooking(bookingId: UUID): List<AttractionEvent> {
+        if (bookings.any { it == bookingId }) {
+            return listOf(AttractionBookFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Booking $bookingId already signed for Attraction $_id"
+            ))
+        }
+
+        // just in case
+        if (bookings.size >= capacity) {
+            return listOf(AttractionBookFailedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+                message = "Attraction $_id is fully booked"
+            ))
+        }
+
+        bookings.add(bookingId)
+
+        return listOfNotNull(
+            AttractionBookedEvent(
+                attractionId = _id,
+                bookingId = bookingId,
+            ),
+            takeIf { slotsCheck() }.let {
+                AttractionFullEvent(
+                    attractionId = _id,
+                )
+            }
+        )
+    }
 }

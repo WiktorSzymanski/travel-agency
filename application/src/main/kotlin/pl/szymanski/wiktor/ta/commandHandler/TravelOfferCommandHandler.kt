@@ -27,8 +27,10 @@ import pl.szymanski.wiktor.ta.withRetry
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
 ) {
+    val maxRetries = 10
+
     suspend fun handle(command: TravelOfferCommand): TravelOfferEvent =
-        withRetry(3) {
+        withRetry(maxRetries) {
             when (command) {
                 is BookTravelOfferCommand -> handle(command)
                 is CancelBookTravelOfferCommand -> handle(command)

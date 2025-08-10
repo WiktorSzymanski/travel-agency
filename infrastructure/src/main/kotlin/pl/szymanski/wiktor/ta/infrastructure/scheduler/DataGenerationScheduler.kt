@@ -63,10 +63,9 @@ object DataGenerationScheduler {
         if (job != null) return
         job =
             scope.launch {
-                generate()
                 while (isActive) {
-                    delay((config.intervalSeconds * MILLIS_IN_SECOND).toLong())
                     generate()
+                    delay((config.intervalSeconds * MILLIS_IN_SECOND).toLong())
                 }
             }
     }

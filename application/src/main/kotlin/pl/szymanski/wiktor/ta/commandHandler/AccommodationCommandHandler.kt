@@ -10,6 +10,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationFailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -17,8 +18,10 @@ import pl.szymanski.wiktor.ta.withRetry
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
+    val maxRetries = 10
+
     suspend fun handle(command: AccommodationCommand): AccommodationEvent =
-        withRetry (3) {
+        withRetry (maxRetries) {
             when (command) {
                 is BookAccommodationCommand -> handle(command)
                 is CancelAccommodationBookingCommand -> handle(command)
@@ -33,8 +36,11 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .book(command.bookingId)
-                    .also { accommodationRepository.update(accommodation) }
-            }.apply { correlationId = command.correlationId }
+                    .also {
+                        if (it !is AccommodationFailedEvent)
+                            accommodationRepository.update(accommodation)
+                    }
+            }
 
     suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
         accommodationRepository
@@ -42,11 +48,14 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .cancelBooking(command.bookingId)
-                    .also { accommodationRepository.update(accommodation) }
-            }.apply { correlationId = command.correlationId }
+                    .also {
+                        if (it !is AccommodationFailedEvent)
+                            accommodationRepository.update(accommodation)
+                    }
+            }
 
     suspend fun handle(command: CreateAccommodationCommand): AccommodationEvent =
-        Accommodation.Companion.create(
+        Accommodation.create(
             command.name,
             command.location,
             command.rent,
@@ -61,8 +70,11 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .expire()
-                    .also { accommodationRepository.update(accommodation) }
-            }.apply { correlationId = command.correlationId }
+                    .also {
+                        if (it !is AccommodationFailedEvent)
+                            accommodationRepository.update(accommodation)
+                    }
+            }
 
     suspend fun compensate(event: AccommodationEvent): AccommodationEvent =
         when (event) {
@@ -72,20 +84,26 @@ class AccommodationCommandHandler(
         }.apply { correlationId = event.correlationId }.toCompensation().also { EventBus.publish(it) }
 
     suspend fun compensate(event: AccommodationBookedEvent): AccommodationEvent =
-        handle(
-            CancelAccommodationBookingCommand(
-                event.accommodationId,
-                event.correlationId!!,
-                event.bookingId,
-            ),
-        )
+        accommodationRepository
+            .findById(event.accommodationId)
+            .let { accommodation ->
+                accommodation
+                    .compensateBook(event.bookingId)
+                    .also {
+                        if (it !is AccommodationFailedEvent)
+                            accommodationRepository.update(accommodation)
+                    }
+            }
 
     suspend fun compensate(event: AccommodationBookingCanceledEvent): AccommodationEvent =
-        handle(
-            BookAccommodationCommand(
-                event.accommodationId,
-                event.correlationId!!,
-                event.bookingId,
-            ),
-        )
+        accommodationRepository
+            .findById(event.accommodationId)
+            .let { accommodation ->
+                accommodation
+                    .compensateCancelBooking(event.bookingId)
+                    .also {
+                        if (it !is AccommodationFailedEvent)
+                            accommodationRepository.update(accommodation)
+                    }
+            }
 }

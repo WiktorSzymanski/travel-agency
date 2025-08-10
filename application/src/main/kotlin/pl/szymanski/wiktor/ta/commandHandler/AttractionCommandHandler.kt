@@ -10,6 +10,8 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -17,8 +19,10 @@ import pl.szymanski.wiktor.ta.withRetry
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
+    val maxRetries = 10
+
     suspend fun handle(command: AttractionCommand): AttractionEvent =
-        withRetry (3) {
+        withRetry (maxRetries) {
             when (command) {
                 is BookAttractionCommand -> handle(command)
                 is CancelAttractionBookingCommand -> handle(command)
@@ -37,7 +41,10 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .book(command.bookingId)
-                    .also { attractionRepository.update(attraction) }
+                    .also {
+                        if (it[0] !is AttractionFailedEvent)
+                            attractionRepository.update(attraction)
+                    }
             }
 
     private suspend fun handle(command: CancelAttractionBookingCommand): List<AttractionEvent> =
@@ -46,7 +53,10 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .cancelBooking(command.bookingId)
-                    .also { attractionRepository.update(attraction) }
+                    .also {
+                        if (it[0] !is AttractionFailedEvent)
+                            attractionRepository.update(attraction)
+                    }
             }
 
     private suspend fun handle(command: CreateAttractionCommand): List<AttractionEvent> =
@@ -66,7 +76,10 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .expire()
-                    .also { attractionRepository.update(attraction) }
+                    .also {
+                        if (it[0] !is AttractionFailedEvent)
+                            attractionRepository.update(attraction)
+                    }
             }
 
     suspend fun compensate(event: AttractionEvent): AttractionEvent =
@@ -84,20 +97,26 @@ class AttractionCommandHandler(
         }.let { it[0] }
 
     private suspend fun compensate(event: AttractionBookedEvent): List<AttractionEvent> =
-        handle(
-            CancelAttractionBookingCommand(
-                event.attractionId,
-                event.correlationId!!,
-                event.bookingId,
-            ),
-        )
+        attractionRepository
+            .findById(event.attractionId)
+            .let { attraction ->
+                attraction
+                    .compensateBook(event.bookingId)
+                    .also {
+                        if (it[0] !is AttractionFailedEvent)
+                            attractionRepository.update(attraction)
+                    }
+            }
 
     private suspend fun compensate(event: AttractionBookingCanceledEvent): List<AttractionEvent> =
-        handle(
-            BookAttractionCommand(
-                event.attractionId,
-                event.correlationId!!,
-                event.bookingId,
-            ),
-        )
+        attractionRepository
+            .findById(event.attractionId)
+            .let { attraction ->
+                attraction
+                    .compensateCancelBooking(event.bookingId)
+                    .also {
+                        if (it[0] !is AttractionFailedEvent)
+                            attractionRepository.update(attraction)
+                    }
+            }
 }

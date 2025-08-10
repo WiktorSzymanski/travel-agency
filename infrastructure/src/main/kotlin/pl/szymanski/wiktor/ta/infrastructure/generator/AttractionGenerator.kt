@@ -18,11 +18,11 @@ class AttractionGenerator(
         CreateAttractionCommand(
             name = template.name,
             location = LocationEnum.valueOf(template.location.uppercase()),
-            date =
-                randomDateTimeBetween(
-                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
-                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
-                ),
+            date = LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + 3),
+//                randomDateTimeBetween(
+//                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+//                    LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
+//                ),
             capacity = template.capacity,
             attractionId = UUID.randomUUID(),
             correlationId = UUID.randomUUID(),

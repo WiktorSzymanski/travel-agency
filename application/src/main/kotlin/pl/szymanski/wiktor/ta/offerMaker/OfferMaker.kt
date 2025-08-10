@@ -22,8 +22,8 @@ import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.timeMet
-import java.time.temporal.ChronoUnit
 import java.util.UUID
+import java.time.Duration
 
 class OfferMaker(
     private val accommodationRepository: AccommodationRepository,
@@ -101,6 +101,7 @@ class OfferMaker(
         commutes: List<Commute>,
         accommodations: List<Accommodation>,
         attractions: List<Attraction>,
+        creationWindowSeconds: Long = 3,
     ): List<Triple<Commute, Accommodation, Attraction?>> {
         val commuteGroups = commutes.groupBy { it.arrival.location }
         val accommodationGroups = accommodations.groupBy { it.location }
@@ -111,11 +112,11 @@ class OfferMaker(
             val nearbyCommutes = commuteGroups[location] ?: emptyList()
 
             accommodations.flatMap { accommodation ->
-                val validAttractions = nearbyAttractions.filter { it.date < accommodation.rent.till }
+                val validAttractions = nearbyAttractions.filter { it.date < accommodation.rent.till && it.date > accommodation.rent.from }
                 val validCommutes =
                     nearbyCommutes.filter {
-                        it.arrival.time.truncatedTo(ChronoUnit.MINUTES) ==
-                            accommodation.rent.from.truncatedTo(ChronoUnit.MINUTES)
+                        it.arrival.time.isBefore(accommodation.rent.from) &&
+                                Duration.between(it.arrival.time, accommodation.rent.from).seconds <= creationWindowSeconds
                     }
 
                 validCommutes.flatMap { commute ->

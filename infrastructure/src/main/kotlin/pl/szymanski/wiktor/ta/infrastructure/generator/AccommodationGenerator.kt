@@ -16,17 +16,17 @@ class AccommodationGenerator(
     override fun generate(): List<CreateAccommodationCommand> = templates.map { toCommand(it) }
 
     override fun toCommand(template: AccommodationTemplate): CreateAccommodationCommand {
-        val fromTime =
-            randomDateTimeBetween(
-                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
-                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
-            )
+        val fromTime = LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + 2)
+//            randomDateTimeBetween(
+//                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
+//                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
+//            )
 
-        val tillTime =
-            randomDateTimeBetween(
-                fromTime,
-                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
-            )
+        val tillTime = LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + 5)
+//            randomDateTimeBetween(
+//                fromTime,
+//                LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
+//            )
 
         return CreateAccommodationCommand(
             name = template.name,

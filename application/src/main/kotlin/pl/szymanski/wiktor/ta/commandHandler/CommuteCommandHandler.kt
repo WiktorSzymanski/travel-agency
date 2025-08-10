@@ -10,6 +10,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -17,8 +18,10 @@ import pl.szymanski.wiktor.ta.withRetry
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
+    val maxRetries = 10
+
     suspend fun handle(command: CommuteCommand): CommuteEvent =
-        withRetry (3) {
+        withRetry (maxRetries) {
             when (command) {
                 is BookCommuteCommand -> handle(command)
                 is CancelCommuteBookingCommand -> handle(command)
@@ -48,7 +51,10 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .bookSeat(command.bookingId, command.seat)
-                    .also { commuteRepository.update(commute) }
+                    .also {
+                        if (it[0] !is CommuteFailedEvent)
+                            commuteRepository.update(commute)
+                    }
             }
 
     private suspend fun handle(command: CancelCommuteBookingCommand): List<CommuteEvent> =
@@ -57,7 +63,10 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .cancelBookedSeat(command.bookingId)
-                    .also { commuteRepository.update(commute) }
+                    .also {
+                        if (it[0] !is CommuteFailedEvent)
+                            commuteRepository.update(commute)
+                    }
             }
 
     private suspend fun handle(command: ExpireCommuteCommand): List<CommuteEvent> =
@@ -66,7 +75,10 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .expire()
-                    .also { commuteRepository.update(commute) }
+                    .also {
+                        if (it[0] !is CommuteFailedEvent)
+                            commuteRepository.update(commute)
+                    }
             }
 
     suspend fun compensate(event: CommuteEvent): CommuteEvent =
@@ -89,7 +101,10 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .compensateBookSeat(event.bookingId)
-                    .also { commuteRepository.update(commute) }
+                    .also {
+                        if (it[0] !is CommuteFailedEvent)
+                            commuteRepository.update(commute)
+                    }
             }
 
     private suspend fun compensate(event: CommuteBookingCanceledEvent): List<CommuteEvent> =
@@ -98,6 +113,9 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .compensateCancelBookedSeat(event.bookingId, event.seat)
-                    .also { commuteRepository.update(commute) }
+                    .also {
+                        if (it[0] !is CommuteFailedEvent)
+                            commuteRepository.update(commute)
+                    }
             }
 }
