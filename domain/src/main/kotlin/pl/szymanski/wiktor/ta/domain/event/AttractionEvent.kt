@@ -6,23 +6,21 @@ import java.util.UUID
 
 interface AttractionFailedEvent : AttractionEvent, FailedEvent
 
+data class AttractionCreatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val attractionId: UUID,
+    val name: String,
+    val location: LocationEnum,
+    val date: LocalDateTime,
+    val capacity: Int,
+) : AttractionEvent
+
 data class AttractionBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val attractionId: UUID,
     val bookingId: UUID,
-) : AttractionEvent
-
-data class AttractionFullEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val attractionId: UUID,
-) : AttractionEvent
-
-data class AttractionAvailableEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val attractionId: UUID,
 ) : AttractionEvent
 
 data class AttractionBookingCanceledEvent(
@@ -38,22 +36,18 @@ data class AttractionExpiredEvent(
     override val attractionId: UUID,
 ) : AttractionEvent
 
-data class AttractionCreatedEvent(
+
+data class AttractionFullEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val attractionId: UUID,
-    val name: String,
-    val location: LocationEnum,
-    val date: LocalDateTime,
-    val capacity: Int,
 ) : AttractionEvent
 
-data class AttractionExpireFailedEvent(
+data class AttractionAvailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val attractionId: UUID,
-    override val message: String,
-) : AttractionFailedEvent
+) : AttractionEvent
 
 data class AttractionBookFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
@@ -68,5 +62,12 @@ data class AttractionBookingCancelFailedEvent(
     override var correlationId: UUID? = null,
     override val attractionId: UUID,
     val bookingId: UUID,
+    override val message: String,
+) : AttractionFailedEvent
+
+data class AttractionExpireFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val attractionId: UUID,
     override val message: String,
 ) : AttractionFailedEvent

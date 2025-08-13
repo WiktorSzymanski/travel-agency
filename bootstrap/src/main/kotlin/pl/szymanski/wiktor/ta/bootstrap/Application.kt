@@ -4,19 +4,24 @@ import io.ktor.server.application.Application
 import io.ktor.server.cio.EngineMain
 import io.ktor.server.config.property
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.eventHandler.DateMetEventHandler
+import pl.szymanski.wiktor.ta.eventHandler.EntityEventHandler
 import pl.szymanski.wiktor.ta.eventHandler.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
+import pl.szymanski.wiktor.ta.infrastructure.config.KurrentDbConfig
+import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
 import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AccommodationRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AttractionRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.BookingRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.command.EventRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.AccommodationQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.BookingQueryRepositoryImpl
@@ -36,6 +41,8 @@ fun main(args: Array<String>) {
 
 fun Application.application() {
     MongoDbProvider.init(property<DatabaseConfig>("database"))
+    KurrentDbProvider.init(property<KurrentDbConfig>("kurrentDatabase"))
+    EventBus.init(EventRepositoryImpl())
 
     val travelOfferRepository = TravelOfferRepositoryImpl(MongoDbProvider.database)
     val accommodationRepository = AccommodationRepositoryImpl(MongoDbProvider.database)
@@ -43,15 +50,15 @@ fun Application.application() {
     val commuteRepository = CommuteRepositoryImpl(MongoDbProvider.database)
     val bookingRepository = BookingRepositoryImpl(MongoDbProvider.database)
 
-    val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
-    val travelOfferExpireService = TravelOfferExpireService(travelOfferRepository, travelOfferCommandHandler)
-    val travelOfferStatusService = TravelOfferStatusService(travelOfferRepository, travelOfferCommandHandler)
-
     val travelOfferQueryRepository = TravelOfferQueryRepositoryImpl(MongoDbProvider.database)
     val bookingQueryRepository = BookingQueryRepositoryImpl(MongoDbProvider.database)
     val accommodationQueryRepository = AccommodationQueryRepositoryImpl(MongoDbProvider.database)
     val commuteQueryRepository = CommuteQueryRepositoryImpl(MongoDbProvider.database)
     val bookingCommandHandler = BookingCommandHandler(bookingRepository)
+
+    val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
+    val travelOfferExpireService = TravelOfferExpireService(travelOfferQueryRepository, travelOfferCommandHandler)
+    val travelOfferStatusService = TravelOfferStatusService(travelOfferQueryRepository, travelOfferCommandHandler)
 
     val bookingQuery = BookingQuery(bookingQueryRepository)
 
@@ -72,6 +79,15 @@ fun Application.application() {
             attractionCommandHandler = AttractionCommandHandler(attractionRepository),
             commuteCommandHandler = CommuteCommandHandler(commuteRepository),
             accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository),
+        ).setup()
+    }
+    
+    launch {
+        EntityEventHandler(
+            accommodationRepository = accommodationRepository,
+            attractionRepository = attractionRepository,
+            commuteRepository = commuteRepository,
+            travelOfferRepository = travelOfferRepository
         ).setup()
     }
 

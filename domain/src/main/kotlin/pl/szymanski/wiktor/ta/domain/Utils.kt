@@ -2,7 +2,6 @@ package pl.szymanski.wiktor.ta.domain
 
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
-import java.util.UUID
 
 enum class LocationEnum {
     POZNAN,

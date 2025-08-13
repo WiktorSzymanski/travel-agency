@@ -10,7 +10,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -18,16 +24,19 @@ import java.util.UUID
 
 object EventBus {
     private val log = LoggerFactory.getLogger(EventBus::class.java)
-    private val _events = MutableSharedFlow<Any>()
-    val events = _events.asSharedFlow()
+    lateinit var repository: EventRepository
 
-    suspend fun publish(event: Any) {
+    fun init(repository: EventRepository) {
+        this.repository = repository
+    }
+
+    suspend fun publish(event: Event) {
 //        log.info("Publishing event: {}", event)
-        _events.emit(event)
+        repository.save(event)
     }
 
     fun publish(
-        event: Any,
+        event: Event,
         date: LocalDateTime,
         scope: CoroutineScope = CoroutineScope(Dispatchers.Default),
         zoneId: ZoneId = ZoneId.systemDefault(),
@@ -42,16 +51,6 @@ object EventBus {
     }
 
     suspend inline fun <reified T> subscribe(crossinline onEvent: suspend (T) -> Unit) {
-        events.filterIsInstance<T>().collectLatest { event -> onEvent(event) }
-    }
-
-    suspend inline fun <reified T> subscribe(
-        correlationId: UUID,
-        crossinline onEvent: suspend (T) -> Unit,
-    ) where T : Event {
-        events
-            .filterIsInstance<T>()
-            .filter { event -> event.correlationId == correlationId }
-            .collectLatest { event -> onEvent(event) }
+        repository.subscribe(T::class.java as Class<Event>) { event -> onEvent(event as T) }
     }
 }

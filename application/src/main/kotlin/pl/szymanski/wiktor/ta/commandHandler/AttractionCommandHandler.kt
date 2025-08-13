@@ -41,10 +41,6 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .book(command.bookingId)
-                    .also {
-                        if (it[0] !is AttractionFailedEvent)
-                            attractionRepository.update(attraction)
-                    }
             }
 
     private suspend fun handle(command: CancelAttractionBookingCommand): List<AttractionEvent> =
@@ -53,10 +49,6 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .cancelBooking(command.bookingId)
-                    .also {
-                        if (it[0] !is AttractionFailedEvent)
-                            attractionRepository.update(attraction)
-                    }
             }
 
     private suspend fun handle(command: CreateAttractionCommand): List<AttractionEvent> =
@@ -66,7 +58,6 @@ class AttractionCommandHandler(
             command.date,
             command.capacity,
         ).let { (attraction, event) ->
-            attractionRepository.save(attraction)
             event
         }
 
@@ -76,10 +67,6 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .expire()
-                    .also {
-                        if (it[0] !is AttractionFailedEvent)
-                            attractionRepository.update(attraction)
-                    }
             }
 
     suspend fun compensate(event: AttractionEvent): AttractionEvent =
@@ -102,10 +89,6 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .compensateBook(event.bookingId)
-                    .also {
-                        if (it[0] !is AttractionFailedEvent)
-                            attractionRepository.update(attraction)
-                    }
             }
 
     private suspend fun compensate(event: AttractionBookingCanceledEvent): List<AttractionEvent> =
@@ -114,9 +97,5 @@ class AttractionCommandHandler(
             .let { attraction ->
                 attraction
                     .compensateCancelBooking(event.bookingId)
-                    .also {
-                        if (it[0] !is AttractionFailedEvent)
-                            attractionRepository.update(attraction)
-                    }
             }
 }

@@ -20,9 +20,9 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
-import pl.szymanski.wiktor.ta.event.CancelBookingSagaCompletedEvent
-import pl.szymanski.wiktor.ta.event.CancelBookingSagaFailedEvent
-import pl.szymanski.wiktor.ta.event.CancelBookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.*
@@ -85,17 +85,13 @@ class CancelBookingSaga(
 
     suspend fun execute() {
         EventBus.publish(
-            CancelBookingSagaStartedEvent(
+            BookingCancelSagaStartedEvent(
                 correlationId = triggeringEvent.correlationId!!,
                 bookingId = bookingId,
             )
         )
 
-        val cH = runCatching {
-            withRetry(maxRetries) {
-                commuteCommandHandler.handle(commuteCommand)
-            }
-        }
+        val cH = runCatching { commuteCommandHandler.handle(commuteCommand) }
 
         if (cH.isFailure) {
             compensateTriggeringEvent(cH.exceptionOrNull()?.message ?: "Unknown error")
@@ -109,54 +105,38 @@ class CancelBookingSaga(
         }
 
         val acH = runCatching {
-            withRetry(maxRetries) {
-                accommodationCommandHandler.handle(accommodationCommand)
-            }
+            accommodationCommandHandler.handle(accommodationCommand)
         }
 
         if (acH.isFailure) {
-            withRetry(maxRetries) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-            }
+            commuteCommandHandler.compensate(cHEvent as CommuteEvent)
             compensateTriggeringEvent(acH.exceptionOrNull()?.message ?: "Unknown error")
             return
         }
 
         val acHEvent = acH.getOrNull()
         if (acHEvent is AccommodationFailedEvent) {
-            withRetry(maxRetries) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-            }
+            commuteCommandHandler.compensate(cHEvent as CommuteEvent)
             compensateTriggeringEvent(acHEvent.message)
             return
         }
 
         if (attractionCommand != null) {
             val atH = runCatching {
-                withRetry(maxRetries) {
-                    attractionCommandHandler.handle(attractionCommand!!)
-                }
+                attractionCommandHandler.handle(attractionCommand!!)
             }
 
             if (atH.isFailure) {
-                withRetry(maxRetries) {
-                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                }
-                withRetry(maxRetries) {
-                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
-                }
+                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+                accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
                 compensateTriggeringEvent(atH.exceptionOrNull()?.message ?: "Unknown error")
                 return
             }
 
             val atHEvent = atH.getOrNull()
             if (atHEvent is AttractionFailedEvent) {
-                withRetry(maxRetries) {
-                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                }
-                withRetry(maxRetries) {
-                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
-                }
+                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+                accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
                 compensateTriggeringEvent(atHEvent.message)
                 return
             }
@@ -164,7 +144,7 @@ class CancelBookingSaga(
 
         // Co jeśli nie wiadomo czemu BOOK się wywali
         EventBus.publish(
-            CancelBookingSagaCompletedEvent(
+            BookingCancelSagaCompletedEvent(
                 correlationId = triggeringEvent.correlationId!!,
                 bookingId = bookingId,
                 travelOfferId = triggeringEvent.travelOfferId,
@@ -176,13 +156,13 @@ class CancelBookingSaga(
     suspend fun compensateTriggeringEvent(message: String) =
         coroutineScope {
             EventBus.publish(
-                CancelBookingSagaFailedEvent(
+                BookingCancelSagaFailedEvent(
                     correlationId = triggeringEvent.correlationId!!,
                     bookingId = bookingId,
                     message = message
                 )
             )
-            withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
+            travelOfferCommandHandler.compensate(triggeringEvent)
 
             if (!travelOfferStatusService
                 .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)

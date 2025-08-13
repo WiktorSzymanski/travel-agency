@@ -6,10 +6,18 @@ ktor:
             - pl.szymanski.wiktor.ta.bootstrap.ApplicationKt.application
             - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
             - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
+            - pl.szymanski.wiktor.ta.infrastructure.projection.ProjectionModuleKt.projectionModule
 
 database:
     uri: "mongodb://localhost:27017"
     dbName: "travel_agency"
+
+kurrentDatabase:
+  host: "localhost"
+  port: 2113
+  username: "admin"
+  password: "changeit"
+
 
 offerScheduler:
   intervalSeconds: 1

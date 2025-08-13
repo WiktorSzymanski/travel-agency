@@ -31,6 +31,8 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
+    implementation("io.kurrent:kurrentdb-client:1.0.0")
+
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     implementation("org.mongodb:bson-kotlinx:5.2.0")

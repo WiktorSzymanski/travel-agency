@@ -26,6 +26,47 @@ data class Commute(
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
     val version: Int = 1,
 ) {
+    fun apply(event: CommuteEvent): Commute {
+        return when (event) {
+            is CommuteCreatedEvent -> this.copy(
+                _id = event.commuteId,
+                name = event.name,
+                departure = event.departure,
+                arrival = event.arrival,
+                seats = event.seats,
+                status = CommuteStatusEnum.SCHEDULED,
+                bookings = mutableMapOf()
+            )
+            is CommuteBookedEvent -> {
+                val newBookings = this.bookings.toMutableMap()
+                newBookings[event.bookingId.toString()] = event.seat.toString()
+                this.copy(
+                    bookings = newBookings
+                )
+            }
+            is CommuteFullEvent -> this.copy(
+                status = CommuteStatusEnum.FULL
+            )
+            is CommuteAvailableEvent -> this.copy(
+                status = CommuteStatusEnum.SCHEDULED
+            )
+            is CommuteBookingCanceledEvent -> {
+                val newBookings = this.bookings.toMutableMap()
+                newBookings.remove(event.bookingId.toString())
+                this.copy(
+                    bookings = newBookings
+                )
+            }
+            is CommuteExpiredEvent -> this.copy(
+                status = CommuteStatusEnum.EXPIRED
+            )
+            // Failed events don't change the state
+            is CommuteBookSeatFailedEvent,
+            is CommuteExpireFailedEvent,
+            is CommuteCancelBookedSeatFailedEvent -> this
+            else -> this
+        }
+    }
     companion object {
         fun create(
             name: String,
@@ -51,6 +92,30 @@ data class Commute(
                 )
 
             return commute to listOf(event)
+        }
+        
+        fun fromEvents(events: List<CommuteEvent>): Commute? {
+            if (events.isEmpty()) return null
+            
+            // Find the first created event
+            val createdEvent = events.find { it is CommuteCreatedEvent } as? CommuteCreatedEvent
+                ?: return null
+                
+            // Create an initial state from the created event
+            var commute = Commute(
+                _id = createdEvent.commuteId,
+                name = createdEvent.name,
+                departure = createdEvent.departure,
+                arrival = createdEvent.arrival,
+                seats = createdEvent.seats,
+            )
+            
+            // Apply all events in order to reconstruct the current state
+            for (event in events) {
+                commute = commute.apply(event)
+            }
+            
+            return commute
         }
     }
 

@@ -34,6 +34,60 @@ data class TravelOffer(
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
     val version: Int = 1,
 ) {
+    fun apply(event: TravelOfferEvent): TravelOffer {
+        return when (event) {
+            is TravelOfferCreatedEvent -> this.copy(
+                _id = event.travelOfferId,
+                name = event.name,
+                commuteId = event.commuteId,
+                accommodationId = event.accommodationId,
+                attractionId = event.attractionId,
+                status = TravelOfferStatusEnum.AVAILABLE
+            )
+            is TravelOfferMadeUnavailableEvent -> this.copy(
+                status = TravelOfferStatusEnum.UNAVAILABLE
+            )
+            is TravelOfferMadeAvailableEvent -> this.copy(
+                status = TravelOfferStatusEnum.AVAILABLE
+            )
+            is TravelOfferExpiredEvent -> this.copy(
+                status = TravelOfferStatusEnum.EXPIRED
+            )
+            is TravelOfferReservedEvent -> this.copy(
+                status = TravelOfferStatusEnum.RESERVED,
+                bookingId = event.bookingId
+            )
+            is TravelOfferBookedEvent -> this.copy(
+                status = TravelOfferStatusEnum.BOOKED,
+                bookingId = event.bookingId
+            )
+            is TravelOfferReservationCanceledEvent -> this.copy(
+                status = TravelOfferStatusEnum.AVAILABLE,
+                bookingId = null
+            )
+            is TravelOfferReleaseEvent -> this.copy(
+                status = TravelOfferStatusEnum.RELEASING
+            )
+            is TravelOfferRebookedEvent -> this.copy(
+                status = TravelOfferStatusEnum.BOOKED
+            )
+            is TravelOfferBookingCanceledEvent -> this.copy(
+                status = TravelOfferStatusEnum.AVAILABLE,
+                bookingId = null
+            )
+            // Failed events don't change the state
+            is TravelOfferBookFailedEvent,
+            is TravelOfferReserveFailedEvent,
+            is TravelOfferMakeUnavailableFailedEvent,
+            is TravelOfferMakeAvailableFailedEvent,
+            is TravelOfferExpireFailedEvent,
+            is TravelOfferReservationCancelFailedEvent,
+            is TravelOfferBookingCancelFailedEvent,
+            is TravelOfferReleaseCompleteFailedEvent,
+            is TravelOfferRebookCompleteFailedEvent -> this
+            else -> this
+        }
+    }
     companion object {
         fun create(
             name: String,
@@ -60,6 +114,30 @@ data class TravelOffer(
                 )
 
             return travelOffer to event
+        }
+        
+        fun fromEvents(events: List<TravelOfferEvent>): TravelOffer? {
+            if (events.isEmpty()) return null
+            
+            // Find the first created event
+            val createdEvent = events.find { it is TravelOfferCreatedEvent } as? TravelOfferCreatedEvent
+                ?: return null
+                
+            // Create an initial state from the created event
+            var travelOffer = TravelOffer(
+                _id = createdEvent.travelOfferId,
+                name = createdEvent.name,
+                commuteId = createdEvent.commuteId,
+                accommodationId = createdEvent.accommodationId,
+                attractionId = createdEvent.attractionId,
+            )
+            
+            // Apply all events in order to reconstruct the current state
+            for (event in events) {
+                travelOffer = travelOffer.apply(event)
+            }
+            
+            return travelOffer
         }
     }
 

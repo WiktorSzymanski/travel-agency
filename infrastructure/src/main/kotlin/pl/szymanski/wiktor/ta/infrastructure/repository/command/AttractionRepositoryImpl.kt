@@ -1,45 +1,109 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import io.kurrent.dbclient.EventData
+import io.kurrent.dbclient.KurrentDBClient
+import io.kurrent.dbclient.ReadStreamOptions
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.future.await
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.bson.Document
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCancelFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpireFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
+import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import java.util.ConcurrentModificationException
+import pl.szymanski.wiktor.ta.event.AttractionBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.event.AttractionBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
+import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
+import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
 import java.util.UUID
+
+// Projection model for Attraction queries
+data class AttractionProjection(
+    val _id: UUID,
+    val status: AttractionStatusEnum
+)
+
+// Event store model for storing events
+data class AttractionEventRecord(
+    val _id: UUID,
+    val aggregateId: UUID,
+    val eventType: String,
+    val eventData: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
 
 class AttractionRepositoryImpl(
     database: MongoDatabase,
 ) : AttractionRepository {
-    private val collection: MongoCollection<Attraction> = database.getCollection("attraction")
+    private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
 
-    override suspend fun findById(attractionId: UUID): Attraction = collection.find(Document("_id", attractionId)).toList().first()
+    override suspend fun findById(attractionId: UUID): Attraction {
+        val streamName = "attraction-$attractionId"
 
-    override suspend fun save(entity: Attraction): Attraction? = collection.insertOne(entity).insertedId?.let { entity }
+        val options = ReadStreamOptions.get()
+            .fromStart()
+            .maxCount(100)
 
-    override suspend fun update(entity: Attraction) {
-        val filter =
-            Filters.and(
-                Filters.eq("_id", entity._id),
-                Filters.eq("version", entity.version),
-            )
-        val update =
-            Updates.combine(
-                Updates.set("bookings", entity.bookings),
-                Updates.set("status", "${entity.status}"),
-                Updates.set("version", entity.version + 1),
-            )
-        if (collection.updateOne(filter, update).matchedCount == 0L) {
-            throw ConcurrentModificationException("Concurrent modification detected for ${entity._id}")
+        val readResult = kurrentClient.readStream(streamName, options).await()
+
+        val events: List<AttractionEvent> = readResult.events.map { resolvedEvent ->
+            val eventTypeName = resolvedEvent.event.eventType
+            val eventClass = attractionEventTypeRegistry[eventTypeName]
+                ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
+
+            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
         }
+
+        return Attraction.fromEvents(events)
+            ?: throw NoSuchElementException("Attraction with ID $attractionId not found")
     }
 
-    override suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction> =
-        collection.find(Document("status", status.toString())).toList()
-
-    // All used by command side
+    override suspend fun save(event: Event) {
+        if (event !is AttractionEvent) {
+            throw IllegalArgumentException("Event must be an AttractionEvent")
+        }
+        
+        try {
+            val streamName = "attraction-${event.attractionId}"
+            val serializedEvent = EventJsonSerializer.toBytes(event)
+            val eventData = EventData.builderAsJson(event::class.simpleName, serializedEvent).build()
+            kurrentClient.appendToStream(streamName, eventData)
+        } catch (e: Exception) {
+            println("Failed to save event to KurrentDb: ${e.message}")
+            throw e
+        }
+    }
 }
+
+// Maps event type names in KurrentDb to their Kotlin classes
+val attractionEventTypeRegistry: Map<String, Class<out AttractionEvent>> = mapOf(
+    AttractionBookedEvent::class.simpleName!! to AttractionBookedEvent::class.java,
+    AttractionFullEvent::class.simpleName!! to AttractionFullEvent::class.java,
+    AttractionAvailableEvent::class.simpleName!! to AttractionAvailableEvent::class.java,
+    AttractionBookingCanceledEvent::class.simpleName!! to AttractionBookingCanceledEvent::class.java,
+    AttractionExpiredEvent::class.simpleName!! to AttractionExpiredEvent::class.java,
+    AttractionCreatedEvent::class.simpleName!! to AttractionCreatedEvent::class.java,
+    AttractionDateMetEvent::class.simpleName!! to AttractionDateMetEvent::class.java,
+
+    AttractionBookedCompensatedEvent::class.simpleName!! to AttractionBookedCompensatedEvent::class.java,
+    AttractionBookingCanceledCompensatedEvent::class.simpleName!! to AttractionBookingCanceledCompensatedEvent::class.java,
+
+    // Failure events
+    AttractionExpireFailedEvent::class.simpleName!! to AttractionExpireFailedEvent::class.java,
+    AttractionBookFailedEvent::class.simpleName!! to AttractionBookFailedEvent::class.java,
+    AttractionBookingCancelFailedEvent::class.simpleName!! to AttractionBookingCancelFailedEvent::class.java
+)

@@ -5,10 +5,11 @@ import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import java.util.UUID
 
 class TravelOfferExpireService(
-    private val travelOfferRepository: TravelOfferRepository,
+    private val travelOfferRepository: TravelOfferQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
     companion object {
@@ -24,7 +25,7 @@ class TravelOfferExpireService(
             .map {
                 travelOfferCommandHandler.handle(
                     ExpireTravelOfferCommand(
-                        travelOfferId = it._id,
+                        travelOfferId = it,
                         correlationId = correlationId,
                     ) as TravelOfferCommand,
                 )
@@ -40,7 +41,7 @@ class TravelOfferExpireService(
             .map {
                 travelOfferCommandHandler.handle(
                     ExpireTravelOfferCommand(
-                        travelOfferId = it._id,
+                        travelOfferId = it,
                         correlationId = correlationId,
                     ) as TravelOfferCommand,
                 )
@@ -56,7 +57,7 @@ class TravelOfferExpireService(
             .map {
                 travelOfferCommandHandler.handle(
                     ExpireTravelOfferCommand(
-                        travelOfferId = it._id,
+                        travelOfferId = it,
                         correlationId = correlationId,
                     ) as TravelOfferCommand,
                 )

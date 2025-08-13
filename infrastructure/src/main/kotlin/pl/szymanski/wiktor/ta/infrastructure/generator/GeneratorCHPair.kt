@@ -30,6 +30,7 @@ class GeneratorCHPair<T, U>(
                             val event = handler.handle(command as AccommodationCommand) as AccommodationCreatedEvent
                             EventBus.publish(
                                 AccommodationDateMetEvent(
+                                    UUID.randomUUID(),
                                     event.accommodationId,
                                     UUID.randomUUID(),
                                 ),
@@ -40,6 +41,7 @@ class GeneratorCHPair<T, U>(
                             val event = handler.handle(command as AttractionCommand) as AttractionCreatedEvent
                             EventBus.publish(
                                 AttractionDateMetEvent(
+                                    UUID.randomUUID(),
                                     event.attractionId,
                                     UUID.randomUUID(),
                                 ),
@@ -50,6 +52,7 @@ class GeneratorCHPair<T, U>(
                             val event = handler.handle(command as CommuteCommand) as CommuteCreatedEvent
                             EventBus.publish(
                                 CommuteDateMetEvent(
+                                    UUID.randomUUID(),
                                     event.commuteId,
                                     UUID.randomUUID(),
                                 ),

@@ -36,10 +36,6 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .book(command.bookingId)
-                    .also {
-                        if (it !is AccommodationFailedEvent)
-                            accommodationRepository.update(accommodation)
-                    }
             }
 
     suspend fun handle(command: CancelAccommodationBookingCommand): AccommodationEvent =
@@ -48,10 +44,6 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .cancelBooking(command.bookingId)
-                    .also {
-                        if (it !is AccommodationFailedEvent)
-                            accommodationRepository.update(accommodation)
-                    }
             }
 
     suspend fun handle(command: CreateAccommodationCommand): AccommodationEvent =
@@ -60,7 +52,6 @@ class AccommodationCommandHandler(
             command.location,
             command.rent,
         ).let { (accommodation, event) ->
-            accommodationRepository.save(accommodation)
             event
         }
 
@@ -70,10 +61,6 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .expire()
-                    .also {
-                        if (it !is AccommodationFailedEvent)
-                            accommodationRepository.update(accommodation)
-                    }
             }
 
     suspend fun compensate(event: AccommodationEvent): AccommodationEvent =
@@ -89,10 +76,6 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .compensateBook(event.bookingId)
-                    .also {
-                        if (it !is AccommodationFailedEvent)
-                            accommodationRepository.update(accommodation)
-                    }
             }
 
     suspend fun compensate(event: AccommodationBookingCanceledEvent): AccommodationEvent =
@@ -101,9 +84,5 @@ class AccommodationCommandHandler(
             .let { accommodation ->
                 accommodation
                     .compensateCancelBooking(event.bookingId)
-                    .also {
-                        if (it !is AccommodationFailedEvent)
-                            accommodationRepository.update(accommodation)
-                    }
             }
 }

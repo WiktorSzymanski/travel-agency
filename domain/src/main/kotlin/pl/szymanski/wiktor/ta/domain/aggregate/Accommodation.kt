@@ -23,6 +23,33 @@ data class Accommodation(
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
     val version: Int = 1,
 ) {
+    fun apply(event: AccommodationEvent): Accommodation {
+        return when (event) {
+            is AccommodationCreatedEvent -> this.copy(
+                _id = event.accommodationId,
+                name = event.name,
+                location = event.location,
+                rent = event.rent,
+                status = AccommodationStatusEnum.AVAILABLE
+            )
+            is AccommodationBookedEvent -> this.copy(
+                status = AccommodationStatusEnum.BOOKED,
+                bookingId = event.bookingId
+            )
+            is AccommodationBookingCanceledEvent -> this.copy(
+                status = AccommodationStatusEnum.AVAILABLE,
+                bookingId = null
+            )
+            is AccommodationExpiredEvent -> this.copy(
+                status = AccommodationStatusEnum.EXPIRED
+            )
+            // Failed events don't change the state
+            is AccommodationBookFailedEvent,
+            is AccommodationExpireFailedEvent,
+            is AccommodationBookingCancelFailedEvent -> this
+            else -> this
+        }
+    }
     companion object {
         fun create(
             name: String,
@@ -45,6 +72,29 @@ data class Accommodation(
                 )
 
             return accommodation to event
+        }
+        
+        fun fromEvents(events: List<AccommodationEvent>): Accommodation? {
+            if (events.isEmpty()) return null
+            
+            // Find the first created event
+            val createdEvent = events.find { it is AccommodationCreatedEvent } as? AccommodationCreatedEvent
+                ?: return null
+                
+            // Create an initial state from the created event
+            var accommodation = Accommodation(
+                _id = createdEvent.accommodationId,
+                name = createdEvent.name,
+                location = createdEvent.location,
+                rent = createdEvent.rent,
+            )
+            
+            // Apply all events in order to reconstruct the current state
+            for (event in events) {
+                accommodation = accommodation.apply(event)
+            }
+            
+            return accommodation
         }
     }
 

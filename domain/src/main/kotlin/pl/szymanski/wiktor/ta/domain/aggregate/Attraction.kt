@@ -25,6 +25,47 @@ data class Attraction(
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
     val version: Int = 1,
 ) {
+    fun apply(event: AttractionEvent): Attraction {
+        return when (event) {
+            is AttractionCreatedEvent -> this.copy(
+                _id = event.attractionId,
+                name = event.name,
+                location = event.location,
+                date = event.date,
+                capacity = event.capacity,
+                status = AttractionStatusEnum.SCHEDULED,
+                bookings = mutableListOf()
+            )
+            is AttractionBookedEvent -> {
+                val newBookings = this.bookings.toMutableList()
+                newBookings.add(event.bookingId)
+                this.copy(
+                    bookings = newBookings
+                )
+            }
+            is AttractionFullEvent -> this.copy(
+                status = AttractionStatusEnum.FULL
+            )
+            is AttractionAvailableEvent -> this.copy(
+                status = AttractionStatusEnum.SCHEDULED
+            )
+            is AttractionBookingCanceledEvent -> {
+                val newBookings = this.bookings.toMutableList()
+                newBookings.removeIf { it == event.bookingId }
+                this.copy(
+                    bookings = newBookings
+                )
+            }
+            is AttractionExpiredEvent -> this.copy(
+                status = AttractionStatusEnum.EXPIRED
+            )
+            // Failed events don't change the state
+            is AttractionBookFailedEvent,
+            is AttractionExpireFailedEvent,
+            is AttractionBookingCancelFailedEvent -> this
+            else -> this
+        }
+    }
     companion object {
         fun create(
             name: String,
@@ -50,6 +91,30 @@ data class Attraction(
                 )
 
             return attraction to listOf(event)
+        }
+        
+        fun fromEvents(events: List<AttractionEvent>): Attraction? {
+            if (events.isEmpty()) return null
+            
+            // Find the first created event
+            val createdEvent = events.find { it is AttractionCreatedEvent } as? AttractionCreatedEvent
+                ?: return null
+                
+            // Create an initial state from the created event
+            var attraction = Attraction(
+                _id = createdEvent.attractionId,
+                name = createdEvent.name,
+                location = createdEvent.location,
+                date = createdEvent.date,
+                capacity = createdEvent.capacity,
+            )
+            
+            // Apply all events in order to reconstruct the current state
+            for (event in events) {
+                attraction = attraction.apply(event)
+            }
+            
+            return attraction
         }
     }
 

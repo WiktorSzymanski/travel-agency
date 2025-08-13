@@ -21,14 +21,18 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.timeMet
 import java.util.UUID
 import java.time.Duration
 
 class OfferMaker(
-    private val accommodationRepository: AccommodationRepository,
-    private val attractionRepository: AttractionRepository,
-    private val commuteRepository: CommuteRepository,
+    private val accommodationRepository: AccommodationQueryRepository,
+    private val attractionRepository: AttractionQueryRepository,
+    private val commuteRepository: CommuteQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
     private val offerHashes = mutableListOf<Int>()

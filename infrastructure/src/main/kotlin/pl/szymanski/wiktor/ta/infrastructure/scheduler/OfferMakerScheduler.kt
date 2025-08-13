@@ -12,6 +12,9 @@ import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.OfferMakerSchedulerConfig
 import pl.szymanski.wiktor.ta.offerMaker.OfferMaker
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 
 object OfferMakerScheduler {
     private lateinit var config: OfferMakerSchedulerConfig
@@ -23,9 +26,9 @@ object OfferMakerScheduler {
 
     fun init(
         config: OfferMakerSchedulerConfig,
-        accommodationRepository: AccommodationRepository,
-        attractionRepository: AttractionRepository,
-        commuteRepository: CommuteRepository,
+        accommodationRepository: AccommodationQueryRepository,
+        attractionRepository: AttractionQueryRepository,
+        commuteRepository: CommuteQueryRepository,
         travelOfferCommandHandler: TravelOfferCommandHandler,
     ) {
         this.config = config

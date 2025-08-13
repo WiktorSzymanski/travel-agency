@@ -52,7 +52,6 @@ class TravelOfferCommandHandler(
             command.accommodationId,
             command.attractionId,
         ).let { (travelOffer, event) ->
-            travelOfferRepository.save(travelOffer)
             event
         }
 
@@ -62,10 +61,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .book(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
@@ -74,10 +69,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .cancelBooking(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: ReleaseTravelOfferCommand): TravelOfferEvent =
@@ -86,10 +77,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .releaseBooking(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: RebookTravelOfferCommand): TravelOfferEvent =
@@ -98,10 +85,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .rebook(command.bookingId)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: ExpireTravelOfferCommand): TravelOfferEvent =
@@ -110,10 +93,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .expire()
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: MakeTravelOfferUnavailableCommand): TravelOfferEvent =
@@ -122,10 +101,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .makeUnavailable()
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: MakeTravelOfferAvailableCommand): TravelOfferEvent =
@@ -134,10 +109,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .makeAvailable()
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: ReserveTravelOfferCommand): TravelOfferEvent =
@@ -146,10 +117,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .reserve(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     private suspend fun handle(command: CancelReserveTravelOfferCommand): TravelOfferEvent =
@@ -158,10 +125,6 @@ class TravelOfferCommandHandler(
             .let { travelOffer ->
                 travelOffer
                     .cancelReservation(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
-                            travelOfferRepository.update(travelOffer)
-                    }
             }
 
     suspend fun compensate(event: TravelOfferEvent): TravelOfferEvent =

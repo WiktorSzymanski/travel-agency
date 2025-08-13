@@ -5,24 +5,79 @@ import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Sorts
+import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
+import org.bson.conversions.Bson
+import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdate
+import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateStatus
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.dto.ArrivalLocationDto
 import pl.szymanski.wiktor.ta.dto.CommuteStatisticDto
+import pl.szymanski.wiktor.ta.queryRepository.CommuteCancelUpdate
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Date
+import java.util.UUID
 
 class CommuteQueryRepositoryImpl(
     database: MongoDatabase,
 ) : CommuteQueryRepository {
     private val collection: MongoCollection<Commute> = database.getCollection("commute")
+    
+    override suspend fun save(entity: Commute): Commute? = collection.insertOne(entity).insertedId?.let { entity }
+
+    override suspend fun findById(commuteId: UUID): Commute = collection.find(Document("_id", commuteId)).toList().first()
+
+    override suspend fun findAllByStatus(status: CommuteStatusEnum): List<Commute> = collection.find(Document("status", status.toString())).toList()
+
+    override suspend fun update(entity: CommuteUpdate) {
+        val filter = Filters.and(
+            Filters.eq("_id", entity._id),
+        )
+
+        val bookingIdStr = entity.bookingId.toString()
+        val seatStr = entity.seat.toString()
+
+        val update = Updates.set("bookings.$bookingIdStr", seatStr)
+
+        if (collection.updateOne(filter, update).matchedCount == 0L) {
+            throw ConcurrentModificationException("Could not update ${entity._id}")
+        }
+    }
+
+    override suspend fun update(entity: CommuteCancelUpdate) {
+        val filter = Filters.and(
+            Filters.eq("_id", entity._id),
+        )
+
+        val bookingIdStr = entity.bookingId.toString()
+
+        val update = Updates.unset("bookings.$bookingIdStr")
+
+        if (collection.updateOne(filter, update).matchedCount == 0L) {
+            throw ConcurrentModificationException("Could not update ${entity._id}")
+        }
+    }
+
+    override suspend fun update(entity: CommuteUpdateStatus) {
+        val filter = Filters.and(
+            Filters.eq("_id", entity._id),
+        )
+        val update = Updates.combine(
+            Updates.set("status", "${entity.status}"),
+        )
+
+        if (collection.updateOne(filter, update).matchedCount == 0L) {
+            throw ConcurrentModificationException("Could not update ${entity._id}")
+        }
+    }
 
     override suspend fun findStatistics(
         page: Int,

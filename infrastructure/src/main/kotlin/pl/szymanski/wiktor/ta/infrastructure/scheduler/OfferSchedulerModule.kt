@@ -10,15 +10,18 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.command.AccommodationRep
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.AttractionRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.query.AccommodationQueryRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.query.AttractionQueryRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.query.CommuteQueryRepositoryImpl
 
 fun Application.offerScheduler() {
     MongoDbProvider.init(property<DatabaseConfig>("database"))
 
     OfferMakerScheduler.init(
         property("offerScheduler"),
-        AccommodationRepositoryImpl(MongoDbProvider.database),
-        AttractionRepositoryImpl(MongoDbProvider.database),
-        CommuteRepositoryImpl(MongoDbProvider.database),
+        AccommodationQueryRepositoryImpl(MongoDbProvider.database),
+        AttractionQueryRepositoryImpl(MongoDbProvider.database),
+        CommuteQueryRepositoryImpl(MongoDbProvider.database),
         TravelOfferCommandHandler(TravelOfferRepositoryImpl(MongoDbProvider.database)),
     )
 

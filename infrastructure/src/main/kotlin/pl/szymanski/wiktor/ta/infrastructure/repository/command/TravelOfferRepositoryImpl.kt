@@ -3,111 +3,127 @@ package pl.szymanski.wiktor.ta.infrastructure.repository.command
 import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Projections
-import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import io.kurrent.dbclient.KurrentDBClient
+import io.kurrent.dbclient.EventData
+import io.kurrent.dbclient.ReadStreamOptions
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.future.await
+import kotlinx.serialization.json.Json
 import org.bson.Document
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCancelFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpireFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeUnavailableEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMakeAvailableFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMakeUnavailableFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookCompleteFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseCompleteFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCancelFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
+import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
+import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
 import java.util.UUID
-import kotlin.ConcurrentModificationException
+
+// Projection model for TravelOffer queries
+data class TravelOfferProjection(
+    val _id: UUID,
+    val commuteId: UUID,
+    val accommodationId: UUID,
+    val attractionId: UUID?
+)
+
+// Event store model for storing events
+data class EventRecord(
+    val _id: UUID,
+    val aggregateId: UUID,
+    val eventType: String,
+    val eventData: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
 
 class TravelOfferRepositoryImpl(
-    database: MongoDatabase,
+    database: MongoDatabase
 ) : TravelOfferRepository {
-    // db.travelOffer.createIndex( {commuteId: 1, attractionId: 1, accommodationId: 1 }, {unique: true} )
-    companion object {
-        const val DUPLICATE_ERROR_CODE = 11000
-    }
+    private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
 
-    private val collection: MongoCollection<TravelOffer> = database.getCollection("travelOffer")
+    override suspend fun findById(travelOfferId: UUID): TravelOffer {
+        val streamName = "travelOffer-$travelOfferId"
 
-    override suspend fun findById(travelOfferId: UUID): TravelOffer = collection.find(Document("_id", travelOfferId)).toList().first()
+        val options = ReadStreamOptions.get()
+            .fromStart()
+            .maxCount(100)
 
-    override suspend fun save(travelOffer: TravelOffer): TravelOffer? = collection.insertOne(travelOffer).insertedId?.let { travelOffer }
+        val readResult = kurrentClient.readStream(streamName, options).await()
 
-    override suspend fun update(travelOffer: TravelOffer) {
-        val filter =
-            Filters.and(
-                Filters.eq("_id", travelOffer._id),
-                Filters.eq("version", travelOffer.version),
-            )
-        val update =
-            Updates.combine(
-                Updates.set("bookingId", travelOffer.bookingId),
-                Updates.set("status", "${travelOffer.status}"),
-                Updates.set("version", travelOffer.version + 1),
-            )
-        if (collection.updateOne(filter, update).matchedCount == 0L) {
-            throw ConcurrentModificationException("Concurrent modification detected for ${travelOffer._id}")
+
+        val events: List<TravelOfferEvent> = readResult.events.map { resolvedEvent ->
+            val eventTypeName = resolvedEvent.event.eventType
+            val eventClass = travelOfferEventTypeRegistry[eventTypeName]
+                ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
+
+            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
         }
+
+        return TravelOffer.fromEvents(events)
+            ?: throw NoSuchElementException("TravelOffer with ID $travelOfferId not found")
     }
 
-    override suspend fun findByCommuteId(commuteId: UUID): List<TravelOffer> = collection.find(Document("commuteId", commuteId)).toList()
-
-    override suspend fun findByAccommodationId(accommodationId: UUID): List<TravelOffer> =
-        collection.find(Document("accommodationId", accommodationId)).toList()
-
-    override suspend fun findByAttractionId(attractionId: UUID): List<TravelOffer> =
-        collection.find(Document("attractionId", attractionId)).toList()
-
-    override suspend fun findStatusesOfComponents(
-        travelOfferId: UUID,
-    ): Triple<CommuteStatusEnum, AccommodationStatusEnum, AttractionStatusEnum?>? {
-        val idMatcher = Aggregates.match(Filters.eq("_id", travelOfferId))
-
-        val accommodationLookup =
-            Aggregates.lookup(
-                "accommodation",
-                "accommodationId",
-                "_id",
-                "accommodation",
-            )
-
-        val attractionLookup =
-            Aggregates.lookup(
-                "attraction",
-                "attractionId",
-                "_id",
-                "attraction",
-            )
-
-        val commuteLookup =
-            Aggregates.lookup(
-                "commute",
-                "commuteId",
-                "_id",
-                "commute",
-            )
-
-        val projection =
-            Aggregates.project(
-                Projections.fields(
-                    Projections.computed("accommodationStatus", Document("\$arrayElemAt", listOf("\$accommodation.status", 0))),
-                    Projections.computed("attractionStatus", Document("\$arrayElemAt", listOf("\$attraction.status", 0))),
-                    Projections.computed("commuteStatus", Document("\$arrayElemAt", listOf("\$commute.status", 0))),
-                ),
-            )
-
-        val pipeline =
-            listOfNotNull(
-                idMatcher,
-                accommodationLookup,
-                attractionLookup,
-                commuteLookup,
-                projection,
-            )
-
-        return collection.aggregate<Document>(pipeline).toList().firstOrNull()?.let { doc ->
-            Triple(
-                CommuteStatusEnum.valueOf(doc.getString("commuteStatus")),
-                AccommodationStatusEnum.valueOf(doc.getString("accommodationStatus")),
-                doc.getString("attractionStatus")?.let { AttractionStatusEnum.valueOf(it) },
-            )
+    override suspend fun save(event: TravelOfferEvent) {
+        try {
+            val streamName = "travelOffer-${event.travelOfferId}"
+            val serializedEvent = EventJsonSerializer.toBytes(event)
+            val eventData = EventData.builderAsJson(event::class.simpleName, serializedEvent).build()
+            kurrentClient.appendToStream(streamName, eventData)
+        } catch (e: Exception) {
+            println("Failed to save event to KurrentDb: ${e.message}")
+            throw e
         }
     }
 }
+
+// Maps event type names in KurrentDb to their Kotlin classes
+val travelOfferEventTypeRegistry: Map<String, Class<out TravelOfferEvent>> = mapOf(
+    TravelOfferReservedEvent::class.simpleName!! to TravelOfferReservedEvent::class.java,
+    TravelOfferReservationCanceledEvent::class.simpleName!! to TravelOfferReservationCanceledEvent::class.java,
+    TravelOfferBookedEvent::class.simpleName!! to TravelOfferBookedEvent::class.java,
+    TravelOfferReleaseEvent::class.simpleName!! to TravelOfferReleaseEvent::class.java,
+    TravelOfferRebookedEvent::class.simpleName!! to TravelOfferRebookedEvent::class.java,
+    TravelOfferBookingCanceledEvent::class.simpleName!! to TravelOfferBookingCanceledEvent::class.java,
+    TravelOfferExpiredEvent::class.simpleName!! to TravelOfferExpiredEvent::class.java,
+    TravelOfferCreatedEvent::class.simpleName!! to TravelOfferCreatedEvent::class.java,
+    TravelOfferMadeUnavailableEvent::class.simpleName!! to TravelOfferMadeUnavailableEvent::class.java,
+    TravelOfferMadeAvailableEvent::class.simpleName!! to TravelOfferMadeAvailableEvent::class.java,
+
+    TravelOfferBookedCompensatedEvent::class.simpleName!! to TravelOfferBookedCompensatedEvent::class.java,
+    TravelOfferBookingCanceledCompensatedEvent::class.simpleName!! to TravelOfferBookingCanceledCompensatedEvent::class.java,
+
+    // Failure events
+    TravelOfferBookFailedEvent::class.simpleName!! to TravelOfferBookFailedEvent::class.java,
+    TravelOfferReserveFailedEvent::class.simpleName!! to TravelOfferReserveFailedEvent::class.java,
+    TravelOfferMakeUnavailableFailedEvent::class.simpleName!! to TravelOfferMakeUnavailableFailedEvent::class.java,
+    TravelOfferMakeAvailableFailedEvent::class.simpleName!! to TravelOfferMakeAvailableFailedEvent::class.java,
+    TravelOfferExpireFailedEvent::class.simpleName!! to TravelOfferExpireFailedEvent::class.java,
+    TravelOfferReservationCancelFailedEvent::class.simpleName!! to TravelOfferReservationCancelFailedEvent::class.java,
+    TravelOfferBookingCancelFailedEvent::class.simpleName!! to TravelOfferBookingCancelFailedEvent::class.java,
+    TravelOfferReleaseCompleteFailedEvent::class.simpleName!! to TravelOfferReleaseCompleteFailedEvent::class.java,
+    TravelOfferRebookCompleteFailedEvent::class.simpleName!! to TravelOfferRebookCompleteFailedEvent::class.java
+)

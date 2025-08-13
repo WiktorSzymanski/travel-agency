@@ -27,6 +27,16 @@ data class BookingStateChangedEvent(
     val message: String? = null,
 ) : BookingEvent
 
+data class BookingStateChangeFailedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID? = null,
+    override val bookingId: UUID,
+    val userId: UUID,
+    val state: BookingState,
+    val message: String? = null,
+) : BookingEvent
+
+
 data class BookingCancelRequestedFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,

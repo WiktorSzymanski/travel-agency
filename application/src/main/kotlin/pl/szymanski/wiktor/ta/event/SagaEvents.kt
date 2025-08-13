@@ -4,18 +4,20 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.Event
 import java.util.UUID
 
+interface SagaEvent: Event
+
 data class BookingSagaStartedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     val bookingId: UUID,
-) : Event
+) : SagaEvent
 
 data class BookingSagaFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     val bookingId: UUID,
     val message: String,
-) : Event
+) : SagaEvent
 
 data class BookingSagaCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
@@ -23,26 +25,26 @@ data class BookingSagaCompletedEvent(
     val bookingId: UUID,
     val travelOfferId: UUID,
     val seat: Seat
-) : Event
+) : SagaEvent
 
-data class CancelBookingSagaStartedEvent(
+data class BookingCancelSagaStartedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     val bookingId: UUID,
-) : Event
+) : SagaEvent
 
-data class CancelBookingSagaFailedEvent(
+data class BookingCancelSagaFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     val bookingId: UUID,
     val message: String,
-) : Event
+) : SagaEvent
 
-data class CancelBookingSagaCompletedEvent(
+data class BookingCancelSagaCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID?,
     val bookingId: UUID,
     val travelOfferId: UUID,
     val seat: Seat
-) : Event
+) : SagaEvent
 

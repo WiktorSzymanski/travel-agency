@@ -18,7 +18,10 @@ class BookingRepositoryImpl(
 
     override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).toList().first()
 
-    override suspend fun save(booking: Booking): Booking? = collection.insertOne(booking).insertedId?.let { booking }
+    override suspend fun save(booking: Booking): Booking {
+        val insertId = collection.insertOne(booking)
+        return insertId.let{ booking }
+    }
 
     override suspend fun update(booking: Booking) {
         val filter =

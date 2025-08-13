@@ -12,12 +12,13 @@ import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 import kotlin.reflect.KClass
 
 class TravelOfferStatusService(
-    private val travelOfferRepository: TravelOfferRepository,
+    private val travelOfferRepository: TravelOfferQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
     suspend fun checkTravelOfferComponentsAvailability(travelOfferId: UUID): Boolean {
@@ -41,7 +42,7 @@ class TravelOfferStatusService(
                     runCatching {
                         travelOfferCommandHandler.handle(
                             MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it._id,
+                                travelOfferId = it,
                                 correlationId = correlationId,
                             ) as TravelOfferCommand,
                         )
@@ -61,7 +62,7 @@ class TravelOfferStatusService(
                     runCatching {
                         travelOfferCommandHandler.handle(
                             MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it._id,
+                                travelOfferId = it,
                                 correlationId = correlationId,
                             ) as TravelOfferCommand,
                         )
@@ -81,7 +82,7 @@ class TravelOfferStatusService(
                     runCatching {
                         travelOfferCommandHandler.handle(
                             MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it._id,
+                                travelOfferId = it,
                                 correlationId = correlationId,
                             ) as TravelOfferCommand,
                         )
@@ -99,10 +100,10 @@ class TravelOfferStatusService(
             .map {
                 async {
                     runCatching {
-                        if (!checkTravelOfferComponentsAvailability(it._id)) return@async
+                        if (!checkTravelOfferComponentsAvailability(it)) return@async
                         travelOfferCommandHandler.handle(
                             MakeTravelOfferAvailableCommand(
-                                travelOfferId = it._id,
+                                travelOfferId = it,
                                 correlationId = correlationId,
                             ) as TravelOfferCommand,
                         )
@@ -120,10 +121,10 @@ class TravelOfferStatusService(
             .map {
                 async {
                     runCatching {
-                        if (!checkTravelOfferComponentsAvailability(it._id)) return@async
+                        if (!checkTravelOfferComponentsAvailability(it)) return@async
                         travelOfferCommandHandler.handle(
                             MakeTravelOfferAvailableCommand(
-                                travelOfferId = it._id,
+                                travelOfferId = it,
                                 correlationId = correlationId,
                             ) as TravelOfferCommand,
                         )
@@ -141,10 +142,10 @@ class TravelOfferStatusService(
             .map {
                 async {
                     runCatching {
-                        if (!checkTravelOfferComponentsAvailability(it._id)) return@async
+                        if (!checkTravelOfferComponentsAvailability(it)) return@async
                         travelOfferCommandHandler.handle(
                             MakeTravelOfferAvailableCommand(
-                                travelOfferId = it._id,
+                                travelOfferId = it,
                                 correlationId = correlationId,
                             ) as TravelOfferCommand,
                         )

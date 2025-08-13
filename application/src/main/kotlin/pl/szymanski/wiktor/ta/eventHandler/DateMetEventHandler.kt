@@ -38,7 +38,7 @@ class DateMetEventHandler(
             commuteCommandHandler.handle(
                 ExpireCommuteCommand(
                     commuteId = it.commuteId,
-                    correlationId = it.correlationId,
+                    correlationId = it.correlationId!!,
                 ) as CommuteCommand,
             )
         }
@@ -49,7 +49,7 @@ class DateMetEventHandler(
             accommodationCommandHandler.handle(
                 ExpireAccommodationCommand(
                     accommodationId = it.accommodationId,
-                    correlationId = it.correlationId,
+                    correlationId = it.correlationId!!,
                 ) as AccommodationCommand,
             )
         }
@@ -60,7 +60,7 @@ class DateMetEventHandler(
             attractionCommandHandler.handle(
                 ExpireAttractionCommand(
                     attractionId = it.attractionId,
-                    correlationId = it.correlationId,
+                    correlationId = it.correlationId!!,
                 ) as AttractionCommand,
             )
         }

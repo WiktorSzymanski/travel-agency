@@ -11,29 +11,29 @@ import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CancelBookingCommand
+import pl.szymanski.wiktor.ta.command.CompleteBookingCommand
+import pl.szymanski.wiktor.ta.command.FailBookingCommand
+import pl.szymanski.wiktor.ta.command.FailCancelBookingCommand
+import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
+import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
 import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
-import pl.szymanski.wiktor.ta.command.UpdateBookingStateCommand
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
-import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
@@ -43,9 +43,9 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
-import pl.szymanski.wiktor.ta.event.CancelBookingSagaCompletedEvent
-import pl.szymanski.wiktor.ta.event.CancelBookingSagaFailedEvent
-import pl.szymanski.wiktor.ta.event.CancelBookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 
@@ -220,10 +220,9 @@ class TravelOfferEventHandler(
         EventBus.subscribe<TravelOfferReserveFailedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    FailBookingCommand(
                         it.bookingId,
                         it.correlationId!!,
-                        BookingState.FAILED,
                         it.message
                     ) as BookingCommand,
                 )
@@ -235,10 +234,9 @@ class TravelOfferEventHandler(
         EventBus.subscribe<TravelOfferBookFailedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    FailBookingCommand(
                         it.bookingId,
                         it.correlationId!!,
-                        BookingState.FAILED,
                         it.message
                     ) as BookingCommand,
                 )
@@ -250,10 +248,9 @@ class TravelOfferEventHandler(
         EventBus.subscribe<BookingSagaStartedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    ProcessBookingCommand(
                         it.bookingId,
                         it.correlationId!!,
-                        BookingState.PROCESSING,
                     ) as BookingCommand,
                 )
             }
@@ -264,10 +261,9 @@ class TravelOfferEventHandler(
         EventBus.subscribe<BookingSagaCompletedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    CompleteBookingCommand(
                         it.bookingId,
                         it.correlationId!!,
-                        BookingState.SUCCEEDED,
                     ) as BookingCommand,
                 )
             }
@@ -293,10 +289,9 @@ class TravelOfferEventHandler(
         EventBus.subscribe<BookingSagaFailedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    FailBookingCommand(
                         bookingId = it.bookingId,
                         correlationId = it.correlationId!!,
-                        state = BookingState.FAILED,
                         message = it.message
                     )
                 )
@@ -305,13 +300,12 @@ class TravelOfferEventHandler(
     }
 
     suspend fun cancelBookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
-        EventBus.subscribe<CancelBookingSagaStartedEvent> {
+        EventBus.subscribe<BookingCancelSagaStartedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    ProcessCancelBookingCommand(
                         it.bookingId,
                         it.correlationId!!,
-                        BookingState.PROCESSING_CANCELLATION,
                     ) as BookingCommand,
                 )
             }
@@ -319,13 +313,12 @@ class TravelOfferEventHandler(
     }
 
     suspend fun cancelBookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
-        EventBus.subscribe<CancelBookingSagaCompletedEvent> {
+        EventBus.subscribe<BookingCancelSagaCompletedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    CancelBookingCommand(
                         it.bookingId,
                         it.correlationId!!,
-                        BookingState.CANCELED,
                     ) as BookingCommand,
                 )
             }
@@ -333,7 +326,7 @@ class TravelOfferEventHandler(
     }
 
     suspend fun cancelBookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
-        EventBus.subscribe<CancelBookingSagaCompletedEvent> {
+        EventBus.subscribe<BookingCancelSagaCompletedEvent> {
             scope.launch {
                 travelOfferCommandHandler.handle(
                     CancelBookTravelOfferCommand(
@@ -348,13 +341,12 @@ class TravelOfferEventHandler(
     }
 
     suspend fun cancelBookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
-        EventBus.subscribe<CancelBookingSagaFailedEvent> {
+        EventBus.subscribe<BookingCancelSagaFailedEvent> {
             scope.launch {
                 bookingCommandHandler.handle(
-                    UpdateBookingStateCommand(
+                    FailCancelBookingCommand(
                         bookingId = it.bookingId,
                         correlationId = it.correlationId!!,
-                        state = BookingState.SUCCEEDED,
                         message = it.message
                     )
                 )

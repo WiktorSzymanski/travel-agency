@@ -14,7 +14,6 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import java.util.UUID
 
 data class AccommodationBookedCompensatedEvent(

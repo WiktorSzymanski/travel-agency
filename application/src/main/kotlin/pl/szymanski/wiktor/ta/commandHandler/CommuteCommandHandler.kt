@@ -41,7 +41,6 @@ class CommuteCommandHandler(
             command.arrival,
             command.seats,
         ).let { (commute, event) ->
-            commuteRepository.save(commute)
             event
         }
 
@@ -51,10 +50,6 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .bookSeat(command.bookingId, command.seat)
-                    .also {
-                        if (it[0] !is CommuteFailedEvent)
-                            commuteRepository.update(commute)
-                    }
             }
 
     private suspend fun handle(command: CancelCommuteBookingCommand): List<CommuteEvent> =
@@ -63,10 +58,6 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .cancelBookedSeat(command.bookingId)
-                    .also {
-                        if (it[0] !is CommuteFailedEvent)
-                            commuteRepository.update(commute)
-                    }
             }
 
     private suspend fun handle(command: ExpireCommuteCommand): List<CommuteEvent> =
@@ -75,10 +66,6 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .expire()
-                    .also {
-                        if (it[0] !is CommuteFailedEvent)
-                            commuteRepository.update(commute)
-                    }
             }
 
     suspend fun compensate(event: CommuteEvent): CommuteEvent =
@@ -101,10 +88,6 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .compensateBookSeat(event.bookingId)
-                    .also {
-                        if (it[0] !is CommuteFailedEvent)
-                            commuteRepository.update(commute)
-                    }
             }
 
     private suspend fun compensate(event: CommuteBookingCanceledEvent): List<CommuteEvent> =
@@ -113,9 +96,5 @@ class CommuteCommandHandler(
             .let { commute ->
                 commute
                     .compensateCancelBookedSeat(event.bookingId, event.seat)
-                    .also {
-                        if (it[0] !is CommuteFailedEvent)
-                            commuteRepository.update(commute)
-                    }
             }
 }
