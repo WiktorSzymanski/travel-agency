@@ -91,7 +91,11 @@ class CancelBookingSaga(
             )
         )
 
-        val cH = runCatching { commuteCommandHandler.handle(commuteCommand) }
+        val cH = runCatching {
+            withRetry(maxRetries) {
+                commuteCommandHandler.handle(commuteCommand)
+            }
+        }
 
         if (cH.isFailure) {
             compensateTriggeringEvent(cH.exceptionOrNull()?.message ?: "Unknown error")
@@ -105,38 +109,54 @@ class CancelBookingSaga(
         }
 
         val acH = runCatching {
-            accommodationCommandHandler.handle(accommodationCommand)
+            withRetry(maxRetries) {
+                accommodationCommandHandler.handle(accommodationCommand)
+            }
         }
 
         if (acH.isFailure) {
-            commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+            withRetry(maxRetries) {
+                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+            }
             compensateTriggeringEvent(acH.exceptionOrNull()?.message ?: "Unknown error")
             return
         }
 
         val acHEvent = acH.getOrNull()
         if (acHEvent is AccommodationFailedEvent) {
-            commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+            withRetry(maxRetries) {
+                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+            }
             compensateTriggeringEvent(acHEvent.message)
             return
         }
 
         if (attractionCommand != null) {
             val atH = runCatching {
-                attractionCommandHandler.handle(attractionCommand!!)
+                withRetry(maxRetries) {
+                    attractionCommandHandler.handle(attractionCommand!!)
+                }
             }
 
             if (atH.isFailure) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
+                withRetry(maxRetries) {
+                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+                }
+                withRetry(maxRetries) {
+                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
+                }
                 compensateTriggeringEvent(atH.exceptionOrNull()?.message ?: "Unknown error")
                 return
             }
 
             val atHEvent = atH.getOrNull()
             if (atHEvent is AttractionFailedEvent) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
+                withRetry(maxRetries) {
+                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+                }
+                withRetry(maxRetries) {
+                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
+                }
                 compensateTriggeringEvent(atHEvent.message)
                 return
             }
@@ -162,7 +182,7 @@ class CancelBookingSaga(
                     message = message
                 )
             )
-            travelOfferCommandHandler.compensate(triggeringEvent)
+            withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
 
             if (!travelOfferStatusService
                 .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
