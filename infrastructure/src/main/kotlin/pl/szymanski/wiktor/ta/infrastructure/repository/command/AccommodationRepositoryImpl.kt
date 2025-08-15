@@ -52,17 +52,17 @@ class AccommodationRepositoryImpl(
         val streamName = "accommodation-$accommodationId"
 
         val options = ReadStreamOptions.get()
+            .forwards()
             .fromStart()
-            .maxCount(100)
 
         val readResult = kurrentClient.readStream(streamName, options).await()
 
-        val events: List<AccommodationEvent> = readResult.events.map { resolvedEvent ->
+        val events: List<Pair<AccommodationEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
             val eventClass = accommodationEventTypeRegistry[eventTypeName]
                 ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
 
-            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
+            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()
         }
 
         return Accommodation.fromEvents(events)

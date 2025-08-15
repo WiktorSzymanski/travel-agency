@@ -14,6 +14,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import java.util.UUID
 
 data class AccommodationBookedCompensatedEvent(
@@ -159,5 +160,6 @@ fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
             )
         is TravelOfferRebookedEvent ->
             this
+        is TravelOfferReservationCanceledEvent -> this
         else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: $this")
     }

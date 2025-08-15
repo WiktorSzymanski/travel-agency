@@ -32,7 +32,7 @@ class BookingCommandHandler(
                 is BookingRequestCancelCommand -> handle(command)
                 is ProcessCancelBookingCommand -> handle(command)
             }
-        }.apply { correlationId = command.correlationId }.also { EventBus.publish(it) }
+        }.apply { correlationId = command.correlationId }.also { EventBus.ignoreRevisionPublish(it) }
 
     private suspend fun handle(command: CreateBookingCommand): BookingEvent =
         Booking.create(

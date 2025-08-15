@@ -24,9 +24,9 @@ data class Commute(
     val seats: List<Seat>,
     val bookings: MutableMap<String, String> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
-    val version: Int = 1,
+    val lastRevision: Int = -1,
 ) {
-    fun apply(event: CommuteEvent): Commute {
+    fun apply(event: CommuteEvent, revision: Int): Commute {
         return when (event) {
             is CommuteCreatedEvent -> this.copy(
                 _id = event.commuteId,
@@ -35,36 +35,38 @@ data class Commute(
                 arrival = event.arrival,
                 seats = event.seats,
                 status = CommuteStatusEnum.SCHEDULED,
-                bookings = mutableMapOf()
+                bookings = mutableMapOf(),
+                lastRevision = revision
             )
             is CommuteBookedEvent -> {
                 val newBookings = this.bookings.toMutableMap()
                 newBookings[event.bookingId.toString()] = event.seat.toString()
                 this.copy(
-                    bookings = newBookings
+                    bookings = newBookings,
+                    lastRevision = revision
                 )
             }
             is CommuteFullEvent -> this.copy(
-                status = CommuteStatusEnum.FULL
+                status = CommuteStatusEnum.FULL,
+                lastRevision = revision
             )
             is CommuteAvailableEvent -> this.copy(
-                status = CommuteStatusEnum.SCHEDULED
+                status = CommuteStatusEnum.SCHEDULED,
+                lastRevision = revision
             )
             is CommuteBookingCanceledEvent -> {
                 val newBookings = this.bookings.toMutableMap()
                 newBookings.remove(event.bookingId.toString())
                 this.copy(
-                    bookings = newBookings
+                    bookings = newBookings,
+                    lastRevision = revision
                 )
             }
             is CommuteExpiredEvent -> this.copy(
-                status = CommuteStatusEnum.EXPIRED
+                status = CommuteStatusEnum.EXPIRED,
+                lastRevision = revision
             )
-            // Failed events don't change the state
-            is CommuteBookSeatFailedEvent,
-            is CommuteExpireFailedEvent,
-            is CommuteCancelBookedSeatFailedEvent -> this
-            else -> this
+            else -> this.copy(lastRevision = revision)
         }
     }
     companion object {
@@ -94,14 +96,13 @@ data class Commute(
             return commute to listOf(event)
         }
         
-        fun fromEvents(events: List<CommuteEvent>): Commute? {
+        fun fromEvents(events: List<Pair<CommuteEvent, Int>>): Commute? {
             if (events.isEmpty()) return null
-            
-            // Find the first created event
-            val createdEvent = events.find { it is CommuteCreatedEvent } as? CommuteCreatedEvent
-                ?: return null
-                
-            // Create an initial state from the created event
+
+            val (createdEvent, _) = events.first()
+
+            require(createdEvent is CommuteCreatedEvent) { "First event must be CommuteCreatedEvent" }
+
             var commute = Commute(
                 _id = createdEvent.commuteId,
                 name = createdEvent.name,
@@ -109,10 +110,9 @@ data class Commute(
                 arrival = createdEvent.arrival,
                 seats = createdEvent.seats,
             )
-            
-            // Apply all events in order to reconstruct the current state
-            for (event in events) {
-                commute = commute.apply(event)
+
+            for ((event, revision) in events) {
+                commute = commute.apply(event, revision)
             }
             
             return commute

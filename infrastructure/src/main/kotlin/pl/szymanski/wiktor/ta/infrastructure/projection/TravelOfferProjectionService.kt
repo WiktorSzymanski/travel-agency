@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
@@ -61,7 +62,7 @@ class TravelOfferProjectionService(
         when (event) {
             is TravelOfferCreatedEvent -> {
                 travelOfferQueryRepository.save(
-                    pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer(
+                    TravelOffer(
                         _id = event.travelOfferId,
                         name = event.name,
                         commuteId = event.commuteId,

@@ -55,17 +55,17 @@ class CommuteRepositoryImpl(
         val streamName = "commute-$commuteId"
 
         val options = ReadStreamOptions.get()
+            .forwards()
             .fromStart()
-            .maxCount(100)
 
         val readResult = kurrentClient.readStream(streamName, options).await()
 
-        val events: List<CommuteEvent> = readResult.events.map { resolvedEvent ->
+        val events: List<Pair<CommuteEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
             val eventClass = commuteEventTypeRegistry[eventTypeName]
                 ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
 
-            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
+            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()
         }
 
         return Commute.fromEvents(events)

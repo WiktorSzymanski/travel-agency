@@ -32,9 +32,9 @@ data class TravelOffer(
     val attractionId: UUID? = null,
     var bookingId: UUID? = null,
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
-    val version: Int = 1,
+    val lastRevision: Int = -1,
 ) {
-    fun apply(event: TravelOfferEvent): TravelOffer {
+    fun apply(event: TravelOfferEvent, revision: Int): TravelOffer {
         return when (event) {
             is TravelOfferCreatedEvent -> this.copy(
                 _id = event.travelOfferId,
@@ -42,50 +42,50 @@ data class TravelOffer(
                 commuteId = event.commuteId,
                 accommodationId = event.accommodationId,
                 attractionId = event.attractionId,
-                status = TravelOfferStatusEnum.AVAILABLE
+                status = TravelOfferStatusEnum.AVAILABLE,
+                lastRevision = revision
             )
             is TravelOfferMadeUnavailableEvent -> this.copy(
-                status = TravelOfferStatusEnum.UNAVAILABLE
+                status = TravelOfferStatusEnum.UNAVAILABLE,
+                lastRevision = revision
             )
             is TravelOfferMadeAvailableEvent -> this.copy(
-                status = TravelOfferStatusEnum.AVAILABLE
+                status = TravelOfferStatusEnum.AVAILABLE,
+                lastRevision = revision
             )
             is TravelOfferExpiredEvent -> this.copy(
-                status = TravelOfferStatusEnum.EXPIRED
+                status = TravelOfferStatusEnum.EXPIRED,
+                lastRevision = revision
             )
             is TravelOfferReservedEvent -> this.copy(
                 status = TravelOfferStatusEnum.RESERVED,
-                bookingId = event.bookingId
+                bookingId = event.bookingId,
+                lastRevision = revision
             )
             is TravelOfferBookedEvent -> this.copy(
                 status = TravelOfferStatusEnum.BOOKED,
-                bookingId = event.bookingId
+                bookingId = event.bookingId,
+                lastRevision = revision
             )
             is TravelOfferReservationCanceledEvent -> this.copy(
                 status = TravelOfferStatusEnum.AVAILABLE,
-                bookingId = null
+                bookingId = null,
+                lastRevision = revision
             )
             is TravelOfferReleaseEvent -> this.copy(
-                status = TravelOfferStatusEnum.RELEASING
+                status = TravelOfferStatusEnum.RELEASING,
+                lastRevision = revision
             )
             is TravelOfferRebookedEvent -> this.copy(
-                status = TravelOfferStatusEnum.BOOKED
+                status = TravelOfferStatusEnum.BOOKED,
+                lastRevision = revision
             )
             is TravelOfferBookingCanceledEvent -> this.copy(
                 status = TravelOfferStatusEnum.AVAILABLE,
-                bookingId = null
+                bookingId = null,
+                lastRevision = revision
             )
-            // Failed events don't change the state
-            is TravelOfferBookFailedEvent,
-            is TravelOfferReserveFailedEvent,
-            is TravelOfferMakeUnavailableFailedEvent,
-            is TravelOfferMakeAvailableFailedEvent,
-            is TravelOfferExpireFailedEvent,
-            is TravelOfferReservationCancelFailedEvent,
-            is TravelOfferBookingCancelFailedEvent,
-            is TravelOfferReleaseCompleteFailedEvent,
-            is TravelOfferRebookCompleteFailedEvent -> this
-            else -> this
+            else -> this.copy(lastRevision = revision)
         }
     }
     companion object {
@@ -116,14 +116,13 @@ data class TravelOffer(
             return travelOffer to event
         }
         
-        fun fromEvents(events: List<TravelOfferEvent>): TravelOffer? {
+        fun fromEvents(events: List<Pair<TravelOfferEvent, Int>>): TravelOffer? {
             if (events.isEmpty()) return null
-            
-            // Find the first created event
-            val createdEvent = events.find { it is TravelOfferCreatedEvent } as? TravelOfferCreatedEvent
-                ?: return null
-                
-            // Create an initial state from the created event
+
+            val (createdEvent, _) = events.first()
+
+            require(createdEvent is TravelOfferCreatedEvent) { "First event must be TravelOfferCreatedEvent" }
+
             var travelOffer = TravelOffer(
                 _id = createdEvent.travelOfferId,
                 name = createdEvent.name,
@@ -133,8 +132,8 @@ data class TravelOffer(
             )
             
             // Apply all events in order to reconstruct the current state
-            for (event in events) {
-                travelOffer = travelOffer.apply(event)
+            for ((event, revision) in events) {
+                travelOffer = travelOffer.apply(event, revision)
             }
             
             return travelOffer

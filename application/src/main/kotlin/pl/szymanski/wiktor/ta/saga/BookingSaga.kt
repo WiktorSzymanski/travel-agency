@@ -89,7 +89,7 @@ class BookingSaga(
 //    }
 
     suspend fun execute() {
-        EventBus.publish(
+        EventBus.ignoreRevisionPublish(
             BookingSagaStartedEvent(
                 correlationId = triggeringEvent.correlationId!!,
                 bookingId = bookingId,
@@ -167,7 +167,7 @@ class BookingSaga(
             }
         }
 
-        EventBus.publish(
+        EventBus.ignoreRevisionPublish(
             BookingSagaCompletedEvent(
                 correlationId = triggeringEvent.correlationId!!,
                 bookingId = bookingId,
@@ -179,7 +179,7 @@ class BookingSaga(
 
     suspend fun compensateTriggeringEvent(message: String) =
         coroutineScope {
-            EventBus.publish(
+            EventBus.ignoreRevisionPublish(
                 BookingSagaFailedEvent(
                     correlationId = triggeringEvent.correlationId!!,
                     bookingId = bookingId,

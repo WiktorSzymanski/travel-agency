@@ -30,9 +30,13 @@ object EventBus {
         this.repository = repository
     }
 
-    suspend fun publish(event: Event) {
+    suspend fun publish(event: Event, revision: Int) {
 //        log.info("Publishing event: {}", event)
-        repository.save(event)
+        repository.save(event, revision)
+    }
+
+    suspend fun ignoreRevisionPublish(event: Event) {
+        repository.noRevisionSave(event)
     }
 
     fun publish(
@@ -45,7 +49,7 @@ object EventBus {
         scope.launch {
             Duration.between(LocalDateTime.now(zoneId), date).toMillis().let {
                 if (it > 0) delay(it)
-                publish(event)
+                ignoreRevisionPublish(event)
             }
         }
     }

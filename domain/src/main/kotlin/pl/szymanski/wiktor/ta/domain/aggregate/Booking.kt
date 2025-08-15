@@ -130,6 +130,7 @@ data class Booking(
         }
 
         this.status = BookingState.PROCESSING_CANCELLATION
+
         return BookingStateChangedEvent(
             bookingId = _id,
             userId = userId,
@@ -139,7 +140,7 @@ data class Booking(
     }
 
     fun fail(message: String?) : BookingEvent {
-        if (this.status != BookingState.PROCESSING || this.status != BookingState.NEW) {
+        if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
             return BookingStateChangeFailedEvent(
                 bookingId = _id,
                 userId = userId,
@@ -149,6 +150,8 @@ data class Booking(
         }
 
         this.status = BookingState.FAILED
+        this.message = message
+
         return BookingStateChangedEvent(
             bookingId = _id,
             userId = userId,
@@ -167,6 +170,8 @@ data class Booking(
         }
 
         this.status = BookingState.SUCCEEDED
+        this.message = message
+
         return BookingStateChangedEvent(
             bookingId = _id,
             userId = userId,

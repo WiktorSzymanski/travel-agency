@@ -23,9 +23,9 @@ data class Attraction(
     val capacity: Int,
     val bookings: MutableList<UUID> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
-    val version: Int = 1,
+    val lastRevision: Int = -1,
 ) {
-    fun apply(event: AttractionEvent): Attraction {
+    fun apply(event: AttractionEvent, revision: Int): Attraction {
         return when (event) {
             is AttractionCreatedEvent -> this.copy(
                 _id = event.attractionId,
@@ -34,36 +34,38 @@ data class Attraction(
                 date = event.date,
                 capacity = event.capacity,
                 status = AttractionStatusEnum.SCHEDULED,
-                bookings = mutableListOf()
+                bookings = mutableListOf(),
+                lastRevision = revision
             )
             is AttractionBookedEvent -> {
                 val newBookings = this.bookings.toMutableList()
                 newBookings.add(event.bookingId)
                 this.copy(
-                    bookings = newBookings
+                    bookings = newBookings,
+                    lastRevision = revision
                 )
             }
             is AttractionFullEvent -> this.copy(
-                status = AttractionStatusEnum.FULL
+                status = AttractionStatusEnum.FULL,
+                lastRevision = revision
             )
             is AttractionAvailableEvent -> this.copy(
-                status = AttractionStatusEnum.SCHEDULED
+                status = AttractionStatusEnum.SCHEDULED,
+                lastRevision = revision
             )
             is AttractionBookingCanceledEvent -> {
                 val newBookings = this.bookings.toMutableList()
                 newBookings.removeIf { it == event.bookingId }
                 this.copy(
-                    bookings = newBookings
+                    bookings = newBookings,
+                    lastRevision = revision
                 )
             }
             is AttractionExpiredEvent -> this.copy(
-                status = AttractionStatusEnum.EXPIRED
+                status = AttractionStatusEnum.EXPIRED,
+                lastRevision = revision
             )
-            // Failed events don't change the state
-            is AttractionBookFailedEvent,
-            is AttractionExpireFailedEvent,
-            is AttractionBookingCancelFailedEvent -> this
-            else -> this
+            else -> this.copy(lastRevision = revision)
         }
     }
     companion object {
@@ -93,14 +95,13 @@ data class Attraction(
             return attraction to listOf(event)
         }
         
-        fun fromEvents(events: List<AttractionEvent>): Attraction? {
+        fun fromEvents(events: List<Pair<AttractionEvent, Int>>): Attraction? {
             if (events.isEmpty()) return null
-            
-            // Find the first created event
-            val createdEvent = events.find { it is AttractionCreatedEvent } as? AttractionCreatedEvent
-                ?: return null
-                
-            // Create an initial state from the created event
+
+            val (createdEvent, _) = events.first()
+
+            require(createdEvent is AttractionCreatedEvent) { "First event must be AttractionCreatedEvent" }
+
             var attraction = Attraction(
                 _id = createdEvent.attractionId,
                 name = createdEvent.name,
@@ -108,10 +109,9 @@ data class Attraction(
                 date = createdEvent.date,
                 capacity = createdEvent.capacity,
             )
-            
-            // Apply all events in order to reconstruct the current state
-            for (event in events) {
-                attraction = attraction.apply(event)
+
+            for ((event, revision) in events) {
+                attraction = attraction.apply(event, revision)
             }
             
             return attraction

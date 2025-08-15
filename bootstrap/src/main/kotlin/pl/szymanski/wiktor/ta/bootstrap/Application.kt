@@ -11,7 +11,6 @@ import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.eventHandler.DateMetEventHandler
-import pl.szymanski.wiktor.ta.eventHandler.EntityEventHandler
 import pl.szymanski.wiktor.ta.eventHandler.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 import pl.szymanski.wiktor.ta.infrastructure.config.KurrentDbConfig
@@ -79,15 +78,6 @@ fun Application.application() {
             attractionCommandHandler = AttractionCommandHandler(attractionRepository),
             commuteCommandHandler = CommuteCommandHandler(commuteRepository),
             accommodationCommandHandler = AccommodationCommandHandler(accommodationRepository),
-        ).setup()
-    }
-    
-    launch {
-        EntityEventHandler(
-            accommodationRepository = accommodationRepository,
-            attractionRepository = attractionRepository,
-            commuteRepository = commuteRepository,
-            travelOfferRepository = travelOfferRepository
         ).setup()
     }
 
