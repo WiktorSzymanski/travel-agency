@@ -20,7 +20,7 @@ import pl.szymanski.wiktor.ta.withRetry
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
-    val maxRetries = 10
+    val maxRetries = 20
 
     suspend fun handle(command: AttractionCommand): AttractionEvent =
         withRetry (maxRetries) {

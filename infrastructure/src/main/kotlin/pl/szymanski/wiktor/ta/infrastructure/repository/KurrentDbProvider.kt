@@ -13,6 +13,9 @@ object KurrentDbProvider {
                 .addHost(config.host, config.port)
                 .defaultCredentials(config.username, config.password)
                 .tls(false)
+                .keepAliveInterval(30_000)
+                .keepAliveTimeout(30_000)
+                .defaultDeadline(30_000)
                 .buildConnectionSettings()
         )
     }

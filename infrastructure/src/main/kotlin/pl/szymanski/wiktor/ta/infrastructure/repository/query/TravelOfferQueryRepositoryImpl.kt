@@ -17,8 +17,11 @@ import pl.szymanski.wiktor.ta.queryRepository.TravelOfferUpdate
 import pl.szymanski.wiktor.ta.queryRepository.TravelOfferUpdateStatus
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferUpdateRevision
+import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 
 class TravelOfferQueryRepositoryImpl(
@@ -32,44 +35,80 @@ class TravelOfferQueryRepositoryImpl(
 
     override suspend fun findAllByStatus(status: TravelOfferStatusEnum): List<TravelOffer> = collection.find(Document("status", status.toString())).toList()
 
-    override suspend fun update(entity: TravelOfferUpdate) {
+    override suspend fun update(entity: TravelOfferUpdateRevision, event: Event) {
         val filter = Filters.and(
             Filters.eq("_id", entity._id),
+            Filters.eq("lastRevision", entity.lastRevision - 1),
         )
-        
-        val updatesList = mutableListOf<Bson>()
-        
-        if (entity.status != null) {
-            updatesList.add(Updates.set("status", "${entity.status}"))
-        }
-        
-        // Handle bookingId for TravelOffer
-        if (entity.bookingId != null) {
-            // For TravelOffer, we store a single bookingId
-            updatesList.add(Updates.set("bookingId", entity.bookingId))
-        } else {
-            // If bookingId is null, we're removing the booking
-            updatesList.add(Updates.set("bookingId", null))
-        }
-        
-        val update = Updates.combine(updatesList)
+        val update = Updates.combine(
+            Updates.addToSet("events", event.toString()),
+            Updates.set("lastRevision", entity.lastRevision )
+        )
 
-        if (collection.updateOne(filter, update).matchedCount == 0L) {
-            throw ConcurrentModificationException("Could not update ${entity._id}")
+        try {
+            withRetry (
+                maxRetries = 30,
+                maxDelayMs = 100000
+            ) {
+                if (collection.updateOne(filter, update).matchedCount == 0L) {
+                    throw ConcurrentModificationException("Could not update ${entity._id}")
+                }
+            }
+        } catch (e: ConcurrentModificationException) {
+            println("Failed to Update TO ${entity._id}")
         }
     }
 
-    override suspend fun update(entity: TravelOfferUpdateStatus) {
+    override suspend fun update(entity: TravelOfferUpdate, event: Event) {
         val filter = Filters.and(
             Filters.eq("_id", entity._id),
+            Filters.eq("lastRevision", entity.lastRevision - 1),
         )
         val update = Updates.combine(
             Updates.set("status", "${entity.status}"),
+            Updates.addToSet("events", event.toString()),
+            Updates.set("lastRevision", entity.lastRevision )
         )
 
-        if (collection.updateOne(filter, update).matchedCount == 0L) {
-            throw ConcurrentModificationException("Could not update ${entity._id}")
+        try {
+            withRetry (
+                maxRetries = 30,
+                maxDelayMs = 100000
+            ) {
+                if (collection.updateOne(filter, update).matchedCount == 0L) {
+                    throw ConcurrentModificationException("Could not update ${entity._id}")
+                }
+            }
+        } catch (e: ConcurrentModificationException) {
+            println("Failed to Update TO ${entity._id}")
         }
+
+    }
+
+    override suspend fun update(entity: TravelOfferUpdateStatus, event: Event) {
+        val filter = Filters.and(
+            Filters.eq("_id", entity._id),
+            Filters.eq("lastRevision", entity.lastRevision - 1),
+        )
+        val update = Updates.combine(
+            Updates.set("status", "${entity.status}"),
+            Updates.addToSet("events", event.toString()),
+            Updates.set("lastRevision", entity.lastRevision )
+        )
+
+        try {
+            withRetry (
+                maxRetries = 30,
+                maxDelayMs = 100000
+            ) {
+                if (collection.updateOne(filter, update).matchedCount == 0L) {
+                    throw ConcurrentModificationException("Could not update ${entity._id}")
+                }
+            }
+        } catch (e: ConcurrentModificationException) {
+            println("Failed to Update TO ${entity._id}")
+        }
+
     }
 
     override suspend fun findTravelOfferDto(

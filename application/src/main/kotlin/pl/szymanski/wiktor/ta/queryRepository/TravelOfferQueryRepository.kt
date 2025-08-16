@@ -6,6 +6,7 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import java.util.UUID
 
@@ -16,9 +17,11 @@ interface TravelOfferQueryRepository {
 
     suspend fun findAllByStatus(status: TravelOfferStatusEnum): List<TravelOffer>
 
-    suspend fun update(entity: TravelOfferUpdate)
+    suspend fun update(entity: TravelOfferUpdate, event: Event)
 
-    suspend fun update(entity: TravelOfferUpdateStatus)
+    suspend fun update(entity: TravelOfferUpdateRevision, event: Event)
+
+    suspend fun update(entity: TravelOfferUpdateStatus, event: Event)
 
     suspend fun findTravelOfferDto(
         page: Int = 1,
@@ -39,13 +42,20 @@ interface TravelOfferQueryRepository {
 
 }
 
+data class TravelOfferUpdateRevision(
+    val _id: UUID,
+    val lastRevision: Int
+)
+
 data class TravelOfferUpdate(
     val _id: UUID,
     val status: TravelOfferStatusEnum? = null,
     val bookingId: UUID? = null,
+    val lastRevision: Int
 )
 
 data class TravelOfferUpdateStatus(
     val _id: UUID,
     val status: TravelOfferStatusEnum? = null,
+    val lastRevision: Int
 )

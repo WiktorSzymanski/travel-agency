@@ -6,8 +6,18 @@ import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingStateChangeFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingStateChangedEvent
+import pl.szymanski.wiktor.ta.domain.event.CancelBookingEvent
+import pl.szymanski.wiktor.ta.domain.event.CancelBookingFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.CompleteBookingEvent
+import pl.szymanski.wiktor.ta.domain.event.CompleteBookingFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
+import pl.szymanski.wiktor.ta.domain.event.FailBookingFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
+import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
+import pl.szymanski.wiktor.ta.domain.event.ProcessBookingFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
+import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingFailedEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -47,39 +57,29 @@ data class Booking(
 
     fun process() : BookingEvent {
         if (this.status != BookingState.NEW) {
-            return BookingStateChangeFailedEvent(
+            return ProcessBookingFailedEvent(
                 bookingId = _id,
-                userId = userId,
-                state = this.status,
                 message = "Booking can only be processed in NEW state"
             )
         }
 
         this.status = BookingState.PROCESSING
-        return BookingStateChangedEvent(
+        return ProcessBookingEvent(
             bookingId = _id,
-            userId = userId,
-            state = BookingState.PROCESSING,
-            message = null
         )
     }
 
     fun complete() : BookingEvent {
-        if (this.status != BookingState.PROCESSING) {
-            return BookingStateChangeFailedEvent(
+        if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
+            return CompleteBookingFailedEvent(
                 bookingId = _id,
-                userId = userId,
-                state = this.status,
                 message = "Booking can only be completed in PROCESSING state"
             )
         }
 
         this.status = BookingState.SUCCEEDED
-        return BookingStateChangedEvent(
+        return CompleteBookingEvent(
             bookingId = _id,
-            userId = userId,
-            state = BookingState.SUCCEEDED,
-            message = null
         )
     }
 
@@ -102,80 +102,63 @@ data class Booking(
 
     fun cancel() : BookingEvent {
         if (this.status != BookingState.PROCESSING_CANCELLATION) {
-            return BookingStateChangeFailedEvent(
+            return CancelBookingFailedEvent(
                 bookingId = _id,
-                userId = userId,
-                state = this.status,
                 message = "Booking can only be cancelled in PROCESSING or NEW state"
             )
         }
 
         this.status = BookingState.CANCELED
-        return BookingStateChangedEvent(
+        return CancelBookingEvent(
             bookingId = _id,
-            userId = userId,
-            state = BookingState.CANCELED,
-            message = null
         )
     }
 
     fun processCancellation() : BookingEvent {
         if (this.status != BookingState.CANCEL_REQUESTED) {
-            return BookingStateChangeFailedEvent(
+            return ProcessCancelBookingFailedEvent(
                 bookingId = _id,
-                userId = userId,
-                state = this.status,
                 message = "Booking cancelation can only be process in CANCEL_REQUESTED state"
             )
         }
 
         this.status = BookingState.PROCESSING_CANCELLATION
 
-        return BookingStateChangedEvent(
+        return ProcessCancelBookingEvent(
             bookingId = _id,
-            userId = userId,
-            state = BookingState.PROCESSING_CANCELLATION,
-            message = null
         )
     }
 
-    fun fail(message: String?) : BookingEvent {
+    fun fail(message: String) : BookingEvent {
         if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
-            return BookingStateChangeFailedEvent(
+            return FailBookingFailedEvent(
                 bookingId = _id,
-                userId = userId,
-                state = this.status,
-                message = "Booking can only be failed in PROCESSING or NEW state"
+                message = "Booking can only be failed in PROCESSING or NEW state. Original message: $message"
             )
         }
 
         this.status = BookingState.FAILED
         this.message = message
 
-        return BookingStateChangedEvent(
+        return FailBookingEvent(
             bookingId = _id,
-            userId = userId,
-            state = BookingState.FAILED,
             message = message
         )
     }
 
-    fun failCancellation(message: String?) : BookingEvent {
-        if (this.status != BookingState.PROCESSING_CANCELLATION || this.status != BookingState.CANCEL_REQUESTED) {
-            return BookingStateChangeFailedEvent(
+    fun failCancellation(message: String) : BookingEvent {
+        if (!listOf(BookingState.PROCESSING_CANCELLATION, BookingState.CANCEL_REQUESTED).contains(this.status)) {
+            return FailCancelBookingFailedEvent(
                 bookingId = _id,
-                userId = userId,
-                state = this.status,
+                message = "Cancel Booking can only be failed in PROCESSING_CANCELLATION or CANCEL_REQUESTED state. Original message: $message"
             )
         }
 
         this.status = BookingState.SUCCEEDED
         this.message = message
 
-        return BookingStateChangedEvent(
+        return FailCancelBookingEvent(
             bookingId = _id,
-            userId = userId,
-            state = BookingState.SUCCEEDED,
             message = message
         )
     }

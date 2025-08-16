@@ -24,7 +24,7 @@ import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import pl.szymanski.wiktor.ta.event.SagaEvent
 import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
 import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
-import java.util.UUID
+import io.kurrent.dbclient.*
 
 class EventRepositoryImpl() : EventRepository {
     private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
@@ -74,11 +74,12 @@ class EventRepositoryImpl() : EventRepository {
             .metadataAsBytes(serializedMetadata)
             .build()
 
-        kurrentClient.appendToStream(streamName, eventData)
+        kurrentClient.appendToStream(streamName, eventData).await()
     }
 
-    override suspend fun subscribe(eventClass: Class<Event>, onEvent: suspend (Event) -> Unit) {
+    override suspend fun subscribe(eventClass: Class<Event>, doOnEvent: suspend (Event) -> Unit) {
         val scope = CoroutineScope(Dispatchers.Default)
+        var checkpoint: Position = Position(0L, 0L)
 
         val filter = SubscriptionFilter.newBuilder()
             .addEventTypePrefix(eventClass.simpleName)
@@ -92,11 +93,50 @@ class EventRepositoryImpl() : EventRepository {
             override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
                 scope.launch {
                     val event = EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
-                    onEvent(event)
+                    doOnEvent(event)
+                    checkpoint = resolvedEvent.originalEvent.position
                 }
+            }
+
+            override fun onCancelled(subscription: Subscription, exception: Throwable) {
+                println("Subscription for ${eventClass.simpleName} cancelled: ${exception.message}")
+                resubscribeFromCheckpoint(checkpoint, eventClass, doOnEvent)
+            }
+        }
+        kurrentClient.subscribeToAll(listener, subscriptionOptions)
+    }
+
+    fun resubscribeFromCheckpoint(
+        checkpoint: Position,
+        eventClass: Class<Event>,
+        doOnEvent: suspend (Event) -> Unit
+    ) {
+
+        val scope = CoroutineScope(Dispatchers.Default)
+
+        val filter = SubscriptionFilter.newBuilder()
+            .addEventTypePrefix(eventClass.simpleName)
+            .build()
+
+        val subscriptionOptions = SubscribeToAllOptions.get()
+            .filter(filter)
+            .fromPosition(checkpoint)
+            .resolveLinkTos()
+
+        val listener = object : SubscriptionListener() {
+            override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
+                scope.launch {
+                    val event = EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
+                    doOnEvent(event)
+                }
+            }
+            override fun onCancelled(subscription: Subscription, exception: Throwable?) {
+                if (exception == null) return
+                println("Subscription for ${eventClass.simpleName} dropped again: ${exception.message}")
             }
         }
 
+        println("Resubscribing to ${eventClass.simpleName} from checkpoint: $checkpoint")
         kurrentClient.subscribeToAll(listener, subscriptionOptions)
     }
 }
