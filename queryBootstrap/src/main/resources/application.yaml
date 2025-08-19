@@ -1,0 +1,17 @@
+ktor:
+    deployment:
+        port: 8081
+    application:
+        modules:
+            - pl.szymanski.wiktor.ta.queryBootstrap.ApplicationKt.application
+            - pl.szymanski.wiktor.ta.infrastructure.projection.ProjectionModuleKt.projectionModule
+
+database:
+    uri: "mongodb://localhost:27017"
+    dbName: "travel_agency"
+
+kurrentDatabase:
+  host: "localhost"
+  port: 2113
+  username: "admin"
+  password: "changeit"

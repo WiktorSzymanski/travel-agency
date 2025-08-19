@@ -5,31 +5,19 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.reflect.TypeInfo
-import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
-import pl.szymanski.wiktor.ta.command.BookingCommand
-import pl.szymanski.wiktor.ta.command.BookingRequestCancelCommand
-import pl.szymanski.wiktor.ta.command.CreateBookingCommand
-import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
-import pl.szymanski.wiktor.ta.command.TravelOfferCommand
-import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
-import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedFailedEvent
 import pl.szymanski.wiktor.ta.dto.BookingDto
-import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.query.BookingQuery
 import pl.szymanski.wiktor.ta.query.TravelOfferQuery
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import java.util.*
 
-fun Application.travelOfferController(
+fun Application.QueryController(
     travelOfferQueryRepository: TravelOfferQueryRepository,
     accommodationQueryRepository: AccommodationQueryRepository,
-    travelOfferCommandHandler: TravelOfferCommandHandler,
-    bookingCommandHandler: BookingCommandHandler,
     bookingQuery: BookingQuery,
 ) {
     fun extractPaginationParams(queryParams: Parameters): Pair<Int, Int> {
@@ -63,14 +51,14 @@ fun Application.travelOfferController(
             call.response.status(HttpStatusCode.OK)
             call.respond(resp)
         }
-        
+
         get("/travelOffers/{status}/count") {
             val status = call.parameters["status"]?.let { TravelOfferStatusEnum.valueOf(it) }
-            
+
             requireNotNull(status) {
                 "Invalid travel offer status ${call.parameters["status"]}"
             }
-            
+
             val count = travelOfferQuery.countTravelOffersByStatus(status)
             call.response.status(HttpStatusCode.OK)
             call.respond(mapOf("count" to count))
@@ -147,39 +135,6 @@ fun Application.travelOfferController(
                 )
             call.response.status(HttpStatusCode.OK)
             call.respond(resp)
-        }
-
-        post("/bookTravelOffer") {
-            val (offerId, userId, seat) = extractQueryParams(call.request.queryParameters)
-
-            val bookingId = bookingCommandHandler.handle(
-                CreateBookingCommand(
-                    correlationId = UUID.randomUUID(),
-                    userId = userId,
-                    travelOfferId = offerId,
-                    seat = seat,
-                ) as BookingCommand,
-            ).bookingId
-
-            call.respond(HttpStatusCode.Accepted, mapOf("bookingId" to bookingId.toString()))
-        }
-        post("/cancelTravelOffer") {
-            val bookingId = call.request.queryParameters["bookingId"]?.let { UUID.fromString(it) }
-
-            requireNotNull(bookingId)
-
-            val event = bookingCommandHandler.handle(
-                BookingRequestCancelCommand(
-                    correlationId = UUID.randomUUID(),
-                    bookingId = bookingId,
-                )
-            )
-
-            if (event is BookingCancelRequestedFailedEvent) {
-                call.respond(HttpStatusCode.Forbidden, event.message)
-            } else {
-                call.respond(HttpStatusCode.Accepted, mapOf("bookingId" to bookingId.toString()))
-            }
         }
     }
 
