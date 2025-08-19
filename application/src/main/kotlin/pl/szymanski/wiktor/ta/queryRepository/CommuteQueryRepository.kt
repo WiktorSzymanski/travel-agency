@@ -16,6 +16,8 @@ interface CommuteQueryRepository {
 
     suspend fun update(entity: CommuteUpdate)
 
+    suspend fun update(entity: CommuteUpdateRevision)
+
     suspend fun update(entity: CommuteUpdateStatus)
 
     suspend fun update(entity: CommuteCancelUpdate)
@@ -32,15 +34,23 @@ data class CommuteUpdate(
     val _id: UUID,
     val bookingId: UUID? = null,
     val seat: Seat? = null,
+    val revision: Int
+)
+
+data class CommuteUpdateRevision(
+    val _id: UUID,
+    val revision: Int
 )
 
 data class CommuteCancelUpdate(
     val _id: UUID,
     val status: CommuteStatusEnum? = null,
-    val bookingId: UUID? = null
+    val bookingId: UUID? = null,
+    val revision: Int
 )
 
 data class CommuteUpdateStatus(
     val _id: UUID,
     val status: CommuteStatusEnum? = null,
+    val revision: Int
 )

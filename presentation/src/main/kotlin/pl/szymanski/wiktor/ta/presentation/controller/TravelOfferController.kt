@@ -39,14 +39,13 @@ fun Application.travelOfferController(
         return Pair(page, size)
     }
 
-    fun extractQueryParams(queryParams: Parameters): Triple<UUID, UUID, Seat> {
+    fun extractQueryParams(queryParams: Parameters): Triple<UUID, UUID, Seat?> {
         val offerId = queryParams["offerId"]?.let { UUID.fromString(it) }
         val userId = queryParams["userId"]?.let { UUID.fromString(it) }
         val seat = queryParams["seat"]?.let { Seat.fromString(it) }
 
         requireNotNull(offerId)
         requireNotNull(userId)
-        requireNotNull(seat)
 
         return Triple(offerId, userId, seat)
     }

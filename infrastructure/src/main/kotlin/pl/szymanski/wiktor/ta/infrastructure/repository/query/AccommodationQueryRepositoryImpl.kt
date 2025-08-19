@@ -6,6 +6,7 @@ import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
@@ -16,17 +17,27 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdate
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateRevision
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateStatus
+import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 
 class AccommodationQueryRepositoryImpl(
     database: MongoDatabase,
 ) : AccommodationQueryRepository {
+    companion object {
+        private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
+    }
+    val maxRetries = 10
+    val initialDelayMs = 100L
+    val maxDelayMs = 10000L
+    val jitterFactor = 0.1
+
     private val collection: MongoCollection<Accommodation> = database.getCollection("accommodation")
 
     override suspend fun save(entity: Accommodation): Accommodation? = collection.insertOne(entity).insertedId?.let { entity }
 
-    override suspend fun findById(accommodationId: UUID): Accommodation = collection.find(Document("_id", accommodationId)).toList().first()
+    override suspend fun findById(accommodationId: UUID): Accommodation = collection.find(Document("_id", accommodationId)).firstOrNull() ?: throw NoSuchElementException()
 
     override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> = collection.find(Document("status", status.toString())).toList()
 
@@ -34,31 +45,79 @@ class AccommodationQueryRepositoryImpl(
         val filter =
             Filters.and(
                 Filters.eq("_id", entity._id),
+                Filters.eq("lastRevision", entity.revision - 1),
             )
         val update =
             Updates.combine(
                 Updates.set("bookingId", entity.bookingId),
                 Updates.set("status", "${entity.status}"),
+                Updates.set("lastRevision", entity.revision),
             )
 
-        if (collection.updateOne(filter, update).matchedCount == 0L) {
-            throw ConcurrentModificationException("Could not update ${entity._id}")
-        }
+        runCatching {
+            withRetry(
+                maxRetries = maxRetries,
+                initialDelayMs = initialDelayMs,
+                maxDelayMs = maxDelayMs,
+                jitterFactor = jitterFactor
+            ) {
+                if (collection.updateOne(filter, update).matchedCount == 0L) {
+                    throw ConcurrentModificationException("Could not update ${entity}")
+                }
+            }
+        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+    }
+
+    override suspend fun update(entity: AccommodationUpdateRevision) {
+        val filter =
+            Filters.and(
+                Filters.eq("_id", entity._id),
+                Filters.eq("lastRevision", entity.revision - 1),
+            )
+
+        val update =
+            Updates.combine(
+                Updates.set("lastRevision", entity.revision),
+            )
+
+        runCatching {
+            withRetry(
+                maxRetries = maxRetries,
+                initialDelayMs = initialDelayMs,
+                maxDelayMs = maxDelayMs,
+                jitterFactor = jitterFactor
+            ) {
+                if (collection.updateOne(filter, update).matchedCount == 0L) {
+                    throw ConcurrentModificationException("Could not update ${entity}")
+                }
+            }
+        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
     }
 
     override suspend fun update(entity: AccommodationUpdateStatus) {
         val filter =
             Filters.and(
                 Filters.eq("_id", entity._id),
+                Filters.eq("lastRevision", entity.revision - 1),
             )
         val update =
             Updates.combine(
                 Updates.set("status", "${entity.status}"),
+                Updates.set("lastRevision", entity.revision),
             )
 
-        if (collection.updateOne(filter, update).matchedCount == 0L) {
-            throw ConcurrentModificationException("Could not update ${entity._id}")
+        runCatching {
+        withRetry(
+            maxRetries = maxRetries,
+            initialDelayMs = initialDelayMs,
+            maxDelayMs = maxDelayMs,
+            jitterFactor = jitterFactor
+        ) {
+            if (collection.updateOne(filter, update).matchedCount == 0L) {
+                throw ConcurrentModificationException("Could not update ${entity}")
+            }
         }
+        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
     }
 
     override suspend fun findTravelOfferByLocation(

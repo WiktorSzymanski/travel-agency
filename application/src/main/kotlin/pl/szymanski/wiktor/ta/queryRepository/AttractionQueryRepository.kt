@@ -14,6 +14,8 @@ interface AttractionQueryRepository {
 
     suspend fun update(entity: AttractionUpdate)
 
+    suspend fun update(entity: AttractionUpdateRevision)
+
     suspend fun update(entity: AttractionUpdateStatus)
 
     suspend fun update(entity: AttractionCancelUpdate)
@@ -22,16 +24,25 @@ interface AttractionQueryRepository {
 data class AttractionUpdate(
     val _id: UUID,
     val status: AttractionStatusEnum? = null,
-    val bookingId: UUID? = null
+    val bookingId: UUID? = null,
+    val revision: Int
+)
+
+data class AttractionUpdateRevision(
+    val _id: UUID,
+    val bookingId: UUID? = null,
+    val revision: Int
 )
 
 data class AttractionCancelUpdate(
     val _id: UUID,
     val status: AttractionStatusEnum? = null,
-    val bookingId: UUID? = null
+    val bookingId: UUID? = null,
+    val revision: Int
 )
 
 data class AttractionUpdateStatus(
     val _id: UUID,
     val status: AttractionStatusEnum? = null,
+    val revision: Int
 )

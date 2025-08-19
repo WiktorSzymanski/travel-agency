@@ -63,7 +63,7 @@ data class CommuteBookSeatFailedEvent(
     override var correlationId: UUID? = null,
     override val commuteId: UUID,
     val bookingId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
     override val message: String,
 ) : CommuteFailedEvent
 

@@ -12,7 +12,7 @@ data class CreateBookingCommand(
     override val correlationId: UUID,
     val travelOfferId: UUID,
     val userId: UUID,
-    val seat: Seat,
+    val seat: Seat? = null,
 ) : BookingCommand
 
 data class ProcessBookingCommand(

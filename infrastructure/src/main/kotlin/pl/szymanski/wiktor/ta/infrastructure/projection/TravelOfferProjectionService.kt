@@ -1,16 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.projection
 
 import io.kurrent.dbclient.KurrentDBClient
-import io.kurrent.dbclient.ResolvedEvent
-import io.kurrent.dbclient.SubscribeToStreamOptions
-import io.kurrent.dbclient.Subscription
-import io.kurrent.dbclient.SubscriptionListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
@@ -26,45 +16,22 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
-import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
-import pl.szymanski.wiktor.ta.infrastructure.repository.command.travelOfferEventTypeRegistry
 import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.TravelOfferUpdate
 import pl.szymanski.wiktor.ta.queryRepository.TravelOfferUpdateRevision
 import pl.szymanski.wiktor.ta.queryRepository.TravelOfferUpdateStatus
 
 class TravelOfferProjectionService(
-    private val kurrentDBClient: KurrentDBClient,
     private val travelOfferQueryRepository: TravelOfferQueryRepository
 ) {
-    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+    companion object {
+        private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
+    }
+
     fun startProjection() {
-        val streamName = "\$ce-travelOffer"
-        val scope = CoroutineScope(newSingleThreadContext("travel-offer-projection"))
-
-        val subscriptionOptions = SubscribeToStreamOptions.get()
-            .fromStart()
-            .resolveLinkTos()
-
-        val listener = object : SubscriptionListener() {
-            override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
-                scope.launch {
-                    val eventTypeName = resolvedEvent.event.eventType
-                    val eventClass = travelOfferEventTypeRegistry[eventTypeName]
-                        ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
-
-                    updateProjection(EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass),
-                        resolvedEvent.event.revision.toInt())
-                }
-            }
-
-            override fun onCancelled(subscription: Subscription, exception: Throwable?) {
-                if (exception == null) return
-                println("Subscription for travelOfferProjection subscription dropped: ${exception.message}")
-            }
+        ProjectionEventRepository().subscribe("travelOffer") {
+            event, i -> updateProjection(event as TravelOfferEvent, i)
         }
-
-        kurrentDBClient.subscribeToStream(streamName, listener, subscriptionOptions)
     }
 
     private suspend fun updateProjection(event: TravelOfferEvent, revision: Int) {
@@ -81,6 +48,7 @@ class TravelOfferProjectionService(
                         lastRevision = revision
                     )
                 )
+                ?: log.error("Unable to save travel offer ${event.travelOfferId}")
             }
             is TravelOfferReservedEvent -> {
                 travelOfferQueryRepository.update(

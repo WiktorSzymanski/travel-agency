@@ -1,13 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.projection
 
-import io.kurrent.dbclient.KurrentDBClient
-import io.kurrent.dbclient.ResolvedEvent
-import io.kurrent.dbclient.SubscribeToStreamOptions
-import io.kurrent.dbclient.Subscription
-import io.kurrent.dbclient.SubscriptionListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
@@ -19,40 +11,25 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
-import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
-import pl.szymanski.wiktor.ta.infrastructure.repository.command.commuteEventTypeRegistry
 import pl.szymanski.wiktor.ta.queryRepository.CommuteCancelUpdate
 import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdate
+import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateRevision
 import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateStatus
 
 class CommuteProjectionService(
-    private val kurrentDBClient: KurrentDBClient,
     private val commuteQueryRepository: CommuteQueryRepository
 ) {
+    companion object {
+        private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
+    }
     fun startProjection() {
-        val streamName = "\$ce-commute"
-
-        val subscriptionOptions = SubscribeToStreamOptions.get()
-            .fromStart()
-            .resolveLinkTos()
-
-        val listener = object : SubscriptionListener() {
-            override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
-                CoroutineScope(Dispatchers.Default).launch {
-                    val eventTypeName = resolvedEvent.event.eventType
-                    val eventClass = commuteEventTypeRegistry[eventTypeName]
-                        ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
-
-                    updateProjection(EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass))
-                }
-            }
+        ProjectionEventRepository().subscribe("commute") {
+            event, i -> updateProjection(event as CommuteEvent, i)
         }
-
-        kurrentDBClient.subscribeToStream(streamName, listener, subscriptionOptions)
     }
 
-    private suspend fun updateProjection(event: CommuteEvent) {
+    private suspend fun updateProjection(event: CommuteEvent, revision: Int) {
         when (event) {
             is CommuteCreatedEvent -> {
                 commuteQueryRepository.save(
@@ -62,15 +39,17 @@ class CommuteProjectionService(
                         departure = event.departure,
                         arrival = event.arrival,
                         seats = event.seats,
-                        status = CommuteStatusEnum.SCHEDULED
+                        status = CommuteStatusEnum.SCHEDULED,
+                        lastRevision = revision
                     )
-                )
+                ) ?: throw IllegalStateException("Unable to save commute ${event.commuteId}")
             }
             is CommuteBookedEvent -> {
                 commuteQueryRepository.update(
                     CommuteUpdate(
                         _id = event.commuteId,
                         bookingId = event.bookingId,
+                        revision = revision
                     )
                 )
             }
@@ -79,6 +58,7 @@ class CommuteProjectionService(
                     CommuteCancelUpdate(
                         _id = event.commuteId,
                         bookingId = event.bookingId,
+                        revision = revision
                     )
                 )
             }
@@ -86,7 +66,8 @@ class CommuteProjectionService(
                 commuteQueryRepository.update(
                     CommuteUpdateStatus(
                         _id = event.commuteId,
-                        status = CommuteStatusEnum.EXPIRED
+                        status = CommuteStatusEnum.EXPIRED,
+                        revision = revision
                     )
                 )
             }
@@ -94,7 +75,8 @@ class CommuteProjectionService(
                 commuteQueryRepository.update(
                     CommuteUpdateStatus(
                         _id = event.commuteId,
-                        status = CommuteStatusEnum.FULL
+                        status = CommuteStatusEnum.FULL,
+                        revision = revision
                     )
                 )
             }
@@ -102,7 +84,8 @@ class CommuteProjectionService(
                 commuteQueryRepository.update(
                     CommuteUpdateStatus(
                         _id = event.commuteId,
-                        status = CommuteStatusEnum.SCHEDULED
+                        status = CommuteStatusEnum.SCHEDULED,
+                        revision = revision
                     )
                 )
             }
@@ -111,6 +94,7 @@ class CommuteProjectionService(
                     CommuteCancelUpdate(
                         _id = event.commuteId,
                         bookingId = event.bookingId,
+                        revision = revision
                     )
                 )
             }
@@ -119,6 +103,15 @@ class CommuteProjectionService(
                     CommuteUpdate(
                         _id = event.commuteId,
                         bookingId = event.bookingId,
+                        revision = revision
+                    )
+                )
+            }
+            else -> {
+                commuteQueryRepository.update(
+                    CommuteUpdateRevision(
+                        _id = event.commuteId,
+                        revision = revision
                     )
                 )
             }

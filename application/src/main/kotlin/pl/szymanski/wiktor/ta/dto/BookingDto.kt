@@ -9,7 +9,7 @@ data class BookingDto(
     val id: String,
     val userId: String,
     val travelOfferId: String,
-    val seat: Seat,
+    val seat: Seat? = null,
     var status: String,
     var message: String? = null,
     val timestamp: String,

@@ -25,7 +25,7 @@ data class Booking(
     val _id: UUID = UUID.randomUUID(),
     val userId: UUID,
     val travelOfferId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
     var status: BookingState = BookingState.NEW,
     var message: String? = null,
     val timestamp: LocalDateTime = LocalDateTime.now(),
@@ -34,7 +34,7 @@ data class Booking(
     companion object {
         fun create(
             userId: UUID,
-            seat: Seat,
+            seat: Seat? = null,
             travelOfferId: UUID,
         ): Pair<Booking, BookingCreatedEvent> {
             val booking = Booking(

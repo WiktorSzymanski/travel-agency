@@ -24,7 +24,7 @@ offerScheduler:
 
 scheduler:
     intervalSeconds: 1
-    inAdvanceSeconds: 1000
+    inAdvanceSeconds: 30
     creationWindowSeconds: 10
     accommodations:
       # London Accommodations (15 total)

@@ -16,6 +16,8 @@ interface AccommodationQueryRepository {
 
     suspend fun update(entity: AccommodationUpdate)
 
+    suspend fun update(entity: AccommodationUpdateRevision)
+
     suspend fun update(entity: AccommodationUpdateStatus)
 
     suspend fun findTravelOfferByLocation(

@@ -42,7 +42,7 @@ class OfferMaker(
     }
 
     init {
-        popExpiredHashes()
+//        popExpiredHashes()
     }
 
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {

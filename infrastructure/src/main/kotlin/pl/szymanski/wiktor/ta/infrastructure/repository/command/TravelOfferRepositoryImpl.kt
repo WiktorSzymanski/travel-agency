@@ -77,10 +77,9 @@ class TravelOfferRepositoryImpl(
 
         val events: List<Pair<TravelOfferEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
-            val eventClass = travelOfferEventTypeRegistry[eventTypeName]
-                ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
+            val eventClass: Class<*> = Class.forName(eventTypeName)
 
-            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()
+            (EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()) as Pair<TravelOfferEvent, Int>
         }
 
         return TravelOffer.fromEvents(events)
@@ -99,31 +98,3 @@ class TravelOfferRepositoryImpl(
         }
     }
 }
-
-// Maps event type names in KurrentDb to their Kotlin classes
-val travelOfferEventTypeRegistry: Map<String, Class<out TravelOfferEvent>> = mapOf(
-    TravelOfferReservedEvent::class.simpleName!! to TravelOfferReservedEvent::class.java,
-    TravelOfferReservationCanceledEvent::class.simpleName!! to TravelOfferReservationCanceledEvent::class.java,
-    TravelOfferBookedEvent::class.simpleName!! to TravelOfferBookedEvent::class.java,
-    TravelOfferReleaseEvent::class.simpleName!! to TravelOfferReleaseEvent::class.java,
-    TravelOfferRebookedEvent::class.simpleName!! to TravelOfferRebookedEvent::class.java,
-    TravelOfferBookingCanceledEvent::class.simpleName!! to TravelOfferBookingCanceledEvent::class.java,
-    TravelOfferExpiredEvent::class.simpleName!! to TravelOfferExpiredEvent::class.java,
-    TravelOfferCreatedEvent::class.simpleName!! to TravelOfferCreatedEvent::class.java,
-    TravelOfferMadeUnavailableEvent::class.simpleName!! to TravelOfferMadeUnavailableEvent::class.java,
-    TravelOfferMadeAvailableEvent::class.simpleName!! to TravelOfferMadeAvailableEvent::class.java,
-
-    TravelOfferBookedCompensatedEvent::class.simpleName!! to TravelOfferBookedCompensatedEvent::class.java,
-    TravelOfferBookingCanceledCompensatedEvent::class.simpleName!! to TravelOfferBookingCanceledCompensatedEvent::class.java,
-
-    // Failure events
-    TravelOfferBookFailedEvent::class.simpleName!! to TravelOfferBookFailedEvent::class.java,
-    TravelOfferReserveFailedEvent::class.simpleName!! to TravelOfferReserveFailedEvent::class.java,
-    TravelOfferMakeUnavailableFailedEvent::class.simpleName!! to TravelOfferMakeUnavailableFailedEvent::class.java,
-    TravelOfferMakeAvailableFailedEvent::class.simpleName!! to TravelOfferMakeAvailableFailedEvent::class.java,
-    TravelOfferExpireFailedEvent::class.simpleName!! to TravelOfferExpireFailedEvent::class.java,
-    TravelOfferReservationCancelFailedEvent::class.simpleName!! to TravelOfferReservationCancelFailedEvent::class.java,
-    TravelOfferBookingCancelFailedEvent::class.simpleName!! to TravelOfferBookingCancelFailedEvent::class.java,
-    TravelOfferReleaseCompleteFailedEvent::class.simpleName!! to TravelOfferReleaseCompleteFailedEvent::class.java,
-    TravelOfferRebookCompleteFailedEvent::class.simpleName!! to TravelOfferRebookCompleteFailedEvent::class.java
-)

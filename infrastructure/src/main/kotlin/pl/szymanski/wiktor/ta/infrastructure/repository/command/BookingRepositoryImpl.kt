@@ -4,6 +4,7 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import pl.szymanski.wiktor.ta.domain.BookingState
@@ -16,7 +17,7 @@ class BookingRepositoryImpl(
 ) : BookingRepository {
     private val collection: MongoCollection<Booking> = database.getCollection("booking")
 
-    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).toList().first()
+    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).firstOrNull() ?: throw NoSuchElementException()
 
     override suspend fun save(booking: Booking): Booking {
         val insertId = collection.insertOne(booking)

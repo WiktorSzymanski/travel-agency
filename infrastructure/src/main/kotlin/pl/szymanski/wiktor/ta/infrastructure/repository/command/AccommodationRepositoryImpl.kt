@@ -59,10 +59,9 @@ class AccommodationRepositoryImpl(
 
         val events: List<Pair<AccommodationEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
-            val eventClass = accommodationEventTypeRegistry[eventTypeName]
-                ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
+            val eventClass: Class<*> = Class.forName(eventTypeName)
 
-            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()
+            (EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()) as Pair<AccommodationEvent, Int>
         }
 
         return Accommodation.fromEvents(events)
@@ -85,20 +84,3 @@ class AccommodationRepositoryImpl(
         }
     }
 }
-
-// Maps event type names in KurrentDb to their Kotlin classes
-val accommodationEventTypeRegistry: Map<String, Class<out AccommodationEvent>> = mapOf(
-    AccommodationBookedEvent::class.simpleName!! to AccommodationBookedEvent::class.java,
-    AccommodationBookingCanceledEvent::class.simpleName!! to AccommodationBookingCanceledEvent::class.java,
-    AccommodationExpiredEvent::class.simpleName!! to AccommodationExpiredEvent::class.java,
-    AccommodationCreatedEvent::class.simpleName!! to AccommodationCreatedEvent::class.java,
-    AccommodationDateMetEvent::class.simpleName!! to AccommodationDateMetEvent::class.java,
-
-    AccommodationBookingCanceledCompensatedEvent::class.simpleName!! to AccommodationBookingCanceledCompensatedEvent::class.java,
-    AccommodationBookedCompensatedEvent::class.simpleName!! to AccommodationBookedCompensatedEvent::class.java,
-
-    // Failure events
-    AccommodationExpireFailedEvent::class.simpleName!! to AccommodationExpireFailedEvent::class.java,
-    AccommodationBookFailedEvent::class.simpleName!! to AccommodationBookFailedEvent::class.java,
-    AccommodationBookingCancelFailedEvent::class.simpleName!! to AccommodationBookingCancelFailedEvent::class.java
-)

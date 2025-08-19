@@ -62,10 +62,9 @@ class AttractionRepositoryImpl(
 
         val events: List<Pair<AttractionEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
-            val eventClass = attractionEventTypeRegistry[eventTypeName]
-                ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
+            val eventClass: Class<*> = Class.forName(eventTypeName)
 
-            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()
+            (EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()) as Pair<AttractionEvent, Int>
         }
 
         return Attraction.fromEvents(events)
@@ -88,22 +87,3 @@ class AttractionRepositoryImpl(
         }
     }
 }
-
-// Maps event type names in KurrentDb to their Kotlin classes
-val attractionEventTypeRegistry: Map<String, Class<out AttractionEvent>> = mapOf(
-    AttractionBookedEvent::class.simpleName!! to AttractionBookedEvent::class.java,
-    AttractionFullEvent::class.simpleName!! to AttractionFullEvent::class.java,
-    AttractionAvailableEvent::class.simpleName!! to AttractionAvailableEvent::class.java,
-    AttractionBookingCanceledEvent::class.simpleName!! to AttractionBookingCanceledEvent::class.java,
-    AttractionExpiredEvent::class.simpleName!! to AttractionExpiredEvent::class.java,
-    AttractionCreatedEvent::class.simpleName!! to AttractionCreatedEvent::class.java,
-    AttractionDateMetEvent::class.simpleName!! to AttractionDateMetEvent::class.java,
-
-    AttractionBookedCompensatedEvent::class.simpleName!! to AttractionBookedCompensatedEvent::class.java,
-    AttractionBookingCanceledCompensatedEvent::class.simpleName!! to AttractionBookingCanceledCompensatedEvent::class.java,
-
-    // Failure events
-    AttractionExpireFailedEvent::class.simpleName!! to AttractionExpireFailedEvent::class.java,
-    AttractionBookFailedEvent::class.simpleName!! to AttractionBookFailedEvent::class.java,
-    AttractionBookingCancelFailedEvent::class.simpleName!! to AttractionBookingCancelFailedEvent::class.java
-)

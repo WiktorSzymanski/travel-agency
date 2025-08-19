@@ -277,8 +277,8 @@ paths:
             format: uuid
         - name: seat
           in: query
-          description: Seat to book in format "row/column" (e.g., "1|A")
-          required: true
+          description: Seat to book in format "row/column" (e.g., "1|A"), If not specified, first available seat will be selected
+          required: false
           schema:
             type: string
       responses:
@@ -325,7 +325,7 @@ paths:
       parameters:
         - name: start
           in: query
-          description: Start of the date range (defaults to 1 hour ago)
+          description: Start of the date range (defaults to 1 hour ago) yyyy-mm-ddThh:mm:ss
           required: false
           schema:
             type: string

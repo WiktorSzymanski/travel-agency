@@ -62,10 +62,9 @@ class CommuteRepositoryImpl(
 
         val events: List<Pair<CommuteEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
-            val eventClass = commuteEventTypeRegistry[eventTypeName]
-                ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
+            val eventClass: Class<*> = Class.forName(eventTypeName)
 
-            EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()
+            (EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()) as Pair<CommuteEvent, Int>
         }
 
         return Commute.fromEvents(events)
@@ -88,22 +87,3 @@ class CommuteRepositoryImpl(
         }
     }
 }
-
-// Maps event type names in KurrentDb to their Kotlin classes
-val commuteEventTypeRegistry: Map<String, Class<out CommuteEvent>> = mapOf(
-    CommuteBookedEvent::class.simpleName!! to CommuteBookedEvent::class.java,
-    CommuteFullEvent::class.simpleName!! to CommuteFullEvent::class.java,
-    CommuteAvailableEvent::class.simpleName!! to CommuteAvailableEvent::class.java,
-    CommuteBookingCanceledEvent::class.simpleName!! to CommuteBookingCanceledEvent::class.java,
-    CommuteExpiredEvent::class.simpleName!! to CommuteExpiredEvent::class.java,
-    CommuteCreatedEvent::class.simpleName!! to CommuteCreatedEvent::class.java,
-    CommuteDateMetEvent::class.simpleName!! to CommuteDateMetEvent::class.java,
-
-    CommuteBookingCanceledCompensatedEvent::class.simpleName!! to CommuteBookingCanceledCompensatedEvent::class.java,
-    CommuteBookedCompensatedEvent::class.simpleName!! to CommuteBookedCompensatedEvent::class.java,
-    
-    // Failure events
-    CommuteExpireFailedEvent::class.simpleName!! to CommuteExpireFailedEvent::class.java,
-    CommuteBookSeatFailedEvent::class.simpleName!! to CommuteBookSeatFailedEvent::class.java,
-    CommuteCancelBookedSeatFailedEvent::class.simpleName!! to CommuteCancelBookedSeatFailedEvent::class.java
-)

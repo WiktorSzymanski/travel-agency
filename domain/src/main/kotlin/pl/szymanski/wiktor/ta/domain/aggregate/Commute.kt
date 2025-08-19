@@ -143,7 +143,7 @@ data class Commute(
 
     fun bookSeat(
         bookingId: UUID,
-        seat: Seat
+        seat: Seat?
     ): List<CommuteEvent> {
         statusCheck()
         if (this.status != CommuteStatusEnum.SCHEDULED) {
@@ -155,31 +155,49 @@ data class Commute(
             ))
         }
 
-        if (!this.seats.contains(seat)) {
-            return listOf(CommuteBookSeatFailedEvent(
-                commuteId = _id,
-                bookingId = bookingId,
-                seat = seat,
-                message = "Seat $seat not found in Commute $_id"
-            ))
+        val seatToBook = when (seat) {
+            null -> {
+                val availableSeats = this.seats.filter { !this.bookings.containsValue(it.toString()) }
+                if (availableSeats.isEmpty()) {
+                    return listOf(CommuteBookSeatFailedEvent(
+                        commuteId = _id,
+                        bookingId = bookingId,
+                        seat = seat,
+                        message = "No available seats in Commute $_id"
+                    ))
+                }
+                availableSeats[0]
+            }
+            is Seat -> {
+                if (!this.seats.contains(seat)) {
+                    return listOf(CommuteBookSeatFailedEvent(
+                        commuteId = _id,
+                        bookingId = bookingId,
+                        seat = seat,
+                        message = "Seat $seat not found in Commute $_id"
+                    ))
+                }
+
+                if (this.bookings.containsValue(seat.toString())) {
+                    return listOf(CommuteBookSeatFailedEvent(
+                        commuteId = _id,
+                        bookingId = bookingId,
+                        seat = seat,
+                        message = "Seat $seat already booked in Commute $_id"
+                    ))
+                }
+
+                seat
+            }
         }
 
-        if (this.bookings.containsValue(seat.toString())) {
-            return listOf(CommuteBookSeatFailedEvent(
-                commuteId = _id,
-                bookingId = bookingId,
-                seat = seat,
-                message = "Seat $seat already booked in Commute $_id"
-            ))
-        }
-
-        this.bookings[bookingId.toString()] = seat.toString()
+        this.bookings[bookingId.toString()] = seatToBook.toString()
 
         return listOfNotNull(
             CommuteBookedEvent(
                 commuteId = _id,
                 bookingId = bookingId,
-                seat = seat
+                seat = seatToBook
             ),
             takeIf {seatsCheck()}?.let {
                 CommuteFullEvent(

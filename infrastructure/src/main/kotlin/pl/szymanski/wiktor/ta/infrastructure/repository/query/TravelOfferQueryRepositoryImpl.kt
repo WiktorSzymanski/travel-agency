@@ -6,6 +6,7 @@ import com.mongodb.client.model.Projections
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -27,11 +28,19 @@ import java.util.UUID
 class TravelOfferQueryRepositoryImpl(
     database: MongoDatabase,
 ) : TravelOfferQueryRepository {
+    companion object {
+        private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
+    }
+    val maxRetries = 10
+    val initialDelayMs = 100L
+    val maxDelayMs = 10000L
+    val jitterFactor = 0.1
+
     private val collection: MongoCollection<TravelOffer> = database.getCollection("travelOffer")
     
     override suspend fun save(entity: TravelOffer): TravelOffer? = collection.insertOne(entity).insertedId?.let { entity }
 
-    override suspend fun findById(travelOfferId: UUID): TravelOffer = collection.find(Document("_id", travelOfferId)).toList().first()
+    override suspend fun findById(travelOfferId: UUID): TravelOffer = collection.find(Document("_id", travelOfferId)).firstOrNull() ?: throw NoSuchElementException()
 
     override suspend fun findAllByStatus(status: TravelOfferStatusEnum): List<TravelOffer> = collection.find(Document("status", status.toString())).toList()
 
@@ -45,17 +54,15 @@ class TravelOfferQueryRepositoryImpl(
             Updates.set("lastRevision", entity.lastRevision )
         )
 
-        try {
-            withRetry (
-                maxRetries = 30,
-                maxDelayMs = 100000
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity._id}")
-                }
+        withRetry(
+            maxRetries = maxRetries,
+            initialDelayMs = initialDelayMs,
+            maxDelayMs = maxDelayMs,
+            jitterFactor = jitterFactor
+        ) {
+            if (collection.updateOne(filter, update).matchedCount == 0L) {
+                throw ConcurrentModificationException("Could not update ${entity}")
             }
-        } catch (e: ConcurrentModificationException) {
-            println("Failed to Update TO ${entity._id}")
         }
     }
 
@@ -70,19 +77,16 @@ class TravelOfferQueryRepositoryImpl(
             Updates.set("lastRevision", entity.lastRevision )
         )
 
-        try {
-            withRetry (
-                maxRetries = 30,
-                maxDelayMs = 100000
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity._id}")
-                }
+        withRetry(
+            maxRetries = maxRetries,
+            initialDelayMs = initialDelayMs,
+            maxDelayMs = maxDelayMs,
+            jitterFactor = jitterFactor
+        ) {
+            if (collection.updateOne(filter, update).matchedCount == 0L) {
+                throw ConcurrentModificationException("Could not update ${entity}")
             }
-        } catch (e: ConcurrentModificationException) {
-            println("Failed to Update TO ${entity._id}")
         }
-
     }
 
     override suspend fun update(entity: TravelOfferUpdateStatus, event: Event) {
@@ -96,19 +100,16 @@ class TravelOfferQueryRepositoryImpl(
             Updates.set("lastRevision", entity.lastRevision )
         )
 
-        try {
-            withRetry (
-                maxRetries = 30,
-                maxDelayMs = 100000
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity._id}")
-                }
+        withRetry(
+            maxRetries = maxRetries,
+            initialDelayMs = initialDelayMs,
+            maxDelayMs = maxDelayMs,
+            jitterFactor = jitterFactor
+        ) {
+            if (collection.updateOne(filter, update).matchedCount == 0L) {
+                throw ConcurrentModificationException("Could not update ${entity}")
             }
-        } catch (e: ConcurrentModificationException) {
-            println("Failed to Update TO ${entity._id}")
         }
-
     }
 
     override suspend fun findTravelOfferDto(

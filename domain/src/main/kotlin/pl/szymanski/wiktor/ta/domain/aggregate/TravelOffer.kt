@@ -189,7 +189,7 @@ data class TravelOffer(
 
     fun reserve(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.AVAILABLE)
             return TravelOfferReserveFailedEvent(
@@ -213,7 +213,7 @@ data class TravelOffer(
 
     fun book(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.RESERVED)
             return TravelOfferBookFailedEvent(
@@ -243,7 +243,7 @@ data class TravelOffer(
 
     fun cancelReservation(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.RESERVED) {
             return TravelOfferReservationCancelFailedEvent(
@@ -276,7 +276,7 @@ data class TravelOffer(
 
     fun releaseBooking(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.BOOKED) {
             return TravelOfferBookingCancelFailedEvent(
@@ -327,7 +327,7 @@ data class TravelOffer(
 
     fun cancelBooking(
         bookingId: UUID,
-        seat: Seat
+        seat: Seat?
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.RELEASING) {
             return TravelOfferReleaseCompleteFailedEvent(

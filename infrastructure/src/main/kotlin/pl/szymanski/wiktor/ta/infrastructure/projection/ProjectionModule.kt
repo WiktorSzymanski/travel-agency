@@ -21,8 +21,8 @@ fun Application.projectionModule() {
     val attractionQueryRepository = AttractionQueryRepositoryImpl(MongoDbProvider.database)
 
     // Start projection services
-    AccommodationProjectionService(KurrentDbProvider.client, accommodationQueryRepository).startProjection()
-    TravelOfferProjectionService(KurrentDbProvider.client, travelOfferQueryRepository).startProjection()
-    CommuteProjectionService(KurrentDbProvider.client, commuteQueryRepository).startProjection()
-    AttractionProjectionService(KurrentDbProvider.client, attractionQueryRepository).startProjection()
+    AccommodationProjectionService(accommodationQueryRepository).startProjection()
+    TravelOfferProjectionService(travelOfferQueryRepository).startProjection()
+    CommuteProjectionService(commuteQueryRepository).startProjection()
+    AttractionProjectionService(attractionQueryRepository).startProjection()
 }

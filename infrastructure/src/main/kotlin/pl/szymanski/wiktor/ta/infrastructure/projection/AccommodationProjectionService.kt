@@ -1,13 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.projection
 
-import io.kurrent.dbclient.KurrentDBClient
-import io.kurrent.dbclient.ResolvedEvent
-import io.kurrent.dbclient.SubscribeToStreamOptions
-import io.kurrent.dbclient.Subscription
-import io.kurrent.dbclient.SubscriptionListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
@@ -17,39 +9,21 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookingCanceledCompensatedEvent
-import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
-import pl.szymanski.wiktor.ta.infrastructure.repository.command.accommodationEventTypeRegistry
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdate
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateRevision
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateStatus
 
 class AccommodationProjectionService(
-    private val kurrentDBClient: KurrentDBClient,
     private val accommodationQueryRepository: AccommodationQueryRepository
 ) {
     fun startProjection() {
-        val streamName = "\$ce-accommodation"
-
-        val subscriptionOptions = SubscribeToStreamOptions.get()
-            .fromStart()
-            .resolveLinkTos()
-
-        val listener = object : SubscriptionListener() {
-            override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
-                CoroutineScope(Dispatchers.Default).launch {
-                    val eventTypeName = resolvedEvent.event.eventType
-                    val eventClass = accommodationEventTypeRegistry[eventTypeName]
-                        ?: throw IllegalArgumentException("Unknown event type: $eventTypeName")
-
-                    updateProjection(EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass))
-                }
-            }
+        ProjectionEventRepository().subscribe("accommodation") {
+            event, i -> updateProjection(event as AccommodationEvent, i)
         }
-
-        kurrentDBClient.subscribeToStream(streamName, listener, subscriptionOptions)
     }
 
-    private suspend fun updateProjection(event: AccommodationEvent) {
+    private suspend fun updateProjection(event: AccommodationEvent, revision: Int) {
         when (event) {
             is AccommodationCreatedEvent -> {
                 accommodationQueryRepository.save(
@@ -58,16 +32,18 @@ class AccommodationProjectionService(
                         name = event.name,
                         location = event.location,
                         rent = event.rent,
-                        status = AccommodationStatusEnum.AVAILABLE
+                        status = AccommodationStatusEnum.AVAILABLE,
+                        lastRevision = revision
                     )
-                )
+                ) ?: throw IllegalStateException("Unable to save accommodation ${event.accommodationId}")
             }
             is AccommodationBookedEvent -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdate(
                         _id = event.accommodationId,
                         status = AccommodationStatusEnum.BOOKED,
-                        bookingId = event.bookingId
+                        bookingId = event.bookingId,
+                        revision = revision
                     )
                 )
             }
@@ -76,7 +52,8 @@ class AccommodationProjectionService(
                     AccommodationUpdate(
                         _id = event.accommodationId,
                         status = AccommodationStatusEnum.AVAILABLE,
-                        bookingId = null
+                        bookingId = null,
+                        revision = revision
                     )
                 )
             }
@@ -85,6 +62,7 @@ class AccommodationProjectionService(
                     AccommodationUpdateStatus(
                         _id = event.accommodationId,
                         status = AccommodationStatusEnum.EXPIRED,
+                        revision = revision
                     )
                 )
             }
@@ -93,7 +71,8 @@ class AccommodationProjectionService(
                     AccommodationUpdate(
                         _id = event.accommodationId,
                         status = AccommodationStatusEnum.AVAILABLE,
-                        bookingId = null
+                        bookingId = null,
+                        revision = revision
                     )
                 )
             }
@@ -102,7 +81,16 @@ class AccommodationProjectionService(
                     AccommodationUpdate(
                         _id = event.accommodationId,
                         status = AccommodationStatusEnum.BOOKED,
-                        bookingId = event.bookingId
+                        bookingId = event.bookingId,
+                        revision = revision
+                    )
+                )
+            }
+            else -> {
+                accommodationQueryRepository.update(
+                    AccommodationUpdateRevision(
+                        _id = event.accommodationId,
+                        revision = revision
                     )
                 )
             }

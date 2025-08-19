@@ -23,7 +23,7 @@ class TravelOfferQuery(
     ): List<TravelOfferDto> = travelOfferRepository.findTravelOfferDto(page, size, status)
 
     suspend fun getTravelOfferById(travelOfferId: UUID): TravelOfferDto =
-        travelOfferRepository.findTravelOfferDto(travelOfferId = travelOfferId)[0]
+        travelOfferRepository.findTravelOfferDto(travelOfferId = travelOfferId).firstOrNull() ?: throw NoSuchElementException()
 
     suspend fun getTravelOfferByLocation(
         page: Int,

@@ -25,8 +25,14 @@ import pl.szymanski.wiktor.ta.event.SagaEvent
 import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
 import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
 import io.kurrent.dbclient.*
+import org.slf4j.LoggerFactory
+import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 
-class EventRepositoryImpl() : EventRepository {
+class EventRepositoryImpl : EventRepository {
+    companion object {
+        private val log = LoggerFactory.getLogger(TravelOfferExpireService::class.java)
+    }
+
     private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
 
     override suspend fun save(event: Event, revision: Int) {
@@ -35,84 +41,47 @@ class EventRepositoryImpl() : EventRepository {
             else -> AppendToStreamOptions.get().streamRevision(revision.toLong())
         }
 
-        val streamName = when (event) {
-            is CommuteEvent -> "commute-${event.commuteId}"
-            is AccommodationEvent -> "accommodation-${event.accommodationId}"
-            is AttractionEvent -> "attraction-${event.attractionId}"
-            is TravelOfferEvent -> "travelOffer-${event.travelOfferId}"
-            is BookingEvent -> "booking-${event.bookingId}"
-            is SagaEvent -> "saga-${event.correlationId}"
-            else -> { throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}") }
-        }
-
-        val serializedEvent = EventJsonSerializer.toBytes(event)
-        val serializedMetadata = EventJsonSerializer.toBytes(mapOf("\$correlationId" to event.correlationId))
-
-        val eventData = EventData.builderAsJson(event.eventId, event::class.simpleName, serializedEvent)
-            .metadataAsBytes(serializedMetadata)
-            .build()
+        val streamName = getStreamName(event)
+        val eventData = prepareEventData(event)
 
         runCatching{ kurrentClient.appendToStream(streamName, options, eventData).await() }
             .onFailure { if (it is WrongExpectedVersionException) throw ConcurrentModificationException(it.message) }
     }
 
     override suspend fun noRevisionSave(event: Event) {
-        val streamName = when (event) {
-            is CommuteEvent -> "commute-${event.commuteId}"
-            is AccommodationEvent -> "accommodation-${event.accommodationId}"
-            is AttractionEvent -> "attraction-${event.attractionId}"
-            is TravelOfferEvent -> "travelOffer-${event.travelOfferId}"
-            is BookingEvent -> "booking-${event.bookingId}"
-            is SagaEvent -> "saga-${event.correlationId}"
-            else -> { throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}") }
-        }
-
-        val serializedEvent = EventJsonSerializer.toBytes(event)
-        val serializedMetadata = EventJsonSerializer.toBytes(mapOf("\$correlationId" to event.correlationId))
-
-        val eventData = EventData.builderAsJson(event.eventId, event::class.simpleName, serializedEvent)
-            .metadataAsBytes(serializedMetadata)
-            .build()
+        val streamName = getStreamName(event)
+        val eventData = prepareEventData(event)
 
         kurrentClient.appendToStream(streamName, eventData).await()
     }
 
-    override suspend fun subscribe(eventClass: Class<Event>, doOnEvent: suspend (Event) -> Unit) {
-        val scope = CoroutineScope(Dispatchers.Default)
-        var checkpoint: Position = Position(0L, 0L)
+    fun prepareEventData(event: Event): EventData {
+        val serializedEvent = EventJsonSerializer.toBytes(event)
+        val serializedMetadata = EventJsonSerializer.toBytes(mapOf("\$correlationId" to event.correlationId))
 
-        val filter = SubscriptionFilter.newBuilder()
-            .addEventTypePrefix(eventClass.simpleName)
+        val eventData = EventData.builderAsJson(event.eventId, event::class.java.name, serializedEvent)
+            .metadataAsBytes(serializedMetadata)
             .build()
 
-        val subscriptionOptions = SubscribeToAllOptions.get()
-            .filter(filter)
-            .resolveLinkTos()
-
-        val listener = object : SubscriptionListener() {
-            override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
-                scope.launch {
-                    val event = EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
-                    doOnEvent(event)
-                    checkpoint = resolvedEvent.originalEvent.position
-                }
-            }
-
-            override fun onCancelled(subscription: Subscription, exception: Throwable) {
-                println("Subscription for ${eventClass.simpleName} cancelled: ${exception.message}")
-                resubscribeFromCheckpoint(checkpoint, eventClass, doOnEvent)
-            }
-        }
-        kurrentClient.subscribeToAll(listener, subscriptionOptions)
+        return eventData
     }
 
-    fun resubscribeFromCheckpoint(
-        checkpoint: Position,
+    fun getStreamName(event: Event): String = when (event) {
+        is CommuteEvent -> "commute-${event.commuteId}"
+        is AccommodationEvent -> "accommodation-${event.accommodationId}"
+        is AttractionEvent -> "attraction-${event.attractionId}"
+        is TravelOfferEvent -> "travelOffer-${event.travelOfferId}"
+        is BookingEvent -> "booking-${event.bookingId}"
+        is SagaEvent -> "saga-${event.correlationId}"
+        else -> { throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}") }
+    }
+
+    override suspend fun subscribe(
         eventClass: Class<Event>,
+        positionPair: Pair<Long, Long>,
         doOnEvent: suspend (Event) -> Unit
     ) {
-
-        val scope = CoroutineScope(Dispatchers.Default)
+        var checkpoint = positionPair.toPosition()
 
         val filter = SubscriptionFilter.newBuilder()
             .addEventTypePrefix(eventClass.simpleName)
@@ -125,18 +94,26 @@ class EventRepositoryImpl() : EventRepository {
 
         val listener = object : SubscriptionListener() {
             override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
-                scope.launch {
+                CoroutineScope(Dispatchers.Default).launch {
                     val event = EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
                     doOnEvent(event)
+                    checkpoint = resolvedEvent.originalEvent.position
                 }
             }
-            override fun onCancelled(subscription: Subscription, exception: Throwable?) {
-                if (exception == null) return
-                println("Subscription for ${eventClass.simpleName} dropped again: ${exception.message}")
+
+            override fun onCancelled(subscription: Subscription, exception: Throwable) {
+                CoroutineScope(Dispatchers.Default).launch {
+                    log.warn("Subscription for ${eventClass.simpleName} stream dropped: ${exception.message}")
+                    subscribe(eventClass, checkpoint.toPair(), doOnEvent)
+                }
             }
         }
 
-        println("Resubscribing to ${eventClass.simpleName} from checkpoint: $checkpoint")
+        log.info("Subscribing to ${eventClass.simpleName} stream from position: $checkpoint")
         kurrentClient.subscribeToAll(listener, subscriptionOptions)
     }
+
+    fun Pair<Long, Long>.toPosition() = Position(first, second)
+
+    fun Position.toPair() = this.commitUnsigned to this.prepareUnsigned
 }

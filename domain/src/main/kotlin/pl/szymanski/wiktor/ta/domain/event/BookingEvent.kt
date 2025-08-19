@@ -16,7 +16,7 @@ data class BookingCreatedEvent(
     override val bookingId: UUID,
     val travelOfferId: UUID,
     val userId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
     val state: BookingState,
 ) : BookingEvent
 
@@ -51,7 +51,7 @@ data class BookingCancelRequestedEvent(
     override var correlationId: UUID? = null,
     override val bookingId: UUID,
     val travelOfferId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
 ) : BookingEvent
 
 data class BookingCancelRequestedFailedEvent(

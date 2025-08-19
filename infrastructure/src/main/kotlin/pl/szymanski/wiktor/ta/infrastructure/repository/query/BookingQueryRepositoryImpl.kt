@@ -5,6 +5,7 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Projections
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import pl.szymanski.wiktor.ta.queryRepository.BookingQueryRepository
@@ -96,7 +97,7 @@ class BookingQueryRepositoryImpl(
             .map { it.toTravelOfferDto() }
     }
 
-    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).toList().first()
+    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).firstOrNull() ?: throw NoSuchElementException()
 
     override suspend fun findByUserId(
         page: Int,

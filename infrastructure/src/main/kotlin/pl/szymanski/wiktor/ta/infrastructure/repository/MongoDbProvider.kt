@@ -19,6 +19,9 @@ object MongoDbProvider {
                 .builder()
                 .applyConnectionString(ConnectionString(config.uri))
                 .uuidRepresentation(UuidRepresentation.STANDARD)
+                .applyToConnectionPoolSettings {
+                    it.maxSize(200)
+                }
                 .build()
         this.dbName = config.dbName
     }

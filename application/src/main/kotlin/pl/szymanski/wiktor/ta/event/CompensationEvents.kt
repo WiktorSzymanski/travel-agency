@@ -69,7 +69,7 @@ data class TravelOfferBookedCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
 ) : TravelOfferEvent
 
 data class TravelOfferBookingCanceledCompensatedEvent(
@@ -80,7 +80,7 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
 ) : TravelOfferEvent
 
 fun AccommodationEvent.toCompensation(): AccommodationEvent =
@@ -133,7 +133,7 @@ fun CommuteEvent.toCompensation(): CommuteEvent =
                 bookingId = this.bookingId,
                 seat = this.seat,
             )
-        else -> throw IllegalArgumentException("Unsupported CommuteEvent type: $this")
+        else -> this
     }
 
 fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
@@ -161,5 +161,5 @@ fun TravelOfferEvent.toCompensation(): TravelOfferEvent =
         is TravelOfferRebookedEvent ->
             this
         is TravelOfferReservationCanceledEvent -> this
-        else -> throw IllegalArgumentException("Unsupported TravelOfferEvent type: $this")
+        else -> this
     }
