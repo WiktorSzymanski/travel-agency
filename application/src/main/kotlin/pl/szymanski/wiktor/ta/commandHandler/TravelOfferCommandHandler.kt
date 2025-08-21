@@ -29,7 +29,7 @@ import kotlin.collections.mapIndexed
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
 ) {
-    val maxRetries = 20
+    val maxRetries = 30
 
     suspend fun handle(command: TravelOfferCommand): TravelOfferEvent =
         withRetry(maxRetries) {

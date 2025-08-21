@@ -48,7 +48,7 @@ object OfferMakerScheduler {
             scope.launch {
                 while (isActive) {
                     offerMaker.makeOffers()
-                    delay(config.intervalSeconds * MILLIS_IN_SECOND)
+                    delay((config.intervalSeconds * MILLIS_IN_SECOND).toLong())
                 }
             }
     }

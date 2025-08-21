@@ -20,7 +20,7 @@ import pl.szymanski.wiktor.ta.withRetry
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
-    val maxRetries = 20
+    val maxRetries = 30
 
     suspend fun handle(command: AttractionCommand): AttractionEvent =
         withRetry (maxRetries) {
@@ -29,12 +29,12 @@ class AttractionCommandHandler(
                 is CancelAttractionBookingCommand -> handle(command)
                 is CreateAttractionCommand -> handle(command)
                 is ExpireAttractionCommand -> handle(command)
-            }
-        }.map {
-            it.first.correlationId = command.correlationId
-            EventBus.publish(it.first, it.second)
-            it
-        }.let { it[0].first }
+            }.map {
+                it.first.correlationId = command.correlationId
+                EventBus.publish(it.first, it.second)
+                it
+            }.let { it[0].first }
+        }
 
     private suspend fun handle(command: BookAttractionCommand): List<Pair<AttractionEvent, Int>> =
         attractionRepository

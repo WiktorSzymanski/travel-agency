@@ -49,6 +49,10 @@ suspend fun <T> withRetry(
         lastException = result.exceptionOrNull()
         if (!onException.isInstance(lastException)) throw lastException!!
 
+        if (attempt > 25) {
+            println("ERROR: ${lastException!!.message} \t Retrying attempt: $attempt")
+        }
+
         if (attempt < maxRetries - 1) {
             val jitter = currentDelay * jitterFactor * Random.nextDouble()
             val delayWithJitter = currentDelay + jitter

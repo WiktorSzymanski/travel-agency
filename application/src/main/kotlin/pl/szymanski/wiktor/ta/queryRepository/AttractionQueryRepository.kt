@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.queryRepository
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.event.Event
 import java.util.UUID
 
 interface AttractionQueryRepository {
@@ -31,7 +32,8 @@ data class AttractionUpdate(
 data class AttractionUpdateRevision(
     val _id: UUID,
     val bookingId: UUID? = null,
-    val revision: Int
+    val revision: Int,
+    val event: Event
 )
 
 data class AttractionCancelUpdate(

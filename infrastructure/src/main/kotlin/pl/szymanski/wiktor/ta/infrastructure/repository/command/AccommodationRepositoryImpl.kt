@@ -55,7 +55,9 @@ class AccommodationRepositoryImpl(
             .forwards()
             .fromStart()
 
-        val readResult = kurrentClient.readStream(streamName, options).await()
+        val readResult = retryOnUnavailable {
+            kurrentClient.readStream(streamName, options).await()
+        }
 
         val events: List<Pair<AccommodationEvent, Int>> = readResult.events.map { resolvedEvent ->
             val eventTypeName = resolvedEvent.event.eventType
@@ -77,7 +79,9 @@ class AccommodationRepositoryImpl(
             val streamName = "accommodation-${event.accommodationId}"
             val serializedEvent = EventJsonSerializer.toBytes(event)
             val eventData = EventData.builderAsJson(event::class.simpleName, serializedEvent).build()
-            kurrentClient.appendToStream(streamName, eventData)
+            retryOnUnavailable {
+                kurrentClient.appendToStream(streamName, eventData)
+            }
         } catch (e: Exception) {
             println("Failed to save event to KurrentDb: ${e.message}")
             throw e

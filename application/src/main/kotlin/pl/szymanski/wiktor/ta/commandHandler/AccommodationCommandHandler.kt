@@ -19,7 +19,7 @@ import pl.szymanski.wiktor.ta.withRetry
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
-    val maxRetries = 20
+    val maxRetries = 30
 
     suspend fun handle(command: AccommodationCommand): AccommodationEvent =
         withRetry (maxRetries) {

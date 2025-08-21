@@ -25,7 +25,7 @@ fun Application.scheduler() {
 
     launch {
         DataGenerationScheduler.start()
-        delay(600000) // TODO: To remove - for debug
+        delay(600000 * 6) // TODO: To remove - for debug
         DataGenerationScheduler.stop()
     }
 

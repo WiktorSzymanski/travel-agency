@@ -42,6 +42,8 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
+
+    implementation("io.grpc:grpc-core:1.57.0")
 }
 
 tasks.test {

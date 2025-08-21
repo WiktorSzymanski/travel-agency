@@ -20,11 +20,11 @@ kurrentDatabase:
 
 
 offerScheduler:
-  intervalSeconds: 1
+  intervalSeconds: 0.1
 
 scheduler:
-    intervalSeconds: 1
-    inAdvanceSeconds: 30
+    intervalSeconds: 0.1
+    inAdvanceSeconds: 300
     creationWindowSeconds: 10
     accommodations:
       # London Accommodations (15 total)

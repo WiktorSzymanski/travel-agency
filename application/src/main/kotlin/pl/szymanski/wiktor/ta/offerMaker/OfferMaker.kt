@@ -41,6 +41,7 @@ class OfferMaker(
         private val log = LoggerFactory.getLogger(OfferMaker::class.java)
     }
 
+    // TODO: I think it's needed
     init {
 //        popExpiredHashes()
     }
@@ -48,7 +49,7 @@ class OfferMaker(
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch {
             EventBus.subscribe<TravelOfferExpiredEvent> {
-                delay(2000)
+                delay(10000)
                 offerHashes.remove(
                     Triple(
                         it.commuteId,

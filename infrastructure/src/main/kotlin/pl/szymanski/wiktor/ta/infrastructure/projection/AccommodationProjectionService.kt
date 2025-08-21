@@ -90,7 +90,8 @@ class AccommodationProjectionService(
                 accommodationQueryRepository.update(
                     AccommodationUpdateRevision(
                         _id = event.accommodationId,
-                        revision = revision
+                        revision = revision,
+                        event = event
                     )
                 )
             }

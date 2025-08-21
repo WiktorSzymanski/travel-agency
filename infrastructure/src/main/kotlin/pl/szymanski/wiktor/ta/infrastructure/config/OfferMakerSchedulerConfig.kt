@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OfferMakerSchedulerConfig(
-    val intervalSeconds: Long,
+    val intervalSeconds: Double,
     // min active time for entities
 )

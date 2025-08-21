@@ -109,7 +109,8 @@ class AttractionProjectionService(
                 attractionQueryRepository.update(
                     AttractionUpdateRevision(
                         _id = event.attractionId,
-                        revision = revision
+                        revision = revision,
+                        event = event
                     )
                 )
             }

@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.queryRepository
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.dto.CommuteStatisticDto
 import java.time.LocalDateTime
 import java.util.UUID
@@ -39,7 +40,8 @@ data class CommuteUpdate(
 
 data class CommuteUpdateRevision(
     val _id: UUID,
-    val revision: Int
+    val revision: Int,
+    val event: Event
 )
 
 data class CommuteCancelUpdate(

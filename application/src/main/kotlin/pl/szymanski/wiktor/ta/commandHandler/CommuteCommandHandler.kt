@@ -20,7 +20,7 @@ import kotlin.collections.get
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
-    val maxRetries = 20
+    val maxRetries = 30
 
     suspend fun handle(command: CommuteCommand): CommuteEvent =
         withRetry (maxRetries) {

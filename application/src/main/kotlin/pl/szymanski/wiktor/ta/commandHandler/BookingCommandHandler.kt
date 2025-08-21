@@ -18,7 +18,7 @@ import pl.szymanski.wiktor.ta.withRetry
 class BookingCommandHandler(
     private val bookingRepository: BookingRepository,
 ) {
-    val maxRetries = 20
+    val maxRetries = 30
 
     suspend fun handle(command: BookingCommand): BookingEvent =
         withRetry (maxRetries) {

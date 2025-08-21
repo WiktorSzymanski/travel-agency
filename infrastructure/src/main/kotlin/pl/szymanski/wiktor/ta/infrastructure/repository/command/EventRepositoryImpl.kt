@@ -33,6 +33,8 @@ class EventRepositoryImpl : EventRepository {
         private val log = LoggerFactory.getLogger(TravelOfferExpireService::class.java)
     }
 
+    val map = mutableMapOf<String, Long>()
+
     private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
 
     override suspend fun save(event: Event, revision: Int) {
@@ -44,15 +46,22 @@ class EventRepositoryImpl : EventRepository {
         val streamName = getStreamName(event)
         val eventData = prepareEventData(event)
 
-        runCatching{ kurrentClient.appendToStream(streamName, options, eventData).await() }
-            .onFailure { if (it is WrongExpectedVersionException) throw ConcurrentModificationException(it.message) }
+        retryOnUnavailable {
+            runCatching{ kurrentClient.appendToStream(streamName, options, eventData).await() }
+                .onFailure {
+                    if (it is WrongExpectedVersionException) throw ConcurrentModificationException("event - ${event}\nrevision - ${revision}\nmessage - ${it.message}")
+                    else throw it
+                }
+        }
     }
 
     override suspend fun noRevisionSave(event: Event) {
         val streamName = getStreamName(event)
         val eventData = prepareEventData(event)
 
-        kurrentClient.appendToStream(streamName, eventData).await()
+        retryOnUnavailable {
+            kurrentClient.appendToStream(streamName, eventData).await()
+        }
     }
 
     fun prepareEventData(event: Event): EventData {

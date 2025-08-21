@@ -160,7 +160,8 @@ class TravelOfferProjectionService(
                 travelOfferQueryRepository.update(
                     TravelOfferUpdateRevision(
                         _id = event.travelOfferId,
-                        lastRevision = revision
+                        lastRevision = revision,
+                        event = event
                     ), event)
             }
         }

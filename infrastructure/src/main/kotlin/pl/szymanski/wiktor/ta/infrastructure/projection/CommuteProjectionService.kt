@@ -111,7 +111,8 @@ class CommuteProjectionService(
                 commuteQueryRepository.update(
                     CommuteUpdateRevision(
                         _id = event.commuteId,
-                        revision = revision
+                        revision = revision,
+                        event = event
                     )
                 )
             }
