@@ -118,6 +118,22 @@ fun Application.travelOfferController(
             call.respond(resp)
         }
 
+        get("/travelOffers/location/{location}/count") {
+            val location = call.parameters["location"]?.let { LocationEnum.valueOf(it) }
+            val status = call.request.queryParameters["status"]?.let { TravelOfferStatusEnum.valueOf(it) }
+
+            requireNotNull(location) {
+                "Invalid location ${call.parameters["location"]}"
+            }
+            requireNotNull(status) {
+                "Invalid travel offer status ${call.request.queryParameters["status"]}"
+            }
+
+            val count = travelOfferQuery.countTravelOffersByLocation(location, status)
+            call.response.status(HttpStatusCode.OK)
+            call.respond(mapOf("count" to count))
+        }
+
         get("/travelOffer/{id}") {
             val travelOfferId = call.parameters["id"]?.let { UUID.fromString(it) }
 

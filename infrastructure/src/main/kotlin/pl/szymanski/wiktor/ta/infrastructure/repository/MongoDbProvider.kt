@@ -7,6 +7,9 @@ import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import org.bson.UuidRepresentation
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 
+//db.dropDatabase() ; db.travelOffer.createIndex( { commuteId: 1, accommodationId: 1, attractionId: 1 },  { unique: true, name: "unique_commute_accommodation_attraction" } ); db.travelOffer.createIndex({ commuteId: 1 }, { name: "idx_commuteId" }); db.travelOffer.createIndex({ accommodationId: 1 }, { name: "idx_accommodationId" }); db.travelOffer.createIndex({ attractionId: 1 }, { name: "idx_attractionId" }); db.travelOffer.createIndex({ status: 1 }, { name: "idx_status" });
+
+
 object MongoDbProvider {
     private lateinit var dbName: String
     private lateinit var settings: MongoClientSettings

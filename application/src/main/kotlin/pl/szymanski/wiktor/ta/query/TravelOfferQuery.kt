@@ -43,4 +43,11 @@ class TravelOfferQuery(
     ): Int {
         return travelOfferRepository.countTravelOffersByStatus(status)
     }
+
+    suspend fun countTravelOffersByLocation(
+        location: LocationEnum,
+        status: TravelOfferStatusEnum,
+    ): Int {
+        return accommodationRepository.countTravelOfferByLocation(location, status)
+    }
 }

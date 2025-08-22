@@ -2,10 +2,12 @@ package pl.szymanski.wiktor.ta.commandHandler
 
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.FailBookingCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferAvailableCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferUnavailableCommand
 import pl.szymanski.wiktor.ta.command.RebookTravelOfferCommand
@@ -13,25 +15,23 @@ import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.event.FailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
-import kotlin.collections.mapIndexed
 
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
+    private val bookingCommandHandler: BookingCommandHandler, // SHOULD NOT BE HERE THO
 ) {
     val maxRetries = 30
 
-    suspend fun handle(command: TravelOfferCommand): TravelOfferEvent =
+    suspend fun handle(command: TravelOfferCommand): TravelOfferEvent? =
         withRetry(maxRetries) {
             when (command) {
                 is BookTravelOfferCommand -> handle(command)
@@ -44,8 +44,8 @@ class TravelOfferCommandHandler(
                 is ExpireTravelOfferCommand -> handle(command)
                 is MakeTravelOfferAvailableCommand -> handle(command)
                 is MakeTravelOfferUnavailableCommand -> handle(command)
-            }.apply { first.correlationId = command.correlationId }
-                .also { EventBus.publish(it.first, it.second) }.first
+            }.apply { first?.correlationId = command.correlationId }
+                .also { if (it.first != null) EventBus.publish(it.first!!, it.second!!) }.first
         }
     private suspend fun handle(command: CreateTravelOfferCommand): Pair<TravelOfferEvent, Int> =
         TravelOffer.create(
@@ -57,13 +57,25 @@ class TravelOfferCommandHandler(
             event to travelOffer.lastRevision
         }
 
-    private suspend fun handle(command: BookTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: BookTravelOfferCommand): Pair<TravelOfferEvent?, Int?> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer
-                    .book(command.bookingId, command.seat)
-                    .let { it to travelOffer.lastRevision }
+                try {
+                    travelOffer
+                        .book(command.bookingId, command.seat)
+                        .let { it to travelOffer.lastRevision }
+                } catch  (e: IllegalStateException) {
+                    bookingCommandHandler.handle(
+                        FailBookingCommand(
+                            command.bookingId,
+                            command.correlationId,
+                            e.message
+                        ) as BookingCommand,
+                    )
+
+                    return@let null to null
+                }
             }
 
     private suspend fun handle(command: CancelBookTravelOfferCommand): Pair<TravelOfferEvent, Int> =
@@ -120,13 +132,25 @@ class TravelOfferCommandHandler(
                     .let { it to travelOffer.lastRevision }
             }
 
-    private suspend fun handle(command: ReserveTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: ReserveTravelOfferCommand): Pair<TravelOfferEvent?, Int?> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer
-                    .reserve(command.bookingId, command.seat)
-                    .let { it to travelOffer.lastRevision }
+                try {
+                    return@let travelOffer
+                        .reserve(command.bookingId, command.seat)
+                        .let { it to travelOffer.lastRevision }
+                } catch (e: IllegalStateException) {
+                    bookingCommandHandler.handle(
+                        FailBookingCommand(
+                            command.bookingId,
+                            command.correlationId,
+                            e.message
+                        ) as BookingCommand,
+                    )
+
+                    return@let null to null
+                }
             }
 
     private suspend fun handle(command: CancelReserveTravelOfferCommand): Pair<TravelOfferEvent, Int> =
@@ -138,7 +162,7 @@ class TravelOfferCommandHandler(
                     .let { it to travelOffer.lastRevision }
             }
 
-    suspend fun compensate(event: TravelOfferEvent): TravelOfferEvent =
+    suspend fun compensate(event: TravelOfferEvent): TravelOfferEvent? =
         withRetry(maxRetries) {
             when (event) {
                 is TravelOfferBookedEvent -> compensate(event)
@@ -148,10 +172,10 @@ class TravelOfferCommandHandler(
                 is TravelOfferReleaseEvent -> compensate(event)
                 else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
             }.let {
-                it.first.correlationId = event.correlationId
-                it.first.toCompensation()
+                it.first?.correlationId = event.correlationId
+                it.first?.toCompensation()
                 it
-            }.also { EventBus.publish(it.first, it.second) }.first
+            }.also { if (it.first != null) EventBus.publish(it.first!!, it.second!!) }.first
         }
 
     private suspend fun compensate(event: TravelOfferReleaseEvent): Pair<TravelOfferEvent, Int> =
@@ -173,7 +197,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): Pair<TravelOfferEvent, Int> =
+    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): Pair<TravelOfferEvent?, Int?> =
         handle(
             BookTravelOfferCommand(
                 event.travelOfferId,
@@ -193,7 +217,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferReservationCanceledEvent): Pair<TravelOfferEvent, Int> =
+    private suspend fun compensate(event: TravelOfferReservationCanceledEvent): Pair<TravelOfferEvent?, Int?> =
         handle(
             ReserveTravelOfferCommand(
                 event.travelOfferId,

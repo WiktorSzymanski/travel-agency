@@ -26,4 +26,9 @@ interface AccommodationQueryRepository {
         location: LocationEnum,
         status: TravelOfferStatusEnum? = null,
     ): List<TravelOfferDto>
+
+    suspend fun countTravelOfferByLocation(
+        location: LocationEnum,
+        status: TravelOfferStatusEnum? = null,
+    ): Int
 }

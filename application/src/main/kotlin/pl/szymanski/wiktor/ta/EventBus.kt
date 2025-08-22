@@ -3,24 +3,14 @@ package pl.szymanski.wiktor.ta
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
-import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.Event
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+import pl.szymanski.wiktor.ta.domain.event.FailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.UUID
 
 object EventBus {
     private val log = LoggerFactory.getLogger(EventBus::class.java)
@@ -32,6 +22,7 @@ object EventBus {
 
     suspend fun publish(event: Event, revision: Int) {
 //        log.info("Publishing event: {}", event)
+        if (event is FailedEvent) { return }
         repository.save(event, revision)
     }
 

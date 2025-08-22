@@ -218,4 +218,54 @@ class AccommodationQueryRepositoryImpl(
 
         return collection.aggregate<Document>(pipeline).toList().map { it.toTravelOfferDto() }
     }
+
+    override suspend fun countTravelOfferByLocation(
+        location: LocationEnum,
+        status: TravelOfferStatusEnum?,
+    ): Int {
+        val accommodationStatus = status?.let { AccommodationStatusEnum.valueOf(status.toString()) }
+
+        val entryFiltersMatch =
+            Aggregates.match(
+                Filters.and(
+                    listOfNotNull(
+                        Filters.eq("location", location),
+                        accommodationStatus?.let { Filters.eq("status", accommodationStatus) },
+                    ),
+                ),
+            )
+
+        val travelOfferLookup =
+            Aggregates.lookup(
+                "travelOffer",
+                "_id",
+                "accommodationId",
+                "travelOffer",
+            )
+
+        val travelOfferUnwind = Aggregates.unwind("$" + "travelOffer")
+
+        val travelOfferStatusCheck =
+            status?.let {
+                Aggregates.match(
+                    Filters.eq("travelOffer.status", status),
+                )
+            }
+
+        val countStage = Aggregates.count("count")
+
+        val pipeline =
+            listOfNotNull(
+                entryFiltersMatch,
+                travelOfferLookup,
+                travelOfferUnwind,
+                travelOfferStatusCheck.takeIf { it != null },
+                countStage,
+            )
+
+        val result = collection.aggregate<Document>(pipeline).firstOrNull()
+        return result?.getInteger("count") ?: 0
+    }
 }
+
+

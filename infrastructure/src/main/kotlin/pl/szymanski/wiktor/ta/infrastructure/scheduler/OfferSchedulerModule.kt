@@ -1,14 +1,13 @@
 package pl.szymanski.wiktor.ta.infrastructure.scheduler
 
-import io.ktor.server.application.Application
-import io.ktor.server.config.property
+import io.ktor.server.application.*
+import io.ktor.server.config.*
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseConfig
 import pl.szymanski.wiktor.ta.infrastructure.repository.MongoDbProvider
-import pl.szymanski.wiktor.ta.infrastructure.repository.command.AccommodationRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.command.AttractionRepositoryImpl
-import pl.szymanski.wiktor.ta.infrastructure.repository.command.CommuteRepositoryImpl
+import pl.szymanski.wiktor.ta.infrastructure.repository.command.BookingRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.command.TravelOfferRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.AccommodationQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.AttractionQueryRepositoryImpl
@@ -17,12 +16,14 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.query.CommuteQueryReposi
 fun Application.offerScheduler() {
     MongoDbProvider.init(property<DatabaseConfig>("database"))
 
+    val bookingCommandHandler = BookingCommandHandler(BookingRepositoryImpl(MongoDbProvider.database))
+
     OfferMakerScheduler.init(
         property("offerScheduler"),
         AccommodationQueryRepositoryImpl(MongoDbProvider.database),
         AttractionQueryRepositoryImpl(MongoDbProvider.database),
         CommuteQueryRepositoryImpl(MongoDbProvider.database),
-        TravelOfferCommandHandler(TravelOfferRepositoryImpl(MongoDbProvider.database)),
+        TravelOfferCommandHandler(TravelOfferRepositoryImpl(MongoDbProvider.database), bookingCommandHandler),
     )
 
     launch { OfferMakerScheduler.start() }

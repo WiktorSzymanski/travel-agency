@@ -192,11 +192,7 @@ data class TravelOffer(
         seat: Seat?,
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.AVAILABLE)
-            return TravelOfferReserveFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer is not open for reservation, current status is $status"
-            )
+            throw IllegalStateException("TravelOffer $_id is not AVAILABLE, current status is $status")
 
         this.status = TravelOfferStatusEnum.RESERVED
         this.bookingId = bookingId
@@ -216,18 +212,10 @@ data class TravelOffer(
         seat: Seat?,
     ): TravelOfferEvent {
         if (status != TravelOfferStatusEnum.RESERVED)
-            return TravelOfferBookFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer can not be booked if not RESERVED prior, current status is $status"
-            )
+            throw IllegalStateException("TravelOffer $_id not be booked if not RESERVED prior, current status is $status")
 
         if (this.bookingId != bookingId)
-            return TravelOfferBookFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer $_id is not RESERVED by booking $bookingId"
-            )
+            throw IllegalStateException("TravelOffer $_id is not RESERVED by booking $bookingId")
 
         this.status = TravelOfferStatusEnum.BOOKED
 

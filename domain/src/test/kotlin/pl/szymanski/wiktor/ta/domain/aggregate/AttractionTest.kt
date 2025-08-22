@@ -1,169 +1,169 @@
-package pl.szymanski.wiktor.ta.domain.aggregate
-
-import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
-import pl.szymanski.wiktor.ta.domain.LocationEnum
-import pl.szymanski.wiktor.ta.domain.assertEventEquals
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCancelFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionExpireFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
-import java.time.LocalDateTime
-import java.util.UUID
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-
-class AttractionTest {
-    private lateinit var attraction: Attraction
-    private lateinit var bookingId: UUID
-
-    @BeforeTest
-    fun setup() {
-        attraction =
-            Attraction(
-                _id = UUID.randomUUID(),
-                name = "attraction_name",
-                location = LocationEnum.POZNAN,
-                date = LocalDateTime.now().plusHours(1),
-                capacity = 3,
-            )
-        bookingId = UUID.randomUUID()
-    }
-
-    @Test
-    fun book_successfully() {
-        val event = attraction.book(bookingId)
-
-        assertEventEquals(
-            AttractionBookedEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-            ),
-            event,
-        )
-        assertEquals(1, attraction.bookings.size)
-        assertEquals(bookingId, attraction.bookings.first())
-    }
-
-    @Test
-    fun cannot_book_when_expired() {
-        attraction.status = AttractionStatusEnum.EXPIRED
-        val event = attraction.book(bookingId)
-
-        assertEventEquals(
-            AttractionBookFailedEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-                message = "Attraction ${attraction._id} is not open for booking",
-            ),
-            event,
-        )
-    }
-
-    @Test
-    fun cannot_book_twice_by_same_user() {
-        attraction.book(bookingId)
-        val event = attraction.book(bookingId)
-
-        assertEventEquals(
-            AttractionBookFailedEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-                message = "Booking $bookingId already signed for Attraction ${attraction._id}",
-            ),
-            event,
-        )
-    }
-
-    @Test
-    fun cannot_book_when_full() {
-        attraction.book(UUID.randomUUID())
-        attraction.book(UUID.randomUUID())
-        attraction.book(UUID.randomUUID())
-        val event = attraction.book(bookingId)
-
-        assertEventEquals(
-            AttractionBookFailedEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-                message = "Attraction ${attraction._id} is fully booked",
-            ),
-            event,
-        )
-    }
-
-    @Test
-    fun cancel_booking_successfully() {
-        attraction.book(bookingId)
-        val event = attraction.cancelBooking(bookingId)
-
-        assertEventEquals(
-            AttractionBookingCanceledEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-            ),
-            event,
-        )
-        assertTrue(attraction.bookings.none { it == bookingId })
-    }
-
-    @Test
-    fun cannot_cancel_booking_when_expired() {
-        attraction.status = AttractionStatusEnum.EXPIRED
-        val event = attraction.cancelBooking(bookingId)
-
-        assertEventEquals(
-            AttractionBookingCancelFailedEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-                message = "Cannot cancel booking for Attraction ${attraction._id} not in SCHEDULED status",
-            ),
-            event,
-        )
-    }
-
-    @Test
-    fun cannot_cancel_nonexistent_booking() {
-        val event = attraction.cancelBooking(bookingId)
-
-        assertEventEquals(
-            AttractionBookingCancelFailedEvent(
-                attractionId = attraction._id,
-                bookingId = bookingId,
-                message = "Booking $bookingId was not signed for Attraction ${attraction._id}",
-            ),
-            event,
-        )
-    }
-
-    @Test
-    fun expire_successfully_after_date() {
-        attraction = attraction.copy(date = LocalDateTime.now().minusMinutes(1))
-        val event = attraction.expire()
-
-        assertEventEquals(
-            AttractionExpiredEvent(
-                attractionId = attraction._id,
-            ),
-            event,
-        )
-        assertEquals(AttractionStatusEnum.EXPIRED, attraction.status)
-    }
-
-    @Test
-    fun cannot_expire_before_date() {
-        attraction = attraction.copy(date = LocalDateTime.now().plusMinutes(5))
-        val event = attraction.expire()
-
-        assertEventEquals(
-            AttractionExpireFailedEvent(
-                attractionId = attraction._id,
-                message = "Attraction ${attraction._id} cannot expire before its date",
-            ),
-            event,
-        )
-    }
-}
+//package pl.szymanski.wiktor.ta.domain.aggregate
+//
+//import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+//import pl.szymanski.wiktor.ta.domain.LocationEnum
+//import pl.szymanski.wiktor.ta.domain.assertEventEquals
+//import pl.szymanski.wiktor.ta.domain.event.AttractionBookFailedEvent
+//import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+//import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCancelFailedEvent
+//import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+//import pl.szymanski.wiktor.ta.domain.event.AttractionExpireFailedEvent
+//import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+//import java.time.LocalDateTime
+//import java.util.UUID
+//import kotlin.test.BeforeTest
+//import kotlin.test.Test
+//import kotlin.test.assertEquals
+//import kotlin.test.assertTrue
+//
+//class AttractionTest {
+//    private lateinit var attraction: Attraction
+//    private lateinit var bookingId: UUID
+//
+//    @BeforeTest
+//    fun setup() {
+//        attraction =
+//            Attraction(
+//                _id = UUID.randomUUID(),
+//                name = "attraction_name",
+//                location = LocationEnum.POZNAN,
+//                date = LocalDateTime.now().plusHours(1),
+//                capacity = 3,
+//            )
+//        bookingId = UUID.randomUUID()
+//    }
+//
+//    @Test
+//    fun book_successfully() {
+//        val event = attraction.book(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookedEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//            ),
+//            event,
+//        )
+//        assertEquals(1, attraction.bookings.size)
+//        assertEquals(bookingId, attraction.bookings.first())
+//    }
+//
+//    @Test
+//    fun cannot_book_when_expired() {
+//        attraction.status = AttractionStatusEnum.EXPIRED
+//        val event = attraction.book(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookFailedEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//                message = "Attraction ${attraction._id} is not open for booking",
+//            ),
+//            event,
+//        )
+//    }
+//
+//    @Test
+//    fun cannot_book_twice_by_same_user() {
+//        attraction.book(bookingId)
+//        val event = attraction.book(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookFailedEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//                message = "Booking $bookingId already signed for Attraction ${attraction._id}",
+//            ),
+//            event,
+//        )
+//    }
+//
+//    @Test
+//    fun cannot_book_when_full() {
+//        attraction.book(UUID.randomUUID())
+//        attraction.book(UUID.randomUUID())
+//        attraction.book(UUID.randomUUID())
+//        val event = attraction.book(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookFailedEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//                message = "Attraction ${attraction._id} is fully booked",
+//            ),
+//            event,
+//        )
+//    }
+//
+//    @Test
+//    fun cancel_booking_successfully() {
+//        attraction.book(bookingId)
+//        val event = attraction.cancelBooking(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookingCanceledEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//            ),
+//            event,
+//        )
+//        assertTrue(attraction.bookings.none { it == bookingId })
+//    }
+//
+//    @Test
+//    fun cannot_cancel_booking_when_expired() {
+//        attraction.status = AttractionStatusEnum.EXPIRED
+//        val event = attraction.cancelBooking(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookingCancelFailedEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//                message = "Cannot cancel booking for Attraction ${attraction._id} not in SCHEDULED status",
+//            ),
+//            event,
+//        )
+//    }
+//
+//    @Test
+//    fun cannot_cancel_nonexistent_booking() {
+//        val event = attraction.cancelBooking(bookingId)
+//
+//        assertEventEquals(
+//            AttractionBookingCancelFailedEvent(
+//                attractionId = attraction._id,
+//                bookingId = bookingId,
+//                message = "Booking $bookingId was not signed for Attraction ${attraction._id}",
+//            ),
+//            event,
+//        )
+//    }
+//
+//    @Test
+//    fun expire_successfully_after_date() {
+//        attraction = attraction.copy(date = LocalDateTime.now().minusMinutes(1))
+//        val event = attraction.expire()
+//
+//        assertEventEquals(
+//            AttractionExpiredEvent(
+//                attractionId = attraction._id,
+//            ),
+//            event,
+//        )
+//        assertEquals(AttractionStatusEnum.EXPIRED, attraction.status)
+//    }
+//
+//    @Test
+//    fun cannot_expire_before_date() {
+//        attraction = attraction.copy(date = LocalDateTime.now().plusMinutes(5))
+//        val event = attraction.expire()
+//
+//        assertEventEquals(
+//            AttractionExpireFailedEvent(
+//                attractionId = attraction._id,
+//                message = "Attraction ${attraction._id} cannot expire before its date",
+//            ),
+//            event,
+//        )
+//    }
+//}

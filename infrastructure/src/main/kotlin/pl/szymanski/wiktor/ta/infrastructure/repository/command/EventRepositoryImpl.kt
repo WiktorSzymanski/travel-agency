@@ -1,5 +1,7 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
+import io.grpc.Status
+import io.grpc.StatusRuntimeException
 import io.kurrent.dbclient.AppendToStreamOptions
 import io.kurrent.dbclient.EventData
 import io.kurrent.dbclient.KurrentDBClient
@@ -46,12 +48,19 @@ class EventRepositoryImpl : EventRepository {
         val streamName = getStreamName(event)
         val eventData = prepareEventData(event)
 
-        retryOnUnavailable {
-            runCatching{ kurrentClient.appendToStream(streamName, options, eventData).await() }
-                .onFailure {
-                    if (it is WrongExpectedVersionException) throw ConcurrentModificationException("event - ${event}\nrevision - ${revision}\nmessage - ${it.message}")
-                    else throw it
-                }
+        try {
+            retryOnUnavailable {
+                runCatching{ kurrentClient.appendToStream(streamName, options, eventData).await() }
+                    .onFailure {
+                        if (it is WrongExpectedVersionException) throw ConcurrentModificationException("event - ${event}\nrevision - ${revision}\nmessage - ${it.message}")
+                        else throw it
+                    }
+            }
+        } catch (e: StatusRuntimeException) {
+            if (e.status.code == Status.Code.DEADLINE_EXCEEDED) {
+                log.error("Call failed with ${e.status.code} for stream $streamName")
+            }
+            throw e
         }
     }
 
