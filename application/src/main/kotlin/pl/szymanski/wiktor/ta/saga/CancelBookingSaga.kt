@@ -15,10 +15,7 @@ import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
@@ -103,10 +100,6 @@ class CancelBookingSaga(
         }
 
         val cHEvent = cH.getOrNull()
-        if (cHEvent is CommuteFailedEvent) {
-            compensateTriggeringEvent(cHEvent.message)
-            return
-        }
 
         val acH = runCatching {
             withRetry(maxRetries) {
@@ -123,13 +116,6 @@ class CancelBookingSaga(
         }
 
         val acHEvent = acH.getOrNull()
-        if (acHEvent is AccommodationFailedEvent) {
-            withRetry(maxRetries) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-            }
-            compensateTriggeringEvent(acHEvent.message)
-            return
-        }
 
         if (attractionCommand != null) {
             val atH = runCatching {
@@ -150,16 +136,6 @@ class CancelBookingSaga(
             }
 
             val atHEvent = atH.getOrNull()
-            if (atHEvent is AttractionFailedEvent) {
-                withRetry(maxRetries) {
-                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                }
-                withRetry(maxRetries) {
-                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
-                }
-                compensateTriggeringEvent(atHEvent.message)
-                return
-            }
         }
 
         // Co jeśli nie wiadomo czemu BOOK się wywali

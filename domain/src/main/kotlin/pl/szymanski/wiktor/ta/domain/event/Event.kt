@@ -7,10 +7,6 @@ interface Event {
     var correlationId: UUID?
 }
 
-interface FailedEvent : Event {
-    val message: String
-}
-
 interface AccommodationEvent : Event {
     val accommodationId: UUID
 }
@@ -26,5 +22,3 @@ interface CommuteEvent : Event {
 interface TravelOfferEvent : Event {
     val travelOfferId: UUID
 }
-
-interface TravelOfferFailedEvent : TravelOfferEvent, FailedEvent

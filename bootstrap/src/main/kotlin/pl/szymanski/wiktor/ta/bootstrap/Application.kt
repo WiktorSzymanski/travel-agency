@@ -55,7 +55,7 @@ fun Application.application() {
     val commuteQueryRepository = CommuteQueryRepositoryImpl(MongoDbProvider.database)
     val bookingCommandHandler = BookingCommandHandler(bookingRepository)
 
-    val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository, bookingCommandHandler)
+    val travelOfferCommandHandler = TravelOfferCommandHandler(travelOfferRepository)
     val travelOfferExpireService = TravelOfferExpireService(travelOfferQueryRepository, travelOfferCommandHandler)
     val travelOfferStatusService = TravelOfferStatusService(travelOfferQueryRepository, travelOfferCommandHandler)
 

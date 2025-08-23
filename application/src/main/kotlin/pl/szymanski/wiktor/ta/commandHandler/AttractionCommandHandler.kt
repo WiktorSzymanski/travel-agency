@@ -10,7 +10,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-import pl.szymanski.wiktor.ta.domain.event.FailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -82,7 +81,7 @@ class AttractionCommandHandler(
                 it
             }.map {
                 it.first.correlationId = event.correlationId
-                if (it.first !is FailedEvent) EventBus.publish(it.first, it.second)
+                EventBus.publish(it.first, it.second)
                 it
             }.let { it[0].first }
         }

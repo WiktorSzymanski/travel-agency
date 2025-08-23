@@ -1,13 +1,14 @@
 package pl.szymanski.wiktor.ta.commandHandler
 
+import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
-import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.FailBookingCommand
+import pl.szymanski.wiktor.ta.command.FailCancelBookingCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferAvailableCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferUnavailableCommand
 import pl.szymanski.wiktor.ta.command.RebookTravelOfferCommand
@@ -27,7 +28,6 @@ import pl.szymanski.wiktor.ta.withRetry
 
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
-    private val bookingCommandHandler: BookingCommandHandler, // SHOULD NOT BE HERE THO
 ) {
     val maxRetries = 30
 
@@ -61,39 +61,57 @@ class TravelOfferCommandHandler(
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                try {
+                runCatching {
                     travelOffer
                         .book(command.bookingId, command.seat)
                         .let { it to travelOffer.lastRevision }
-                } catch  (e: IllegalStateException) {
-                    bookingCommandHandler.handle(
+                }.onFailure {
+                    CommandBus.dispatch(
                         FailBookingCommand(
                             command.bookingId,
                             command.correlationId,
-                            e.message
-                        ) as BookingCommand,
+                            it.message
+                        )
                     )
-
-                    return@let null to null
-                }
+                }.getOrThrow()
             }
 
     private suspend fun handle(command: CancelBookTravelOfferCommand): Pair<TravelOfferEvent, Int> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer
-                    .cancelBooking(command.bookingId, command.seat)
-                    .let { it to travelOffer.lastRevision }
+                runCatching {
+                    travelOffer
+                        .cancelBooking(command.bookingId, command.seat)
+                        .let { it to travelOffer.lastRevision }
+                }.onFailure {
+                    CommandBus.dispatch(
+                        FailCancelBookingCommand(
+                            command.bookingId,
+                            command.correlationId,
+                            it.message
+                        )
+                    )
+                }.getOrThrow()
             }
 
     private suspend fun handle(command: ReleaseTravelOfferCommand): Pair<TravelOfferEvent, Int> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer
-                    .releaseBooking(command.bookingId, command.seat)
-                    .let { it to travelOffer.lastRevision }
+                runCatching {
+                    travelOffer
+                        .releaseBooking(command.bookingId, command.seat)
+                        .let { it to travelOffer.lastRevision }
+                }.onFailure {
+                    CommandBus.dispatch(
+                        FailCancelBookingCommand(
+                            command.bookingId,
+                            command.correlationId,
+                            it.message
+                        )
+                    )
+                }.getOrThrow()
             }
 
     private suspend fun handle(command: RebookTravelOfferCommand): Pair<TravelOfferEvent, Int> =
@@ -136,21 +154,19 @@ class TravelOfferCommandHandler(
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                try {
-                    return@let travelOffer
+                runCatching {
+                    travelOffer
                         .reserve(command.bookingId, command.seat)
                         .let { it to travelOffer.lastRevision }
-                } catch (e: IllegalStateException) {
-                    bookingCommandHandler.handle(
+                }.onFailure {
+                    CommandBus.dispatch(
                         FailBookingCommand(
                             command.bookingId,
                             command.correlationId,
-                            e.message
-                        ) as BookingCommand,
+                            it.message
+                        )
                     )
-
-                    return@let null to null
-                }
+                }.getOrThrow()
             }
 
     private suspend fun handle(command: CancelReserveTravelOfferCommand): Pair<TravelOfferEvent, Int> =

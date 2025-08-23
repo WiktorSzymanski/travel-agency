@@ -8,8 +8,6 @@ interface BookingEvent : Event {
     val bookingId: UUID
 }
 
-interface BookingFailedEvent : BookingEvent, FailedEvent
-
 data class BookingCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -26,25 +24,11 @@ data class ProcessBookingEvent(
     override val bookingId: UUID,
 ) : BookingEvent
 
-data class ProcessBookingFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val bookingId: UUID,
-    override val message: String,
-) : BookingFailedEvent
-
 data class CompleteBookingEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val bookingId: UUID,
 ) : BookingEvent
-
-data class CompleteBookingFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val bookingId: UUID,
-    override val message: String,
-) : BookingFailedEvent
 
 data class BookingCancelRequestedEvent(
     override val eventId: UUID = UUID.randomUUID(),
@@ -67,25 +51,11 @@ data class CancelBookingEvent(
     override val bookingId: UUID,
 ) : BookingEvent
 
-data class CancelBookingFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val bookingId: UUID,
-    override val message: String,
-) : BookingFailedEvent
-
 data class ProcessCancelBookingEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val bookingId: UUID,
 ) : BookingEvent
-
-data class ProcessCancelBookingFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val bookingId: UUID,
-    override val message: String,
-) : BookingFailedEvent
 
 data class FailBookingEvent(
     override val eventId: UUID = UUID.randomUUID(),
@@ -94,12 +64,6 @@ data class FailBookingEvent(
     val message: String,
 ) : BookingEvent
 
-data class FailBookingFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val bookingId: UUID,
-    override val message: String,
-) : BookingFailedEvent
 
 data class FailCancelBookingEvent(
     override val eventId: UUID = UUID.randomUUID(),
@@ -107,10 +71,3 @@ data class FailCancelBookingEvent(
     override val bookingId: UUID,
     val message: String,
 ) : BookingEvent
-
-data class FailCancelBookingFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val bookingId: UUID,
-    override val message: String,
-) : BookingFailedEvent

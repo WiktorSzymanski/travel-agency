@@ -10,7 +10,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.FailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -29,7 +28,7 @@ class CommuteCommandHandler(
                 is ExpireCommuteCommand -> handle(command)
             }.map {
                 it.first.correlationId = command.correlationId
-                if (it.first !is FailedEvent) EventBus.publish(it.first, it.second)
+                EventBus.publish(it.first, it.second)
                 it
             }.let { it[0].first }
         }

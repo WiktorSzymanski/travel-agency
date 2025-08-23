@@ -15,10 +15,7 @@ import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
@@ -108,10 +105,6 @@ class BookingSaga(
         }
 
         val cHEvent = cH.getOrNull()
-        if (cHEvent is CommuteFailedEvent) {
-            compensateTriggeringEvent(cHEvent.message)
-            return
-        }
 
         val acH = runCatching {
             withRetry(maxRetries) {
@@ -128,13 +121,6 @@ class BookingSaga(
         }
 
         val acHEvent = acH.getOrNull()
-        if (acHEvent is AccommodationFailedEvent) {
-            withRetry(maxRetries) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-            }
-            compensateTriggeringEvent(acHEvent.message)
-            return
-        }
 
         if (attractionCommand != null) {
             val atH = runCatching {
@@ -155,16 +141,6 @@ class BookingSaga(
             }
 
             val atHEvent = atH.getOrNull()
-            if (atHEvent is AttractionFailedEvent) {
-                withRetry(maxRetries) {
-                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                }
-                withRetry(maxRetries) {
-                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
-                }
-                compensateTriggeringEvent(atHEvent.message)
-                return
-            }
         }
 
         EventBus.ignoreRevisionPublish(

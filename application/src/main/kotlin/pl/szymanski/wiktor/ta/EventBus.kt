@@ -6,7 +6,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.domain.event.Event
-import pl.szymanski.wiktor.ta.domain.event.FailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import java.time.Duration
 import java.time.LocalDateTime
@@ -22,7 +21,6 @@ object EventBus {
 
     suspend fun publish(event: Event, revision: Int) {
 //        log.info("Publishing event: {}", event)
-        if (event is FailedEvent) { return }
         repository.save(event, revision)
     }
 

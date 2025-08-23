@@ -4,8 +4,6 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.util.UUID
 
-interface AccommodationFailedEvent : AccommodationEvent, FailedEvent
-
 data class AccommodationCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -34,26 +32,3 @@ data class AccommodationExpiredEvent(
     override var correlationId: UUID? = null,
     override val accommodationId: UUID,
 ) : AccommodationEvent
-
-data class AccommodationBookFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val accommodationId: UUID,
-    val bookingId: UUID,
-    override val message: String,
-) : AccommodationFailedEvent
-
-data class AccommodationBookingCancelFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val accommodationId: UUID,
-    val bookingId: UUID,
-    override val message: String,
-) : AccommodationFailedEvent
-
-data class AccommodationExpireFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val accommodationId: UUID,
-    override val message: String,
-) : AccommodationFailedEvent
