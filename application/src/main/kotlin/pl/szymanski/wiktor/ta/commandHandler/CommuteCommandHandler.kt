@@ -10,7 +10,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -52,7 +51,7 @@ class CommuteCommandHandler(
                 commute
                     .bookSeat(command.bookingId, command.seat)
                     .also {
-                        if (it[0] !is CommuteFailedEvent)
+
                             commuteRepository.update(commute)
                     }
             }
@@ -64,7 +63,7 @@ class CommuteCommandHandler(
                 commute
                     .cancelBookedSeat(command.bookingId)
                     .also {
-                        if (it[0] !is CommuteFailedEvent)
+
                             commuteRepository.update(commute)
                     }
             }
@@ -76,7 +75,7 @@ class CommuteCommandHandler(
                 commute
                     .expire()
                     .also {
-                        if (it[0] !is CommuteFailedEvent)
+
                             commuteRepository.update(commute)
                     }
             }
@@ -102,7 +101,7 @@ class CommuteCommandHandler(
                 commute
                     .compensateBookSeat(event.bookingId)
                     .also {
-                        if (it[0] !is CommuteFailedEvent)
+
                             commuteRepository.update(commute)
                     }
             }
@@ -114,7 +113,7 @@ class CommuteCommandHandler(
                 commute
                     .compensateCancelBookedSeat(event.bookingId, event.seat)
                     .also {
-                        if (it[0] !is CommuteFailedEvent)
+
                             commuteRepository.update(commute)
                     }
             }

@@ -6,16 +6,17 @@ ktor:
             - pl.szymanski.wiktor.ta.bootstrap.ApplicationKt.application
             - pl.szymanski.wiktor.ta.infrastructure.scheduler.SchedulerModuleKt.scheduler
             - pl.szymanski.wiktor.ta.infrastructure.scheduler.OfferSchedulerModuleKt.offerScheduler
+            - pl.szymanski.wiktor.ta.presentation.controller.ConfigureExceptionHandlingKt.configureExceptionHandling
 
 database:
     uri: "mongodb://localhost:27017"
     dbName: "travel_agency"
 
 offerScheduler:
-  intervalSeconds: 1
+  intervalSeconds: 0.5
 
 scheduler:
-    intervalSeconds: 1
+    intervalSeconds: 0.5
     inAdvanceSeconds: 1000
     creationWindowSeconds: 10
     accommodations:

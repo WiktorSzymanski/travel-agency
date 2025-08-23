@@ -22,7 +22,7 @@ data class BookingSagaCompletedEvent(
     override var correlationId: UUID?,
     val bookingId: UUID,
     val travelOfferId: UUID,
-    val seat: Seat
+    val seat: Seat?
 ) : Event
 
 data class CancelBookingSagaStartedEvent(
@@ -43,6 +43,6 @@ data class CancelBookingSagaCompletedEvent(
     override var correlationId: UUID?,
     val bookingId: UUID,
     val travelOfferId: UUID,
-    val seat: Seat
+    val seat: Seat?
 ) : Event
 

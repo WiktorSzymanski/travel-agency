@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta.eventHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
@@ -17,52 +16,55 @@ import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
+import pl.szymanski.wiktor.ta.launchCatching
 
 class DateMetEventHandler(
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
 ) {
-    companion object {
-        private val log = LoggerFactory.getLogger(DateMetEventHandler::class.java)
-    }
-
     fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch { commuteDateMetEventHandler() }
         scope.launch { accommodationDateMetEventHandler() }
         scope.launch { attractionDateMetEventHandler() }
     }
 
-    suspend fun commuteDateMetEventHandler() {
+    suspend fun commuteDateMetEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         EventBus.subscribe<CommuteDateMetEvent> {
-            commuteCommandHandler.handle(
-                ExpireCommuteCommand(
-                    commuteId = it.commuteId,
-                    correlationId = it.correlationId,
-                ) as CommuteCommand,
-            )
+            scope.launchCatching {
+                commuteCommandHandler.handle(
+                    ExpireCommuteCommand(
+                        commuteId = it.commuteId,
+                        correlationId = it.correlationId,
+                    ) as CommuteCommand,
+                )
+            }
         }
     }
 
-    suspend fun accommodationDateMetEventHandler() {
+    suspend fun accommodationDateMetEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         EventBus.subscribe<AccommodationDateMetEvent> {
-            accommodationCommandHandler.handle(
-                ExpireAccommodationCommand(
-                    accommodationId = it.accommodationId,
-                    correlationId = it.correlationId,
-                ) as AccommodationCommand,
-            )
+            scope.launchCatching {
+                accommodationCommandHandler.handle(
+                    ExpireAccommodationCommand(
+                        accommodationId = it.accommodationId,
+                        correlationId = it.correlationId,
+                    ) as AccommodationCommand,
+                )
+            }
         }
     }
 
-    suspend fun attractionDateMetEventHandler() {
+    suspend fun attractionDateMetEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         EventBus.subscribe<AttractionDateMetEvent> {
-            attractionCommandHandler.handle(
-                ExpireAttractionCommand(
-                    attractionId = it.attractionId,
-                    correlationId = it.correlationId,
-                ) as AttractionCommand,
-            )
+            scope.launchCatching {
+                attractionCommandHandler.handle(
+                    ExpireAttractionCommand(
+                        attractionId = it.attractionId,
+                        correlationId = it.correlationId,
+                    ) as AttractionCommand,
+                )
+            }
         }
     }
 }

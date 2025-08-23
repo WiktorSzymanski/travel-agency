@@ -1,11 +1,13 @@
 package pl.szymanski.wiktor.ta.commandHandler
 
+import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.FailBookingCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferAvailableCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferUnavailableCommand
 import pl.szymanski.wiktor.ta.command.RebookTravelOfferCommand
@@ -16,7 +18,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
@@ -60,12 +61,21 @@ class TravelOfferCommandHandler(
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer
-                    .book(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
+                runCatching {
+                    travelOffer
+                        .book(command.bookingId, command.seat)
+                        .also {
                             travelOfferRepository.update(travelOffer)
-                    }
+                        }
+                }.onFailure {
+                    CommandBus.dispatch(
+                        FailBookingCommand(
+                            command.bookingId,
+                            command.correlationId,
+                            it.message
+                        )
+                    )
+                }.getOrThrow()
             }
 
     private suspend fun handle(command: CancelBookTravelOfferCommand): TravelOfferEvent =
@@ -75,7 +85,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .cancelBooking(command.bookingId, command.seat)
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }
@@ -87,7 +97,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .releaseBooking(command.bookingId, command.seat)
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }
@@ -99,7 +109,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .rebook(command.bookingId)
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }
@@ -111,7 +121,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .expire()
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }
@@ -123,7 +133,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .makeUnavailable()
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }
@@ -135,7 +145,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .makeAvailable()
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }
@@ -144,12 +154,21 @@ class TravelOfferCommandHandler(
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
-                travelOffer
-                    .reserve(command.bookingId, command.seat)
-                    .also {
-                        if (it !is TravelOfferFailedEvent)
+                runCatching {
+                    travelOffer
+                        .reserve(command.bookingId, command.seat)
+                        .also {
                             travelOfferRepository.update(travelOffer)
-                    }
+                        }
+                }.onFailure {
+                    CommandBus.dispatch(
+                        FailBookingCommand(
+                            command.bookingId,
+                            command.correlationId,
+                            it.message
+                        )
+                    )
+                }.getOrThrow()
             }
 
     private suspend fun handle(command: CancelReserveTravelOfferCommand): TravelOfferEvent =
@@ -159,7 +178,7 @@ class TravelOfferCommandHandler(
                 travelOffer
                     .cancelReservation(command.bookingId, command.seat)
                     .also {
-                        if (it !is TravelOfferFailedEvent)
+
                             travelOfferRepository.update(travelOffer)
                     }
             }

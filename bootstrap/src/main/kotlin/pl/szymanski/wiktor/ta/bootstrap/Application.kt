@@ -23,6 +23,7 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.query.BookingQueryReposi
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.CommuteQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.TravelOfferQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.presentation.controller.commuteStatisticsController
+import pl.szymanski.wiktor.ta.presentation.controller.configureExceptionHandling
 import pl.szymanski.wiktor.ta.presentation.controller.travelOfferController
 import pl.szymanski.wiktor.ta.query.BookingQuery
 import pl.szymanski.wiktor.ta.query.CommuteStatisticsQuery

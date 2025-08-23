@@ -10,8 +10,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
 import pl.szymanski.wiktor.ta.withRetry
@@ -42,7 +40,7 @@ class AttractionCommandHandler(
                 attraction
                     .book(command.bookingId)
                     .also {
-                        if (it[0] !is AttractionFailedEvent)
+
                             attractionRepository.update(attraction)
                     }
             }
@@ -54,7 +52,7 @@ class AttractionCommandHandler(
                 attraction
                     .cancelBooking(command.bookingId)
                     .also {
-                        if (it[0] !is AttractionFailedEvent)
+
                             attractionRepository.update(attraction)
                     }
             }
@@ -77,7 +75,7 @@ class AttractionCommandHandler(
                 attraction
                     .expire()
                     .also {
-                        if (it[0] !is AttractionFailedEvent)
+
                             attractionRepository.update(attraction)
                     }
             }
@@ -103,7 +101,7 @@ class AttractionCommandHandler(
                 attraction
                     .compensateBook(event.bookingId)
                     .also {
-                        if (it[0] !is AttractionFailedEvent)
+
                             attractionRepository.update(attraction)
                     }
             }
@@ -115,7 +113,7 @@ class AttractionCommandHandler(
                 attraction
                     .compensateCancelBooking(event.bookingId)
                     .also {
-                        if (it[0] !is AttractionFailedEvent)
+
                             attractionRepository.update(attraction)
                     }
             }

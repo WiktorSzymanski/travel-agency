@@ -2,25 +2,16 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeUnavailableEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferMakeAvailableFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferMakeUnavailableFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookCompleteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseCompleteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import java.util.UUID
 
@@ -64,11 +55,9 @@ data class TravelOffer(
     }
 
     fun makeUnavailable(): TravelOfferEvent {
-        if (this.status != TravelOfferStatusEnum.AVAILABLE)
-            return TravelOfferMakeUnavailableFailedEvent(
-                travelOfferId = _id,
-                message = "TravelOffer $_id cannot be made unavailable when in $status status"
-            )
+        require(this.status == TravelOfferStatusEnum.AVAILABLE) {
+            "TravelOffer $_id cannot be made unavailable when in $status status"
+        }
 
         this.status = TravelOfferStatusEnum.UNAVAILABLE
 
@@ -78,11 +67,8 @@ data class TravelOffer(
     }
 
     fun makeAvailable(): TravelOfferEvent {
-        if (this.status != TravelOfferStatusEnum.UNAVAILABLE) {
-            return TravelOfferMakeAvailableFailedEvent(
-                travelOfferId = _id,
-                message = "TravelOffer $_id cannot be made available when in $status status"
-            )
+        require(this.status == TravelOfferStatusEnum.UNAVAILABLE) {
+            "TravelOffer $_id cannot be made available when in $status status"
         }
 
         this.status = TravelOfferStatusEnum.AVAILABLE
@@ -93,11 +79,8 @@ data class TravelOffer(
     }
 
     fun expire(): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.AVAILABLE) {
-            return TravelOfferExpireFailedEvent(
-                travelOfferId = _id,
-                message = "TravelOffer $_id cannot be expired when in $status status"
-            )
+        require(status == TravelOfferStatusEnum.AVAILABLE) {
+            "TravelOffer $_id cannot be expired when in $status status"
         }
 
         this.status = TravelOfferStatusEnum.EXPIRED
@@ -112,14 +95,11 @@ data class TravelOffer(
 
     fun reserve(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.AVAILABLE)
-            return TravelOfferReserveFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer is not open for reservation, current status is $status"
-            )
+        require(status == TravelOfferStatusEnum.AVAILABLE) {
+            "TravelOffer is not open for reservation, current status is $status"
+        }
 
         this.status = TravelOfferStatusEnum.RESERVED
         this.bookingId = bookingId
@@ -136,21 +116,15 @@ data class TravelOffer(
 
     fun book(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.RESERVED)
-            return TravelOfferBookFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer can not be booked if not RESERVED prior, current status is $status"
-            )
+        require(status == TravelOfferStatusEnum.RESERVED) {
+            "TravelOffer can not be booked if not RESERVED prior, current status is $status"
+        }
 
-        if (this.bookingId != bookingId)
-            return TravelOfferBookFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer $_id is not RESERVED by booking $bookingId"
-            )
+        require(this.bookingId == bookingId) {
+            "TravelOffer $_id is not RESERVED by booking $bookingId"
+        }
 
         this.status = TravelOfferStatusEnum.BOOKED
 
@@ -166,22 +140,14 @@ data class TravelOffer(
 
     fun cancelReservation(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.RESERVED) {
-            return TravelOfferReservationCancelFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "Cannot cancel reservation for TravelOffer $_id when in $status status"
-            )
+        require(status == TravelOfferStatusEnum.RESERVED) {
+            "Cannot cancel reservation for TravelOffer $_id when in $status status"
         }
 
-        if (this.bookingId != bookingId) {
-            return TravelOfferReservationCancelFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer $_id is not RESERVED by user $bookingId"
-            )
+        require(this.bookingId == bookingId) {
+            "TravelOffer $_id is not RESERVED by user $bookingId"
         }
 
         this.bookingId = null
@@ -199,22 +165,14 @@ data class TravelOffer(
 
     fun releaseBooking(
         bookingId: UUID,
-        seat: Seat,
+        seat: Seat?,
     ): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.BOOKED) {
-            return TravelOfferBookingCancelFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "Cannot cancel booking for TravelOffer $_id when in $status status"
-            )
+        require(status == TravelOfferStatusEnum.BOOKED) {
+            "Cannot cancel booking for TravelOffer $_id when in $status status"
         }
 
-        if (this.bookingId != bookingId) {
-            return TravelOfferBookingCancelFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer $_id is not BOOKED for Booking $bookingId"
-            )
+        require(this.bookingId == bookingId) {
+            "TravelOffer $_id is not BOOKED for Booking $bookingId"
         }
 
         this.status = TravelOfferStatusEnum.RELEASING
@@ -232,12 +190,8 @@ data class TravelOffer(
     fun rebook(
         bookingId: UUID,
     ): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.RELEASING) {
-            return TravelOfferRebookCompleteFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "Cannot rebook TravelOffer $_id when in $status status",
-            )
+        require(status == TravelOfferStatusEnum.RELEASING) {
+            "Cannot rebook TravelOffer $_id when in $status status"
         }
 
         this.status = TravelOfferStatusEnum.BOOKED
@@ -250,22 +204,14 @@ data class TravelOffer(
 
     fun cancelBooking(
         bookingId: UUID,
-        seat: Seat
+        seat: Seat?
     ): TravelOfferEvent {
-        if (status != TravelOfferStatusEnum.RELEASING) {
-            return TravelOfferReleaseCompleteFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "Cannot cancel Booking for TravelOffer $_id when in $status status"
-            )
+        require(status == TravelOfferStatusEnum.RELEASING) {
+            "Cannot cancel Booking for TravelOffer $_id when in $status status"
         }
 
-        if (this.bookingId != bookingId) {
-            return TravelOfferReleaseCompleteFailedEvent(
-                travelOfferId = _id,
-                bookingId = bookingId,
-                message = "TravelOffer $_id is not being released by Booking $bookingId"
-            )
+        require(this.bookingId == bookingId) {
+            "TravelOffer $_id is not being released by Booking $bookingId"
         }
 
         this.bookingId = null

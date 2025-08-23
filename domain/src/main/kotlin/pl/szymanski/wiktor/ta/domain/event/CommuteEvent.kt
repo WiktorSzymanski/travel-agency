@@ -4,8 +4,6 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-interface CommuteFailedEvent : CommuteEvent, FailedEvent
-
 data class CommuteBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -49,27 +47,3 @@ data class CommuteCreatedEvent(
     val arrival: LocationAndTime,
     val seats: List<Seat>,
 ) : CommuteEvent
-
-data class CommuteExpireFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val commuteId: UUID,
-    override val message: String,
-) : CommuteFailedEvent
-
-data class CommuteBookSeatFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val commuteId: UUID,
-    val bookingId: UUID,
-    val seat: Seat,
-    override val message: String,
-) : CommuteFailedEvent
-
-data class CommuteCancelBookedSeatFailedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
-    override val commuteId: UUID,
-    val bookingId: UUID,
-    override val message: String,
-) : CommuteFailedEvent

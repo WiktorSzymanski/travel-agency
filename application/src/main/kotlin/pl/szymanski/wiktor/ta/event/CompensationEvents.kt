@@ -14,7 +14,6 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import java.util.UUID
 
 data class AccommodationBookedCompensatedEvent(
@@ -69,7 +68,7 @@ data class TravelOfferBookedCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
 ) : TravelOfferEvent
 
 data class TravelOfferBookingCanceledCompensatedEvent(
@@ -80,7 +79,7 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
 ) : TravelOfferEvent
 
 fun AccommodationEvent.toCompensation(): AccommodationEvent =

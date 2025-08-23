@@ -12,7 +12,7 @@ data class BookCommuteCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-    val seat: Seat,
+    val seat: Seat?,
 ) : CommuteCommand
 
 data class CancelCommuteBookingCommand(

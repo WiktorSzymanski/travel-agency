@@ -1,6 +1,7 @@
 package pl.szymanski.wiktor.ta.saga
 
 import kotlinx.coroutines.coroutineScope
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
@@ -15,14 +16,12 @@ import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationFailedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.eventHandler.TravelOfferEventHandler
 import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
@@ -35,6 +34,10 @@ class BookingSaga(
     private val travelOfferStatusService: TravelOfferStatusService,
     private val triggeringEvent: TravelOfferReservedEvent,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(BookingSaga::class.java)
+    }
+
     private var accommodationCommand: AccommodationCommand = BookAccommodationCommand(
         triggeringEvent.accommodationId,
         triggeringEvent.correlationId!!,
@@ -108,10 +111,6 @@ class BookingSaga(
         }
 
         val cHEvent = cH.getOrNull()
-        if (cHEvent is CommuteFailedEvent) {
-            compensateTriggeringEvent(cHEvent.message)
-            return
-        }
 
         val acH = runCatching {
             withRetry(maxRetries) {
@@ -128,13 +127,6 @@ class BookingSaga(
         }
 
         val acHEvent = acH.getOrNull()
-        if (acHEvent is AccommodationFailedEvent) {
-            withRetry(maxRetries) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-            }
-            compensateTriggeringEvent(acHEvent.message)
-            return
-        }
 
         if (attractionCommand != null) {
             val atH = runCatching {
@@ -155,16 +147,6 @@ class BookingSaga(
             }
 
             val atHEvent = atH.getOrNull()
-            if (atHEvent is AttractionFailedEvent) {
-                withRetry(maxRetries) {
-                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
-                }
-                withRetry(maxRetries) {
-                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
-                }
-                compensateTriggeringEvent(atHEvent.message)
-                return
-            }
         }
 
         EventBus.publish(
@@ -192,12 +174,21 @@ class BookingSaga(
                 .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
             ) {
                 withRetry(maxRetries) {
-                    travelOfferCommandHandler.handle(
-                        MakeTravelOfferUnavailableCommand(
-                            triggeringEvent.travelOfferId,
-                            triggeringEvent.correlationId!!,
-                        ) as TravelOfferCommand,
-                    )
+                    val r = runCatching {
+                        travelOfferCommandHandler.handle(
+                            MakeTravelOfferUnavailableCommand(
+                                triggeringEvent.travelOfferId,
+                                triggeringEvent.correlationId!!,
+                            ) as TravelOfferCommand,
+                        )
+                    }
+
+                    if (r.isFailure) {
+                        val ex = r.exceptionOrNull()
+                        if (ex is IllegalArgumentException) {
+                            log.error("IN BOOKING MakeTravelOfferUnavailableCommand failed with: ${ex.message}")
+                        }
+                    }
                 }
             }
         }

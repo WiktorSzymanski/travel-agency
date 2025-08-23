@@ -25,7 +25,7 @@ fun Application.scheduler() {
 
     launch {
         DataGenerationScheduler.start()
-        delay(600000)
+        delay(600000 * 6)
         DataGenerationScheduler.stop()
     }
 
