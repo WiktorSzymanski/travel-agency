@@ -20,8 +20,12 @@ class BookingCommandHandler(
     private val bookingRepository: BookingRepository,
 ) {
     init {
-        CommandBus.registerHandler(FailBookingCommand::class.java) { command ->
-            this.handle(command)
+        CommandBus.registerHandler(FailBookingCommand::class.java) {
+            this.handle(it)
+        }
+
+        CommandBus.registerHandler(FailCancelBookingCommand::class.java) {
+            this.handle(it)
         }
     }
 
