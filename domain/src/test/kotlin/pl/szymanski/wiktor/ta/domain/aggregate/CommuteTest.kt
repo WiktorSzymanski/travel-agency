@@ -40,7 +40,7 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteBookedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat1,
             ),
@@ -57,10 +57,10 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteBookSeatFailedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat1,
-                message = "Seat cannot be booked when Commute ${commute._id} not in SCHEDULED status, current status is ${commute.status}",
+                message = "Seat cannot be booked when Commute ${commute.id} not in SCHEDULED status, current status is ${commute.status}",
             ),
             event,
         )
@@ -73,10 +73,10 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteBookSeatFailedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = bookingId,
                 seat = unknownSeat,
-                message = "Seat $unknownSeat not found in Commute ${commute._id}",
+                message = "Seat $unknownSeat not found in Commute ${commute.id}",
             ),
             event,
         )
@@ -90,10 +90,10 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteBookSeatFailedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = otherBookingId,
                 seat = seat1,
-                message = "Seat $seat1 already booked in Commute ${commute._id}",
+                message = "Seat $seat1 already booked in Commute ${commute.id}",
             ),
             event,
         )
@@ -106,7 +106,7 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteBookedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat1,
             ),
@@ -114,7 +114,7 @@ class CommuteTest {
         )
         assertEventEquals(
             CommuteBookingCanceledEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat1,
             ),
@@ -129,9 +129,9 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteCancelBookedSeatFailedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = bookingId,
-                message = "No seat assigned for booking $bookingId in Commute ${commute._id}",
+                message = "No seat assigned for booking $bookingId in Commute ${commute.id}",
             ),
             event,
         )
@@ -145,9 +145,9 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteCancelBookedSeatFailedEvent(
-                commuteId = commute._id,
+                commuteId = commute.id,
                 bookingId = otherUser,
-                message = "No seat assigned for booking $otherUser in Commute ${commute._id}",
+                message = "No seat assigned for booking $otherUser in Commute ${commute.id}",
             ),
             event,
         )
@@ -162,7 +162,7 @@ class CommuteTest {
             )
         val event = commute.expire()
 
-        assertEventEquals(CommuteExpiredEvent(commuteId = commute._id), event)
+        assertEventEquals(CommuteExpiredEvent(commuteId = commute.id), event)
         assertEquals(CommuteStatusEnum.EXPIRED, commute.status)
     }
 
@@ -173,8 +173,8 @@ class CommuteTest {
 
         assertEventEquals(
             CommuteExpireFailedEvent(
-                commuteId = commute._id,
-                message = "Commute ${commute._id} cannot expire before its departure time",
+                commuteId = commute.id,
+                message = "Commute ${commute.id} cannot expire before its departure time",
             ),
             event,
         )

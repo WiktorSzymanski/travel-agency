@@ -1,15 +1,16 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.query
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Updates
-import com.mongodb.kotlin.client.coroutine.MongoCollection
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.toList
-import org.bson.Document
-import org.bson.conversions.Bson
+import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.PartitionKey
+import com.azure.cosmos.models.SqlParameter
+import com.azure.cosmos.models.SqlQuerySpec
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.runBlocking
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProjectionProvider
 import pl.szymanski.wiktor.ta.queryRepository.AttractionCancelUpdate
 import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AttractionUpdate
@@ -18,120 +19,110 @@ import pl.szymanski.wiktor.ta.queryRepository.AttractionUpdateStatus
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 
-class AttractionQueryRepositoryImpl(
-    database: MongoDatabase,
-) : AttractionQueryRepository {
+class AttractionQueryRepositoryImpl() : AttractionQueryRepository {
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
     }
-    val maxRetries = 10
-    val initialDelayMs = 100L
-    val maxDelayMs = 10000L
-    val jitterFactor = 0.1
 
-    private val collection: MongoCollection<Attraction> = database.getCollection("attraction")
+    private val container = runBlocking { CosmosClientProjectionProvider.getAttractionContainer() }
 
-    override suspend fun save(entity: Attraction): Attraction? = collection.insertOne(entity).insertedId?.let { entity }
+    override suspend fun save(entity: Attraction): Attraction? =
+        try {
+            container.createItem(entity).map { entity }.awaitSingleOrNull()
+        } catch (ex: Exception) {
+            log.error("Error inserting attraction: $entity", ex)
+            null
+        }
 
-    override suspend fun findById(attractionId: UUID): Attraction = collection.find(Document("_id", attractionId)).firstOrNull() ?: throw NoSuchElementException()
+    override suspend fun findById(attractionId: UUID): Attraction {
+        val query = "SELECT * FROM c WHERE c.id = @id"
+        val params = listOf(SqlParameter("@id", attractionId.toString()))
+        val querySpec = SqlQuerySpec(query, params)
 
-    override suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction> = collection.find(Document("status", status.toString())).toList()
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Attraction::class.java)
+            .awaitSingle()
+            ?: throw NoSuchElementException("Attraction with id $attractionId not found")
+    }
+
+    override suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction> {
+        val query = "SELECT * FROM c WHERE c.status = @status"
+        val params = listOf(SqlParameter("@status", status.toString()))
+        val querySpec = SqlQuerySpec(query, params)
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Attraction::class.java)
+            .collectList()
+            .awaitSingle()
+    }
 
     override suspend fun update(entity: AttractionUpdate) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val update = Updates.combine(
-            Updates.addToSet("bookings", entity.bookingId),
-            Updates.set("lastRevision", entity.revision)
-        )
-
-        withRetry(
-            maxRetries = maxRetries,
-            initialDelayMs = initialDelayMs,
-            maxDelayMs = maxDelayMs,
-            jitterFactor = jitterFactor
-        ) {
-            if (collection.updateOne(filter, update).matchedCount == 0L) {
-                throw ConcurrentModificationException("Could not update ${entity}")
+            val updatedBookings = current.bookings.toMutableList().apply {
+                entity.bookingId?.let { if (!this.contains(it)) this.add(it) }
             }
+            val updated = current.copy(
+                bookings = updatedBookings,
+                lastRevision = entity.revision
+            )
+
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
         }
     }
 
     override suspend fun update(entity: AttractionUpdateRevision) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val update = Updates.combine(
-            Updates.addToSet("bookings", entity.bookingId),
-            Updates.set("lastRevision", entity.revision)
-        )
-
-        runCatching {
-            withRetry(
-                maxRetries = maxRetries,
-                initialDelayMs = initialDelayMs,
-                maxDelayMs = maxDelayMs,
-                jitterFactor = jitterFactor
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity}")
-                }
+            val updatedBookings = current.bookings.toMutableList().apply {
+                entity.bookingId?.let { if (!this.contains(it)) this.add(it) }
             }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            val updated = current.copy(
+                bookings = updatedBookings,
+                lastRevision = entity.revision
+            )
+
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun update(entity: AttractionCancelUpdate) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val update = Updates.combine(
-            Updates.pull("bookings", entity.bookingId),
-            Updates.set("lastRevision", entity.revision)
-        )
-
-        runCatching {
-        withRetry(
-            maxRetries = maxRetries,
-            initialDelayMs = initialDelayMs,
-            maxDelayMs = maxDelayMs,
-            jitterFactor = jitterFactor
-        ) {
-            if (collection.updateOne(filter, update).matchedCount == 0L) {
-                throw ConcurrentModificationException("Could not update ${entity}")
+            val updatedBookings = current.bookings.toMutableList().apply {
+                entity.bookingId?.let { this.remove(it) }
             }
+            val updated = current.copy(
+                bookings = updatedBookings,
+                lastRevision = entity.revision
+            )
+
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
         }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
     }
 
     override suspend fun update(entity: AttractionUpdateStatus) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val update = Updates.combine(
-            Updates.set("status", "${entity.status}"),
-            Updates.set("lastRevision", entity.revision)
-        )
+            val updated = current.copy(
+                status = entity.status!!,
+                lastRevision = entity.revision
+            )
 
-        runCatching {
-        withRetry(
-            maxRetries = maxRetries,
-            initialDelayMs = initialDelayMs,
-            maxDelayMs = maxDelayMs,
-            jitterFactor = jitterFactor
-        ) {
-            if (collection.updateOne(filter, update).matchedCount == 0L) {
-                throw ConcurrentModificationException("Could not update ${entity}")
-            }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
         }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
     }
 }

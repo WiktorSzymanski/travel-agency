@@ -30,40 +30,40 @@ class AccommodationCommandHandler(
                 .also { EventBus.publish(it.first, it.second) }.first
         }
 
-    suspend fun handle(command: BookAccommodationCommand): Pair<AccommodationEvent, Int> =
+    suspend fun handle(command: BookAccommodationCommand): Pair<AccommodationEvent, String> =
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
                 accommodation
                     .book(command.bookingId)
-                    .let { it to accommodation.lastRevision }
+                    .let { it to accommodation.lastEtag!! }
             }
 
-    suspend fun handle(command: CancelAccommodationBookingCommand): Pair<AccommodationEvent, Int> =
+    suspend fun handle(command: CancelAccommodationBookingCommand): Pair<AccommodationEvent, String> =
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
                 accommodation
                     .cancelBooking(command.bookingId)
-                    .let { it to accommodation.lastRevision }
+                    .let { it to accommodation.lastEtag!! }
             }
 
-    suspend fun handle(command: CreateAccommodationCommand): Pair<AccommodationEvent, Int> =
+    suspend fun handle(command: CreateAccommodationCommand): Pair<AccommodationEvent, String?> =
         Accommodation.create(
             command.name,
             command.location,
             command.rent,
         ).let { (accommodation, event) ->
-            event to accommodation.lastRevision
+            event to accommodation.lastEtag
         }
 
-    suspend fun handle(command: ExpireAccommodationCommand): Pair<AccommodationEvent, Int> =
+    suspend fun handle(command: ExpireAccommodationCommand): Pair<AccommodationEvent, String> =
         accommodationRepository
             .findById(command.accommodationId)
             .let { accommodation ->
                 accommodation
                     .expire()
-                    .let { it to accommodation.lastRevision }
+                    .let { it to accommodation.lastEtag!! }
             }
 
     suspend fun compensate(event: AccommodationEvent): AccommodationEvent =
@@ -80,21 +80,21 @@ class AccommodationCommandHandler(
         }
 
 
-    suspend fun compensate(event: AccommodationBookedEvent): Pair<AccommodationEvent, Int> =
+    suspend fun compensate(event: AccommodationBookedEvent): Pair<AccommodationEvent, String> =
         accommodationRepository
             .findById(event.accommodationId)
             .let { accommodation ->
                 accommodation
                     .compensateBook(event.bookingId)
-                    .let { it to accommodation.lastRevision }
+                    .let { it to accommodation.lastEtag!! }
             }
 
-    suspend fun compensate(event: AccommodationBookingCanceledEvent): Pair<AccommodationEvent, Int> =
+    suspend fun compensate(event: AccommodationBookingCanceledEvent): Pair<AccommodationEvent, String> =
         accommodationRepository
             .findById(event.accommodationId)
             .let { accommodation ->
                 accommodation
                     .compensateCancelBooking(event.bookingId)
-                    .let { it to accommodation.lastRevision }
+                    .let { it to accommodation.lastEtag!! }
             }
 }

@@ -7,6 +7,4 @@ import java.util.UUID
 
 interface AttractionRepository : Repository<Attraction> {
     suspend fun findById(attractionId: UUID): Attraction
-
-    override suspend fun save(event: Event)
 }

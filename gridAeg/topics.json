@@ -1,0 +1,45 @@
+{
+  "Topics": {
+    "domainTopic": [
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=ProjectionUpdateFunction",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AccommodationDateMetEventHandler",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AttractionDateMetEventHandler",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=CommuteDateMetEventHandler",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AccommodationExpiredEventHandler",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AttractionExpiredEventHandler",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=CommuteExpiredEventHandler",
+      "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=BookingCreatedEventHandler"
+    ]
+  },
+  "Filters": [
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AccommodationDateMetEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent" ]
+    },
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AttractionDateMetEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.event.AttractionDateMetEvent" ]
+    },
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=CommuteDateMetEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.event.CommuteDateMetEvent" ]
+    },
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AccommodationExpiredEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent" ]
+    },
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=AttractionExpiredEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent" ]
+    },
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=CommuteExpiredEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent" ]
+    },
+
+    {
+      "Subscription": "http://host.docker.internal:7071/runtime/webhooks/EventGrid?functionName=BookingCreatedEventHandler",
+      "IncludedEventTypes": [ "pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent" ]
+    }
+  ]
+}

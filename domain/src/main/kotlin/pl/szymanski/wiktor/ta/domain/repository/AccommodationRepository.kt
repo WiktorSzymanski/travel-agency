@@ -8,5 +8,5 @@ import java.util.UUID
 interface AccommodationRepository : Repository<Accommodation> {
     suspend fun findById(accommodationId: UUID): Accommodation
 
-    override suspend fun save(event: Event)
+//    override suspend fun save(event: Event)
 }

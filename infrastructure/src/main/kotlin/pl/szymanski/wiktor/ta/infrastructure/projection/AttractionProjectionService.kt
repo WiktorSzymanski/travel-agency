@@ -11,6 +11,7 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import pl.szymanski.wiktor.ta.event.AttractionBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.AttractionBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.queryRepository.AttractionCancelUpdate
 import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AttractionUpdate
@@ -20,19 +21,19 @@ import pl.szymanski.wiktor.ta.queryRepository.AttractionUpdateStatus
 class AttractionProjectionService(
     private val attractionQueryRepository: AttractionQueryRepository
 ) {
-    fun startProjection() {
-        ProjectionEventRepository().subscribe("attraction")
-            {
-                    event, i -> updateProjection(event as AttractionEvent, i)
-            }
-    }
+//    fun startProjection() {
+//        ProjectionEventRepository().subscribe("attraction")
+//            {
+//                    event, i -> updateProjection(event as AttractionEvent, i)
+//            }
+//    }
 
-    private suspend fun updateProjection(event: AttractionEvent, revision: Int) {
+    suspend fun updateProjection(event: AttractionEvent, revision: Int) {
         when (event) {
             is AttractionCreatedEvent -> {
                 attractionQueryRepository.save(
                     Attraction(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         name = event.name,
                         location = event.location,
                         date = event.date,
@@ -45,7 +46,7 @@ class AttractionProjectionService(
             is AttractionBookedEvent -> {
                 attractionQueryRepository.update(
                     AttractionUpdate(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
@@ -54,7 +55,7 @@ class AttractionProjectionService(
             is AttractionBookingCanceledEvent -> {
                 attractionQueryRepository.update(
                     AttractionCancelUpdate(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
@@ -63,7 +64,7 @@ class AttractionProjectionService(
             is AttractionExpiredEvent -> {
                 attractionQueryRepository.update(
                     AttractionUpdateStatus(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         status = AttractionStatusEnum.EXPIRED,
                         revision = revision
                     )
@@ -72,7 +73,7 @@ class AttractionProjectionService(
             is AttractionFullEvent -> {
                 attractionQueryRepository.update(
                     AttractionUpdateStatus(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         status = AttractionStatusEnum.FULL,
                         revision = revision
                     )
@@ -81,7 +82,7 @@ class AttractionProjectionService(
             is AttractionAvailableEvent -> {
                 attractionQueryRepository.update(
                     AttractionUpdateStatus(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         status = AttractionStatusEnum.SCHEDULED,
                         revision = revision
                     )
@@ -90,7 +91,7 @@ class AttractionProjectionService(
             is AttractionBookedCompensatedEvent -> {
                 attractionQueryRepository.update(
                     AttractionCancelUpdate(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
@@ -99,16 +100,17 @@ class AttractionProjectionService(
             is AttractionBookingCanceledCompensatedEvent -> {
                 attractionQueryRepository.update(
                     AttractionUpdate(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
                 )
             }
+            is AttractionDateMetEvent -> {}
             else -> {
                 attractionQueryRepository.update(
                     AttractionUpdateRevision(
-                        _id = event.attractionId,
+                        id = event.attractionId,
                         revision = revision,
                         event = event
                     )

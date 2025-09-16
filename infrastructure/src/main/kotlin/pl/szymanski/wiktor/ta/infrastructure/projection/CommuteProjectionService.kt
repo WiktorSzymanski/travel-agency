@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.projection
 
+import com.microsoft.azure.functions.ExecutionContext
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
@@ -11,6 +12,7 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
 import pl.szymanski.wiktor.ta.queryRepository.CommuteCancelUpdate
 import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdate
@@ -23,18 +25,18 @@ class CommuteProjectionService(
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
     }
-    fun startProjection() {
-        ProjectionEventRepository().subscribe("commute") {
-            event, i -> updateProjection(event as CommuteEvent, i)
-        }
-    }
+//    fun startProjection() {
+//        ProjectionEventRepository().subscribe("commute") {
+//            event, i -> updateProjection(event as CommuteEvent, i)
+//        }
+//    }
 
-    private suspend fun updateProjection(event: CommuteEvent, revision: Int) {
+    suspend fun updateProjection(event: CommuteEvent, revision: Int, context: ExecutionContext) {
         when (event) {
             is CommuteCreatedEvent -> {
                 commuteQueryRepository.save(
                     Commute(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         name = event.name,
                         departure = event.departure,
                         arrival = event.arrival,
@@ -47,7 +49,7 @@ class CommuteProjectionService(
             is CommuteBookedEvent -> {
                 commuteQueryRepository.update(
                     CommuteUpdate(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
@@ -56,7 +58,7 @@ class CommuteProjectionService(
             is CommuteBookingCanceledEvent -> {
                 commuteQueryRepository.update(
                     CommuteCancelUpdate(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
@@ -65,7 +67,7 @@ class CommuteProjectionService(
             is CommuteExpiredEvent -> {
                 commuteQueryRepository.update(
                     CommuteUpdateStatus(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         status = CommuteStatusEnum.EXPIRED,
                         revision = revision
                     )
@@ -74,7 +76,7 @@ class CommuteProjectionService(
             is CommuteFullEvent -> {
                 commuteQueryRepository.update(
                     CommuteUpdateStatus(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         status = CommuteStatusEnum.FULL,
                         revision = revision
                     )
@@ -83,7 +85,7 @@ class CommuteProjectionService(
             is CommuteAvailableEvent -> {
                 commuteQueryRepository.update(
                     CommuteUpdateStatus(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         status = CommuteStatusEnum.SCHEDULED,
                         revision = revision
                     )
@@ -92,7 +94,7 @@ class CommuteProjectionService(
             is CommuteBookedCompensatedEvent -> {
                 commuteQueryRepository.update(
                     CommuteCancelUpdate(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
@@ -101,16 +103,17 @@ class CommuteProjectionService(
             is CommuteBookingCanceledCompensatedEvent -> {
                 commuteQueryRepository.update(
                     CommuteUpdate(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         bookingId = event.bookingId,
                         revision = revision
                     )
                 )
             }
+            is CommuteDateMetEvent -> {}
             else -> {
                 commuteQueryRepository.update(
                     CommuteUpdateRevision(
-                        _id = event.commuteId,
+                        id = event.commuteId,
                         revision = revision,
                         event = event
                     )

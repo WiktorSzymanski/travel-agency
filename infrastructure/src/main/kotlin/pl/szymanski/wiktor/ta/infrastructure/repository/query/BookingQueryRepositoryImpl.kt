@@ -24,80 +24,81 @@ class BookingQueryRepositoryImpl(
         size: Int,
         userId: UUID
     ): List<TravelOfferDto> {
-        val matchStage = Aggregates.match(
-            Filters.and(
-                Filters.eq("status", "SUCCEEDED"),
-                Filters.eq("userId", userId),
-            )
-        )
-
-        val paginationSkip = Aggregates.skip((page - 1) * size)
-        val paginationLimit = Aggregates.limit(size)
-
-        val travelOfferLookup = Aggregates.lookup(
-            "travelOffer",
-            "travelOfferId",
-            "_id",
-            "travelOffer"
-        )
-
-        val replaceRootStage = Aggregates.replaceRoot(
-            Document("\$arrayElemAt", listOf("\$travelOffer", 0))
-        )
-
-        val accommodationLookup =
-            Aggregates.lookup(
-                "accommodation",
-                "accommodationId",
-                "_id",
-                "accommodation",
-            )
-
-        val attractionLookup =
-            Aggregates.lookup(
-                "attraction",
-                "attractionId",
-                "_id",
-                "attraction",
-            )
-
-        val commuteLookup =
-            Aggregates.lookup(
-                "commute",
-                "commuteId",
-                "_id",
-                "commute",
-            )
-
-        val projection =
-            Aggregates.project(
-                Projections.fields(
-                    Projections.include("_id", "name", "booking", "status"),
-                    Projections.computed("accommodation", Document("\$arrayElemAt", listOf("\$accommodation", 0))),
-                    Projections.computed("attraction", Document("\$arrayElemAt", listOf("\$attraction", 0))),
-                    Projections.computed("commute", Document("\$arrayElemAt", listOf("\$commute", 0))),
-                ),
-            )
-
-
-        val pipeline = listOf(
-            matchStage,
-            paginationSkip,
-            paginationLimit,
-            travelOfferLookup,
-            replaceRootStage,
-            accommodationLookup,
-            attractionLookup,
-            commuteLookup,
-            projection,
-        )
-
-        return collection.aggregate<Document>(pipeline)
-            .toList()
-            .map { it.toTravelOfferDto() }
+//        val matchStage = Aggregates.match(
+//            Filters.and(
+//                Filters.eq("status", "SUCCEEDED"),
+//                Filters.eq("userId", userId),
+//            )
+//        )
+//
+//        val paginationSkip = Aggregates.skip((page - 1) * size)
+//        val paginationLimit = Aggregates.limit(size)
+//
+//        val travelOfferLookup = Aggregates.lookup(
+//            "travelOffer",
+//            "travelOfferId",
+//            "id",
+//            "travelOffer"
+//        )
+//
+//        val replaceRootStage = Aggregates.replaceRoot(
+//            Document("\$arrayElemAt", listOf("\$travelOffer", 0))
+//        )
+//
+//        val accommodationLookup =
+//            Aggregates.lookup(
+//                "accommodation",
+//                "accommodationId",
+//                "id",
+//                "accommodation",
+//            )
+//
+//        val attractionLookup =
+//            Aggregates.lookup(
+//                "attraction",
+//                "attractionId",
+//                "id",
+//                "attraction",
+//            )
+//
+//        val commuteLookup =
+//            Aggregates.lookup(
+//                "commute",
+//                "commuteId",
+//                "id",
+//                "commute",
+//            )
+//
+//        val projection =
+//            Aggregates.project(
+//                Projections.fields(
+//                    Projections.include("id", "name", "booking", "status"),
+//                    Projections.computed("accommodation", Document("\$arrayElemAt", listOf("\$accommodation", 0))),
+//                    Projections.computed("attraction", Document("\$arrayElemAt", listOf("\$attraction", 0))),
+//                    Projections.computed("commute", Document("\$arrayElemAt", listOf("\$commute", 0))),
+//                ),
+//            )
+//
+//
+//        val pipeline = listOf(
+//            matchStage,
+//            paginationSkip,
+//            paginationLimit,
+//            travelOfferLookup,
+//            replaceRootStage,
+//            accommodationLookup,
+//            attractionLookup,
+//            commuteLookup,
+//            projection,
+//        )
+//
+//        return collection.aggregate<Document>(pipeline)
+//            .toList()
+//            .map { it.toTravelOfferDto() }
+        throw Exception("Not yet implemented")
     }
 
-    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("_id", bookingId)).firstOrNull() ?: throw NoSuchElementException()
+    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("id", bookingId)).firstOrNull() ?: throw NoSuchElementException()
 
     override suspend fun findByUserId(
         page: Int,

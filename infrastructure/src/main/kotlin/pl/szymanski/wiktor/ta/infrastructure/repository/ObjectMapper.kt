@@ -17,6 +17,14 @@ object EventJsonSerializer {
     fun toBytes(event: Any): ByteArray =
         mapper.writeValueAsBytes(event)
 
+    fun toJSON(event: Any): String =
+        mapper.writeValueAsString(event)
+
     fun <T> fromBytes(bytes: ByteArray, clazz: Class<T>): T =
         mapper.readValue(bytes, clazz)
+
+    fun <T> fromJSON(json: Any, clazz: Class<T>): T = when (json) {
+        is String -> mapper.treeToValue(mapper.readTree(json), clazz)
+        else -> mapper.readValue(mapper.writeValueAsString(json), clazz)
+    }
 }

@@ -1,5 +1,7 @@
 package pl.szymanski.wiktor.ta.infrastructure.generator
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
@@ -22,7 +24,7 @@ class GeneratorCHPair<T, U>(
     private val handler: Any,
 ) where U : Any {
     suspend fun process() =
-        coroutineScope {
+        CoroutineScope(Dispatchers.Default).launch {
             generator.generate().forEach { command ->
                 launch {
                     when (handler) {

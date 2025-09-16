@@ -1,0 +1,27 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "Logging__LogLevel__Default": "Information",
+        "EventGridTopicUri": "http://localhost:6500/domainTopic/api/events",
+        "EventGridTopicKey": "fakeAccessKey",
+        "FUNCTIONS_WORKER_JAVA_LOAD_APP_LIBS": "true",
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "java",
+        "CosmosDBDatabaseName": "TestEventStore",
+        "CosmosDBContainerName": "TestEventStore",
+        "CosmosDBEndpoint": "https://localhost:8081",
+        "CosmosDBKey": "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
+        "CosmosConnectionString": "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
+        "AzureWebJobsEventGridOutputBindingTopicUriString": "",
+        "AzureWebJobsEventGridOutputBindingTopicKeyString": "",
+        "AzureWebJobsEventHubSender": "",
+        "AzureWebJobsEventHubSender_2": "",
+        "BrokerList": "",
+        "ConfluentCloudUsername": "",
+        "ConfluentCloudPassword": "",
+        "AzureWebJobsServiceBus": "",
+        "SBTopicName": "",
+        "SBTopicSubName": "",
+        "SBQueueName": ""
+    }
+}

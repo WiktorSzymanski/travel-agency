@@ -9,6 +9,7 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.event.AccommodationBookingCanceledCompensatedEvent
+import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdate
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateRevision
@@ -17,18 +18,18 @@ import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateStatus
 class AccommodationProjectionService(
     private val accommodationQueryRepository: AccommodationQueryRepository
 ) {
-    fun startProjection() {
-        ProjectionEventRepository().subscribe("accommodation") {
-            event, i -> updateProjection(event as AccommodationEvent, i)
-        }
-    }
+//    fun startProjection() {
+//        ProjectionEventRepository().subscribe("accommodation") {
+//            event, i -> updateProjection(event as AccommodationEvent, i)
+//        }
+//    }
 
-    private suspend fun updateProjection(event: AccommodationEvent, revision: Int) {
+    suspend fun updateProjection(event: AccommodationEvent, revision: Int) {
         when (event) {
             is AccommodationCreatedEvent -> {
                 accommodationQueryRepository.save(
                     Accommodation(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         name = event.name,
                         location = event.location,
                         rent = event.rent,
@@ -40,7 +41,7 @@ class AccommodationProjectionService(
             is AccommodationBookedEvent -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdate(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         status = AccommodationStatusEnum.BOOKED,
                         bookingId = event.bookingId,
                         revision = revision
@@ -50,7 +51,7 @@ class AccommodationProjectionService(
             is AccommodationBookingCanceledEvent -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdate(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         status = AccommodationStatusEnum.AVAILABLE,
                         bookingId = null,
                         revision = revision
@@ -60,7 +61,7 @@ class AccommodationProjectionService(
             is AccommodationExpiredEvent -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdateStatus(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         status = AccommodationStatusEnum.EXPIRED,
                         revision = revision
                     )
@@ -69,7 +70,7 @@ class AccommodationProjectionService(
             is AccommodationBookedCompensatedEvent -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdate(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         status = AccommodationStatusEnum.AVAILABLE,
                         bookingId = null,
                         revision = revision
@@ -79,17 +80,18 @@ class AccommodationProjectionService(
             is AccommodationBookingCanceledCompensatedEvent -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdate(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         status = AccommodationStatusEnum.BOOKED,
                         bookingId = event.bookingId,
                         revision = revision
                     )
                 )
             }
+            is AccommodationDateMetEvent -> {}
             else -> {
                 accommodationQueryRepository.update(
                     AccommodationUpdateRevision(
-                        _id = event.accommodationId,
+                        id = event.accommodationId,
                         revision = revision,
                         event = event
                     )

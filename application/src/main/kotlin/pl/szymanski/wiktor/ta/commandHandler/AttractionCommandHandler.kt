@@ -28,46 +28,64 @@ class AttractionCommandHandler(
                 is ExpireAttractionCommand -> handle(command)
             }.map {
                 it.first.correlationId = command.correlationId
-                EventBus.publish(it.first, it.second)
                 it
-            }.let { it[0].first }
+            }.let {
+                EventBus.publish(it[0].first, it[0].second)
+                if (it.size > 1) EventBus.ignoreRevisionPublish(it[1].first)
+                it[0].first
+            }
         }
 
-    private suspend fun handle(command: BookAttractionCommand): List<Pair<AttractionEvent, Int>> =
+    private suspend fun handle(command: BookAttractionCommand): List<Pair<AttractionEvent, String?>> =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
                 attraction
                     .book(command.bookingId)
-                    .mapIndexed { index, event -> event to attraction.lastRevision + index }
+                    .let { lst ->
+                        listOfNotNull(
+                            lst[0] to attraction.lastEtag,
+                            takeIf { lst.size > 1 }?.let { lst[1] to null}
+                        )
+                    } as List<Pair<AttractionEvent, String?>>
             }
 
-    private suspend fun handle(command: CancelAttractionBookingCommand): List<Pair<AttractionEvent, Int>> =
+    private suspend fun handle(command: CancelAttractionBookingCommand): List<Pair<AttractionEvent, String?>> =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
                 attraction
                     .cancelBooking(command.bookingId)
-                    .mapIndexed { index, event -> event to attraction.lastRevision + index }
+                    .let { lst ->
+                        listOfNotNull(
+                            lst[0] to attraction.lastEtag,
+                            takeIf { lst.size > 1 }?.let { lst[1] to null}
+                        )
+                    } as List<Pair<AttractionEvent, String?>>
             }
 
-    private suspend fun handle(command: CreateAttractionCommand): List<Pair<AttractionEvent, Int>> =
+    private suspend fun handle(command: CreateAttractionCommand): List<Pair<AttractionEvent, String?>> =
         Attraction.create(
             command.name,
             command.location,
             command.date,
             command.capacity,
         ).let { (attraction, event) ->
-            listOf(event[0] to attraction.lastRevision)
+            listOf(event[0] to attraction.lastEtag)
         }
 
-    private suspend fun handle(command: ExpireAttractionCommand): List<Pair<AttractionEvent, Int>> =
+    private suspend fun handle(command: ExpireAttractionCommand): List<Pair<AttractionEvent, String?>> =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
                 attraction
                     .expire()
-                    .mapIndexed { index, event -> event to attraction.lastRevision + index }
+                    .let { lst ->
+                        listOfNotNull(
+                            lst[0] to attraction.lastEtag,
+                            takeIf { lst.size > 1 }?.let { lst[1] to null}
+                        )
+                    } as List<Pair<AttractionEvent, String?>>
             }
 
     suspend fun compensate(event: AttractionEvent): AttractionEvent =
@@ -81,26 +99,39 @@ class AttractionCommandHandler(
                 it
             }.map {
                 it.first.correlationId = event.correlationId
-                EventBus.publish(it.first, it.second)
                 it
-            }.let { it[0].first }
+            }.let {
+                EventBus.publish(it[0].first, it[0].second!!)
+                if (it.size > 1) EventBus.ignoreRevisionPublish(it[1].first)
+                it[0].first
+            }
         }
 
-    private suspend fun compensate(event: AttractionBookedEvent): List<Pair<AttractionEvent, Int>> =
+    private suspend fun compensate(event: AttractionBookedEvent): List<Pair<AttractionEvent, String?>> =
         attractionRepository
             .findById(event.attractionId)
             .let { attraction ->
                 attraction
                     .compensateBook(event.bookingId)
-                    .mapIndexed { index, event -> event to attraction.lastRevision + index }
+                    .let { lst ->
+                        listOfNotNull(
+                            lst[0] to attraction.lastEtag,
+                            takeIf { lst.size > 1 }?.let { lst[1] to null}
+                        )
+                    } as List<Pair<AttractionEvent, String?>>
             }
 
-    private suspend fun compensate(event: AttractionBookingCanceledEvent): List<Pair<AttractionEvent, Int>> =
+    private suspend fun compensate(event: AttractionBookingCanceledEvent): List<Pair<AttractionEvent, String?>> =
         attractionRepository
             .findById(event.attractionId)
             .let { attraction ->
                 attraction
                     .compensateCancelBooking(event.bookingId)
-                    .mapIndexed { index, event -> event to attraction.lastRevision + index }
+                    .let { lst ->
+                        listOfNotNull(
+                            lst[0] to attraction.lastEtag,
+                            takeIf { lst.size > 1 }?.let { lst[1] to null}
+                        )
+                    } as List<Pair<AttractionEvent, String?>>
             }
 }

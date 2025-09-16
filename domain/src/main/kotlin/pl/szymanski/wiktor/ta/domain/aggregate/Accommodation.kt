@@ -12,39 +12,46 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Accommodation(
-    val _id: UUID = UUID.randomUUID(),
+    val id: UUID = UUID.randomUUID(),
     val name: String,
     val location: LocationEnum,
     val rent: Rent,
     var bookingId: UUID? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
     val lastRevision: Int = -1,
+    val lastEtag : String? = null
 ) {
-    fun apply(event: AccommodationEvent, revision: Int): Accommodation {
+    fun apply(event: AccommodationEvent, revision: Int, etag: String): Accommodation {
         return when (event) {
             is AccommodationCreatedEvent -> this.copy(
-                _id = event.accommodationId,
+                id = event.accommodationId,
                 name = event.name,
                 location = event.location,
                 rent = event.rent,
                 status = AccommodationStatusEnum.AVAILABLE,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
             is AccommodationBookedEvent -> this.copy(
                 status = AccommodationStatusEnum.BOOKED,
                 bookingId = event.bookingId,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
             is AccommodationBookingCanceledEvent -> this.copy(
                 status = AccommodationStatusEnum.AVAILABLE,
                 bookingId = null,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
             is AccommodationExpiredEvent -> this.copy(
                 status = AccommodationStatusEnum.EXPIRED,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
-            else -> this.copy(lastRevision = revision)
+            else -> this.copy(
+                lastRevision = revision,
+                lastEtag = etag)
         }
     }
     companion object {
@@ -62,7 +69,7 @@ data class Accommodation(
 
             val event =
                 AccommodationCreatedEvent(
-                    accommodationId = accommodation._id,
+                    accommodationId = accommodation.id,
                     name = name,
                     location = location,
                     rent = rent,
@@ -71,7 +78,7 @@ data class Accommodation(
             return accommodation to event
         }
         
-        fun fromEvents(events: List<Pair<AccommodationEvent, Int>>): Accommodation? {
+        fun fromEvents(events: List<Triple<AccommodationEvent, Int, String>>): Accommodation? {
             if (events.isEmpty()) return null
 
             val (createdEvent, _) = events.first()
@@ -79,14 +86,14 @@ data class Accommodation(
             require(createdEvent is AccommodationCreatedEvent) { "First event must be AccommodationCreatedEvent" }
 
             var accommodation = Accommodation(
-                _id = createdEvent.accommodationId,
+                id = createdEvent.accommodationId,
                 name = createdEvent.name,
                 location = createdEvent.location,
                 rent = createdEvent.rent,
             )
 
-            for ((event, revision) in events) {
-                accommodation = accommodation.apply(event, revision)
+            for ((event, revision, etag) in events) {
+                accommodation = accommodation.apply(event, revision, etag)
             }
             
             return accommodation
@@ -95,31 +102,31 @@ data class Accommodation(
 
     fun expire(): AccommodationEvent {
         require(status == AccommodationStatusEnum.AVAILABLE) {
-            "Accommodation $_id cannot expire in status $status"
+            "Accommodation $id cannot expire in status $status"
         }
 
         require(!LocalDateTime.now().isBefore(rent.from)) {
-            "Accommodation $_id cannot be expired before its rent start"
+            "Accommodation $id cannot be expired before its rent start"
         }
 
         this.status = AccommodationStatusEnum.EXPIRED
 
         return AccommodationExpiredEvent(
-            accommodationId = _id,
+            accommodationId = id,
         )
     }
 
     fun book(bookingId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.AVAILABLE) {
-            "Accommodation $_id cannot be booked when in status $status"
+            "Accommodation $id cannot be booked when in status $status"
         }
 
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
 
         return AccommodationBookedEvent(
-            accommodationId = _id,
+            accommodationId = id,
             bookingId = bookingId,
         )
     }
@@ -127,18 +134,18 @@ data class Accommodation(
     fun cancelBooking(bookingId: UUID): AccommodationEvent {
         statusCheck()
         require(this.status == AccommodationStatusEnum.BOOKED) {
-            "Accommodation $_id booking cannot be canceled when in status $status"
+            "Accommodation $id booking cannot be canceled when in status $status"
         }
 
         require(this.bookingId == bookingId) {
-            "Accommodation $_id is not BOOKED by bookingId $bookingId"
+            "Accommodation $id is not BOOKED by bookingId $bookingId"
         }
 
         this.bookingId = null
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return AccommodationBookingCanceledEvent(
-            accommodationId = _id,
+            accommodationId = id,
             bookingId = bookingId,
         )
     }
@@ -152,28 +159,28 @@ data class Accommodation(
 
     fun compensateBook(bookingId: UUID): AccommodationEvent {
         require(this.bookingId == bookingId) {
-            "Accommodation $_id is not BOOKED by bookingId $bookingId"
+            "Accommodation $id is not BOOKED by bookingId $bookingId"
         }
 
         this.bookingId = null
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return AccommodationBookingCanceledEvent(
-            accommodationId = _id,
+            accommodationId = id,
             bookingId = bookingId,
         )
     }
 
     fun compensateCancelBooking(bookingId: UUID): AccommodationEvent {
         require(this.bookingId == null) {
-            "Accommodation $_id is already booked"
+            "Accommodation $id is already booked"
         }
 
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
 
         return AccommodationBookedEvent(
-            accommodationId = _id,
+            accommodationId = id,
             bookingId = bookingId,
         )
     }

@@ -9,6 +9,4 @@ import java.util.UUID
 
 interface TravelOfferRepository {
     suspend fun findById(travelOfferId: UUID): TravelOffer
-
-    suspend fun save(event: TravelOfferEvent)
 }

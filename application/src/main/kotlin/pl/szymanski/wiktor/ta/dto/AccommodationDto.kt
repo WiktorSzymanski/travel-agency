@@ -2,7 +2,6 @@ package pl.szymanski.wiktor.ta.dto
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import java.util.UUID
 
 @Serializable
 data class AccommodationDto(
@@ -16,7 +15,7 @@ data class AccommodationDto(
     companion object {
         fun fromDomain(accommodation: Accommodation) =
             AccommodationDto(
-                id = accommodation._id.toString(),
+                id = accommodation.id.toString(),
                 name = accommodation.name,
                 location = accommodation.location.name,
                 rent = RentDto.fromDomain(accommodation.rent),

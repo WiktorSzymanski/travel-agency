@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
 fun Application.application() {
     MongoDbProvider.init(property<DatabaseConfig>("database"))
     KurrentDbProvider.init(property<KurrentDbConfig>("kurrentDatabase"))
-    EventBus.init(EventRepositoryImpl())
+//    EventBus.init(EventRepositoryImpl())
 
     val travelOfferRepository = TravelOfferRepositoryImpl(MongoDbProvider.database)
     val accommodationRepository = AccommodationRepositoryImpl(MongoDbProvider.database)

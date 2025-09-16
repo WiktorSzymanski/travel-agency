@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.projection
 
-import io.kurrent.dbclient.KurrentDBClient
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
@@ -28,18 +27,18 @@ class TravelOfferProjectionService(
         private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
     }
 
-    fun startProjection() {
-        ProjectionEventRepository().subscribe("travelOffer") {
-            event, i -> updateProjection(event as TravelOfferEvent, i)
-        }
-    }
+//    fun startProjection() {
+//        ProjectionEventRepository().subscribe("travelOffer") {
+//            event, i -> updateProjection(event as TravelOfferEvent, i)
+//        }
+//    }
 
-    private suspend fun updateProjection(event: TravelOfferEvent, revision: Int) {
+    suspend fun updateProjection(event: TravelOfferEvent, revision: Int) {
         when (event) {
             is TravelOfferCreatedEvent -> {
                 travelOfferQueryRepository.save(
                     TravelOffer(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         name = event.name,
                         commuteId = event.commuteId,
                         accommodationId = event.accommodationId,
@@ -53,7 +52,7 @@ class TravelOfferProjectionService(
             is TravelOfferReservedEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.RESERVED,
                         bookingId = event.bookingId,
                         lastRevision = revision
@@ -63,7 +62,7 @@ class TravelOfferProjectionService(
             is TravelOfferReservationCanceledEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.AVAILABLE,
                         bookingId = null,
                         lastRevision = revision
@@ -73,7 +72,7 @@ class TravelOfferProjectionService(
             is TravelOfferBookedEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.BOOKED,
                         bookingId = event.bookingId,
                         lastRevision = revision
@@ -83,7 +82,7 @@ class TravelOfferProjectionService(
             is TravelOfferReleaseEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdateStatus(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.RELEASING,
                         lastRevision = revision
                     ), event
@@ -92,7 +91,7 @@ class TravelOfferProjectionService(
             is TravelOfferBookingCanceledEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.AVAILABLE,
                         bookingId = null,
                         lastRevision = revision
@@ -102,7 +101,7 @@ class TravelOfferProjectionService(
             is TravelOfferRebookedEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.BOOKED,
                         bookingId = event.bookingId,
                         lastRevision = revision
@@ -112,7 +111,7 @@ class TravelOfferProjectionService(
             is TravelOfferExpiredEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdateStatus(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.EXPIRED,
                         lastRevision = revision
                     ), event
@@ -121,7 +120,7 @@ class TravelOfferProjectionService(
             is TravelOfferMadeUnavailableEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdateStatus(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.UNAVAILABLE,
                         lastRevision = revision
                     ), event
@@ -130,7 +129,7 @@ class TravelOfferProjectionService(
             is TravelOfferMadeAvailableEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdateStatus(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.AVAILABLE,
                         lastRevision = revision
                     ), event
@@ -139,7 +138,7 @@ class TravelOfferProjectionService(
             is TravelOfferBookedCompensatedEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.AVAILABLE,
                         bookingId = null,
                         lastRevision = revision
@@ -149,7 +148,7 @@ class TravelOfferProjectionService(
             is TravelOfferBookingCanceledCompensatedEvent -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdate(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         status = TravelOfferStatusEnum.BOOKED,
                         bookingId = event.bookingId,
                         lastRevision = revision
@@ -159,7 +158,7 @@ class TravelOfferProjectionService(
             else -> {
                 travelOfferQueryRepository.update(
                     TravelOfferUpdateRevision(
-                        _id = event.travelOfferId,
+                        id = event.travelOfferId,
                         lastRevision = revision,
                         event = event
                     ), event)

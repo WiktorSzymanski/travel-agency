@@ -18,13 +18,9 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.timeMet
 import java.util.UUID
 import java.time.Duration
@@ -144,14 +140,14 @@ class OfferMaker(
             travelOfferId = UUID.randomUUID(),
             correlationId = UUID.randomUUID(),
             name = "${commute.name} ${accommodation.name}${attraction?.name?.let { " $it" } ?: ""}",
-            commuteId = commute._id,
-            accommodationId = accommodation._id,
-            attractionId = attraction?._id,
+            commuteId = commute.id,
+            accommodationId = accommodation.id,
+            attractionId = attraction?.id,
         )
     }
 
     private fun Triple<Commute, Accommodation, Attraction?>.toIds(): Triple<UUID, UUID, UUID?> {
         val (commute, accommodation, attraction) = this
-        return Triple(commute._id, accommodation._id, attraction?._id)
+        return Triple(commute.id, accommodation.id, attraction?.id)
     }
 }

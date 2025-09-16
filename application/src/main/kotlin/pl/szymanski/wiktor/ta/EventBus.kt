@@ -19,9 +19,12 @@ object EventBus {
         this.repository = repository
     }
 
-    suspend fun publish(event: Event, revision: Int) {
+    suspend fun publish(event: Event, etag: String?) {
 //        log.info("Publishing event: {}", event)
-        repository.save(event, revision)
+        if (etag == null)
+            ignoreRevisionPublish(event)
+        else
+            repository.save(event, etag)
     }
 
     suspend fun ignoreRevisionPublish(event: Event) {

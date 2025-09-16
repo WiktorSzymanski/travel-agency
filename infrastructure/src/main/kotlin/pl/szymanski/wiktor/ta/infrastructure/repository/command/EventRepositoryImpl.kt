@@ -1,21 +1,11 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
-import io.grpc.Status
-import io.grpc.StatusRuntimeException
-import io.kurrent.dbclient.AppendToStreamOptions
-import io.kurrent.dbclient.EventData
-import io.kurrent.dbclient.KurrentDBClient
-import io.kurrent.dbclient.ResolvedEvent
-import io.kurrent.dbclient.StreamState
-import io.kurrent.dbclient.SubscribeToAllOptions
-import io.kurrent.dbclient.Subscription
-import io.kurrent.dbclient.SubscriptionFilter
-import io.kurrent.dbclient.SubscriptionListener
-import io.kurrent.dbclient.WrongExpectedVersionException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.await
-import kotlinx.coroutines.launch
+import com.azure.cosmos.CosmosAsyncContainer
+import com.azure.cosmos.models.CosmosItemRequestOptions
+import com.azure.cosmos.models.PartitionKey
+import io.kurrent.dbclient.*
+import kotlinx.coroutines.reactive.awaitSingle
+import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
@@ -25,63 +15,52 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import pl.szymanski.wiktor.ta.event.SagaEvent
 import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
-import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
-import io.kurrent.dbclient.*
-import org.slf4j.LoggerFactory
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.PersistedEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
+import java.time.LocalDateTime
 
-class EventRepositoryImpl : EventRepository {
+class EventRepositoryImpl(
+    private val container: CosmosAsyncContainer
+) : EventRepository {
     companion object {
         private val log = LoggerFactory.getLogger(TravelOfferExpireService::class.java)
     }
 
-    val map = mutableMapOf<String, Long>()
+    override suspend fun save(event: Event, etag: String) {
+        val stream = getStreamName(event)
 
-    private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
+        val persistedEvent = PersistedEvent(
+            id = event.eventId,
+            stream = stream,
+            type = event::class.java.name,
+            correlationid = event.correlationId!!,
+            timestamp = LocalDateTime.now().toString(),
+            revision = -1,
+            domainevent = EventJsonSerializer.toJSON(event),
+        )
 
-    override suspend fun save(event: Event, revision: Int) {
-        val options = when (revision) {
-            -1 -> AppendToStreamOptions.get().streamState(StreamState.noStream())
-            else -> AppendToStreamOptions.get().streamRevision(revision.toLong())
-        }
-
-        val streamName = getStreamName(event)
-        val eventData = prepareEventData(event)
-
-        try {
-            retryOnUnavailable {
-                runCatching{ kurrentClient.appendToStream(streamName, options, eventData).await() }
-                    .onFailure {
-                        if (it is WrongExpectedVersionException) throw ConcurrentModificationException("event - ${event}\nrevision - ${revision}\nmessage - ${it.message}")
-                        else throw it
-                    }
-            }
-        } catch (e: StatusRuntimeException) {
-            if (e.status.code == Status.Code.DEADLINE_EXCEEDED) {
-                log.error("Call failed with ${e.status.code} for stream $streamName")
-            }
-            throw e
-        }
+        container.createItem(
+            persistedEvent,
+            PartitionKey(stream),
+            CosmosItemRequestOptions().setIfMatchETag(etag)
+        ).awaitSingle()
     }
 
     override suspend fun noRevisionSave(event: Event) {
-        val streamName = getStreamName(event)
-        val eventData = prepareEventData(event)
+        val stream = getStreamName(event)
 
-        retryOnUnavailable {
-            kurrentClient.appendToStream(streamName, eventData).await()
-        }
-    }
-
-    fun prepareEventData(event: Event): EventData {
-        val serializedEvent = EventJsonSerializer.toBytes(event)
-        val serializedMetadata = EventJsonSerializer.toBytes(mapOf("\$correlationId" to event.correlationId))
-
-        val eventData = EventData.builderAsJson(event.eventId, event::class.java.name, serializedEvent)
-            .metadataAsBytes(serializedMetadata)
-            .build()
-
-        return eventData
+        val persistedEvent = PersistedEvent(
+            id = event.eventId,
+            stream = stream,
+            type = event::class.java.name,
+            correlationid = event.correlationId!!,
+            timestamp = LocalDateTime.now().toString(),
+            revision = -2,
+            domainevent = EventJsonSerializer.toJSON(event),
+        )
+        container
+            .createItem(persistedEvent)
+            .awaitSingle()
     }
 
     fun getStreamName(event: Event): String = when (event) {
@@ -98,38 +77,7 @@ class EventRepositoryImpl : EventRepository {
         eventClass: Class<Event>,
         positionPair: Pair<Long, Long>,
         doOnEvent: suspend (Event) -> Unit
-    ) {
-        var checkpoint = positionPair.toPosition()
-
-        val filter = SubscriptionFilter.newBuilder()
-            .addEventTypePrefix(eventClass.simpleName)
-            .build()
-
-        val subscriptionOptions = SubscribeToAllOptions.get()
-            .filter(filter)
-            .fromPosition(checkpoint)
-            .resolveLinkTos()
-
-        val listener = object : SubscriptionListener() {
-            override fun onEvent(subscription: Subscription, resolvedEvent: ResolvedEvent) {
-                CoroutineScope(Dispatchers.Default).launch {
-                    val event = EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass)
-                    doOnEvent(event)
-                    checkpoint = resolvedEvent.originalEvent.position
-                }
-            }
-
-            override fun onCancelled(subscription: Subscription, exception: Throwable) {
-                CoroutineScope(Dispatchers.Default).launch {
-                    log.warn("Subscription for ${eventClass.simpleName} stream dropped: ${exception.message}")
-                    subscribe(eventClass, checkpoint.toPair(), doOnEvent)
-                }
-            }
-        }
-
-        log.info("Subscribing to ${eventClass.simpleName} stream from position: $checkpoint")
-        kurrentClient.subscribeToAll(listener, subscriptionOptions)
-    }
+    ) {}
 
     fun Pair<Long, Long>.toPosition() = Position(first, second)
 

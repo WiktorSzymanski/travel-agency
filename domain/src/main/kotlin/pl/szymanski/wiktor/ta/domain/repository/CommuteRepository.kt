@@ -7,6 +7,4 @@ import java.util.UUID
 
 interface CommuteRepository : Repository<Commute> {
     suspend fun findById(commuteId: UUID): Commute
-
-    override suspend fun save(event: Event)
 }

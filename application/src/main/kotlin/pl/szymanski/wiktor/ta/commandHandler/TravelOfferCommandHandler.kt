@@ -45,26 +45,26 @@ class TravelOfferCommandHandler(
                 is MakeTravelOfferAvailableCommand -> handle(command)
                 is MakeTravelOfferUnavailableCommand -> handle(command)
             }.apply { first?.correlationId = command.correlationId }
-                .also { if (it.first != null) EventBus.publish(it.first!!, it.second!!) }.first
+                .also { if (it.first != null) EventBus.publish(it.first!!, it.second) }.first
         }
-    private suspend fun handle(command: CreateTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: CreateTravelOfferCommand): Pair<TravelOfferEvent, String?> =
         TravelOffer.create(
             command.name,
             command.commuteId,
             command.accommodationId,
             command.attractionId,
         ).let { (travelOffer, event) ->
-            event to travelOffer.lastRevision
+            event to travelOffer.lastEtag
         }
 
-    private suspend fun handle(command: BookTravelOfferCommand): Pair<TravelOfferEvent?, Int?> =
+    private suspend fun handle(command: BookTravelOfferCommand): Pair<TravelOfferEvent?, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 runCatching {
                     travelOffer
                         .book(command.bookingId, command.seat)
-                        .let { it to travelOffer.lastRevision }
+                        .let { it to travelOffer.lastEtag!! }
                 }.onFailure {
                     CommandBus.dispatch(
                         FailBookingCommand(
@@ -76,14 +76,14 @@ class TravelOfferCommandHandler(
                 }.getOrThrow()
             }
 
-    private suspend fun handle(command: CancelBookTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: CancelBookTravelOfferCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 runCatching {
                     travelOffer
                         .cancelBooking(command.bookingId, command.seat)
-                        .let { it to travelOffer.lastRevision }
+                        .let { it to travelOffer.lastEtag!! }
                 }.onFailure {
                     CommandBus.dispatch(
                         FailCancelBookingCommand(
@@ -95,14 +95,14 @@ class TravelOfferCommandHandler(
                 }.getOrThrow()
             }
 
-    private suspend fun handle(command: ReleaseTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: ReleaseTravelOfferCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 runCatching {
                     travelOffer
                         .releaseBooking(command.bookingId, command.seat)
-                        .let { it to travelOffer.lastRevision }
+                        .let { it to travelOffer.lastEtag!! }
                 }.onFailure {
                     CommandBus.dispatch(
                         FailCancelBookingCommand(
@@ -114,50 +114,50 @@ class TravelOfferCommandHandler(
                 }.getOrThrow()
             }
 
-    private suspend fun handle(command: RebookTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: RebookTravelOfferCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
                     .rebook(command.bookingId)
-                    .let { it to travelOffer.lastRevision }
+                    .let { it to travelOffer.lastEtag!! }
             }
 
-    private suspend fun handle(command: ExpireTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: ExpireTravelOfferCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
                     .expire()
-                    .let { it to travelOffer.lastRevision }
+                    .let { it to travelOffer.lastEtag!! }
             }
 
-    private suspend fun handle(command: MakeTravelOfferUnavailableCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: MakeTravelOfferUnavailableCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
                     .makeUnavailable()
-                    .let { it to travelOffer.lastRevision }
+                    .let { it to travelOffer.lastEtag!! }
             }
 
-    private suspend fun handle(command: MakeTravelOfferAvailableCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: MakeTravelOfferAvailableCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
                     .makeAvailable()
-                    .let { it to travelOffer.lastRevision }
+                    .let { it to travelOffer.lastEtag!! }
             }
 
-    private suspend fun handle(command: ReserveTravelOfferCommand): Pair<TravelOfferEvent?, Int?> =
+    private suspend fun handle(command: ReserveTravelOfferCommand): Pair<TravelOfferEvent?, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 runCatching {
                     travelOffer
                         .reserve(command.bookingId, command.seat)
-                        .let { it to travelOffer.lastRevision }
+                        .let { it to travelOffer.lastEtag!! }
                 }.onFailure {
                     CommandBus.dispatch(
                         FailBookingCommand(
@@ -169,13 +169,13 @@ class TravelOfferCommandHandler(
                 }.getOrThrow()
             }
 
-    private suspend fun handle(command: CancelReserveTravelOfferCommand): Pair<TravelOfferEvent, Int> =
+    private suspend fun handle(command: CancelReserveTravelOfferCommand): Pair<TravelOfferEvent, String> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let { travelOffer ->
                 travelOffer
                     .cancelReservation(command.bookingId, command.seat)
-                    .let { it to travelOffer.lastRevision }
+                    .let { it to travelOffer.lastEtag!! }
             }
 
     suspend fun compensate(event: TravelOfferEvent): TravelOfferEvent? =
@@ -191,10 +191,10 @@ class TravelOfferCommandHandler(
                 it.first?.correlationId = event.correlationId
                 it.first?.toCompensation()
                 it
-            }.also { if (it.first != null) EventBus.publish(it.first!!, it.second!!) }.first
+            }.also { if (it.first != null) EventBus.publish(it.first!!, it.second) }.first
         }
 
-    private suspend fun compensate(event: TravelOfferReleaseEvent): Pair<TravelOfferEvent, Int> =
+    private suspend fun compensate(event: TravelOfferReleaseEvent): Pair<TravelOfferEvent, String> =
         handle(
             RebookTravelOfferCommand(
                 event.travelOfferId,
@@ -203,7 +203,7 @@ class TravelOfferCommandHandler(
             )
         )
 
-    private suspend fun compensate(event: TravelOfferBookedEvent): Pair<TravelOfferEvent, Int> =
+    private suspend fun compensate(event: TravelOfferBookedEvent): Pair<TravelOfferEvent, String> =
         handle(
             CancelBookTravelOfferCommand(
                 event.travelOfferId,
@@ -213,7 +213,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): Pair<TravelOfferEvent?, Int?> =
+    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): Pair<TravelOfferEvent?, String> =
         handle(
             BookTravelOfferCommand(
                 event.travelOfferId,
@@ -223,7 +223,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferReservedEvent): Pair<TravelOfferEvent, Int> =
+    private suspend fun compensate(event: TravelOfferReservedEvent): Pair<TravelOfferEvent, String> =
         handle(
             CancelReserveTravelOfferCommand(
                 event.travelOfferId,
@@ -233,7 +233,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferReservationCanceledEvent): Pair<TravelOfferEvent?, Int?> =
+    private suspend fun compensate(event: TravelOfferReservationCanceledEvent): Pair<TravelOfferEvent?, String> =
         handle(
             ReserveTravelOfferCommand(
                 event.travelOfferId,

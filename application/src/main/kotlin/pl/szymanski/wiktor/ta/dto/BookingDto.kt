@@ -17,7 +17,7 @@ data class BookingDto(
     companion object {
         fun fromDomain(booking: Booking) =
             BookingDto(
-                id = booking._id.toString(),
+                id = booking.id.toString(),
                 userId = booking.userId.toString(),
                 travelOfferId = booking.travelOfferId.toString(),
                 seat = booking.seat,

@@ -1,88 +1,78 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import io.grpc.Status
-import io.grpc.StatusRuntimeException
-import io.kurrent.dbclient.EventData
-import io.kurrent.dbclient.KurrentDBClient
-import io.kurrent.dbclient.ReadStreamOptions
-import kotlinx.coroutines.future.await
+import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.PartitionKey
+import com.azure.cosmos.models.SqlQuerySpec
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.runBlocking
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
+import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
-import pl.szymanski.wiktor.ta.infrastructure.repository.KurrentDbProvider
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProvider
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.PersistedEvent
 import java.util.*
 
-// Projection model for Commute queries
-data class CommuteProjection(
-    val _id: UUID,
-    val status: CommuteStatusEnum
-)
-
-// Event store model for storing events
-data class CommuteEventRecord(
-    val _id: UUID,
-    val aggregateId: UUID,
-    val eventType: String,
-    val eventData: String,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
-class CommuteRepositoryImpl(
-    database: MongoDatabase,
-) : CommuteRepository {
+class CommuteRepositoryImpl() : CommuteRepository {
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
     }
-    private val kurrentClient: KurrentDBClient = KurrentDbProvider.client
+    private val container = runBlocking { CosmosClientProvider.getContainer() }
 
     override suspend fun findById(commuteId: UUID): Commute {
         val streamName = "commute-$commuteId"
+        val query = "SELECT * FROM c"
+        val options = CosmosQueryRequestOptions().apply { partitionKey = PartitionKey(streamName) }
 
-        val options = ReadStreamOptions.get()
-            .forwards()
-            .fromStart()
+        val querySpec = SqlQuerySpec(query)
 
-        try {
-            val readResult = retryOnUnavailable {
-                kurrentClient.readStream(streamName, options).await()
-            }
+        val readResult = container.queryItems(querySpec, options, PersistedEvent::class.java)
+            .collectList()
+            .awaitSingle()
 
-            val events: List<Pair<CommuteEvent, Int>> = readResult.events.map { resolvedEvent ->
-                val eventTypeName = resolvedEvent.event.eventType
-                val eventClass: Class<*> = Class.forName(eventTypeName)
+        val events: List<Triple<CommuteEvent, Int, String>> = readResult.map { persistedEvent ->
+            val eventTypeName = persistedEvent.type
+            val eventClass: Class<*> = Class.forName(eventTypeName)
 
-                (EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()) as Pair<CommuteEvent, Int>
-            }
-
-            return Commute.fromEvents(events)
-                ?: throw NoSuchElementException("Commute with ID $commuteId not found")
-        } catch (e: StatusRuntimeException) {
-            if (e.status.code == Status.Code.DEADLINE_EXCEEDED) {
-                log.error("Call failed with ${e.status.code} for stream $streamName")
-            }
-            throw e
+            Triple(
+                EventJsonSerializer.fromJSON(persistedEvent.domainevent, eventClass),
+                persistedEvent.revision.toInt(),
+                persistedEvent.etag) as Triple<CommuteEvent, Int, String>
         }
+
+        return Commute.fromEvents(events)
+            ?: throw NoSuchElementException("Commute with ID $commuteId not found")
     }
-
-    override suspend fun save(event: Event) {
-        if (event !is CommuteEvent) {
-            throw IllegalArgumentException("Event must be a CommuteEvent")
-        }
-        
-        try {
-            val streamName = "commute-${event.commuteId}"
-            val serializedEvent = EventJsonSerializer.toBytes(event)
-            val eventData = EventData.builderAsJson(event::class.simpleName, serializedEvent).build()
-            retryOnUnavailable {
-                kurrentClient.appendToStream(streamName, eventData)
-            }
-        } catch (e: Exception) {
-            println("Failed to save event to KurrentDb: ${e.message}")
-            throw e
-        }
-    }
+//    override suspend fun findById(commuteId: UUID): Commute {
+//        val streamName = "commute-$commuteId"
+//
+//        val options = ReadStreamOptions.get()
+//            .forwards()
+//            .fromStart()
+//
+//        try {
+//            val readResult = retryOnUnavailable {
+//                kurrentClient.readStream(streamName, options).await()
+//            }
+//
+//            val events: List<Pair<CommuteEvent, Int>> = readResult.events.map { resolvedEvent ->
+//                val eventTypeName = resolvedEvent.event.eventType
+//                val eventClass: Class<*> = Class.forName(eventTypeName)
+//
+//                (EventJsonSerializer.fromBytes(resolvedEvent.event.eventData, eventClass) to resolvedEvent.event.revision.toInt()) as Pair<CommuteEvent, Int>
+//            }
+//
+//            return Commute.fromEvents(events)
+//                ?: throw NoSuchElementException("Commute with ID $commuteId not found")
+//        } catch (e: StatusRuntimeException) {
+//            if (e.status.code == Status.Code.DEADLINE_EXCEEDED) {
+//                log.error("Call failed with ${e.status.code} for stream $streamName")
+//            }
+//            throw e
+//        }
+//        throw UnsupportedOperationException("Not yet implemented")
+//    }
 }

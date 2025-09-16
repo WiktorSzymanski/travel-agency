@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Booking(
-    val _id: UUID = UUID.randomUUID(),
+    val id: UUID = UUID.randomUUID(),
     val userId: UUID,
     val travelOfferId: UUID,
     val seat: Seat?,
@@ -37,7 +37,7 @@ data class Booking(
             )
 
             val event = BookingCreatedEvent(
-                bookingId = booking._id,
+                bookingId = booking.id,
                 travelOfferId = travelOfferId,
                 userId = userId,
                 seat = seat,
@@ -55,7 +55,7 @@ data class Booking(
 
         this.status = BookingState.PROCESSING
         return ProcessBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
@@ -66,7 +66,7 @@ data class Booking(
 
         this.status = BookingState.SUCCEEDED
         return CompleteBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
@@ -78,7 +78,7 @@ data class Booking(
         this.status = BookingState.CANCEL_REQUESTED
 
         return BookingCancelRequestedEvent(
-            bookingId = _id,
+            bookingId = id,
             travelOfferId = travelOfferId,
             seat = seat
         )
@@ -91,7 +91,7 @@ data class Booking(
 
         this.status = BookingState.CANCELED
         return CancelBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
@@ -103,7 +103,7 @@ data class Booking(
         this.status = BookingState.PROCESSING_CANCELLATION
 
         return ProcessCancelBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
@@ -116,7 +116,7 @@ data class Booking(
         this.message = message
 
         return FailBookingEvent(
-            bookingId = _id,
+            bookingId = id,
             message = message
         )
     }
@@ -130,7 +130,7 @@ data class Booking(
         this.message = message
 
         return FailCancelBookingEvent(
-            bookingId = _id,
+            bookingId = id,
             message = message
         )
     }

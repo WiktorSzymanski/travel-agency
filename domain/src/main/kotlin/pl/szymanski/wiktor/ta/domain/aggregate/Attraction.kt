@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
@@ -13,7 +14,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Attraction(
-    val _id: UUID = UUID.randomUUID(),
+    val id: UUID = UUID.randomUUID(),
     val name: String,
     val location: LocationEnum,
     val date: LocalDateTime,
@@ -21,48 +22,57 @@ data class Attraction(
     val bookings: MutableList<UUID> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
     val lastRevision: Int = -1,
+    val lastEtag : String? = null
 ) {
-    fun apply(event: AttractionEvent, revision: Int): Attraction {
+    fun apply(event: AttractionEvent, revision: Int, etag: String): Attraction {
         return when (event) {
             is AttractionCreatedEvent -> this.copy(
-                _id = event.attractionId,
+                id = event.attractionId,
                 name = event.name,
                 location = event.location,
                 date = event.date,
                 capacity = event.capacity,
                 status = AttractionStatusEnum.SCHEDULED,
                 bookings = mutableListOf(),
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
             is AttractionBookedEvent -> {
                 val newBookings = this.bookings.toMutableList()
                 newBookings.add(event.bookingId)
                 this.copy(
                     bookings = newBookings,
-                    lastRevision = revision
+                    lastRevision = revision,
+                    lastEtag = etag
                 )
             }
             is AttractionFullEvent -> this.copy(
                 status = AttractionStatusEnum.FULL,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
             is AttractionAvailableEvent -> this.copy(
                 status = AttractionStatusEnum.SCHEDULED,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
             is AttractionBookingCanceledEvent -> {
                 val newBookings = this.bookings.toMutableList()
                 newBookings.removeIf { it == event.bookingId }
                 this.copy(
                     bookings = newBookings,
-                    lastRevision = revision
+                    lastRevision = revision,
+                    lastEtag = etag
                 )
             }
             is AttractionExpiredEvent -> this.copy(
                 status = AttractionStatusEnum.EXPIRED,
-                lastRevision = revision
+                lastRevision = revision,
+                lastEtag = etag
             )
-            else -> this.copy(lastRevision = revision)
+            else -> this.copy(
+                lastRevision = revision,
+                lastEtag = etag)
         }
     }
     companion object {
@@ -82,7 +92,7 @@ data class Attraction(
 
             val event =
                 AttractionCreatedEvent(
-                    attractionId = attraction._id,
+                    attractionId = attraction.id,
                     name = name,
                     location = location,
                     date = date,
@@ -92,7 +102,7 @@ data class Attraction(
             return attraction to listOf(event)
         }
         
-        fun fromEvents(events: List<Pair<AttractionEvent, Int>>): Attraction? {
+        fun fromEvents(events: List<Triple<AttractionEvent, Int, String>>): Attraction? {
             if (events.isEmpty()) return null
 
             val (createdEvent, _) = events.first()
@@ -100,15 +110,15 @@ data class Attraction(
             require(createdEvent is AttractionCreatedEvent) { "First event must be AttractionCreatedEvent" }
 
             var attraction = Attraction(
-                _id = createdEvent.attractionId,
+                id = createdEvent.attractionId,
                 name = createdEvent.name,
                 location = createdEvent.location,
                 date = createdEvent.date,
                 capacity = createdEvent.capacity,
             )
 
-            for ((event, revision) in events) {
-                attraction = attraction.apply(event, revision)
+            for ((event, revision, etag) in events) {
+                attraction = attraction.apply(event, revision, etag)
             }
             
             return attraction
@@ -119,14 +129,14 @@ data class Attraction(
 
     fun expire(): List<AttractionEvent> {
         require(!LocalDateTime.now().isBefore(date)) {
-            "Attraction $_id cannot expire before its date"
+            "Attraction $id cannot expire before its date"
         }
 
         this.status = AttractionStatusEnum.EXPIRED
 
         return listOf(
             AttractionExpiredEvent(
-                attractionId = _id,
+                attractionId = id,
             )
         )
     }
@@ -135,28 +145,28 @@ data class Attraction(
         statusCheck()
 
         require(status == AttractionStatusEnum.SCHEDULED) {
-            "Attraction $_id is not open for booking, current status is $status"
+            "Attraction $id is not open for booking, current status is $status"
         }
 
         require(bookings.none { it == bookingId }) {
-            "Booking $bookingId already signed for Attraction $_id"
+            "Booking $bookingId already signed for Attraction $id"
         }
 
         // just in case
         require(bookings.size < capacity) {
-            "Attraction $_id is fully booked"
+            "Attraction $id is fully booked"
         }
 
         bookings.add(bookingId)
 
         return listOfNotNull(
             AttractionBookedEvent(
-                attractionId = _id,
+                attractionId = id,
                 bookingId = bookingId,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionFullEvent(
-                    attractionId = _id,
+                    attractionId = id,
                 )
             }
         )
@@ -166,23 +176,23 @@ data class Attraction(
         statusCheck()
 
         require(listOf(AttractionStatusEnum.SCHEDULED, AttractionStatusEnum.FULL).contains(this.status)) {
-            "Cannot cancel booking for Attraction $_id not in SCHEDULED or FULL status"
+            "Cannot cancel booking for Attraction $id not in SCHEDULED or FULL status"
         }
 
         val removed = bookings.removeIf { it == bookingId }
 
         require(removed) {
-            "Booking $bookingId was not signed for Attraction $_id"
+            "Booking $bookingId was not signed for Attraction $id"
         }
 
         return listOfNotNull(
             AttractionBookingCanceledEvent(
-                attractionId = _id,
+                attractionId = id,
                 bookingId = bookingId,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionAvailableEvent(
-                    attractionId = _id,
+                    attractionId = id,
                 )
             }
         )
@@ -215,17 +225,17 @@ data class Attraction(
         val removed = bookings.removeIf { it == bookingId }
 
         require(removed) {
-            "Booking $bookingId was not signed for Attraction $_id"
+            "Booking $bookingId was not signed for Attraction $id"
         }
 
         return listOfNotNull(
             AttractionBookingCanceledEvent(
-                attractionId = _id,
+                attractionId = id,
                 bookingId = bookingId,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionAvailableEvent(
-                    attractionId = _id,
+                    attractionId = id,
                 )
             }
         )
@@ -233,24 +243,24 @@ data class Attraction(
 
     fun compensateCancelBooking(bookingId: UUID): List<AttractionEvent> {
         require(bookings.none { it == bookingId }) {
-            "Booking $bookingId already signed for Attraction $_id"
+            "Booking $bookingId already signed for Attraction $id"
         }
 
         // just in case
         require(bookings.size < capacity) {
-            "Attraction $_id is fully booked"
+            "Attraction $id is fully booked"
         }
 
         bookings.add(bookingId)
 
         return listOfNotNull(
             AttractionBookedEvent(
-                attractionId = _id,
+                attractionId = id,
                 bookingId = bookingId,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionFullEvent(
-                    attractionId = _id,
+                    attractionId = id,
                 )
             }
         )

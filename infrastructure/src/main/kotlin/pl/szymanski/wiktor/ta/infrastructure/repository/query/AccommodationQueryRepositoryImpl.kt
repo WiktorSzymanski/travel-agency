@@ -1,123 +1,110 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.query
 
-import com.mongodb.client.model.Aggregates
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Projections
-import com.mongodb.client.model.Updates
-import com.mongodb.kotlin.client.coroutine.MongoCollection
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.toList
+import com.azure.cosmos.CosmosAsyncContainer
+import com.azure.cosmos.models.PartitionKey
+import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.SqlParameter
+import com.azure.cosmos.models.SqlQuerySpec
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.runBlocking
 import org.bson.Document
-import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProjectionProvider
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdate
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateRevision
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationUpdateStatus
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 
-class AccommodationQueryRepositoryImpl(
-    database: MongoDatabase,
-) : AccommodationQueryRepository {
+class AccommodationQueryRepositoryImpl() : AccommodationQueryRepository {
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
     }
-    val maxRetries = 10
-    val initialDelayMs = 100L
-    val maxDelayMs = 10000L
-    val jitterFactor = 0.1
+    private val container = runBlocking { CosmosClientProjectionProvider.getAccommodationContainer() }
 
-    private val collection: MongoCollection<Accommodation> = database.getCollection("accommodation")
+    override suspend fun save(entity: Accommodation): Accommodation? =
+        try {
+            container.createItem(entity).map { entity }.awaitSingleOrNull()
+        } catch (ex: Exception) {
+            log.error("Error inserting accommodation: $entity", ex)
+            null
+        }
 
-    override suspend fun save(entity: Accommodation): Accommodation? = collection.insertOne(entity).insertedId?.let { entity }
+    override suspend fun findById(accommodationId: UUID): Accommodation {
+        val query = "SELECT * FROM c WHERE c.id = @id"
+        val params = listOf(SqlParameter("@id", accommodationId.toString()))
+        val querySpec = SqlQuerySpec(query, params)
 
-    override suspend fun findById(accommodationId: UUID): Accommodation = collection.find(Document("_id", accommodationId)).firstOrNull() ?: throw NoSuchElementException()
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Accommodation::class.java)
+            .awaitSingle()
+            ?: throw NoSuchElementException("Accommodation with id $accommodationId not found")
+    }
 
-    override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> = collection.find(Document("status", status.toString())).toList()
+    override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> {
+        val query = "SELECT * FROM c WHERE c.status = @status"
+        val options = CosmosQueryRequestOptions()
+        val params = listOf(
+            SqlParameter("@status", status.toString())
+        )
+
+        val querySpec = SqlQuerySpec(query, params)
+        return container.queryItems(querySpec, options, Accommodation::class.java)
+            .collectList()
+            .awaitSingle()
+    }
 
     override suspend fun update(entity: AccommodationUpdate) {
-        val filter =
-            Filters.and(
-                Filters.eq("_id", entity._id),
-                Filters.eq("lastRevision", entity.revision - 1),
-            )
-        val update =
-            Updates.combine(
-                Updates.set("bookingId", entity.bookingId),
-                Updates.set("status", "${entity.status}"),
-                Updates.set("lastRevision", entity.revision),
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+
+            val updated = current.copy(
+                bookingId = entity.bookingId,
+                status = entity.status!!,
+                lastRevision = entity.revision
             )
 
-        runCatching {
-            withRetry(
-                maxRetries = maxRetries,
-                initialDelayMs = initialDelayMs,
-                maxDelayMs = maxDelayMs,
-                jitterFactor = jitterFactor
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity}")
-                }
-            }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun update(entity: AccommodationUpdateRevision) {
-        val filter =
-            Filters.and(
-                Filters.eq("_id", entity._id),
-                Filters.eq("lastRevision", entity.revision - 1),
-            )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val update =
-            Updates.combine(
-                Updates.set("lastRevision", entity.revision),
-            )
+            val updated = current.copy(lastRevision = entity.revision)
 
-        runCatching {
-            withRetry(
-                maxRetries = maxRetries,
-                initialDelayMs = initialDelayMs,
-                maxDelayMs = maxDelayMs,
-                jitterFactor = jitterFactor
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity}")
-                }
-            }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun update(entity: AccommodationUpdateStatus) {
-        val filter =
-            Filters.and(
-                Filters.eq("_id", entity._id),
-                Filters.eq("lastRevision", entity.revision - 1),
-            )
-        val update =
-            Updates.combine(
-                Updates.set("status", "${entity.status}"),
-                Updates.set("lastRevision", entity.revision),
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+
+            val updated = current.copy(
+                status = entity.status!!,
+                lastRevision = entity.revision
             )
 
-        runCatching {
-        withRetry(
-            maxRetries = maxRetries,
-            initialDelayMs = initialDelayMs,
-            maxDelayMs = maxDelayMs,
-            jitterFactor = jitterFactor
-        ) {
-            if (collection.updateOne(filter, update).matchedCount == 0L) {
-                throw ConcurrentModificationException("Could not update ${entity}")
-            }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
         }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
     }
 
     override suspend fun findTravelOfferByLocation(
@@ -126,146 +113,43 @@ class AccommodationQueryRepositoryImpl(
         location: LocationEnum,
         status: TravelOfferStatusEnum?,
     ): List<TravelOfferDto> {
-        val accommodationStatus = status?.let { AccommodationStatusEnum.valueOf(status.toString()) }
-
-        val entryFiltersMatch =
-            Aggregates.match(
-                Filters.and(
-                    listOfNotNull(
-                        Filters.eq("location", location),
-                        accommodationStatus?.let { Filters.eq("status", accommodationStatus) },
-                    ),
-                ),
-            )
-
-        val paginationSkip = Aggregates.skip((page - 1) * size)
-        val paginationLimit = Aggregates.limit(size)
-
-        val travelOfferLookup =
-            Aggregates.lookup(
-                "travelOffer",
-                "_id",
-                "accommodationId",
-                "travelOffer",
-            )
-
-        val travelOfferUnwind = Aggregates.unwind("\$travelOffer")
-
-        val travelOfferStatusCheck =
-            status?.let {
-                Aggregates.match(
-                    Filters.eq("travelOffer.status", status),
-                )
-            }
-
-        val attractionLookup =
-            Aggregates.lookup(
-                "attraction",
-                "travelOffer.attractionId",
-                "_id",
-                "attraction",
-            )
-
-        val commuteLookup =
-            Aggregates.lookup(
-                "commute",
-                "travelOffer.commuteId",
-                "_id",
-                "commute",
-            )
-
-        val projection =
-            Aggregates.project(
-                Projections.fields(
-                    Projections.computed("_id", "\$travelOffer._id"),
-                    Projections.computed("name", "\$travelOffer.name"),
-                    Projections.computed("status", "\$travelOffer.status"),
-                    Projections.computed("booking", "\$travelOffer.booking"),
-                    Projections
-                        .computed(
-                            "commute",
-                            Document("\$arrayElemAt", listOf("\$commute", 0)),
-                        ),
-                    Projections.computed(
-                        "accommodation",
-                        Document().append("_id", "\$_id")
-                            .append("name", "\$name")
-                            .append("location", "\$location")
-                            .append("rent", "\$rent")
-                            .append("status", "\$status")
-                            .append("booking", "\$booking"),
-                    ),
-                    Projections
-                        .computed(
-                            "attraction",
-                            Document("\$arrayElemAt", listOf("\$attraction", 0)),
-                        ),
-                ),
-            )
-
-        val pipeline =
-            listOfNotNull(
-                entryFiltersMatch,
-                paginationSkip,
-                paginationLimit,
-                travelOfferLookup,
-                travelOfferUnwind,
-                travelOfferStatusCheck.takeIf { it != null },
-                attractionLookup,
-                commuteLookup,
-                projection,
-            )
-
-        return collection.aggregate<Document>(pipeline).toList().map { it.toTravelOfferDto() }
+//        val baseQuery = buildString {
+//            append("SELECT * FROM c WHERE c.location = @location")
+//            status?.let { append(" AND c.status = @status") }
+//            append(" OFFSET @skip LIMIT @limit")
+//        }
+//
+//        val params = listOf(
+//            SqlParameter("@location", location.toString()),
+//            SqlParameter("@skip", ((page - 1) * size)),
+//            SqlParameter("@limit", size),
+//            takeIf { status != null }?.let { SqlParameter("@status", status) }
+//        )
+//
+//        val querySpec = SqlQuerySpec(baseQuery, params)
+//
+//        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Document::class.java)
+//            .collectList()
+//            .awaitSingle()
+//            .map { it.toTravelOfferDto() }
+        throw Exception("Not yet implemented")
     }
 
-    override suspend fun countTravelOfferByLocation(
-        location: LocationEnum,
-        status: TravelOfferStatusEnum?,
-    ): Int {
-        val accommodationStatus = status?.let { AccommodationStatusEnum.valueOf(status.toString()) }
+    override suspend fun countTravelOfferByLocation(location: LocationEnum, status: TravelOfferStatusEnum?): Int {
+        val baseQuery = buildString {
+            append("SELECT VALUE COUNT(1) FROM c WHERE c.location = @location")
+            status?.let { append(" AND c.status = @status") }
+        }
+        val params = listOf(
+            SqlParameter("@location", location.toString()),
+            takeIf { status != null }?.let { SqlParameter("@status", status) }
+        )
 
-        val entryFiltersMatch =
-            Aggregates.match(
-                Filters.and(
-                    listOfNotNull(
-                        Filters.eq("location", location),
-                        accommodationStatus?.let { Filters.eq("status", accommodationStatus) },
-                    ),
-                ),
-            )
+        val querySpec = SqlQuerySpec(baseQuery, params)
+        val result = container.queryItems(querySpec, CosmosQueryRequestOptions(), Int::class.javaObjectType)
+            .collectList()
+            .awaitSingle()
 
-        val travelOfferLookup =
-            Aggregates.lookup(
-                "travelOffer",
-                "_id",
-                "accommodationId",
-                "travelOffer",
-            )
-
-        val travelOfferUnwind = Aggregates.unwind("$" + "travelOffer")
-
-        val travelOfferStatusCheck =
-            status?.let {
-                Aggregates.match(
-                    Filters.eq("travelOffer.status", status),
-                )
-            }
-
-        val countStage = Aggregates.count("count")
-
-        val pipeline =
-            listOfNotNull(
-                entryFiltersMatch,
-                travelOfferLookup,
-                travelOfferUnwind,
-                travelOfferStatusCheck.takeIf { it != null },
-                countStage,
-            )
-
-        val result = collection.aggregate<Document>(pipeline).firstOrNull()
-        return result?.getInteger("count") ?: 0
+        return result.firstOrNull() ?: 0
     }
 }
-
-

@@ -1,149 +1,126 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.query
 
-import com.mongodb.client.model.Accumulators
-import com.mongodb.client.model.Aggregates
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Projections
-import com.mongodb.client.model.Sorts
-import com.mongodb.client.model.Updates
-import com.mongodb.kotlin.client.coroutine.MongoCollection
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.toList
-import org.bson.Document
-import org.bson.conversions.Bson
+import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.PartitionKey
+import com.azure.cosmos.models.SqlParameter
+import com.azure.cosmos.models.SqlQuerySpec
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactive.awaitSingleOrNull
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import kotlinx.coroutines.runBlocking
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
-import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
-import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdate
-import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateStatus
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.dto.ArrivalLocationDto
 import pl.szymanski.wiktor.ta.dto.CommuteStatisticDto
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProjectionProvider
 import pl.szymanski.wiktor.ta.queryRepository.CommuteCancelUpdate
+import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdate
 import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateRevision
+import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateStatus
 import pl.szymanski.wiktor.ta.withRetry
-import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.UUID
 
-class CommuteQueryRepositoryImpl(
-    database: MongoDatabase,
-) : CommuteQueryRepository {
+class CommuteQueryRepositoryImpl() : CommuteQueryRepository {
     companion object {
         private val log = org.slf4j.LoggerFactory.getLogger(this::class.java)
     }
 
-    val maxRetries = 30
-    val initialDelayMs = 1000L
-    val maxDelayMs = 30000L
-    val jitterFactor = 0.3
+    private val container = runBlocking { CosmosClientProjectionProvider.getCommuteContainer() }
 
-    private val collection: MongoCollection<Commute> = database.getCollection("commute")
-    
-    override suspend fun save(entity: Commute): Commute? = collection.insertOne(entity).insertedId?.let { entity }
+    override suspend fun save(entity: Commute): Commute? =
+        try {
+            container.createItem(entity).map { entity }.awaitSingleOrNull()
+        } catch (ex: Exception) {
+            log.error("Error inserting commute: $entity", ex)
+            null
+        }
 
-    override suspend fun findById(commuteId: UUID): Commute = collection.find(Document("_id", commuteId)).firstOrNull() ?: throw NoSuchElementException()
+    override suspend fun findById(commuteId: UUID): Commute {
+        val query = "SELECT * FROM c WHERE c.id = @id"
+        val params = listOf(SqlParameter("@id", commuteId.toString()))
+        val querySpec = SqlQuerySpec(query, params)
 
-    override suspend fun findAllByStatus(status: CommuteStatusEnum): List<Commute> = collection.find(Document("status", status.toString())).toList()
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Commute::class.java)
+            .awaitSingle()
+            ?: throw NoSuchElementException("Commute with id $commuteId not found")
+    }
+
+    override suspend fun findAllByStatus(status: CommuteStatusEnum): List<Commute> {
+        val query = "SELECT * FROM c WHERE c.status = @status"
+        val params = listOf(SqlParameter("@status", status.toString()))
+        val querySpec = SqlQuerySpec(query, params)
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Commute::class.java)
+            .collectList()
+            .awaitSingle()
+    }
 
     override suspend fun update(entity: CommuteUpdate) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val bookingIdStr = entity.bookingId.toString()
-        val seatStr = entity.seat.toString()
+            val bookings = current.bookings.toMutableMap()
+            entity.bookingId?.let { bid -> bookings[bid.toString()] = entity.seat.toString() }
+            val updated = current.copy(
+                bookings = bookings,
+                lastRevision = entity.revision
+            )
 
-        val update = Updates.combine(
-            Updates.set("bookings.$bookingIdStr", seatStr),
-            Updates.set("lastRevision", entity.revision)
-        )
-
-        runCatching {
-            withRetry(
-                maxRetries = maxRetries,
-                initialDelayMs = initialDelayMs,
-                maxDelayMs = maxDelayMs,
-                jitterFactor = jitterFactor
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity}")
-                }
-            }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.arrival.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun update(entity: CommuteUpdateRevision) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val update = Updates.combine(
-            Updates.set("lastRevision", entity.revision)
-        )
+            val updated = current.copy(lastRevision = entity.revision)
 
-        runCatching {
-            withRetry(
-                maxRetries = maxRetries,
-                initialDelayMs = initialDelayMs,
-                maxDelayMs = maxDelayMs,
-                jitterFactor = jitterFactor
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update $entity")
-                }
-            }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.arrival.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun update(entity: CommuteCancelUpdate) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        val bookingIdStr = entity.bookingId.toString()
+            val bookings = current.bookings.toMutableMap()
+            entity.bookingId?.let { bid -> bookings.remove(bid.toString()) }
+            val updated = current.copy(
+                bookings = bookings,
+                lastRevision = entity.revision
+            )
 
-        val update = Updates.combine(
-            Updates.unset("bookings.$bookingIdStr"),
-            Updates.set("lastRevision", entity.revision)
-        )
-        runCatching {
-            withRetry(
-                maxRetries = maxRetries,
-                initialDelayMs = initialDelayMs,
-                maxDelayMs = maxDelayMs,
-                jitterFactor = jitterFactor
-            ) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity}")
-                }
-            }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.arrival.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun update(entity: CommuteUpdateStatus) {
-        val filter = Filters.and(
-            Filters.eq("_id", entity._id),
-            Filters.eq("lastRevision", entity.revision - 1)
-        )
-        val update = Updates.combine(
-            Updates.set("status", "${entity.status}"),
-            Updates.set("lastRevision", entity.revision)
-        )
+        withRetry {
+            val current = findById(entity.id)
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
 
-        runCatching {
-            withRetry(maxRetries) {
-                if (collection.updateOne(filter, update).matchedCount == 0L) {
-                    throw ConcurrentModificationException("Could not update ${entity}")
-                }
-            }
-        }.exceptionOrNull()?.let { log.error("Failed to update $entity revision", it) }
+            val updated = current.copy(
+                status = entity.status!!,
+                lastRevision = entity.revision
+            )
+
+            runCatching {
+                container.replaceItem(updated, entity.id.toString(), PartitionKey(current.arrival.location.toString())).awaitSingle()
+            }.exceptionOrNull()?.let { throw Exception("Failed to update $entity revision", it) }
+        }
     }
 
     override suspend fun findStatistics(
@@ -152,111 +129,40 @@ class CommuteQueryRepositoryImpl(
         startDate: LocalDateTime,
         endDate: LocalDateTime,
     ): List<CommuteStatisticDto> {
-        val matchStage = Aggregates.match(Filters.eq("status", "EXPIRED"))
-        val dateTruncExpr =
-            Document(
-                "\$dateTrunc",
-                Document("date", "\$arrival.time")
-                    .append("unit", "minute"),
-            )
+        // Fetch EXPIRED commutes; filter by date range in memory to avoid date serialization issues
+        val query = "SELECT * FROM c WHERE c.status = @status"
+        val params = listOf(SqlParameter("@status", CommuteStatusEnum.EXPIRED.toString()))
+        val querySpec = SqlQuerySpec(query, params)
+        val commutes = container.queryItems(querySpec, CosmosQueryRequestOptions(), Commute::class.java)
+            .collectList()
+            .awaitSingle()
+            .filter { it.arrival.time in startDate..endDate }
 
-        val bookingsCountExpr =
-            Document(
-                "\$size",
-                Document("\$objectToArray", "\$bookings"),
-            )
+        val grouped = commutes.groupBy {
+            // Truncate to minute as in original Mongo pipeline
+            it.arrival.time.withSecond(0).withNano(0)
+        }
 
-        val projectStage =
-            Aggregates.project(
-                Projections.fields(
-                    Projections.computed("commuteId", "\$_id"),
-                    Projections.computed("arrivalLocation", "\$arrival.location"),
-                    Projections.computed("arrivalTime", "\$arrival.time"),
-                    Projections.computed("timeSlot", dateTruncExpr),
-                    Projections.computed("bookingsCount", bookingsCountExpr),
-                ),
-            )
-
-        val timeRangeMatch =
-            Aggregates.match(
-                Filters.and(
-                    Filters.gte("arrivalTime", startDate),
-                    Filters.lt("arrivalTime", endDate),
-                ),
-            )
-
-        val firstGroupId =
-            Document()
-                .append("timeSlot", "\$timeSlot")
-                .append("arrivalLocation", "\$arrivalLocation")
-
-        val firstGroupStage =
-            Aggregates.group(
-                firstGroupId,
-                Accumulators.sum("bookingsCount", "\$bookingsCount"),
-                Accumulators.sum("commuteCount", 1),
-            )
-
-        val secondGroupStage =
-            Aggregates.group(
-                "\$_id.timeSlot",
-                Accumulators.sum("allBookingsCount", "\$bookingsCount"),
-                Accumulators.sum("allFlightsCount", "\$commuteCount"),
-                Accumulators.push(
-                    "locations",
-                    Document()
-                        .append("location", "\$_id.arrivalLocation")
-                        .append("bookingsCount", "\$bookingsCount")
-                        .append("flightsCount", "\$commuteCount"),
-                ),
-            )
-
-        val paginationSkip = Aggregates.skip((page - 1) * size)
-        val paginationLimit = Aggregates.limit(size)
-
-        val sortStage = Aggregates.sort(Sorts.ascending("_id"))
-
-        val pipeline =
-            listOf(
-                matchStage,
-                projectStage,
-                timeRangeMatch,
-                firstGroupStage,
-                secondGroupStage,
-                paginationSkip,
-                paginationLimit,
-                sortStage,
-            )
-
-        return collection.aggregate<Document>(pipeline).toList().map { it.toCommuteStatisticDto() }
-    }
-
-    private fun Document.toCommuteStatisticDto(): CommuteStatisticDto {
-        val timeSlotDate =
-            this.get("_id") as? Date
-                ?: throw IllegalArgumentException("Missing or invalid '_id' field")
-
-        val time =
-            Instant.ofEpochMilli(timeSlotDate.time)
-                .atZone(ZoneId.of("UTC"))
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-        val locationsDocs = this.getList("locations", Document::class.java) ?: emptyList()
-
-        val arrivalLocations =
-            locationsDocs.map { locationDoc ->
+        val results = grouped.toSortedMap().map { (timeSlot, items) ->
+            val byLocation = items.groupBy { it.arrival.location.toString() }
+            val locations = byLocation.map { (loc, list) ->
+                val bookingsCount = list.sumOf { it.bookings.size }
                 ArrivalLocationDto(
-                    location = locationDoc.getString("location") ?: "Unknown",
-                    commutesNumber = locationDoc.getInteger("flightsCount") ?: 0,
-                    passengersNumber = locationDoc.getInteger("bookingsCount") ?: 0,
+                    location = loc,
+                    commutesNumber = list.size,
+                    passengersNumber = bookingsCount,
                 )
             }
+            CommuteStatisticDto(
+                time = timeSlot.atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                totalCommuteCount = items.size,
+                totalBookingsCount = items.sumOf { it.bookings.size },
+                arrivalLocations = locations,
+            )
+        }
 
-        return CommuteStatisticDto(
-            time = time,
-            totalCommuteCount = this.getInteger("allFlightsCount"),
-            totalBookingsCount = this.getInteger("allBookingsCount"),
-            arrivalLocations = arrivalLocations,
-        )
+        val fromIndex = ((page - 1) * size).coerceAtMost(results.size)
+        val toIndex = (fromIndex + size).coerceAtMost(results.size)
+        return results.subList(fromIndex, toIndex)
     }
 }

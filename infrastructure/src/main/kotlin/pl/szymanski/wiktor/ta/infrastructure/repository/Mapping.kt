@@ -1,8 +1,14 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository
 
 import org.bson.Document
+import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.dto.AccommodationDto
 import pl.szymanski.wiktor.ta.dto.AttractionDto
 //import pl.szymanski.wiktor.ta.dto.BookingDto
@@ -32,44 +38,59 @@ fun Document.toLocationAndTimeDto(): LocationAndTimeDto =
 //        timestamp = get("timestamp", LocalDateTime::class).toString(),
 //    )
 
-fun Document.toCommuteDto(): CommuteDto =
-    CommuteDto(
-        id = get("_id").toString(),
-        name = getString("name"),
-        departure = (get("departure") as Document).toLocationAndTimeDto(),
-        arrival = (get("arrival") as Document).toLocationAndTimeDto(),
-        availableSeats =
-            getList("seats", Document::class.java)
-                .map { Seat(it.getString("row"), it.getString("column")).toString() }
-                .filter { !(get("bookings") as? Map<*, *> ?: emptyMap<Any, Any>()).contains(it) },
-    )
-
-fun Document.toAccommodationDto(): AccommodationDto =
+fun Accommodation.toDto(): AccommodationDto =
     AccommodationDto(
-        id = get("_id").toString(),
-        name = getString("name"),
-        location = getString("location"),
-        rent = (get("rent") as Document).toRentDto(),
-        booking = getString("booking"),
-        status = getString("status"),
+        id = id.toString(),
+        name = name,
+        location = location.toString(),
+        rent = rent.toDto(),
+        booking = bookingId?.toString(),
+        status = status.toString()
     )
 
-fun Document.toAttractionDto(): AttractionDto =
+fun Rent.toDto(): RentDto =
+    RentDto(
+        from = from.toString(),
+        till = till.toString()
+    )
+
+fun Attraction.toDto(): AttractionDto =
     AttractionDto(
-        id = get("_id").toString(),
-        name = getString("name"),
-        location = getString("location"),
-        date = get("date", LocalDateTime::class).toString(),
-        availableSlots = getInteger("capacity") - getList("bookings", UUID::class.java).size,
+        id = id.toString(),
+        name = name,
+        location = location.toString(),
+        date = date.toString(),
+        availableSlots = capacity - bookings.size
     )
 
-fun Document.toTravelOfferDto(): TravelOfferDto =
-    TravelOfferDto(
-        id = get("_id").toString(),
-        name = getString("name"),
-        commute = (get("commute") as Document).toCommuteDto(),
-        accommodation = (get("accommodation") as Document).toAccommodationDto(),
-        attraction = (get("attraction") as? Document)?.toAttractionDto(),
-        booking = getString("booking"),
-        status = getString("status") ?: TravelOfferStatusEnum.AVAILABLE.name,
+fun Commute.toDto(): CommuteDto =
+    CommuteDto(
+        id = id.toString(),
+        name = name,
+        departure = departure.toDto(),
+        arrival = arrival.toDto(),
+        availableSeats = seats
+            .map { "${it.row}${it.column}" }
+            .filter { seatKey -> !bookings.containsKey(seatKey) }
     )
+
+fun LocationAndTime.toDto(): LocationAndTimeDto =
+    LocationAndTimeDto(
+        location = location.name,
+        time = time.toString()
+    )
+
+
+fun TravelOffer.toTravelOfferDto(
+    accommodation: AccommodationDto?,
+    attraction: AttractionDto?,
+    commute: CommuteDto?
+): TravelOfferDto = TravelOfferDto(
+    id = this.id.toString(),
+    name = this.name,
+    commute = commute ?: error("Commute missing for offer $id"),
+    accommodation = accommodation ?: error("Accommodation missing for offer $id"),
+    attraction = attraction, // can be null
+    booking = this.bookingId?.toString(),
+    status = this.status.toString(),
+)
