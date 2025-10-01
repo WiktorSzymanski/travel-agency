@@ -25,13 +25,16 @@ import pl.szymanski.wiktor.ta.timeMet
 import java.util.UUID
 import java.time.Duration
 
+//TODO: Should be AZURE TABLE
+val offerHashes = mutableListOf<Int>()
+
+
 class OfferMaker(
     private val accommodationRepository: AccommodationQueryRepository,
     private val attractionRepository: AttractionQueryRepository,
     private val commuteRepository: CommuteQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
-    private val offerHashes = mutableListOf<Int>()
 
     companion object {
         private val log = LoggerFactory.getLogger(OfferMaker::class.java)
@@ -39,7 +42,7 @@ class OfferMaker(
 
     // TODO: I think it's needed
     init {
-//        popExpiredHashes()
+        popExpiredHashes()
     }
 
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
@@ -59,6 +62,7 @@ class OfferMaker(
 
     suspend fun makeOffers() =
         coroutineScope {
+            val offersAdded = mutableListOf<Triple<Commute, Accommodation, Attraction?>>()
             val (commutes, accommodations, attractions) = collectData()
             val offerTriples = createOfferTriples(commutes, accommodations, attractions)
 
@@ -76,9 +80,12 @@ class OfferMaker(
                             }
                         }
                         offerHashes.add(offerMatchHash)
+                        offersAdded.add(offerTriple)
                     }
                 }
             }
+
+            return@coroutineScope offersAdded
         }
 
     private suspend fun collectData() =

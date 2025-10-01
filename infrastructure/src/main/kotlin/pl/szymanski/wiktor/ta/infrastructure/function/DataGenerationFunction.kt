@@ -15,9 +15,11 @@ import com.microsoft.azure.functions.annotation.HttpTrigger
 import com.microsoft.azure.functions.annotation.TimerTrigger
 import kotlinx.coroutines.runBlocking
 import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.commandHandler.QueueObject
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
@@ -49,9 +51,17 @@ import pl.szymanski.wiktor.ta.infrastructure.repository.query.CommuteQueryReposi
 import pl.szymanski.wiktor.ta.infrastructure.repository.query.TravelOfferQueryRepositoryImpl
 import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProvider
 import pl.szymanski.wiktor.ta.infrastructure.scheduler.PersistedEvent
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.QueueClientProvider
 import pl.szymanski.wiktor.ta.offerMaker.OfferMaker
 import pl.szymanski.wiktor.ta.query.TravelOfferQuery
-import java.util.Optional
+import java.util.*
+
+class QueueObjectWrapper() : QueueObject {
+    override fun sendBookingCommand(command: BookingCommand) {
+        QueueClientProvider.sendBookingCommand(command)
+    }
+
+}
 
 @FunctionName("MakeOffers")
 fun makeOffers(
@@ -62,7 +72,9 @@ fun makeOffers(
     val accommodationRepository = AccommodationQueryRepositoryImpl()
     val attractionRepository = AttractionQueryRepositoryImpl()
     val commuteRepository = CommuteQueryRepositoryImpl()
-    val travelOfferCommandHandler = TravelOfferCommandHandler(TravelOfferRepositoryImpl())
+    val travelOfferCommandHandler = TravelOfferCommandHandler(
+        TravelOfferRepositoryImpl(),
+        QueueObjectWrapper())
 
     val offerMaker =
         OfferMaker(
@@ -72,7 +84,8 @@ fun makeOffers(
             travelOfferCommandHandler,
         )
 
-    offerMaker.makeOffers()
+    val oA = offerMaker.makeOffers()
+    context.logger.info("Made ${oA.size} offers: $oA")
 }
 
 @FunctionName("GenerateData")
@@ -83,7 +96,6 @@ fun generateData(
 ) = runBlocking {
     val container = CosmosClientProvider.getContainer()
     EventBus.init(EventRepositoryImpl(container))
-    context.logger.info("HELLO THERE")
 
     val config = DataGenerationSchedulerConfig(
         intervalSeconds = 1.0,
@@ -171,7 +183,9 @@ val travelOfferProjectionService = TravelOfferProjectionService(travelOfferQuery
 val commuteCommandHandler = CommuteCommandHandler(CommuteRepositoryImpl())
 val accommodationCommandHandler = AccommodationCommandHandler(AccommodationRepositoryImpl())
 val attractionCommandHandler = AttractionCommandHandler(AttractionRepositoryImpl())
-val travelOfferCommandHandler = TravelOfferCommandHandler(TravelOfferRepositoryImpl())
+val travelOfferCommandHandler = TravelOfferCommandHandler(
+    TravelOfferRepositoryImpl(),
+    QueueObjectWrapper())
 
 @FunctionName("PublishEventsToGrid")
 fun publishEventsToGrid(
@@ -234,41 +248,4 @@ fun projectionUpdateFunction(
             }
             else -> context.logger.info { "In else block!!! with ${event.type}" }
         }
-}
-
-@FunctionName("GetTravelOffersByStatus")
-fun getTravelOffersByStatus(
-    @HttpTrigger(
-        name = "req",
-        methods = [HttpMethod.GET],
-        route = "travelOffers/{status}"
-    )
-    request: HttpRequestMessage<Optional<String>>,
-    @BindingName("status") statusParam: String,
-    context: ExecutionContext
-): HttpResponseMessage {
-
-    val logger = context.logger
-    logger.info("Received request for travel offers with status: $statusParam")
-
-    val status = try {
-        TravelOfferStatusEnum.valueOf(statusParam)
-    } catch (ex: IllegalArgumentException) {
-        return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
-            .body("Invalid status parameter: $statusParam")
-            .build()
-    }
-
-    val queryParams = request.queryParameters
-    val page = queryParams["page"]?.toIntOrNull() ?: 1
-    val size = queryParams["size"]?.toIntOrNull() ?: 10
-
-    val response = runBlocking {
-        travelOfferQuery.getTravelOffersByStatus(status, page, size)
-    }
-
-    return request.createResponseBuilder(HttpStatus.OK)
-        .header("Content-Type", "application/json")
-        .body(response)
-        .build()
 }

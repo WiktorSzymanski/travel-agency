@@ -12,10 +12,8 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import kotlinx.coroutines.reactor.awaitSingle
-import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProvider.PARTITION_KEY_PATH
-import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProvider.containerMono
-import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProvider.containerName
 import reactor.core.publisher.Mono
+import java.util.UUID
 import kotlin.jvm.java
 
 
@@ -38,7 +36,22 @@ class CustomItemSerializer : CosmosItemSerializer() {
     ): T? {
         if (jsonNodeMap == null || classType == null) return null
         val jsonString = mapper.writeValueAsString(jsonNodeMap)
-        return mapper.readValue(jsonString, classType)
+
+        if (classType == UUID::class.java) {
+            val idValue = jsonNodeMap["id"] as? String
+            if (idValue != null) {
+                return UUID.fromString(idValue) as T
+            }
+            return null
+        }
+
+        try {
+            return mapper.readValue(jsonString, classType)
+        } catch (e: Exception) {
+            println("DEBUG: Attempting to deserialize into classType: ${classType.name}")
+            println("DEBUG: JSON string: $jsonString")
+            throw IllegalStateException("Error deserializing object \n D classType: ${classType.name} \n D jsonNodeMap: $jsonNodeMap \n D jsonString: $jsonString", e)
+        }
     }
 }
 
@@ -120,6 +133,7 @@ object CosmosClientProvider {
     private val containerName = System.getenv("CosmosDBContainerName") ?: throw kotlin.IllegalStateException("Missing CosmosDBContainerName env var")
 
     private const val PARTITION_KEY_PATH = "/stream"
+
 
     private val client: CosmosAsyncClient by lazy {
         CosmosClientBuilder()

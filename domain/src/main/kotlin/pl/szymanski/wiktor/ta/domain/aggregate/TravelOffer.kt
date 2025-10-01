@@ -23,7 +23,7 @@ data class TravelOffer(
     val attractionId: UUID? = null,
     var bookingId: UUID? = null,
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
-    val lastRevision: Int = -1,
+    val lastRevision: Int = 0,
     val lastEtag : String? = null
 ) {
     fun apply(event: TravelOfferEvent, revision: Int, etag: String): TravelOffer {

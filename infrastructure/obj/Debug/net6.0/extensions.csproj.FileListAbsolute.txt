@@ -72,3 +72,9 @@
 /home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/obj/Debug/net6.0/refint/extensions.dll
 /home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/obj/Debug/net6.0/extensions.pdb
 /home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/obj/Debug/net6.0/ref/extensions.dll
+/home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/build/azure-functions/azure-functions-sample-damn/bin/Azure.Storage.Blobs.dll
+/home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/build/azure-functions/azure-functions-sample-damn/bin/Azure.Storage.Common.dll
+/home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/build/azure-functions/azure-functions-sample-damn/bin/Azure.Storage.Queues.dll
+/home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/build/azure-functions/azure-functions-sample-damn/bin/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.dll
+/home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/build/azure-functions/azure-functions-sample-damn/bin/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.dll
+/home/wiktor/Projects/Magisterka/travel-agency-app/infrastructure/build/azure-functions/azure-functions-sample-damn/bin/System.IO.Hashing.dll

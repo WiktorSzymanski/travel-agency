@@ -70,7 +70,7 @@ class TravelOfferQueryRepositoryImpl() : TravelOfferQueryRepository {
 
     override suspend fun update(entity: TravelOfferUpdateRevision, event: Event) {
         val current = findById(entity.id)
-        if (current.lastRevision != entity.lastRevision - 1) throw ConcurrentModificationException("Could not update $entity")
+        if (current.lastRevision != entity.lastRevision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
         val updated = current.copy(
             lastRevision = entity.lastRevision
@@ -83,7 +83,7 @@ class TravelOfferQueryRepositoryImpl() : TravelOfferQueryRepository {
 
     override suspend fun update(entity: TravelOfferUpdate, event: Event) {
         val current = findById(entity.id)
-        if (current.lastRevision != entity.lastRevision - 1) throw ConcurrentModificationException("Could not update $entity")
+        if (current.lastRevision != entity.lastRevision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
         val updated = current.copy(
             status = entity.status!!,
@@ -98,7 +98,7 @@ class TravelOfferQueryRepositoryImpl() : TravelOfferQueryRepository {
 
     override suspend fun update(entity: TravelOfferUpdateStatus, event: Event) {
         val current = findById(entity.id)
-        if (current.lastRevision != entity.lastRevision - 1) throw ConcurrentModificationException("Could not update $entity")
+        if (current.lastRevision != entity.lastRevision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
         val updated = current.copy(
             status = entity.status!!,

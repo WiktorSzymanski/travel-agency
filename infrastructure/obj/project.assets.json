@@ -59,6 +59,55 @@
           }
         }
       },
+      "Azure.Storage.Blobs/12.25.0": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Storage.Common": "12.24.0"
+        },
+        "compile": {
+          "lib/net6.0/Azure.Storage.Blobs.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Azure.Storage.Blobs.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Azure.Storage.Common/12.24.0": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Core": "1.44.1",
+          "System.IO.Hashing": "8.0.0"
+        },
+        "compile": {
+          "lib/net6.0/Azure.Storage.Common.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Azure.Storage.Common.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Azure.Storage.Queues/12.23.0": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Storage.Common": "12.24.0"
+        },
+        "compile": {
+          "lib/net6.0/Azure.Storage.Queues.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Azure.Storage.Queues.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Microsoft.Azure.Core.NewtonsoftJson/2.0.0": {
         "type": "package",
         "dependencies": {
@@ -208,6 +257,50 @@
         },
         "runtime": {
           "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.EventGrid.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Microsoft.Azure.WebJobs.Extensions.Storage/5.3.6": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Azure.WebJobs.Extensions.Storage.Blobs": "5.3.6",
+          "Microsoft.Azure.WebJobs.Extensions.Storage.Queues": "5.3.6"
+        }
+      },
+      "Microsoft.Azure.WebJobs.Extensions.Storage.Blobs/5.3.6": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Storage.Blobs": "12.25.0",
+          "Azure.Storage.Queues": "12.23.0",
+          "Microsoft.Azure.WebJobs": "3.0.41",
+          "Microsoft.Extensions.Azure": "1.12.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Microsoft.Azure.WebJobs.Extensions.Storage.Queues/5.3.6": {
+        "type": "package",
+        "dependencies": {
+          "Azure.Storage.Queues": "12.23.0",
+          "Microsoft.Azure.WebJobs": "3.0.41",
+          "Microsoft.Extensions.Azure": "1.12.0"
+        },
+        "compile": {
+          "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.dll": {
             "related": ".xml"
           }
         }
@@ -1399,6 +1492,22 @@
           "lib/netstandard1.3/System.IO.FileSystem.Primitives.dll": {}
         }
       },
+      "System.IO.Hashing/8.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/System.IO.Hashing.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/System.IO.Hashing.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net6.0/_._": {}
+        }
+      },
       "System.Linq/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -2521,6 +2630,70 @@
         "lib/netstandard2.0/Azure.Messaging.EventGrid.xml"
       ]
     },
+    "Azure.Storage.Blobs/12.25.0": {
+      "sha512": "+5rQj7vQ2NsVxEzFeGxRGP44P9GhJcJMEZTaG/w96z/c8mEO6OoawBAr8tJ/0vH1QSVkjfr+IY3GmGpT507I0w==",
+      "type": "package",
+      "path": "azure.storage.blobs/12.25.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.storage.blobs.12.25.0.nupkg.sha512",
+        "azure.storage.blobs.nuspec",
+        "azureicon.png",
+        "lib/net6.0/Azure.Storage.Blobs.dll",
+        "lib/net6.0/Azure.Storage.Blobs.xml",
+        "lib/net8.0/Azure.Storage.Blobs.dll",
+        "lib/net8.0/Azure.Storage.Blobs.xml",
+        "lib/netstandard2.0/Azure.Storage.Blobs.dll",
+        "lib/netstandard2.0/Azure.Storage.Blobs.xml",
+        "lib/netstandard2.1/Azure.Storage.Blobs.dll",
+        "lib/netstandard2.1/Azure.Storage.Blobs.xml"
+      ]
+    },
+    "Azure.Storage.Common/12.24.0": {
+      "sha512": "JOmmSgNvH/zRWRihT6PZapEdTNESP4YtGS5OjbkUAg6EFiM6Ite7hDkqzJrA7QKmi1SRwZ40vpHi1McVpQuhgw==",
+      "type": "package",
+      "path": "azure.storage.common/12.24.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.storage.common.12.24.0.nupkg.sha512",
+        "azure.storage.common.nuspec",
+        "azureicon.png",
+        "lib/net6.0/Azure.Storage.Common.dll",
+        "lib/net6.0/Azure.Storage.Common.xml",
+        "lib/net8.0/Azure.Storage.Common.dll",
+        "lib/net8.0/Azure.Storage.Common.xml",
+        "lib/netstandard2.0/Azure.Storage.Common.dll",
+        "lib/netstandard2.0/Azure.Storage.Common.xml"
+      ]
+    },
+    "Azure.Storage.Queues/12.23.0": {
+      "sha512": "8uhYJvlUPrXwD5uxC2L4uPYogk/9VpI1309lwcSku8+odNdAWLlZBAeVfwwZVRSPOGOhWBc/m2LKT/u0D2V+4w==",
+      "type": "package",
+      "path": "azure.storage.queues/12.23.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azure.storage.queues.12.23.0.nupkg.sha512",
+        "azure.storage.queues.nuspec",
+        "azureicon.png",
+        "lib/net6.0/Azure.Storage.Queues.dll",
+        "lib/net6.0/Azure.Storage.Queues.xml",
+        "lib/net8.0/Azure.Storage.Queues.dll",
+        "lib/net8.0/Azure.Storage.Queues.xml",
+        "lib/netstandard2.0/Azure.Storage.Queues.dll",
+        "lib/netstandard2.0/Azure.Storage.Queues.xml",
+        "lib/netstandard2.1/Azure.Storage.Queues.dll",
+        "lib/netstandard2.1/Azure.Storage.Queues.xml"
+      ]
+    },
     "Microsoft.Azure.Core.NewtonsoftJson/2.0.0": {
       "sha512": "ZKV0eHmR1JM4BXPv0TC5fp3PjbWeO+iwHmnV2acYTElYlU9ilmk97ocfmTmKcRFGOmn4zztWqbCBSmdvKqOQng==",
       "type": "package",
@@ -2620,6 +2793,56 @@
         "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.EventGrid.xml",
         "microsoft.azure.webjobs.extensions.eventgrid.3.5.0.nupkg.sha512",
         "microsoft.azure.webjobs.extensions.eventgrid.nuspec"
+      ]
+    },
+    "Microsoft.Azure.WebJobs.Extensions.Storage/5.3.6": {
+      "sha512": "tcvecA/L37AUVQXuiSxswZEOHMUcQNHDi+UVtcjTmpRYlvz3hb+e7IbF08lWsktJvU2ROzeo7QoKr1qiePf8eg==",
+      "type": "package",
+      "path": "microsoft.azure.webjobs.extensions.storage/5.3.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azureicon.png",
+        "microsoft.azure.webjobs.extensions.storage.5.3.6.nupkg.sha512",
+        "microsoft.azure.webjobs.extensions.storage.nuspec"
+      ]
+    },
+    "Microsoft.Azure.WebJobs.Extensions.Storage.Blobs/5.3.6": {
+      "sha512": "ST8R1PxivBrjQeq7BHLUfUK2kEBTf+3cMYH0mEy+WguGxJ/Zt34GZScYuAeeN2ymiYl4ODSGdGQ8aQZ/+R1qSA==",
+      "type": "package",
+      "path": "microsoft.azure.webjobs.extensions.storage.blobs/5.3.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azureicon.png",
+        "lib/net8.0/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.dll",
+        "lib/net8.0/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.xml",
+        "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.dll",
+        "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Blobs.xml",
+        "microsoft.azure.webjobs.extensions.storage.blobs.5.3.6.nupkg.sha512",
+        "microsoft.azure.webjobs.extensions.storage.blobs.nuspec"
+      ]
+    },
+    "Microsoft.Azure.WebJobs.Extensions.Storage.Queues/5.3.6": {
+      "sha512": "A82csoapd6kz9oWNh4eo42ZTlVqfLab/Ae4JERg4HygsMn/csNW4+vixfUm+xWnRWequ/yhvlZhO8QBV6WbNUA==",
+      "type": "package",
+      "path": "microsoft.azure.webjobs.extensions.storage.queues/5.3.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "CHANGELOG.md",
+        "README.md",
+        "azureicon.png",
+        "lib/net8.0/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.dll",
+        "lib/net8.0/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.xml",
+        "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.dll",
+        "lib/netstandard2.0/Microsoft.Azure.WebJobs.Extensions.Storage.Queues.xml",
+        "microsoft.azure.webjobs.extensions.storage.queues.5.3.6.nupkg.sha512",
+        "microsoft.azure.webjobs.extensions.storage.queues.nuspec"
       ]
     },
     "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator/1.1.3": {
@@ -4819,6 +5042,36 @@
         "ref/xamarinwatchos10/_._",
         "system.io.filesystem.primitives.4.3.0.nupkg.sha512",
         "system.io.filesystem.primitives.nuspec"
+      ]
+    },
+    "System.IO.Hashing/8.0.0": {
+      "sha512": "ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA==",
+      "type": "package",
+      "path": "system.io.hashing/8.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "LICENSE.TXT",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.IO.Hashing.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net6.0/_._",
+        "buildTransitive/netcoreapp2.0/System.IO.Hashing.targets",
+        "lib/net462/System.IO.Hashing.dll",
+        "lib/net462/System.IO.Hashing.xml",
+        "lib/net6.0/System.IO.Hashing.dll",
+        "lib/net6.0/System.IO.Hashing.xml",
+        "lib/net7.0/System.IO.Hashing.dll",
+        "lib/net7.0/System.IO.Hashing.xml",
+        "lib/net8.0/System.IO.Hashing.dll",
+        "lib/net8.0/System.IO.Hashing.xml",
+        "lib/netstandard2.0/System.IO.Hashing.dll",
+        "lib/netstandard2.0/System.IO.Hashing.xml",
+        "system.io.hashing.8.0.0.nupkg.sha512",
+        "system.io.hashing.nuspec",
+        "useSharedDesignerContext.txt"
       ]
     },
     "System.Linq/4.3.0": {
@@ -7472,6 +7725,7 @@
     "net6.0": [
       "Microsoft.Azure.WebJobs.Extensions.CosmosDB >= 4.10.0",
       "Microsoft.Azure.WebJobs.Extensions.EventGrid >= 3.5.0",
+      "Microsoft.Azure.WebJobs.Extensions.Storage >= 5.3.6",
       "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator >= 1.1.3"
     ]
   },
@@ -7520,6 +7774,10 @@
           "Microsoft.Azure.WebJobs.Extensions.EventGrid": {
             "target": "Package",
             "version": "[3.5.0, )"
+          },
+          "Microsoft.Azure.WebJobs.Extensions.Storage": {
+            "target": "Package",
+            "version": "[5.3.6, )"
           },
           "Microsoft.Azure.WebJobs.Script.ExtensionsMetadataGenerator": {
             "target": "Package",

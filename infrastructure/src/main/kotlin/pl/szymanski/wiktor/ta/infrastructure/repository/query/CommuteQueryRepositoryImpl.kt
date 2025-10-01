@@ -61,7 +61,7 @@ class CommuteQueryRepositoryImpl() : CommuteQueryRepository {
     override suspend fun update(entity: CommuteUpdate) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $current with update $entity")
 
             val bookings = current.bookings.toMutableMap()
             entity.bookingId?.let { bid -> bookings[bid.toString()] = entity.seat.toString() }
@@ -79,7 +79,7 @@ class CommuteQueryRepositoryImpl() : CommuteQueryRepository {
     override suspend fun update(entity: CommuteUpdateRevision) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $current with update $entity")
 
             val updated = current.copy(lastRevision = entity.revision)
 
@@ -92,7 +92,7 @@ class CommuteQueryRepositoryImpl() : CommuteQueryRepository {
     override suspend fun update(entity: CommuteCancelUpdate) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $current with update $entity")
 
             val bookings = current.bookings.toMutableMap()
             entity.bookingId?.let { bid -> bookings.remove(bid.toString()) }
@@ -110,7 +110,7 @@ class CommuteQueryRepositoryImpl() : CommuteQueryRepository {
     override suspend fun update(entity: CommuteUpdateStatus) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $current with update $entity")
 
             val updated = current.copy(
                 status = entity.status!!,

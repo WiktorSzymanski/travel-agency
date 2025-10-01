@@ -64,7 +64,7 @@ class AccommodationQueryRepositoryImpl() : AccommodationQueryRepository {
     override suspend fun update(entity: AccommodationUpdate) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updated = current.copy(
                 bookingId = entity.bookingId,
@@ -81,7 +81,7 @@ class AccommodationQueryRepositoryImpl() : AccommodationQueryRepository {
     override suspend fun update(entity: AccommodationUpdateRevision) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updated = current.copy(lastRevision = entity.revision)
 
@@ -94,7 +94,7 @@ class AccommodationQueryRepositoryImpl() : AccommodationQueryRepository {
     override suspend fun update(entity: AccommodationUpdateStatus) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updated = current.copy(
                 status = entity.status!!,

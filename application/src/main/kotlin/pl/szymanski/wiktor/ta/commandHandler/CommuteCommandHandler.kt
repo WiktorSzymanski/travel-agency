@@ -18,7 +18,7 @@ import pl.szymanski.wiktor.ta.withRetry
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
-    val maxRetries = 30
+    val maxRetries = 1
 
     suspend fun handle(command: CommuteCommand): CommuteEvent =
         withRetry (maxRetries) {
@@ -27,66 +27,54 @@ class CommuteCommandHandler(
                 is CancelCommuteBookingCommand -> handle(command)
                 is CreateCommuteCommand -> handle(command)
                 is ExpireCommuteCommand -> handle(command)
-            }.map {
-                it.first.correlationId = command.correlationId
-                it
             }.let {
-                EventBus.publish(it[0].first, it[0].second)
-                if (it.size > 1) EventBus.ignoreRevisionPublish(it[1].first)
-                it[0].first
+                it.first.map { event -> event.correlationId = command.correlationId }
+                EventBus.publish(it.first, it.second.toLong(), it.third)
+                it.first.first()
             }
         }
 
-    private suspend fun handle(command: CreateCommuteCommand): List<Pair<CommuteEvent, String?>> =
+    private suspend fun handle(command: CreateCommuteCommand): Triple<List<CommuteEvent>, Int, String?> =
         Commute.create(
             command.name,
             command.departure,
             command.arrival,
             command.seats,
-        ).let { (commute, event) ->
-            listOf(event[0] to commute.lastEtag)
+        ).let { (commute, events) ->
+            Triple(events, commute.lastRevision, commute.lastEtag)
         }
 
-    private suspend fun handle(command: BookCommuteCommand): List<Pair<CommuteEvent, String?>> =
+    private suspend fun handle(command: BookCommuteCommand): Triple<List<CommuteEvent>, Int, String> =
         commuteRepository
             .findById(command.commuteId)
             .let { commute ->
                 commute
                     .bookSeat(command.bookingId, command.seat)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to commute.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<CommuteEvent, String?>>
+                    .let {
+                        Triple(it, commute.lastRevision, commute.lastEtag!!)
+                    }
             }
 
-    private suspend fun handle(command: CancelCommuteBookingCommand): List<Pair<CommuteEvent, String?>> =
+    private suspend fun handle(command: CancelCommuteBookingCommand): Triple<List<CommuteEvent>, Int, String> =
         commuteRepository
             .findById(command.commuteId)
             .let { commute ->
                 commute
                     .cancelBookedSeat(command.bookingId)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to commute.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<CommuteEvent, String?>>
+                    .let {
+                        Triple(it, commute.lastRevision, commute.lastEtag!!)
+                    }
             }
 
-    private suspend fun handle(command: ExpireCommuteCommand): List<Pair<CommuteEvent, String?>> =
+    private suspend fun handle(command: ExpireCommuteCommand): Triple<List<CommuteEvent>, Int, String> =
         commuteRepository
             .findById(command.commuteId)
             .let { commute ->
                 commute
                     .expire()
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to commute.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<CommuteEvent, String?>>
+                    .let {
+                        Triple(it, commute.lastRevision, commute.lastEtag!!)
+                    }
             }
 
     suspend fun compensate(event: CommuteEvent): CommuteEvent =
@@ -96,43 +84,33 @@ class CommuteCommandHandler(
                 is CommuteBookingCanceledEvent -> compensate(event)
                 else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
             }.let {
-                it[0].first.toCompensation()
-                it
-            }.map {
-                it.first.correlationId = event.correlationId
-                it
+                it.copy(first = listOf(it.first.first().toCompensation()) + it.first.drop(1))
             }.let {
-                EventBus.publish(it[0].first, it[0].second!!)
-                if (it.size > 1) EventBus.ignoreRevisionPublish(it[1].first)
-                it[0].first
+                it.first.map { event -> event.correlationId = event.correlationId }
+                EventBus.publish(it.first, it.second.toLong(), it.third)
+                it.first.first()
             }
         }
 
-    private suspend fun compensate(event: CommuteBookedEvent): List<Pair<CommuteEvent, String?>> =
+    private suspend fun compensate(event: CommuteBookedEvent): Triple<List<CommuteEvent>, Int, String> =
         commuteRepository
             .findById(event.commuteId)
             .let { commute ->
                 commute
                     .compensateBookSeat(event.bookingId)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to commute.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<CommuteEvent, String?>>
+                    .let {
+                        Triple(it, commute.lastRevision, commute.lastEtag!!)
+                    }
             }
 
-    private suspend fun compensate(event: CommuteBookingCanceledEvent): List<Pair<CommuteEvent, String?>> =
+    private suspend fun compensate(event: CommuteBookingCanceledEvent): Triple<List<CommuteEvent>, Int, String> =
         commuteRepository
             .findById(event.commuteId)
             .let { commute ->
                 commute
                     .compensateCancelBookedSeat(event.bookingId, event.seat)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to commute.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<CommuteEvent, String?>>
+                    .let {
+                        Triple(it, commute.lastRevision, commute.lastEtag!!)
+                    }
             }
 }

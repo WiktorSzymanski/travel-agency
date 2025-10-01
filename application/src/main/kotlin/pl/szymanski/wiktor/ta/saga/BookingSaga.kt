@@ -56,7 +56,7 @@ class BookingSaga(
     private var bookingId: UUID = triggeringEvent.bookingId
 
 
-    private val maxRetries = 30
+    private val maxRetries = 1
 
 
 //    suspend fun <T> sagaStep(

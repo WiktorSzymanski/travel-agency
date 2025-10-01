@@ -17,6 +17,7 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.QueueClientProvider
 import java.util.UUID
 
 class GeneratorCHPair<T, U>(
@@ -30,7 +31,7 @@ class GeneratorCHPair<T, U>(
                     when (handler) {
                         is AccommodationCommandHandler -> {
                             val event = handler.handle(command as AccommodationCommand) as AccommodationCreatedEvent
-                            EventBus.publish(
+                            QueueClientProvider.sendDelayedEventMessage(
                                 AccommodationDateMetEvent(
                                     UUID.randomUUID(),
                                     event.accommodationId,
@@ -41,7 +42,7 @@ class GeneratorCHPair<T, U>(
                         }
                         is AttractionCommandHandler -> {
                             val event = handler.handle(command as AttractionCommand) as AttractionCreatedEvent
-                            EventBus.publish(
+                            QueueClientProvider.sendDelayedEventMessage(
                                 AttractionDateMetEvent(
                                     UUID.randomUUID(),
                                     event.attractionId,
@@ -52,7 +53,7 @@ class GeneratorCHPair<T, U>(
                         }
                         is CommuteCommandHandler -> {
                             val event = handler.handle(command as CommuteCommand) as CommuteCreatedEvent
-                            EventBus.publish(
+                            QueueClientProvider.sendDelayedEventMessage(
                                 CommuteDateMetEvent(
                                     UUID.randomUUID(),
                                     event.commuteId,

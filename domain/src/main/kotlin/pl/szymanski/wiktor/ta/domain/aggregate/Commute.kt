@@ -21,7 +21,7 @@ data class Commute(
     val seats: List<Seat>,
     val bookings: MutableMap<String, String> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
-    val lastRevision: Int = -1,
+    val lastRevision: Int = 0,
     val lastEtag : String? = null
 ) {
     fun apply(event: CommuteEvent, revision: Int, etag: String): Commute {

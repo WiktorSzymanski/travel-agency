@@ -25,6 +25,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 
     implementation("com.azure:azure-cosmos:4.73.1")
+    implementation("com.azure:azure-storage-queue:12.26.2")
+    implementation("com.azure:azure-messaging-servicebus:7.17.14")
     implementation("com.microsoft.azure.functions:azure-functions-java-library:3.1.0")
 
     implementation(kotlin("stdlib-jdk8"))

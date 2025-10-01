@@ -19,30 +19,17 @@ import pl.szymanski.wiktor.ta.withRetry
 class BookingCommandHandler(
     private val bookingRepository: BookingRepository,
 ) {
-    init {
-        CommandBus.registerHandler(FailBookingCommand::class.java) {
-            this.handle(it as BookingCommand)
-        }
-
-        CommandBus.registerHandler(FailCancelBookingCommand::class.java) {
-            this.handle(it as BookingCommand)
-        }
-    }
-
-    val maxRetries = 30
 
     suspend fun handle(command: BookingCommand): BookingEvent =
-        withRetry (maxRetries) {
-            when (command) {
-                is CreateBookingCommand -> handle(command)
-                is ProcessBookingCommand -> handle(command)
-                is CompleteBookingCommand -> handle(command)
-                is CancelBookingCommand -> handle(command)
-                is FailBookingCommand -> handle(command)
-                is FailCancelBookingCommand -> handle(command)
-                is BookingRequestCancelCommand -> handle(command)
-                is ProcessCancelBookingCommand -> handle(command)
-            }
+        when (command) {
+            is CreateBookingCommand -> handle(command)
+            is ProcessBookingCommand -> handle(command)
+            is CompleteBookingCommand -> handle(command)
+            is CancelBookingCommand -> handle(command)
+            is FailBookingCommand -> handle(command)
+            is FailCancelBookingCommand -> handle(command)
+            is BookingRequestCancelCommand -> handle(command)
+            is ProcessCancelBookingCommand -> handle(command)
         }.apply { correlationId = command.correlationId }.also { EventBus.ignoreRevisionPublish(it) }
 
     private suspend fun handle(command: CreateBookingCommand): BookingEvent =
@@ -56,81 +43,67 @@ class BookingCommandHandler(
         }
 
     private suspend fun handle(command: BookingRequestCancelCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .requestCancel()
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .requestCancel()
+                    .also { bookingRepository.update(booking) }
+            }
 
     private suspend fun handle(command: ProcessBookingCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .process()
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .process()
+                    .also { bookingRepository.update(booking) }
+            }
 
     private suspend fun handle(command: CompleteBookingCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .complete()
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .complete()
+                    .also { bookingRepository.update(booking) }
+            }
 
     private suspend fun handle(command: CancelBookingCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .cancel()
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .cancel()
+                    .also { bookingRepository.update(booking) }
+            }
 
     private suspend fun handle(command: FailBookingCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .fail(command.message!!)
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .fail(command.message!!)
+                    .also { bookingRepository.update(booking) }
+            }
 
     private suspend fun handle(command: FailCancelBookingCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .failCancellation(command.message!!)
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .failCancellation(command.message!!)
+                    .also { bookingRepository.update(booking) }
+            }
 
     private suspend fun handle(command: ProcessCancelBookingCommand): BookingEvent =
-        withRetry(3) {
-            bookingRepository
-                .findById(command.bookingId)
-                .let { booking ->
-                    booking
-                        .processCancellation()
-                        .also { bookingRepository.update(booking) }
-                }
-        }
+        bookingRepository
+            .findById(command.bookingId)
+            .let { booking ->
+                booking
+                    .processCancellation()
+                    .also { bookingRepository.update(booking) }
+            }
 
 //    suspend fun compensate(event: BookingEvent): BookingEvent =
 //        when (event) {

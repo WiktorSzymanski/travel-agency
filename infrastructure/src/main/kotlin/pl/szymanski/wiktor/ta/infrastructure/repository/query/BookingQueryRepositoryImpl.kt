@@ -1,23 +1,18 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.query
 
-import com.mongodb.client.model.Aggregates
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Projections
-import com.mongodb.kotlin.client.coroutine.MongoCollection
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.toList
-import org.bson.Document
-import pl.szymanski.wiktor.ta.queryRepository.BookingQueryRepository
+import com.azure.cosmos.models.CosmosQueryRequestOptions
+import com.azure.cosmos.models.SqlParameter
+import com.azure.cosmos.models.SqlQuerySpec
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.runBlocking
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
-import pl.szymanski.wiktor.ta.infrastructure.repository.toTravelOfferDto
-import java.util.UUID
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.CosmosClientProjectionProvider
+import pl.szymanski.wiktor.ta.queryRepository.BookingQueryRepository
+import java.util.*
 
-class BookingQueryRepositoryImpl(
-    database: MongoDatabase,
-) : BookingQueryRepository {
-    private val collection: MongoCollection<Booking> = database.getCollection("booking")
+class BookingQueryRepositoryImpl() : BookingQueryRepository {
+    private val container = runBlocking { CosmosClientProjectionProvider.getBookingContainer() }
 
     override suspend fun findTravelOfferDtoByUserId(
         page: Int,
@@ -98,15 +93,27 @@ class BookingQueryRepositoryImpl(
         throw Exception("Not yet implemented")
     }
 
-    override suspend fun findById(bookingId: UUID): Booking = collection.find(Document("id", bookingId)).firstOrNull() ?: throw NoSuchElementException()
+    override suspend fun findById(bookingId: UUID): Booking {
+        val query = "SELECT * FROM c WHERE c.id = @id"
+        val params = listOf(SqlParameter("@id", bookingId.toString()))
+        val querySpec = SqlQuerySpec(query, params)
+
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Booking::class.java)
+            .awaitSingle()
+            ?: throw NoSuchElementException("Attraction with id $bookingId not found")
+    }
 
     override suspend fun findByUserId(
         page: Int,
         size: Int,
-        userId: UUID): List<Booking> =
-        collection
-            .find(Document("userId", userId))
-            .skip((page - 1) * size)
-            .limit(size)
+        userId: UUID): List<Booking> {
+        val query = "SELECT * FROM c WHERE c.userId = @userId"
+        val params = listOf(SqlParameter("@userId", userId.toString()))
+        val querySpec = SqlQuerySpec(query, params)
+
+        return container.queryItems(querySpec, CosmosQueryRequestOptions(), Booking::class.java)
+            .collectList()
+            .awaitSingle()
             .toList()
+    }
 }

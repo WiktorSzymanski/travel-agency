@@ -1,8 +1,8 @@
 package pl.szymanski.wiktor.ta.infrastructure.function
 
 import com.microsoft.azure.functions.ExecutionContext
-import com.microsoft.azure.functions.annotation.EventGridTrigger
 import com.microsoft.azure.functions.annotation.FunctionName
+import com.microsoft.azure.functions.annotation.QueueTrigger
 import kotlinx.coroutines.runBlocking
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
@@ -13,62 +13,41 @@ import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
-import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer
-import pl.szymanski.wiktor.ta.infrastructure.scheduler.PersistedEvent
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.QueueMessage
+import pl.szymanski.wiktor.ta.infrastructure.scheduler.getEvent
 
-@FunctionName("AccommodationDateMetEventHandler")
-fun accommodationDateMetEventHandler(
-    @EventGridTrigger(name = "eventgrid") event: PersistedEvent,
+@FunctionName("DateMetQueueTrigger")
+fun dateMetQueueTrigger(
+    @QueueTrigger(name = "message", queueName = "date-met-queue", connection = "AzureWebJobsStorage")
+    message: QueueMessage,
     context: ExecutionContext
-) {
-    require(event.type == AccommodationDateMetEvent::class.java.name)
-    val domainEvent = EventJsonSerializer.fromJSON(event.domainevent, Class.forName(event.type)) as AccommodationDateMetEvent
-
-    runBlocking {
-        accommodationCommandHandler.handle(
-            ExpireAccommodationCommand(
-                accommodationId = domainEvent.accommodationId,
-                correlationId = domainEvent.correlationId!!,
-            ) as AccommodationCommand,
-        )
+) = when (val event = message.getEvent()) {
+        is AccommodationDateMetEvent -> runBlocking {
+                accommodationCommandHandler.handle(
+                    ExpireAccommodationCommand(
+                        accommodationId = event.accommodationId,
+                        correlationId = event.correlationId!!,
+                    ) as AccommodationCommand,
+                )
+            context.logger.info("Accommodation date met: ${event.accommodationId}")
+        }
+        is AttractionDateMetEvent -> runBlocking {
+            attractionCommandHandler.handle(
+                ExpireAttractionCommand(
+                    attractionId = event.attractionId,
+                    correlationId = event.correlationId!!,
+                ) as AttractionCommand,
+            )
+            context.logger.info("Attraction date met: ${event.attractionId}")
+        }
+        is CommuteDateMetEvent -> runBlocking {
+            commuteCommandHandler.handle(
+                ExpireCommuteCommand(
+                    commuteId = event.commuteId,
+                    correlationId = event.correlationId!!,
+                ) as CommuteCommand,
+            )
+            context.logger.info("Commute date met: ${event.commuteId}")
+        }
+        else -> context.logger.info("INVALID event for date-met-queue: $event")
     }
-    context.logger.info("Accommodation date met: ${domainEvent.accommodationId}")
-}
-
-@FunctionName("AttractionDateMetEventHandler")
-fun attractionDateMetEventHandler(
-    @EventGridTrigger(name = "eventgrid") event: PersistedEvent,
-    context: ExecutionContext
-) {
-    require(event.type == AttractionDateMetEvent::class.java.name)
-    val domainEvent = EventJsonSerializer.fromJSON(event.domainevent, Class.forName(event.type)) as AttractionDateMetEvent
-
-    runBlocking {
-        attractionCommandHandler.handle(
-            ExpireAttractionCommand(
-                attractionId = domainEvent.attractionId,
-                correlationId = domainEvent.correlationId!!,
-            ) as AttractionCommand,
-        )
-    }
-    context.logger.info("Attraction date met: ${domainEvent.attractionId}")
-}
-
-@FunctionName("CommuteDateMetEventHandler")
-fun commuteDateMetEventHandler(
-    @EventGridTrigger(name = "eventgrid") event: PersistedEvent,
-    context: ExecutionContext
-) {
-    require(event.type == CommuteDateMetEvent::class.java.name)
-    val domainEvent = EventJsonSerializer.fromJSON(event.domainevent, Class.forName(event.type)) as CommuteDateMetEvent
-
-    runBlocking {
-        commuteCommandHandler.handle(
-            ExpireCommuteCommand(
-                commuteId = domainEvent.commuteId,
-                correlationId = domainEvent.correlationId!!,
-            ) as CommuteCommand,
-        )
-    }
-    context.logger.info("Commute date met: ${domainEvent.commuteId}")
-}

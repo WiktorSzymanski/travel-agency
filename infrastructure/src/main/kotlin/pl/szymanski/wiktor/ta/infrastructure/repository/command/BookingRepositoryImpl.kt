@@ -47,10 +47,10 @@ class BookingRepositoryImpl() : BookingRepository {
     override suspend fun update(booking: Booking) {
         val current = findById(booking.id)
 
-        if (current.version != booking.version - 1) throw ConcurrentModificationException("Could not update $booking")
+        if (current.version != booking.version) throw ConcurrentModificationException("Could not update $current with update $booking")
 
         runCatching {
-            container.replaceItem(booking, booking.id.toString(), PartitionKey(current.id.toString())).awaitSingle()
+            container.replaceItem(booking.copy(version = booking.version + 1), booking.id.toString(), PartitionKey(current.id.toString())).awaitSingle()
         }.exceptionOrNull()?.let { throw Exception("Failed to update $booking revision", it) }
     }
 

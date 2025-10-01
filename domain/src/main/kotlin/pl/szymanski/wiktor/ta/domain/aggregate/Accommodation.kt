@@ -18,7 +18,7 @@ data class Accommodation(
     val rent: Rent,
     var bookingId: UUID? = null,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
-    val lastRevision: Int = -1,
+    val lastRevision: Int = 0,
     val lastEtag : String? = null
 ) {
     fun apply(event: AccommodationEvent, revision: Int, etag: String): Accommodation {

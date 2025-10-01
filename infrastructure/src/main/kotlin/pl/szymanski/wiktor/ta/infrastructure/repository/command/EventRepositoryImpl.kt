@@ -1,6 +1,8 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository.command
 
 import com.azure.cosmos.CosmosAsyncContainer
+import com.azure.cosmos.models.CosmosBatch
+import com.azure.cosmos.models.CosmosBatchItemRequestOptions
 import com.azure.cosmos.models.CosmosItemRequestOptions
 import com.azure.cosmos.models.PartitionKey
 import io.kurrent.dbclient.*
@@ -26,7 +28,7 @@ class EventRepositoryImpl(
         private val log = LoggerFactory.getLogger(TravelOfferExpireService::class.java)
     }
 
-    override suspend fun save(event: Event, etag: String) {
+    override suspend fun save(event: Event, lastRevision: Long, lastEtag: String) {
         val stream = getStreamName(event)
 
         val persistedEvent = PersistedEvent(
@@ -35,15 +37,45 @@ class EventRepositoryImpl(
             type = event::class.java.name,
             correlationid = event.correlationId!!,
             timestamp = LocalDateTime.now().toString(),
-            revision = -1,
+            revision = lastRevision + 1,
             domainevent = EventJsonSerializer.toJSON(event),
         )
 
         container.createItem(
             persistedEvent,
             PartitionKey(stream),
-            CosmosItemRequestOptions().setIfMatchETag(etag)
+            CosmosItemRequestOptions().setIfMatchETag(lastEtag)
         ).awaitSingle()
+    }
+
+    override suspend fun save(events: List<Event>, lastRevision: Long, lastEtag: String) {
+        val stream = getStreamName(events[0])
+        val batch = CosmosBatch.createCosmosBatch(PartitionKey(stream))
+
+        val persistedEvents = events.mapIndexed { idx, event ->
+            PersistedEvent(
+                id = event.eventId,
+                stream = stream,
+                type = event::class.java.name,
+                correlationid = event.correlationId!!,
+                timestamp = LocalDateTime.now().toString(),
+                revision = lastRevision + 1 + idx,
+                domainevent = EventJsonSerializer.toJSON(event),
+            )
+        }
+
+        val first = persistedEvents.first()
+        val rest = persistedEvents.drop(1)
+
+        batch.createItemOperation(
+            first,
+            CosmosBatchItemRequestOptions().setIfMatchETag(lastEtag))
+
+        rest.forEach { event ->
+            batch.createItemOperation(event)
+        }
+
+        container.executeCosmosBatch(batch).awaitSingle()
     }
 
     override suspend fun noRevisionSave(event: Event) {
@@ -55,7 +87,7 @@ class EventRepositoryImpl(
             type = event::class.java.name,
             correlationid = event.correlationId!!,
             timestamp = LocalDateTime.now().toString(),
-            revision = -2,
+            revision = -1,
             domainevent = EventJsonSerializer.toJSON(event),
         )
         container

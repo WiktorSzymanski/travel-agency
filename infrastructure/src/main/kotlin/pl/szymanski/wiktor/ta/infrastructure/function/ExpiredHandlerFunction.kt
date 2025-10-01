@@ -17,8 +17,8 @@ import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
 val travelOfferExpireService = TravelOfferExpireService(
     travelOfferRepository = TravelOfferQueryRepositoryImpl(),
     travelOfferCommandHandler = TravelOfferCommandHandler(
-        TravelOfferRepositoryImpl()
-    )
+        TravelOfferRepositoryImpl(),
+        QueueObjectWrapper())
 )
 
 @FunctionName("AccommodationExpiredEventHandler")

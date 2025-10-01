@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.repository.EventRepository
+import pl.szymanski.wiktor.ta.queryRepository.CommuteUpdateRevision
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -19,12 +20,25 @@ object EventBus {
         this.repository = repository
     }
 
-    suspend fun publish(event: Event, etag: String?) {
-//        log.info("Publishing event: {}", event)
+    suspend fun publish(events: List<Event>, revision: Long, etag: String?) {
+        if (etag == null) {
+            ignoreRevisionPublish(events[0])
+        }
+        else {
+            if (events.size > 1) {
+                repository.save(events, revision, etag)
+            }
+            else {
+                repository.save(events[0], revision, etag)
+            }
+        }
+    }
+
+    suspend fun publish(event: Event, revision: Long, etag: String?) {
         if (etag == null)
             ignoreRevisionPublish(event)
         else
-            repository.save(event, etag)
+            repository.save(event, revision, etag)
     }
 
     suspend fun ignoreRevisionPublish(event: Event) {

@@ -56,7 +56,7 @@ class AttractionQueryRepositoryImpl() : AttractionQueryRepository {
     override suspend fun update(entity: AttractionUpdate) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updatedBookings = current.bookings.toMutableList().apply {
                 entity.bookingId?.let { if (!this.contains(it)) this.add(it) }
@@ -75,7 +75,7 @@ class AttractionQueryRepositoryImpl() : AttractionQueryRepository {
     override suspend fun update(entity: AttractionUpdateRevision) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updatedBookings = current.bookings.toMutableList().apply {
                 entity.bookingId?.let { if (!this.contains(it)) this.add(it) }
@@ -94,7 +94,7 @@ class AttractionQueryRepositoryImpl() : AttractionQueryRepository {
     override suspend fun update(entity: AttractionCancelUpdate) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updatedBookings = current.bookings.toMutableList().apply {
                 entity.bookingId?.let { this.remove(it) }
@@ -113,7 +113,7 @@ class AttractionQueryRepositoryImpl() : AttractionQueryRepository {
     override suspend fun update(entity: AttractionUpdateStatus) {
         withRetry {
             val current = findById(entity.id)
-            if (current.lastRevision != entity.revision - 1) throw ConcurrentModificationException("Could not update $entity")
+            if (current.lastRevision != entity.revision - 1) ConcurrentModificationException("Could not update $current with update $entity")
 
             val updated = current.copy(
                 status = entity.status!!,

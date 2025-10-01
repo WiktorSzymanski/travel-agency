@@ -5,10 +5,7 @@ import com.azure.cosmos.models.PartitionKey
 import com.azure.cosmos.models.SqlQuerySpec
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
-import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
-import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.infrastructure.repository.EventJsonSerializer

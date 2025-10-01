@@ -17,7 +17,7 @@ import pl.szymanski.wiktor.ta.withRetry
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
 ) {
-    val maxRetries = 30
+    val maxRetries = 1
 
     suspend fun handle(command: AttractionCommand): AttractionEvent =
         withRetry (maxRetries) {
@@ -26,66 +26,54 @@ class AttractionCommandHandler(
                 is CancelAttractionBookingCommand -> handle(command)
                 is CreateAttractionCommand -> handle(command)
                 is ExpireAttractionCommand -> handle(command)
-            }.map {
-                it.first.correlationId = command.correlationId
-                it
             }.let {
-                EventBus.publish(it[0].first, it[0].second)
-                if (it.size > 1) EventBus.ignoreRevisionPublish(it[1].first)
-                it[0].first
+                it.first.map { event -> event.correlationId = command.correlationId }
+                EventBus.publish(it.first, it.second.toLong(), it.third)
+                it.first.first()
             }
         }
 
-    private suspend fun handle(command: BookAttractionCommand): List<Pair<AttractionEvent, String?>> =
-        attractionRepository
-            .findById(command.attractionId)
-            .let { attraction ->
-                attraction
-                    .book(command.bookingId)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to attraction.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<AttractionEvent, String?>>
-            }
-
-    private suspend fun handle(command: CancelAttractionBookingCommand): List<Pair<AttractionEvent, String?>> =
-        attractionRepository
-            .findById(command.attractionId)
-            .let { attraction ->
-                attraction
-                    .cancelBooking(command.bookingId)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to attraction.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<AttractionEvent, String?>>
-            }
-
-    private suspend fun handle(command: CreateAttractionCommand): List<Pair<AttractionEvent, String?>> =
+    private suspend fun handle(command: CreateAttractionCommand): Triple<List<AttractionEvent>, Int, String?> =
         Attraction.create(
             command.name,
             command.location,
             command.date,
             command.capacity,
-        ).let { (attraction, event) ->
-            listOf(event[0] to attraction.lastEtag)
+        ).let { (attraction, events) ->
+            Triple(events, attraction.lastRevision, attraction.lastEtag)
         }
 
-    private suspend fun handle(command: ExpireAttractionCommand): List<Pair<AttractionEvent, String?>> =
+    private suspend fun handle(command: BookAttractionCommand): Triple<List<AttractionEvent>, Int, String> =
+        attractionRepository
+            .findById(command.attractionId)
+            .let { attraction ->
+                attraction
+                    .book(command.bookingId)
+                    .let {
+                        Triple(it, attraction.lastRevision, attraction.lastEtag!!)
+                    }
+            }
+
+    private suspend fun handle(command: CancelAttractionBookingCommand): Triple<List<AttractionEvent>, Int, String> =
+        attractionRepository
+            .findById(command.attractionId)
+            .let { attraction ->
+                attraction
+                    .cancelBooking(command.bookingId)
+                    .let {
+                        Triple(it, attraction.lastRevision, attraction.lastEtag!!)
+                    }
+            }
+
+    private suspend fun handle(command: ExpireAttractionCommand): Triple<List<AttractionEvent>, Int, String> =
         attractionRepository
             .findById(command.attractionId)
             .let { attraction ->
                 attraction
                     .expire()
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to attraction.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<AttractionEvent, String?>>
+                    .let {
+                        Triple(it, attraction.lastRevision, attraction.lastEtag!!)
+                    }
             }
 
     suspend fun compensate(event: AttractionEvent): AttractionEvent =
@@ -95,43 +83,33 @@ class AttractionCommandHandler(
                 is AttractionBookingCanceledEvent -> compensate(event)
                 else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
             }.let {
-                it[0].first.toCompensation()
-                it
-            }.map {
-                it.first.correlationId = event.correlationId
-                it
+                it.copy(first = listOf(it.first.first().toCompensation()) + it.first.drop(1))
             }.let {
-                EventBus.publish(it[0].first, it[0].second!!)
-                if (it.size > 1) EventBus.ignoreRevisionPublish(it[1].first)
-                it[0].first
+                it.first.map { event -> event.correlationId = event.correlationId }
+                EventBus.publish(it.first, it.second.toLong(), it.third)
+                it.first.first()
             }
         }
 
-    private suspend fun compensate(event: AttractionBookedEvent): List<Pair<AttractionEvent, String?>> =
+    private suspend fun compensate(event: AttractionBookedEvent): Triple<List<AttractionEvent>, Int, String> =
         attractionRepository
             .findById(event.attractionId)
             .let { attraction ->
                 attraction
                     .compensateBook(event.bookingId)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to attraction.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<AttractionEvent, String?>>
+                    .let {
+                        Triple(it, attraction.lastRevision, attraction.lastEtag!!)
+                    }
             }
 
-    private suspend fun compensate(event: AttractionBookingCanceledEvent): List<Pair<AttractionEvent, String?>> =
+    private suspend fun compensate(event: AttractionBookingCanceledEvent): Triple<List<AttractionEvent>, Int, String> =
         attractionRepository
             .findById(event.attractionId)
             .let { attraction ->
                 attraction
                     .compensateCancelBooking(event.bookingId)
-                    .let { lst ->
-                        listOfNotNull(
-                            lst[0] to attraction.lastEtag,
-                            takeIf { lst.size > 1 }?.let { lst[1] to null}
-                        )
-                    } as List<Pair<AttractionEvent, String?>>
+                    .let {
+                        Triple(it, attraction.lastRevision, attraction.lastEtag!!)
+                    }
             }
 }

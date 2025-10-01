@@ -21,7 +21,7 @@ data class Attraction(
     val capacity: Int,
     val bookings: MutableList<UUID> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
-    val lastRevision: Int = -1,
+    val lastRevision: Int = 0,
     val lastEtag : String? = null
 ) {
     fun apply(event: AttractionEvent, revision: Int, etag: String): Attraction {
