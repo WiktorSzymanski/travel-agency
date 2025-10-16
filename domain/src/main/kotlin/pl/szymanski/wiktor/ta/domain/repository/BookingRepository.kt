@@ -1,17 +1,19 @@
 package pl.szymanski.wiktor.ta.domain.repository
 
-import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import java.util.UUID
 
 interface BookingRepository {
-    suspend fun findById(bookingId: UUID): Booking
-    
-    suspend fun save(booking: Booking): Booking?
-    
-    suspend fun update(booking: Booking)
-    
-    suspend fun findByUserId(userId: UUID): List<Booking>
-    
-    suspend fun findByState(state: BookingState): List<Booking>
+    suspend fun findById(id: UUID): Booking
+
+    suspend fun create(
+        entity: Booking,
+        event: BookingEvent,
+    )
+
+    suspend fun save(
+        entity: Booking,
+        event: BookingEvent,
+    )
 }

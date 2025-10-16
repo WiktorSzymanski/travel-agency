@@ -1,12 +1,19 @@
 package pl.szymanski.wiktor.ta.domain.repository
 
-import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import java.util.UUID
 
-interface AccommodationRepository : Repository<Accommodation> {
-    suspend fun findById(accommodationId: UUID): Accommodation
+interface AccommodationRepository {
+    suspend fun findById(id: UUID): Accommodation
 
-    override suspend fun save(event: Event)
+    suspend fun create(
+        entity: Accommodation,
+        event: AccommodationEvent,
+    )
+
+    suspend fun save(
+        entity: Accommodation,
+        event: AccommodationEvent,
+    )
 }

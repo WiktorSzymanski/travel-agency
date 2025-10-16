@@ -4,17 +4,15 @@ import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
-import pl.szymanski.wiktor.ta.domain.event.AccommodationBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class AccommodationTest {
@@ -54,17 +52,7 @@ class AccommodationTest {
     @Test
     fun book_should_fail_when_not_available() {
         val accommodation = accommodation.copy(status = AccommodationStatusEnum.BOOKED)
-
-        val event = accommodation.book(bookingId)
-
-        assertEventEquals(
-            AccommodationBookFailedEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
-                message = "Accommodation $accommodationId cannot be booked when in status ${AccommodationStatusEnum.BOOKED}",
-            ),
-            event,
-        )
+        assertFailsWith<AccommodationBookingFailedException> { accommodation.book(bookingId) }
     }
 
     @Test
@@ -84,16 +72,7 @@ class AccommodationTest {
 
     @Test
     fun cancelBooking_should_fail_if_not_booked() {
-        val event = accommodation.cancelBooking(bookingId)
-
-        assertEventEquals(
-            AccommodationBookingCancelFailedEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
-                message = "Accommodation $accommodationId booking cannot be canceled when in status ${AccommodationStatusEnum.AVAILABLE}",
-            ),
-            event,
-        )
+        assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.cancelBooking(bookingId) }
     }
 
     @Test
@@ -101,16 +80,7 @@ class AccommodationTest {
         val randomBookingId = UUID.randomUUID()
         accommodation.book(randomBookingId)
 
-        val event = accommodation.cancelBooking(bookingId)
-
-        assertEventEquals(
-            AccommodationBookingCancelFailedEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
-                message = "Accommodation $accommodationId is not BOOKED by bookingId $bookingId",
-            ),
-            event,
-        )
+        assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.cancelBooking(bookingId) }
     }
 
     @Test
@@ -129,29 +99,65 @@ class AccommodationTest {
 
     @Test
     fun expire_should_fail_if_available_but_rent_date_not_met() {
-        val event = accommodation.expire()
-
-        assertEventEquals(
-            AccommodationExpireFailedEvent(
-                accommodationId = accommodationId,
-                message = "Accommodation $accommodationId cannot be expired before its rent start",
-            ),
-            event,
-        )
+        assertFailsWith<DomainException> { accommodation.expire() }
     }
 
     @Test
     fun expire_should_fail_if_in_unexpected_status() {
         val accommodation = accommodation.copy(status = AccommodationStatusEnum.BOOKED)
 
-        val event = accommodation.expire()
+        assertFailsWith<DomainException> { accommodation.expire() }
+    }
+
+    @Test
+    fun compensateBook_should_succeed_when_bookingId_matches() {
+        accommodation.book(bookingId)
+        val event = accommodation.compensateBook(bookingId)
 
         assertEventEquals(
-            AccommodationExpireFailedEvent(
+            AccommodationBookingCanceledEvent(
                 accommodationId = accommodationId,
-                message = "Accommodation $accommodationId cannot expire in status ${AccommodationStatusEnum.BOOKED}",
+                bookingId = bookingId,
             ),
             event,
         )
+        assertEquals(AccommodationStatusEnum.AVAILABLE, accommodation.status)
+        assertNull(accommodation.bookingId)
+    }
+
+    @Test
+    fun compensateBook_should_fail_when_bookingId_does_not_match() {
+        val randomBookingId = UUID.randomUUID()
+        accommodation.book(randomBookingId)
+
+        assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.compensateBook(bookingId) }
+    }
+
+    @Test
+    fun compensateBook_should_fail_when_no_booking_exists() {
+        assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.compensateBook(bookingId) }
+    }
+
+    @Test
+    fun compensateCancelBooking_should_succeed_when_no_existing_booking() {
+        val event = accommodation.compensateCancelBooking(bookingId)
+
+        assertEventEquals(
+            AccommodationBookedEvent(
+                accommodationId = accommodationId,
+                bookingId = bookingId,
+            ),
+            event,
+        )
+        assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
+        assertEquals(bookingId, accommodation.bookingId)
+    }
+
+    @Test
+    fun compensateCancelBooking_should_fail_when_booking_already_exists() {
+        val randomBookingId = UUID.randomUUID()
+        accommodation.book(randomBookingId)
+
+        assertFailsWith<AccommodationBookingFailedException> { accommodation.compensateCancelBooking(bookingId) }
     }
 }

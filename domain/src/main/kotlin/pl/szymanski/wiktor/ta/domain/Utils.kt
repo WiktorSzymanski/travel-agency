@@ -27,6 +27,16 @@ data class LocationAndTime(
     val time: LocalDateTime,
 )
 
+enum class BookingState {
+    NEW,
+    PROCESSING,
+    SUCCEEDED,
+    CANCEL_REQUESTED,
+    PROCESSING_CANCELLATION,
+    CANCELED,
+    FAILED,
+}
+
 @Serializable
 data class Seat(
     val row: String,

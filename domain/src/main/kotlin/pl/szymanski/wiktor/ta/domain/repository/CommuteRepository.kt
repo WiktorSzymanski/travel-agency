@@ -1,12 +1,19 @@
 package pl.szymanski.wiktor.ta.domain.repository
 
-import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import java.util.UUID
 
-interface CommuteRepository : Repository<Commute> {
-    suspend fun findById(commuteId: UUID): Commute
+interface CommuteRepository {
+    suspend fun findById(id: UUID): Commute
 
-    override suspend fun save(event: Event)
+    suspend fun create(
+        entity: Commute,
+        event: CommuteEvent,
+    )
+
+    suspend fun save(
+        entity: Commute,
+        event: CommuteEvent,
+    )
 }

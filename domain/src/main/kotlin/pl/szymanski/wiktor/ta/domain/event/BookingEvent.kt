@@ -64,7 +64,6 @@ data class FailBookingEvent(
     val message: String,
 ) : BookingEvent
 
-
 data class FailCancelBookingEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,

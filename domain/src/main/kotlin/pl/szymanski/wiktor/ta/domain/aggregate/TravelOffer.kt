@@ -4,7 +4,6 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
@@ -16,7 +15,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import java.util.UUID
 
 data class TravelOffer(
-    val _id: UUID,
+    val id: UUID,
     val name: String,
     val commuteId: UUID,
     val accommodationId: UUID,
@@ -25,145 +24,39 @@ data class TravelOffer(
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
     val lastRevision: Int = -1,
 ) {
-    fun apply(event: TravelOfferEvent, revision: Int): TravelOffer {
-        return when (event) {
-            is TravelOfferCreatedEvent -> this.copy(
-                _id = event.travelOfferId,
-                name = event.name,
-                commuteId = event.commuteId,
-                accommodationId = event.accommodationId,
-                attractionId = event.attractionId,
-                status = TravelOfferStatusEnum.AVAILABLE,
-                lastRevision = revision
-            )
-            is TravelOfferMadeUnavailableEvent -> this.copy(
-                status = TravelOfferStatusEnum.UNAVAILABLE,
-                lastRevision = revision
-            )
-            is TravelOfferMadeAvailableEvent -> this.copy(
-                status = TravelOfferStatusEnum.AVAILABLE,
-                lastRevision = revision
-            )
-            is TravelOfferExpiredEvent -> this.copy(
-                status = TravelOfferStatusEnum.EXPIRED,
-                lastRevision = revision
-            )
-            is TravelOfferReservedEvent -> this.copy(
-                status = TravelOfferStatusEnum.RESERVED,
-                bookingId = event.bookingId,
-                lastRevision = revision
-            )
-            is TravelOfferBookedEvent -> this.copy(
-                status = TravelOfferStatusEnum.BOOKED,
-                bookingId = event.bookingId,
-                lastRevision = revision
-            )
-            is TravelOfferReservationCanceledEvent -> this.copy(
-                status = TravelOfferStatusEnum.AVAILABLE,
-                bookingId = null,
-                lastRevision = revision
-            )
-            is TravelOfferReleaseEvent -> this.copy(
-                status = TravelOfferStatusEnum.RELEASING,
-                lastRevision = revision
-            )
-            is TravelOfferRebookedEvent -> this.copy(
-                status = TravelOfferStatusEnum.BOOKED,
-                lastRevision = revision
-            )
-            is TravelOfferBookingCanceledEvent -> this.copy(
-                status = TravelOfferStatusEnum.AVAILABLE,
-                bookingId = null,
-                lastRevision = revision
-            )
-            else -> this.copy(lastRevision = revision)
-        }
-    }
-    companion object {
-        fun create(
-            name: String,
-            commuteId: UUID,
-            accommodationId: UUID,
-            attractionId: UUID? = null,
-        ): Pair<TravelOffer, TravelOfferCreatedEvent> {
-            val travelOffer =
-                TravelOffer(
-                    _id = UUID.randomUUID(),
-                    name = name,
-                    commuteId = commuteId,
-                    accommodationId = accommodationId,
-                    attractionId = attractionId,
-                )
-
-            val event =
-                TravelOfferCreatedEvent(
-                    travelOfferId = travelOffer._id,
-                    name = name,
-                    commuteId = commuteId,
-                    accommodationId = accommodationId,
-                    attractionId = attractionId,
-                )
-
-            return travelOffer to event
-        }
-        
-        fun fromEvents(events: List<Pair<TravelOfferEvent, Int>>): TravelOffer? {
-            if (events.isEmpty()) return null
-
-            val (createdEvent, _) = events.first()
-
-            require(createdEvent is TravelOfferCreatedEvent) { "First event must be TravelOfferCreatedEvent" }
-
-            var travelOffer = TravelOffer(
-                _id = createdEvent.travelOfferId,
-                name = createdEvent.name,
-                commuteId = createdEvent.commuteId,
-                accommodationId = createdEvent.accommodationId,
-                attractionId = createdEvent.attractionId,
-            )
-            
-            // Apply all events in order to reconstruct the current state
-            for ((event, revision) in events) {
-                travelOffer = travelOffer.apply(event, revision)
-            }
-            
-            return travelOffer
-        }
-    }
-
     fun makeUnavailable(): TravelOfferEvent {
-        require(this.status == TravelOfferStatusEnum.AVAILABLE) {
-            "TravelOffer $_id cannot be made unavailable when in $status status"
+        if (this.status != TravelOfferStatusEnum.AVAILABLE) {
+            throw TravelOfferMakeUnavailableFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.UNAVAILABLE
 
         return TravelOfferMadeUnavailableEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
         )
     }
 
     fun makeAvailable(): TravelOfferEvent {
-        require(this.status == TravelOfferStatusEnum.UNAVAILABLE) {
-            "TravelOffer $_id cannot be made available when in $status status"
+        if (this.status != TravelOfferStatusEnum.UNAVAILABLE) {
+            throw TravelOfferMakeAvailableFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.AVAILABLE
 
         return TravelOfferMadeAvailableEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
         )
     }
 
     fun expire(): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.AVAILABLE) {
-            "TravelOffer $_id cannot be expired when in $status status"
+        if (status != TravelOfferStatusEnum.AVAILABLE) {
+            throw TravelOfferExpireFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.EXPIRED
 
         return TravelOfferExpiredEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             commuteId = commuteId,
             accommodationId = accommodationId,
             attractionId = attractionId,
@@ -174,15 +67,15 @@ data class TravelOffer(
         bookingId: UUID,
         seat: Seat?,
     ): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.AVAILABLE) {
-            "TravelOffer is not open for reservation, current status is $status"
+        if (status != TravelOfferStatusEnum.AVAILABLE) {
+            throw TravelOfferReserveFailedException(status)
         }
 
         this.status = TravelOfferStatusEnum.RESERVED
         this.bookingId = bookingId
 
         return TravelOfferReservedEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
@@ -195,18 +88,18 @@ data class TravelOffer(
         bookingId: UUID,
         seat: Seat?,
     ): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.RESERVED) {
-            "TravelOffer can not be booked if not RESERVED prior, current status is $status"
+        if (status != TravelOfferStatusEnum.RESERVED) {
+            throw TravelOfferBookFailedException(status)
         }
 
-        require(this.bookingId == bookingId) {
-            "TravelOffer $_id is not RESERVED by booking $bookingId"
+        if (this.bookingId != bookingId) {
+            throw TravelOfferBookFailedException(id, bookingId)
         }
 
         this.status = TravelOfferStatusEnum.BOOKED
 
         return TravelOfferBookedEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
@@ -219,24 +112,24 @@ data class TravelOffer(
         bookingId: UUID,
         seat: Seat?,
     ): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.RESERVED) {
-            "Cannot cancel reservation for TravelOffer $_id when in $status status"
+        if (status != TravelOfferStatusEnum.RESERVED) {
+            throw TravelOfferReservationCancelFailedException(id, status)
         }
 
-        require(this.bookingId == bookingId) {
-            "TravelOffer $_id is not RESERVED by user $bookingId"
+        if (this.bookingId != bookingId) {
+            throw TravelOfferReservationCancelFailedException(id, bookingId)
         }
 
         this.bookingId = null
         this.status = TravelOfferStatusEnum.AVAILABLE
 
         return TravelOfferReservationCanceledEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
-            seat = seat
+            seat = seat,
         )
     }
 
@@ -244,63 +137,61 @@ data class TravelOffer(
         bookingId: UUID,
         seat: Seat?,
     ): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.BOOKED) {
-            "Cannot cancel booking for TravelOffer $_id when in $status status"
+        if (status != TravelOfferStatusEnum.BOOKED) {
+            throw TravelOfferBookingCancelFailedException(id, status)
         }
 
-        require(this.bookingId == bookingId) {
-            "TravelOffer $_id is not BOOKED for Booking $bookingId"
+        if (this.bookingId != bookingId) {
+            throw TravelOfferBookingCancelFailedException(id, bookingId)
         }
 
         this.status = TravelOfferStatusEnum.RELEASING
 
         return TravelOfferReleaseEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
-            seat = seat
+            seat = seat,
         )
     }
 
-    fun rebook(
-        bookingId: UUID,
-    ): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.RELEASING) {
-            "Cannot rebook TravelOffer $_id when in $status status"
+    fun rebook(bookingId: UUID): TravelOfferEvent {
+        if (status != TravelOfferStatusEnum.RELEASING) {
+            throw TravelOfferRebookFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.BOOKED
 
         return TravelOfferRebookedEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             bookingId = bookingId,
         )
     }
 
     fun cancelBooking(
         bookingId: UUID,
-        seat: Seat?
+        seat: Seat?,
     ): TravelOfferEvent {
-        require(status == TravelOfferStatusEnum.RELEASING) {
-            "Cannot cancel Booking for TravelOffer $_id when in $status status"
+        if (status != TravelOfferStatusEnum.RELEASING) {
+            throw TravelOfferReleaseCompleteFailedException(id, status)
         }
 
-        require(this.bookingId == bookingId) {
-            "TravelOffer $_id is not being released by Booking $bookingId"
+        if (this.bookingId != bookingId) {
+            throw TravelOfferReleaseCompleteFailedException(id, bookingId)
         }
 
         this.bookingId = null
         this.status = TravelOfferStatusEnum.AVAILABLE
 
         return TravelOfferBookingCanceledEvent(
-            travelOfferId = _id,
+            travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
-            seat = seat
+            seat = seat,
         )
     }
 }

@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import pl.szymanski.wiktor.ta.domain.event.CancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.CompleteBookingEvent
@@ -15,7 +14,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Booking(
-    val _id: UUID = UUID.randomUUID(),
+    val id: UUID = UUID.randomUUID(),
     val userId: UUID,
     val travelOfferId: UUID,
     val seat: Seat?,
@@ -24,114 +23,90 @@ data class Booking(
     val timestamp: LocalDateTime = LocalDateTime.now(),
     val version: Int = 1,
 ) {
-    companion object {
-        fun create(
-            userId: UUID,
-            seat: Seat? = null,
-            travelOfferId: UUID,
-        ): Pair<Booking, BookingCreatedEvent> {
-            val booking = Booking(
-                userId = userId,
-                travelOfferId = travelOfferId,
-                seat = seat,
-            )
-
-            val event = BookingCreatedEvent(
-                bookingId = booking._id,
-                travelOfferId = travelOfferId,
-                userId = userId,
-                seat = seat,
-                state = booking.status,
-            )
-
-            return Pair(booking, event)
-        }
-    }
-
-    fun process() : BookingEvent {
-        require(this.status == BookingState.NEW) {
-            "Booking can only be processed in NEW state"
+    fun process(): BookingEvent {
+        if (this.status != BookingState.NEW) {
+            throw BookingProcessFailedException()
         }
 
         this.status = BookingState.PROCESSING
         return ProcessBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
-    fun complete() : BookingEvent {
-        require(listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
-            "Booking can only be completed in PROCESSING state"
+    fun complete(): BookingEvent {
+        if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
+            throw BookingCompleteFailedException()
         }
 
         this.status = BookingState.SUCCEEDED
         return CompleteBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
-    fun requestCancel() : BookingEvent {
-        require(this.status == BookingState.SUCCEEDED) {
-            "Booking can only be cancelled in SUCCEEDED state"
+    fun requestCancel(): BookingEvent {
+        if (this.status != BookingState.SUCCEEDED) {
+            throw BookingCancelRequestFailedException()
         }
 
         this.status = BookingState.CANCEL_REQUESTED
 
         return BookingCancelRequestedEvent(
-            bookingId = _id,
+            bookingId = id,
             travelOfferId = travelOfferId,
-            seat = seat
+            seat = seat,
         )
     }
 
-    fun cancel() : BookingEvent {
-        require(this.status == BookingState.PROCESSING_CANCELLATION) {
-            "Booking can only be cancelled in PROCESSING or NEW state"
+    fun cancel(): BookingEvent {
+        if (this.status != BookingState.PROCESSING_CANCELLATION) {
+            throw BookingCancelFailedException()
         }
 
         this.status = BookingState.CANCELED
         return CancelBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
-    fun processCancellation() : BookingEvent {
-        require(this.status == BookingState.CANCEL_REQUESTED) {
-            "Booking cancelation can only be process in CANCEL_REQUESTED state"
+    fun processCancellation(): BookingEvent {
+        if (this.status != BookingState.CANCEL_REQUESTED) {
+            throw BookingProcessCancellationFailedException()
         }
 
         this.status = BookingState.PROCESSING_CANCELLATION
 
         return ProcessCancelBookingEvent(
-            bookingId = _id,
+            bookingId = id,
         )
     }
 
-    fun fail(message: String) : BookingEvent {
-        require(listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
-            "Booking can only be failed in PROCESSING or NEW state. Original message: $message"
+    fun fail(message: String): BookingEvent {
+        if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
+            throw BookingFailFailedException(message)
         }
 
         this.status = BookingState.FAILED
         this.message = message
 
         return FailBookingEvent(
-            bookingId = _id,
-            message = message
+            bookingId = id,
+            message = message,
         )
     }
 
-    fun failCancellation(message: String) : BookingEvent {
-        require(listOf(BookingState.PROCESSING_CANCELLATION, BookingState.CANCEL_REQUESTED).contains(this.status)) {
-            "Cancel Booking can only be failed in PROCESSING_CANCELLATION or CANCEL_REQUESTED state. Original message: $message"
+    fun failCancellation(message: String): BookingEvent {
+        if (!listOf(BookingState.PROCESSING_CANCELLATION, BookingState.CANCEL_REQUESTED).contains(this.status)) {
+            throw BookingFailCancellationFailedException(message)
         }
 
         this.status = BookingState.SUCCEEDED
         this.message = message
 
         return FailCancelBookingEvent(
-            bookingId = _id,
-            message = message
+            bookingId = id,
+            message = message,
         )
     }
 }

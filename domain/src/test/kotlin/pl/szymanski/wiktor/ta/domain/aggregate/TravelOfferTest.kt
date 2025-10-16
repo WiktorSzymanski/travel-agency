@@ -3,21 +3,21 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCancelFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpireFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseCompleteFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeUnavailableEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReserveFailedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class TravelOfferTest {
@@ -72,16 +72,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val event = offer.reserve(bookingId, seat)
-
-        assertEventEquals(
-            TravelOfferReserveFailedEvent(
-                travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "TravelOffer is not open for reservation, current status is ${TravelOfferStatusEnum.BOOKED}",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferReserveFailedException> { offer.reserve(bookingId, seat) }
     }
 
     @Test
@@ -114,16 +105,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.AVAILABLE,
             )
 
-        val event = offer.book(bookingId, seat)
-
-        assertEventEquals(
-            TravelOfferBookFailedEvent(
-                travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "TravelOffer can not be booked if not RESERVED prior, current status is ${TravelOfferStatusEnum.AVAILABLE}",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferBookFailedException> { offer.book(bookingId, seat) }
     }
 
     @Test
@@ -134,16 +116,7 @@ class TravelOfferTest {
         val reservedOffer = offer.copy()
         reservedOffer.reserve(differentbookingId, seat)
 
-        val event = reservedOffer.book(bookingId, seat)
-
-        assertEventEquals(
-            TravelOfferBookFailedEvent(
-                travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "TravelOffer $travelOfferId is not RESERVED by booking $bookingId",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferBookFailedException> { reservedOffer.book(bookingId, seat) }
     }
 
     @Test
@@ -185,15 +158,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val event = offer.expire()
-
-        assertEventEquals(
-            TravelOfferExpireFailedEvent(
-                travelOfferId = travelOfferId,
-                message = "TravelOffer $travelOfferId cannot be expired when in BOOKED status",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferExpireFailedException> { offer.expire() }
     }
 
     @Test
@@ -228,16 +193,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.AVAILABLE,
             )
 
-        val event = offer.releaseBooking(bookingId, seat)
-
-        assertEventEquals(
-            TravelOfferBookingCancelFailedEvent(
-                travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "Cannot cancel booking for TravelOffer $travelOfferId when in AVAILABLE status",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferBookingCancelFailedException> { offer.releaseBooking(bookingId, seat) }
     }
 
     @Test
@@ -249,16 +205,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val event = offer.releaseBooking(bookingId, seat)
-
-        assertEventEquals(
-            TravelOfferBookingCancelFailedEvent(
-                travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "TravelOffer $travelOfferId is not BOOKED for Booking $bookingId",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferBookingCancelFailedException> { offer.releaseBooking(bookingId, seat) }
     }
 
     @Test
@@ -294,16 +241,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.AVAILABLE,
             )
 
-        val event = offer.cancelBooking(bookingId, seat)
-
-        assertEventEquals(
-            TravelOfferReleaseCompleteFailedEvent(
-                travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "Cannot complete release for TravelOffer $travelOfferId when in AVAILABLE status",
-            ),
-            event,
-        )
+        assertFailsWith<TravelOfferReleaseCompleteFailedException> { offer.cancelBooking(bookingId, seat) }
     }
 
     @Test
@@ -315,15 +253,160 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.RELEASING,
             )
 
-        val event = offer.cancelBooking(bookingId, seat)
+        assertFailsWith<TravelOfferReleaseCompleteFailedException> { offer.cancelBooking(bookingId, seat) }
+    }
+
+    @Test
+    fun makeUnavailable_successfully_from_available() {
+        val event = offer.makeUnavailable()
 
         assertEventEquals(
-            TravelOfferReleaseCompleteFailedEvent(
+            TravelOfferMadeUnavailableEvent(
                 travelOfferId = travelOfferId,
-                bookingId = bookingId,
-                message = "TravelOffer $travelOfferId is not being released by Booking $bookingId",
             ),
             event,
         )
+        assertEquals(TravelOfferStatusEnum.UNAVAILABLE, offer.status)
+    }
+
+    @Test
+    fun makeUnavailable_fails_when_not_available() {
+        offer = offer.copy(status = TravelOfferStatusEnum.BOOKED)
+
+        assertFailsWith<TravelOfferMakeUnavailableFailedException> { offer.makeUnavailable() }
+    }
+
+    @Test
+    fun makeAvailable_successfully_from_unavailable() {
+        offer = offer.copy(status = TravelOfferStatusEnum.UNAVAILABLE)
+        val event = offer.makeAvailable()
+
+        assertEventEquals(
+            TravelOfferMadeAvailableEvent(
+                travelOfferId = travelOfferId,
+            ),
+            event,
+        )
+        assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
+    }
+
+    @Test
+    fun makeAvailable_fails_when_not_unavailable() {
+        assertFailsWith<TravelOfferMakeAvailableFailedException> { offer.makeAvailable() }
+    }
+
+    @Test
+    fun cancelReservation_successfully() {
+        offer.reserve(bookingId, seat)
+        val event = offer.cancelReservation(bookingId, seat)
+
+        assertEventEquals(
+            TravelOfferReservationCanceledEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                bookingId = bookingId,
+                seat = seat,
+            ),
+            event,
+        )
+        assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
+        assertNull(offer.bookingId)
+    }
+
+    @Test
+    fun cancelReservation_fails_when_not_reserved() {
+        assertFailsWith<TravelOfferReservationCancelFailedException> { offer.cancelReservation(bookingId, seat) }
+    }
+
+    @Test
+    fun cancelReservation_fails_when_wrong_booking() {
+        val differentBookingId = UUID.randomUUID()
+        offer.reserve(differentBookingId, seat)
+
+        assertFailsWith<TravelOfferReservationCancelFailedException> { offer.cancelReservation(bookingId, seat) }
+    }
+
+    @Test
+    fun cancelReservation_with_null_seat() {
+        offer.reserve(bookingId, null)
+        val event = offer.cancelReservation(bookingId, null)
+
+        assertEventEquals(
+            TravelOfferReservationCanceledEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                bookingId = bookingId,
+                seat = null,
+            ),
+            event,
+        )
+        assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
+    }
+
+    @Test
+    fun rebook_successfully_from_releasing() {
+        offer =
+            offer.copy(
+                bookingId = bookingId,
+                status = TravelOfferStatusEnum.RELEASING,
+            )
+        val event = offer.rebook(bookingId)
+
+        assertEventEquals(
+            TravelOfferRebookedEvent(
+                travelOfferId = travelOfferId,
+                bookingId = bookingId,
+            ),
+            event,
+        )
+        assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
+    }
+
+    @Test
+    fun rebook_fails_when_not_releasing() {
+        offer = offer.copy(status = TravelOfferStatusEnum.BOOKED)
+
+        assertFailsWith<TravelOfferRebookFailedException> { offer.rebook(bookingId) }
+    }
+
+    @Test
+    fun reserve_with_null_seat() {
+        val event = offer.reserve(bookingId, null)
+
+        assertEventEquals(
+            TravelOfferReservedEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                bookingId = bookingId,
+                seat = null,
+            ),
+            event,
+        )
+        assertEquals(TravelOfferStatusEnum.RESERVED, offer.status)
+    }
+
+    @Test
+    fun book_with_null_seat() {
+        offer.reserve(bookingId, null)
+        val event = offer.book(bookingId, null)
+
+        assertEventEquals(
+            TravelOfferBookedEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                bookingId = bookingId,
+                seat = null,
+            ),
+            event,
+        )
+        assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
     }
 }

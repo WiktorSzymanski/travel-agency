@@ -34,7 +34,6 @@ data class AttractionExpiredEvent(
     override val attractionId: UUID,
 ) : AttractionEvent
 
-
 data class AttractionFullEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
