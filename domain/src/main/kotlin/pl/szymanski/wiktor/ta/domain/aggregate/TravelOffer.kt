@@ -4,6 +4,7 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
@@ -12,6 +13,15 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferBookFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferBookingCancelFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferExpireFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferMakeAvailableFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferMakeUnavailableFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferRebookFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReleaseCompleteFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReserveFailedException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReservationCancelFailedException
 import java.util.UUID
 
 data class TravelOffer(
@@ -22,8 +32,36 @@ data class TravelOffer(
     val attractionId: UUID? = null,
     var bookingId: UUID? = null,
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
-    val lastRevision: Int = -1,
 ) {
+    companion object {
+        fun create(
+            name: String,
+            commuteId: UUID,
+            accommodationId: UUID,
+            attractionId: UUID? = null,
+        ): Pair<TravelOffer, TravelOfferCreatedEvent> {
+            val travelOffer =
+                TravelOffer(
+                    id = UUID.randomUUID(),
+                    name = name,
+                    commuteId = commuteId,
+                    accommodationId = accommodationId,
+                    attractionId = attractionId,
+                )
+
+            val event =
+                TravelOfferCreatedEvent(
+                    travelOfferId = travelOffer.id,
+                    name = name,
+                    commuteId = commuteId,
+                    accommodationId = accommodationId,
+                    attractionId = attractionId,
+                )
+
+            return travelOffer to event
+        }
+    }
+
     fun makeUnavailable(): TravelOfferEvent {
         if (this.status != TravelOfferStatusEnum.AVAILABLE) {
             throw TravelOfferMakeUnavailableFailedException(id, status)

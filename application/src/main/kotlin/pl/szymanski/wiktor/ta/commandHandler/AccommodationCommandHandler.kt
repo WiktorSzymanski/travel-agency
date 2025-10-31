@@ -12,89 +12,72 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
-import pl.szymanski.wiktor.ta.withRetry
 
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
-    val maxRetries = 30
-
-    suspend fun handle(command: AccommodationCommand): AccommodationEvent =
-        withRetry (maxRetries) {
-            when (command) {
-                is BookAccommodationCommand -> handle(command)
-                is CancelAccommodationBookingCommand -> handle(command)
-                is CreateAccommodationCommand -> handle(command)
-                is ExpireAccommodationCommand -> handle(command)
-            }.apply { first.correlationId = command.correlationId }
-                .also { EventBus.publish(it.first, it.second) }.first
+    suspend fun handle(command: AccommodationCommand): Pair<Accommodation, AccommodationEvent> =
+        when (command) {
+            is CreateAccommodationCommand -> handle(command)
+            is BookAccommodationCommand -> handle(command)
+            is CancelAccommodationBookingCommand -> handle(command)
+            is ExpireAccommodationCommand -> handle(command)
         }
 
-    suspend fun handle(command: BookAccommodationCommand): Pair<AccommodationEvent, Int> =
-        accommodationRepository
-            .findById(command.accommodationId)
-            .let { accommodation ->
-                accommodation
-                    .book(command.bookingId)
-                    .let { it to accommodation.lastRevision }
-            }
-
-    suspend fun handle(command: CancelAccommodationBookingCommand): Pair<AccommodationEvent, Int> =
-        accommodationRepository
-            .findById(command.accommodationId)
-            .let { accommodation ->
-                accommodation
-                    .cancelBooking(command.bookingId)
-                    .let { it to accommodation.lastRevision }
-            }
-
-    suspend fun handle(command: CreateAccommodationCommand): Pair<AccommodationEvent, Int> =
+    private fun handle(command: CreateAccommodationCommand): Pair<Accommodation, AccommodationEvent> =
         Accommodation.create(
             command.name,
             command.location,
             command.rent,
-        ).let { (accommodation, event) ->
-            event to accommodation.lastRevision
-        }
+        )
 
-    suspend fun handle(command: ExpireAccommodationCommand): Pair<AccommodationEvent, Int> =
+    private suspend fun handle(command: BookAccommodationCommand): Pair<Accommodation, AccommodationEvent> =
         accommodationRepository
             .findById(command.accommodationId)
-            .let { accommodation ->
-                accommodation
-                    .expire()
-                    .let { it to accommodation.lastRevision }
+            .let {
+                val event = it.book(command.bookingId)
+                it to event
             }
 
-    suspend fun compensate(event: AccommodationEvent): AccommodationEvent =
-        withRetry(maxRetries) {
-            when (event) {
-                is AccommodationBookedEvent -> compensate(event)
-                is AccommodationBookingCanceledEvent -> compensate(event)
-                else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
-            }.let {
-                it.first.correlationId = event.correlationId
-                it.first.toCompensation()
-                it
-            }.also { EventBus.publish(it.first, it.second) }.first
+    private suspend fun handle(command: CancelAccommodationBookingCommand): Pair<Accommodation, AccommodationEvent> =
+        accommodationRepository
+            .findById(command.accommodationId)
+            .let {
+                val event = it.cancelBooking(command.bookingId)
+                it to event
+            }
+
+    private suspend fun handle(command: ExpireAccommodationCommand): Pair<Accommodation, AccommodationEvent> =
+        accommodationRepository
+            .findById(command.accommodationId)
+            .let {
+                val event = it.expire()
+                it to event
+            }
+
+    suspend fun compensate(event: AccommodationEvent): Pair<Accommodation, AccommodationEvent> =
+        when (event) {
+            is AccommodationBookedEvent -> compensate(event)
+            is AccommodationBookingCanceledEvent -> compensate(event)
+            else -> throw IllegalArgumentException("Non compensatable event type: ${event::class.simpleName}")
+        }.let {
+            val compensateEvent = it.second.toCompensation()
+            it.first to compensateEvent
         }
 
-
-    suspend fun compensate(event: AccommodationBookedEvent): Pair<AccommodationEvent, Int> =
+    private suspend fun compensate(event: AccommodationBookedEvent): Pair<Accommodation, AccommodationEvent> =
         accommodationRepository
             .findById(event.accommodationId)
-            .let { accommodation ->
-                accommodation
-                    .compensateBook(event.bookingId)
-                    .let { it to accommodation.lastRevision }
+            .let {
+                val event = it.compensateBook(event.bookingId)
+                it to event
             }
 
-    suspend fun compensate(event: AccommodationBookingCanceledEvent): Pair<AccommodationEvent, Int> =
+    private suspend fun compensate(event: AccommodationBookingCanceledEvent): Pair<Accommodation, AccommodationEvent> =
         accommodationRepository
             .findById(event.accommodationId)
-            .let { accommodation ->
-                accommodation
-                    .compensateCancelBooking(event.bookingId)
-                    .let { it to accommodation.lastRevision }
+            .let {
+                val event = it.compensateCancelBooking(event.bookingId)
+                it to event
             }
 }

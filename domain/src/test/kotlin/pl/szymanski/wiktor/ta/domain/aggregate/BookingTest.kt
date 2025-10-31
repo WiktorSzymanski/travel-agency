@@ -10,6 +10,7 @@ import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
+import pl.szymanski.wiktor.ta.domain.exception.*
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test

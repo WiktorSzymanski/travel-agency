@@ -5,9 +5,13 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
+import pl.szymanski.wiktor.ta.domain.exception.AttractionBookFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionBookingCancelFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionExpireFailedException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -19,8 +23,35 @@ data class Attraction(
     val capacity: Int,
     val bookings: MutableList<UUID> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
-    val lastRevision: Int = -1,
 ) {
+    companion object {
+        fun create(
+            name: String,
+            location: LocationEnum,
+            date: LocalDateTime,
+            capacity: Int,
+        ): Pair<Attraction, List<AttractionCreatedEvent>> {
+            val attraction =
+                Attraction(
+                    name = name,
+                    location = location,
+                    date = date,
+                    capacity = capacity,
+                )
+
+            val event =
+                AttractionCreatedEvent(
+                    attractionId = attraction.id,
+                    name = name,
+                    location = location,
+                    date = date,
+                    capacity = capacity,
+                )
+
+            return attraction to listOf(event)
+        }
+    }
+
     fun expire(): List<AttractionEvent> {
         if (LocalDateTime.now().isBefore(date)) {
             throw AttractionExpireFailedException(id)

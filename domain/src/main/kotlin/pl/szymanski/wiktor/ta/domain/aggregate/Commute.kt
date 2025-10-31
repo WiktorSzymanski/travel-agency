@@ -6,9 +6,13 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
+import pl.szymanski.wiktor.ta.domain.exception.CommuteBookSeatFailedException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteCancelBookedSeatFailedException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteExpireFailedException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -20,8 +24,35 @@ data class Commute(
     val seats: List<Seat>,
     val bookings: MutableMap<String, String> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
-    val lastRevision: Int = -1,
 ) {
+    companion object {
+        fun create(
+            name: String,
+            departure: LocationAndTime,
+            arrival: LocationAndTime,
+            seats: List<Seat>,
+        ): Pair<Commute, List<CommuteCreatedEvent>> {
+            val commute =
+                Commute(
+                    name = name,
+                    departure = departure,
+                    arrival = arrival,
+                    seats = seats,
+                )
+
+            val event =
+                CommuteCreatedEvent(
+                    commuteId = commute.id,
+                    name = name,
+                    departure = departure,
+                    arrival = arrival,
+                    seats = seats,
+                )
+
+            return commute to listOf(event)
+        }
+    }
+
     fun expire(): List<CommuteEvent> {
         if (LocalDateTime.now().isBefore(this.departure.time)) {
             throw CommuteExpireFailedException(id)
