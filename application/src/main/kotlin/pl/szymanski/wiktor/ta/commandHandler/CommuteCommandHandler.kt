@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.commandHandler
 
-import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
@@ -12,95 +11,73 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
-import pl.szymanski.wiktor.ta.withRetry
 
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
-    val maxRetries = 30
-
-    suspend fun handle(command: CommuteCommand): CommuteEvent =
-        withRetry (maxRetries) {
-            when (command) {
-                is BookCommuteCommand -> handle(command)
-                is CancelCommuteBookingCommand -> handle(command)
-                is CreateCommuteCommand -> handle(command)
-                is ExpireCommuteCommand -> handle(command)
-            }.map {
-                it.first.correlationId = command.correlationId
-                EventBus.publish(it.first, it.second)
-                it
-            }.let { it[0].first }
+    suspend fun handle(command: CommuteCommand): Pair<Commute, List<CommuteEvent>> =
+        when (command) {
+            is CreateCommuteCommand -> handle(command)
+            is BookCommuteCommand -> handle(command)
+            is CancelCommuteBookingCommand -> handle(command)
+            is ExpireCommuteCommand -> handle(command)
         }
 
-    private suspend fun handle(command: CreateCommuteCommand): List<Pair<CommuteEvent, Int>> =
+    private fun handle(command: CreateCommuteCommand): Pair<Commute, List<CommuteEvent>> =
         Commute.create(
             command.name,
             command.departure,
             command.arrival,
             command.seats,
-        ).let { (commute, event) ->
-            listOf(event[0] to commute.lastRevision)
+        )
+
+    private suspend fun handle(command: BookCommuteCommand): Pair<Commute, List<CommuteEvent>> =
+        commuteRepository
+            .findById(command.commuteId)
+            .let {
+                val events = it.bookSeat(command.bookingId, command.seat)
+                it to events
+            }
+
+    private suspend fun handle(command: CancelCommuteBookingCommand): Pair<Commute, List<CommuteEvent>> =
+        commuteRepository
+            .findById(command.commuteId)
+            .let {
+                val events = it.cancelBookedSeat(command.bookingId)
+                it to events
+            }
+
+    private suspend fun handle(command: ExpireCommuteCommand): Pair<Commute, List<CommuteEvent>> =
+        commuteRepository
+            .findById(command.commuteId)
+            .let {
+                val events = it.expire()
+                it to events
+            }
+
+    suspend fun compensate(event: CommuteEvent): Pair<Commute, List<CommuteEvent>> =
+        when (event) {
+            is CommuteBookedEvent -> compensate(event)
+            is CommuteBookingCanceledEvent -> compensate(event)
+            else -> throw IllegalArgumentException("Non compensatable event type: ${event::class.simpleName}")
+        }.let {
+            val compensateEvents = it.second.map { e -> e.toCompensation() }
+            it.first to compensateEvents
         }
 
-    private suspend fun handle(command: BookCommuteCommand): List<Pair<CommuteEvent, Int>> =
-        commuteRepository
-            .findById(command.commuteId)
-            .let { commute ->
-                commute
-                    .bookSeat(command.bookingId, command.seat)
-                    .mapIndexed { index, event -> event to commute.lastRevision + index }
-            }
-
-    private suspend fun handle(command: CancelCommuteBookingCommand): List<Pair<CommuteEvent, Int>> =
-        commuteRepository
-            .findById(command.commuteId)
-            .let { commute ->
-                commute
-                    .cancelBookedSeat(command.bookingId)
-                    .mapIndexed { index, event -> event to commute.lastRevision + index }
-            }
-
-    private suspend fun handle(command: ExpireCommuteCommand): List<Pair<CommuteEvent, Int>> =
-        commuteRepository
-            .findById(command.commuteId)
-            .let { commute ->
-                commute
-                    .expire()
-                    .mapIndexed { index, event -> event to commute.lastRevision + index }
-            }
-
-    suspend fun compensate(event: CommuteEvent): CommuteEvent =
-        withRetry(maxRetries) {
-            when (event) {
-                is CommuteBookedEvent -> compensate(event)
-                is CommuteBookingCanceledEvent -> compensate(event)
-                else -> throw IllegalArgumentException("Unknown event type: ${event::class.simpleName}")
-            }.let {
-                it[0].first.toCompensation()
-                it
-            }.map {
-                it.first.correlationId = event.correlationId
-                EventBus.publish(it.first, it.second)
-                it
-            }.let { it[0].first }
-        }
-
-    private suspend fun compensate(event: CommuteBookedEvent): List<Pair<CommuteEvent, Int>> =
+    private suspend fun compensate(event: CommuteBookedEvent): Pair<Commute, List<CommuteEvent>> =
         commuteRepository
             .findById(event.commuteId)
-            .let { commute ->
-                commute
-                    .compensateBookSeat(event.bookingId)
-                    .mapIndexed { index, event -> event to commute.lastRevision + index }
+            .let {
+                val events = it.compensateBookSeat(event.bookingId)
+                it to events
             }
 
-    private suspend fun compensate(event: CommuteBookingCanceledEvent): List<Pair<CommuteEvent, Int>> =
+    private suspend fun compensate(event: CommuteBookingCanceledEvent): Pair<Commute, List<CommuteEvent>> =
         commuteRepository
             .findById(event.commuteId)
-            .let { commute ->
-                commute
-                    .compensateCancelBookedSeat(event.bookingId, event.seat)
-                    .mapIndexed { index, event -> event to commute.lastRevision + index }
+            .let {
+                val events = it.compensateCancelBookedSeat(event.bookingId, event.seat)
+                it to events
             }
 }
