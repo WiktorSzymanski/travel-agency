@@ -3,8 +3,8 @@ package pl.szymanski.wiktor.ta.command
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-sealed interface BookingCommand : Command {
-    val bookingId: UUID
+sealed class BookingCommand : Command {
+    abstract val bookingId: UUID
 }
 
 data class CreateBookingCommand(
@@ -13,42 +13,42 @@ data class CreateBookingCommand(
     val travelOfferId: UUID,
     val userId: UUID,
     val seat: Seat? = null,
-) : BookingCommand
+) : BookingCommand()
 
 data class ProcessBookingCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
     val message: String? = null,
-) : BookingCommand
+) : BookingCommand()
 
 data class CompleteBookingCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
-) : BookingCommand
+) : BookingCommand()
 
 data class CancelBookingCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
-) : BookingCommand
+) : BookingCommand()
 
 data class FailBookingCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
     val message: String? = null,
-) : BookingCommand
+) : BookingCommand()
 
 data class FailCancelBookingCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
     val message: String? = null,
-) : BookingCommand
+) : BookingCommand()
 
 data class ProcessCancelBookingCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
-) : BookingCommand
+) : BookingCommand()
 
 data class BookingRequestCancelCommand(
     override val bookingId: UUID,
     override val correlationId: UUID,
-) : BookingCommand
+) : BookingCommand()

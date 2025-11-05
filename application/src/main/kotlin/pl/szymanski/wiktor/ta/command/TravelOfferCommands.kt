@@ -3,8 +3,8 @@ package pl.szymanski.wiktor.ta.command
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-sealed interface TravelOfferCommand : Command {
-    val travelOfferId: UUID
+sealed class TravelOfferCommand : Command {
+    abstract val travelOfferId: UUID
 }
 
 data class BookTravelOfferCommand(
@@ -12,41 +12,41 @@ data class BookTravelOfferCommand(
     override val correlationId: UUID,
     val bookingId: UUID,
     val seat: Seat?,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class ReleaseTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
     val seat: Seat?,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class RebookTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class CancelBookTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
     val seat: Seat?,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class ReserveTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
     val seat: Seat? = null,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class CancelReserveTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
     val seat: Seat?,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class CreateTravelOfferCommand(
     override val travelOfferId: UUID,
@@ -55,19 +55,19 @@ data class CreateTravelOfferCommand(
     val commuteId: UUID,
     val accommodationId: UUID,
     val attractionId: UUID? = null,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class ExpireTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class MakeTravelOfferUnavailableCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-) : TravelOfferCommand
+) : TravelOfferCommand()
 
 data class MakeTravelOfferAvailableCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
-) : TravelOfferCommand
+) : TravelOfferCommand()

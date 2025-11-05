@@ -14,7 +14,7 @@ data class AttractionDto(
     companion object {
         fun fromDomain(attraction: Attraction) =
             AttractionDto(
-                id = attraction._id.toString(),
+                id = attraction.id.toString(),
                 name = attraction.name,
                 location = attraction.location.name,
                 date = attraction.date.toString(),

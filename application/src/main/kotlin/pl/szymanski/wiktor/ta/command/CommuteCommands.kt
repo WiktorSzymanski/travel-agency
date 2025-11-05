@@ -4,8 +4,8 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-sealed interface CommuteCommand : Command {
-    val commuteId: UUID
+sealed class CommuteCommand : Command {
+    abstract val commuteId: UUID
 }
 
 data class BookCommuteCommand(
@@ -13,13 +13,13 @@ data class BookCommuteCommand(
     override val correlationId: UUID,
     val bookingId: UUID,
     val seat: Seat?,
-) : CommuteCommand
+) : CommuteCommand()
 
 data class CancelCommuteBookingCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-) : CommuteCommand
+) : CommuteCommand()
 
 data class CreateCommuteCommand(
     override val commuteId: UUID,
@@ -28,9 +28,9 @@ data class CreateCommuteCommand(
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
     val seats: List<Seat>,
-) : CommuteCommand
+) : CommuteCommand()
 
 data class ExpireCommuteCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
-) : CommuteCommand
+) : CommuteCommand()

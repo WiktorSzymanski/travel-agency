@@ -25,7 +25,7 @@ data class TravelOfferDto(
             attraction: Attraction?,
         ): TravelOfferDto {
             return TravelOfferDto(
-                id = travelOffer._id.toString(),
+                id = travelOffer.id.toString(),
                 name = travelOffer.name,
                 commute = CommuteDto.fromDomain(commute),
                 accommodation = AccommodationDto.fromDomain(accommodation),

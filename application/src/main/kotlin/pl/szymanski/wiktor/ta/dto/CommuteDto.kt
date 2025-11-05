@@ -14,7 +14,7 @@ data class CommuteDto(
     companion object {
         fun fromDomain(commute: Commute) =
             CommuteDto(
-                id = commute._id.toString(),
+                id = commute.id.toString(),
                 name = commute.name,
                 departure = LocationAndTimeDto.fromDomain(commute.departure),
                 arrival = LocationAndTimeDto.fromDomain(commute.arrival),

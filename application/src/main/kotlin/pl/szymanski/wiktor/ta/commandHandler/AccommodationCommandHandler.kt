@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.commandHandler
 
-import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand

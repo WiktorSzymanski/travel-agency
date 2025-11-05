@@ -32,27 +32,27 @@ interface CommuteQueryRepository {
 }
 
 data class CommuteUpdate(
-    val _id: UUID,
+    val id: UUID,
     val bookingId: UUID? = null,
     val seat: Seat? = null,
     val revision: Int
 )
 
 data class CommuteUpdateRevision(
-    val _id: UUID,
+    val id: UUID,
     val revision: Int,
     val event: Event
 )
 
 data class CommuteCancelUpdate(
-    val _id: UUID,
+    val id: UUID,
     val status: CommuteStatusEnum? = null,
     val bookingId: UUID? = null,
     val revision: Int
 )
 
 data class CommuteUpdateStatus(
-    val _id: UUID,
+    val id: UUID,
     val status: CommuteStatusEnum? = null,
     val revision: Int
 )

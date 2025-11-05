@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.commandHandler
 
-import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.BookingRequestCancelCommand
 import pl.szymanski.wiktor.ta.command.CancelBookingCommand
@@ -17,16 +16,6 @@ import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
 class BookingCommandHandler(
     private val bookingRepository: BookingRepository,
 ) {
-    init {
-        CommandBus.registerHandler(FailBookingCommand::class.java) {
-            this.handle(it as BookingCommand)
-        }
-
-        CommandBus.registerHandler(FailCancelBookingCommand::class.java) {
-            this.handle(it as BookingCommand)
-        }
-    }
-
     suspend fun handle(command: BookingCommand): Pair<Booking, BookingEvent> =
         when (command) {
             is CreateBookingCommand -> handle(command)

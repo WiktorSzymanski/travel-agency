@@ -17,6 +17,7 @@ import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 import kotlin.reflect.KClass
 
+// TODO: merge TravelOfferStatusService and TravelOfferExpireService
 class TravelOfferStatusService(
     private val travelOfferRepository: TravelOfferQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,

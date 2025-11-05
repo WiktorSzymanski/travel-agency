@@ -144,14 +144,14 @@ class OfferMaker(
             travelOfferId = UUID.randomUUID(),
             correlationId = UUID.randomUUID(),
             name = "${commute.name} ${accommodation.name}${attraction?.name?.let { " $it" } ?: ""}",
-            commuteId = commute._id,
-            accommodationId = accommodation._id,
-            attractionId = attraction?._id,
+            commuteId = commute.id,
+            accommodationId = accommodation.id,
+            attractionId = attraction?.id,
         )
     }
 
     private fun Triple<Commute, Accommodation, Attraction?>.toIds(): Triple<UUID, UUID, UUID?> {
         val (commute, accommodation, attraction) = this
-        return Triple(commute._id, accommodation._id, attraction?._id)
+        return Triple(commute.id, accommodation.id, attraction?.id)
     }
 }

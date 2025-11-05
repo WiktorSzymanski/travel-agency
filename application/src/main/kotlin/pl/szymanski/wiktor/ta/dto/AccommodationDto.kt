@@ -16,7 +16,7 @@ data class AccommodationDto(
     companion object {
         fun fromDomain(accommodation: Accommodation) =
             AccommodationDto(
-                id = accommodation._id.toString(),
+                id = accommodation.id.toString(),
                 name = accommodation.name,
                 location = accommodation.location.name,
                 rent = RentDto.fromDomain(accommodation.rent),

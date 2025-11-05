@@ -23,28 +23,28 @@ interface AttractionQueryRepository {
 }
 
 data class AttractionUpdate(
-    val _id: UUID,
+    val id: UUID,
     val status: AttractionStatusEnum? = null,
     val bookingId: UUID? = null,
     val revision: Int
 )
 
 data class AttractionUpdateRevision(
-    val _id: UUID,
+    val id: UUID,
     val bookingId: UUID? = null,
     val revision: Int,
     val event: Event
 )
 
 data class AttractionCancelUpdate(
-    val _id: UUID,
+    val id: UUID,
     val status: AttractionStatusEnum? = null,
     val bookingId: UUID? = null,
     val revision: Int
 )
 
 data class AttractionUpdateStatus(
-    val _id: UUID,
+    val id: UUID,
     val status: AttractionStatusEnum? = null,
     val revision: Int
 )

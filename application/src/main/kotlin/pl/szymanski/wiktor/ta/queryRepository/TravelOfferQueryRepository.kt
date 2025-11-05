@@ -43,20 +43,20 @@ interface TravelOfferQueryRepository {
 }
 
 data class TravelOfferUpdateRevision(
-    val _id: UUID,
+    val id: UUID,
     val lastRevision: Int,
     val event: Event
 )
 
 data class TravelOfferUpdate(
-    val _id: UUID,
+    val id: UUID,
     val status: TravelOfferStatusEnum? = null,
     val bookingId: UUID? = null,
     val lastRevision: Int
 )
 
 data class TravelOfferUpdateStatus(
-    val _id: UUID,
+    val id: UUID,
     val status: TravelOfferStatusEnum? = null,
     val lastRevision: Int
 )
