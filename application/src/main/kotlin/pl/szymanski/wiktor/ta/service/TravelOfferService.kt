@@ -4,6 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.slf4j.LoggerFactory
+import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferAvailableCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferUnavailableCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
@@ -11,24 +12,72 @@ import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
-import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
-import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
-import kotlin.reflect.KClass
 
-// TODO: merge TravelOfferStatusService and TravelOfferExpireService
-class TravelOfferStatusService(
+class TravelOfferService(
     private val travelOfferRepository: TravelOfferQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(TravelOfferService::class.java)
+    }
+
+    suspend fun expireTravelOfferByCommute(
+        commuteId: UUID,
+        correlationId: UUID,
+    ) {
+        travelOfferRepository
+            .findByCommuteId(commuteId)
+            .map {
+                travelOfferCommandHandler.handle(
+                    ExpireTravelOfferCommand(
+                        travelOfferId = it,
+                        correlationId = correlationId,
+                    ) as TravelOfferCommand,
+                )
+            }
+    }
+
+    suspend fun expireTravelOfferByAttraction(
+        attractionId: UUID,
+        correlationId: UUID,
+    ) {
+        travelOfferRepository
+            .findByAttractionId(attractionId)
+            .map {
+                travelOfferCommandHandler.handle(
+                    ExpireTravelOfferCommand(
+                        travelOfferId = it,
+                        correlationId = correlationId,
+                    ) as TravelOfferCommand,
+                )
+            }
+    }
+
+    suspend fun expireTravelOfferByAccommodation(
+        accommodationId: UUID,
+        correlationId: UUID,
+    ) {
+        travelOfferRepository
+            .findByAccommodationId(accommodationId)
+            .map {
+                travelOfferCommandHandler.handle(
+                    ExpireTravelOfferCommand(
+                        travelOfferId = it,
+                        correlationId = correlationId,
+                    ) as TravelOfferCommand,
+                )
+            }
+    }
+
     suspend fun checkTravelOfferComponentsAvailability(travelOfferId: UUID): Boolean {
         return travelOfferRepository.findStatusesOfComponents(
             travelOfferId,
         )?.let { (commuteStatus, accommodationStatus, attractionStatus) ->
             commuteStatus == CommuteStatusEnum.SCHEDULED &&
-                accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
-                (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
+                    accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
+                    (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
         } ?: throw IllegalArgumentException("Invalid travel offer id: $travelOfferId")
     }
 

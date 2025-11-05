@@ -8,18 +8,16 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import pl.szymanski.wiktor.ta.launchCatching
-import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
-import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class CommuteEventHandler(
-    private val travelOfferExpireService: TravelOfferExpireService,
-    private val travelOfferStatusService: TravelOfferStatusService,
+    private val travelOfferService: TravelOfferService,
 ) {
     suspend fun commuteExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<CommuteExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferExpireService.expireTravelOfferByCommute(it.commuteId, it.correlationId!!)
+                    travelOfferService.expireTravelOfferByCommute(it.commuteId, it.correlationId!!)
                 }
             }
         }
@@ -28,7 +26,7 @@ class CommuteEventHandler(
         coroutineScope {
             EventBus.subscribe<CommuteFullEvent> {
                 scope.launchCatching {
-                    travelOfferStatusService.makeTravelOfferUnavailableByCommute(it.commuteId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferUnavailableByCommute(it.commuteId, it.correlationId!!)
                 }
             }
         }
@@ -37,7 +35,7 @@ class CommuteEventHandler(
         coroutineScope {
             EventBus.subscribe<CommuteAvailableEvent> {
                 scope.launchCatching {
-                    travelOfferStatusService.makeTravelOfferAvailableByCommute(it.commuteId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferAvailableByCommute(it.commuteId, it.correlationId!!)
                 }
             }
         }

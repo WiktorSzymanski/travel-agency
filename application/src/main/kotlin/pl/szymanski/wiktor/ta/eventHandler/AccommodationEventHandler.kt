@@ -8,18 +8,16 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.launchCatching
-import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
-import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class AccommodationEventHandler(
-    private val travelOfferExpireService: TravelOfferExpireService,
-    private val travelOfferStatusService: TravelOfferStatusService,
+    private val travelOfferService: TravelOfferService,
 ) {
     suspend fun accommodationExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<AccommodationExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferExpireService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
+                    travelOfferService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
                 }
             }
         }
@@ -28,7 +26,7 @@ class AccommodationEventHandler(
         coroutineScope {
             EventBus.subscribe<AccommodationBookedEvent> {
                 scope.launchCatching {
-                    travelOfferStatusService.makeTravelOfferUnavailableByAccommodation(it.accommodationId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferUnavailableByAccommodation(it.accommodationId, it.correlationId!!)
                 }
             }
         }
@@ -37,7 +35,7 @@ class AccommodationEventHandler(
         coroutineScope {
             EventBus.subscribe<AccommodationBookingCanceledEvent> {
                 scope.launchCatching {
-                    travelOfferStatusService.makeTravelOfferAvailableByAccommodation(it.accommodationId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferAvailableByAccommodation(it.accommodationId, it.correlationId!!)
                 }
             }
         }

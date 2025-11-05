@@ -14,14 +14,14 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.saga.BookingSaga
 import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
-import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class TravelOfferEventHandler(
-    private val travelOfferStatusService: TravelOfferStatusService,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
+    private val travelOfferService: TravelOfferService,
 ) {
     fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch { travelOfferReservedEventHandler() }
@@ -37,7 +37,7 @@ class TravelOfferEventHandler(
                         attractionCommandHandler,
                         commuteCommandHandler,
                         accommodationCommandHandler,
-                        travelOfferStatusService,
+                        travelOfferService,
                         it,
                     ).execute()
                 }
@@ -53,7 +53,7 @@ class TravelOfferEventHandler(
                         attractionCommandHandler,
                         commuteCommandHandler,
                         accommodationCommandHandler,
-                        travelOfferStatusService,
+                        travelOfferService,
                         it,
                     ).execute()
                 }

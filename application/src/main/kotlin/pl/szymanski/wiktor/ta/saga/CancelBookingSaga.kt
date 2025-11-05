@@ -20,7 +20,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
-import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import pl.szymanski.wiktor.ta.service.TravelOfferService
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.*
 
@@ -29,7 +29,7 @@ class CancelBookingSaga(
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
-    private val travelOfferStatusService: TravelOfferStatusService,
+    private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReleaseEvent,
 ) {
     private var accommodationCommand: AccommodationCommand = CancelAccommodationBookingCommand(
@@ -160,7 +160,7 @@ class CancelBookingSaga(
             )
             withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
 
-            if (!travelOfferStatusService
+            if (!travelOfferService
                 .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
             ) {
                 withRetry(maxRetries) {

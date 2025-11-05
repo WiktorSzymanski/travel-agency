@@ -8,18 +8,16 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import pl.szymanski.wiktor.ta.launchCatching
-import pl.szymanski.wiktor.ta.service.TravelOfferExpireService
-import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class AttractionEventHandler(
-    private val travelOfferExpireService: TravelOfferExpireService,
-    private val travelOfferStatusService: TravelOfferStatusService,
+    private val travelOfferService: TravelOfferService,
 ) {
     suspend fun attractionExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<AttractionExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferExpireService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
+                    travelOfferService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
                 }
             }
         }
@@ -28,7 +26,7 @@ class AttractionEventHandler(
         coroutineScope {
             EventBus.subscribe<AttractionFullEvent> {
                 scope.launchCatching {
-                    travelOfferStatusService.makeTravelOfferUnavailableByAttraction(it.attractionId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferUnavailableByAttraction(it.attractionId, it.correlationId!!)
                 }
             }
         }
@@ -37,7 +35,7 @@ class AttractionEventHandler(
         coroutineScope {
             EventBus.subscribe<AttractionAvailableEvent> {
                 scope.launchCatching {
-                    travelOfferStatusService.makeTravelOfferAvailableByAttraction(it.attractionId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferAvailableByAttraction(it.attractionId, it.correlationId!!)
                 }
             }
         }
