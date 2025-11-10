@@ -13,15 +13,11 @@ import java.util.UUID
 interface TravelOfferQueryRepository {
     suspend fun save(entity: TravelOffer): TravelOffer?
 
+    suspend fun update(projectionUpdate: ProjectionUpdate)
+
     suspend fun findById(travelOfferId: UUID): TravelOffer
 
     suspend fun findAllByStatus(status: TravelOfferStatusEnum): List<TravelOffer>
-
-    suspend fun update(entity: TravelOfferUpdate, event: Event)
-
-    suspend fun update(entity: TravelOfferUpdateRevision, event: Event)
-
-    suspend fun update(entity: TravelOfferUpdateStatus, event: Event)
 
     suspend fun findTravelOfferDto(
         page: Int = 1,
@@ -41,22 +37,3 @@ interface TravelOfferQueryRepository {
     suspend fun findStatusesOfComponents(travelOfferId: UUID): Triple<CommuteStatusEnum, AccommodationStatusEnum, AttractionStatusEnum?>?
 
 }
-
-data class TravelOfferUpdateRevision(
-    val id: UUID,
-    val lastRevision: Int,
-    val event: Event
-)
-
-data class TravelOfferUpdate(
-    val id: UUID,
-    val status: TravelOfferStatusEnum? = null,
-    val bookingId: UUID? = null,
-    val lastRevision: Int
-)
-
-data class TravelOfferUpdateStatus(
-    val id: UUID,
-    val status: TravelOfferStatusEnum? = null,
-    val lastRevision: Int
-)

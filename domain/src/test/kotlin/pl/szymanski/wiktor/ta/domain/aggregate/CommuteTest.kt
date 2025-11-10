@@ -37,7 +37,7 @@ class CommuteTest {
 
     @Test
     fun book_seat_successfully() {
-        val event = commute.bookSeat(bookingId, seat1)
+        val events = commute.bookSeat(bookingId, seat1)
 
         assertEventEquals(
             CommuteBookedEvent(
@@ -45,7 +45,7 @@ class CommuteTest {
                 bookingId = bookingId,
                 seat = seat1,
             ),
-            event.first(),
+            events.first(),
         )
         assertEquals(1, commute.bookings.size)
         assertTrue(commute.bookings.contains(bookingId.toString()))
@@ -113,9 +113,9 @@ class CommuteTest {
                 departure =
                     LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().minusMinutes(1)),
             )
-        val event = commute.expire()
+        val events = commute.expire()
 
-        assertEventEquals(CommuteExpiredEvent(commuteId = commute.id), event.first())
+        assertEventEquals(CommuteExpiredEvent(commuteId = commute.id), events.first())
         assertEquals(CommuteStatusEnum.EXPIRED, commute.status)
     }
 

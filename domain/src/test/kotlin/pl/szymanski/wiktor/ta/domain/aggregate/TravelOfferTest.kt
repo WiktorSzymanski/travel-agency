@@ -49,7 +49,7 @@ class TravelOfferTest {
 
     @Test
     fun reserve_should_succeed_when_offer_is_available() {
-        val event = offer.reserve(bookingId, seat)
+        val events = offer.reserve(bookingId, seat)
 
         assertEventEquals(
             TravelOfferReservedEvent(
@@ -60,7 +60,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = seat,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.RESERVED, offer.status)
         assertEquals(bookingId, offer.bookingId)
@@ -82,7 +82,7 @@ class TravelOfferTest {
         offer.reserve(bookingId, seat)
 
         // Then book it
-        val event = offer.book(bookingId, seat)
+        val events = offer.book(bookingId, seat)
 
         assertEventEquals(
             TravelOfferBookedEvent(
@@ -93,7 +93,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = seat,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
         assertEquals(bookingId, offer.bookingId)
@@ -122,7 +122,7 @@ class TravelOfferTest {
 
     @Test
     fun expire_should_change_status_to_expired() {
-        val event = offer.expire()
+        val events = offer.expire()
 
         assertEventEquals(
             TravelOfferExpiredEvent(
@@ -131,14 +131,14 @@ class TravelOfferTest {
                 accommodationId = accommodationId,
                 attractionId = attractionId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.EXPIRED, offer.status)
     }
 
     @Test
     fun expire_should_succeed_if_status_available() {
-        val event = offer.expire()
+        val events = offer.expire()
 
         assertEventEquals(
             TravelOfferExpiredEvent(
@@ -147,7 +147,7 @@ class TravelOfferTest {
                 accommodationId = accommodationId,
                 attractionId = attractionId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.EXPIRED, offer.status)
     }
@@ -171,7 +171,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.BOOKED,
             )
 
-        val event = offer.releaseBooking(bookingId, seat)
+        val events = offer.releaseBooking(bookingId, seat)
 
         assertEventEquals(
             TravelOfferReleaseEvent(
@@ -182,7 +182,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = seat,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.RELEASING, offer.status)
     }
@@ -218,7 +218,7 @@ class TravelOfferTest {
                 status = TravelOfferStatusEnum.RELEASING,
             )
 
-        val event = offer.cancelBooking(bookingId, seat)
+        val events = offer.cancelBooking(bookingId, seat)
 
         assertEventEquals(
             TravelOfferBookingCanceledEvent(
@@ -229,7 +229,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = seat,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
         assertNull(offer.bookingId)
@@ -259,13 +259,13 @@ class TravelOfferTest {
 
     @Test
     fun makeUnavailable_successfully_from_available() {
-        val event = offer.makeUnavailable()
+        val events = offer.makeUnavailable()
 
         assertEventEquals(
             TravelOfferMadeUnavailableEvent(
                 travelOfferId = travelOfferId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.UNAVAILABLE, offer.status)
     }
@@ -280,13 +280,13 @@ class TravelOfferTest {
     @Test
     fun makeAvailable_successfully_from_unavailable() {
         offer = offer.copy(status = TravelOfferStatusEnum.UNAVAILABLE)
-        val event = offer.makeAvailable()
+        val events = offer.makeAvailable()
 
         assertEventEquals(
             TravelOfferMadeAvailableEvent(
                 travelOfferId = travelOfferId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
     }
@@ -299,7 +299,7 @@ class TravelOfferTest {
     @Test
     fun cancelReservation_successfully() {
         offer.reserve(bookingId, seat)
-        val event = offer.cancelReservation(bookingId, seat)
+        val events = offer.cancelReservation(bookingId, seat)
 
         assertEventEquals(
             TravelOfferReservationCanceledEvent(
@@ -310,7 +310,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = seat,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
         assertNull(offer.bookingId)
@@ -332,7 +332,7 @@ class TravelOfferTest {
     @Test
     fun cancelReservation_with_null_seat() {
         offer.reserve(bookingId, null)
-        val event = offer.cancelReservation(bookingId, null)
+        val events = offer.cancelReservation(bookingId, null)
 
         assertEventEquals(
             TravelOfferReservationCanceledEvent(
@@ -343,7 +343,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = null,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
     }
@@ -355,14 +355,14 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 status = TravelOfferStatusEnum.RELEASING,
             )
-        val event = offer.rebook(bookingId)
+        val events = offer.rebook(bookingId)
 
         assertEventEquals(
             TravelOfferRebookedEvent(
                 travelOfferId = travelOfferId,
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
     }
@@ -376,7 +376,7 @@ class TravelOfferTest {
 
     @Test
     fun reserve_with_null_seat() {
-        val event = offer.reserve(bookingId, null)
+        val events = offer.reserve(bookingId, null)
 
         assertEventEquals(
             TravelOfferReservedEvent(
@@ -387,7 +387,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = null,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.RESERVED, offer.status)
     }
@@ -395,7 +395,7 @@ class TravelOfferTest {
     @Test
     fun book_with_null_seat() {
         offer.reserve(bookingId, null)
-        val event = offer.book(bookingId, null)
+        val events = offer.book(bookingId, null)
 
         assertEventEquals(
             TravelOfferBookedEvent(
@@ -406,7 +406,7 @@ class TravelOfferTest {
                 bookingId = bookingId,
                 seat = null,
             ),
-            event,
+            events.first(),
         )
         assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
     }

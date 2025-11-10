@@ -35,7 +35,7 @@ data class Booking(
             userId: UUID,
             seat: Seat? = null,
             travelOfferId: UUID,
-        ): Pair<Booking, BookingCreatedEvent> {
+        ): Pair<Booking, List<BookingCreatedEvent>> {
             val booking =
                 Booking(
                     userId = userId,
@@ -52,70 +52,70 @@ data class Booking(
                     state = booking.status,
                 )
 
-            return Pair(booking, event)
+            return booking to listOf(event)
         }
     }
 
-    fun process(): BookingEvent {
+    fun process(): List<BookingEvent> {
         if (this.status != BookingState.NEW) {
             throw BookingProcessFailedException()
         }
 
         this.status = BookingState.PROCESSING
-        return ProcessBookingEvent(
-            bookingId = id,
+        return listOf(
+            ProcessBookingEvent(bookingId = id)
         )
     }
 
-    fun complete(): BookingEvent {
+    fun complete(): List<BookingEvent> {
         if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
             throw BookingCompleteFailedException()
         }
 
         this.status = BookingState.SUCCEEDED
-        return CompleteBookingEvent(
+        return listOf(CompleteBookingEvent(
             bookingId = id,
-        )
+        ))
     }
 
-    fun requestCancel(): BookingEvent {
+    fun requestCancel(): List<BookingEvent> {
         if (this.status != BookingState.SUCCEEDED) {
             throw BookingCancelRequestFailedException()
         }
 
         this.status = BookingState.CANCEL_REQUESTED
 
-        return BookingCancelRequestedEvent(
+        return listOf(BookingCancelRequestedEvent(
             bookingId = id,
             travelOfferId = travelOfferId,
             seat = seat,
-        )
+        ))
     }
 
-    fun cancel(): BookingEvent {
+    fun cancel(): List<BookingEvent> {
         if (this.status != BookingState.PROCESSING_CANCELLATION) {
             throw BookingCancelFailedException()
         }
 
         this.status = BookingState.CANCELED
-        return CancelBookingEvent(
+        return listOf(CancelBookingEvent(
             bookingId = id,
-        )
+        ))
     }
 
-    fun processCancellation(): BookingEvent {
+    fun processCancellation(): List<BookingEvent> {
         if (this.status != BookingState.CANCEL_REQUESTED) {
             throw BookingProcessCancellationFailedException()
         }
 
         this.status = BookingState.PROCESSING_CANCELLATION
 
-        return ProcessCancelBookingEvent(
+        return listOf(ProcessCancelBookingEvent(
             bookingId = id,
-        )
+        ))
     }
 
-    fun fail(message: String): BookingEvent {
+    fun fail(message: String): List<BookingEvent> {
         if (!listOf(BookingState.PROCESSING, BookingState.NEW).contains(this.status)) {
             throw BookingFailFailedException(message)
         }
@@ -123,13 +123,13 @@ data class Booking(
         this.status = BookingState.FAILED
         this.message = message
 
-        return FailBookingEvent(
+        return listOf(FailBookingEvent(
             bookingId = id,
             message = message,
-        )
+        ))
     }
 
-    fun failCancellation(message: String): BookingEvent {
+    fun failCancellation(message: String): List<BookingEvent> {
         if (!listOf(BookingState.PROCESSING_CANCELLATION, BookingState.CANCEL_REQUESTED).contains(this.status)) {
             throw BookingFailCancellationFailedException(message)
         }
@@ -137,9 +137,9 @@ data class Booking(
         this.status = BookingState.SUCCEEDED
         this.message = message
 
-        return FailCancelBookingEvent(
+        return listOf(FailCancelBookingEvent(
             bookingId = id,
             message = message,
-        )
+        ))
     }
 }

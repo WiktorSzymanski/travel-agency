@@ -10,15 +10,11 @@ import java.util.UUID
 interface AccommodationQueryRepository {
     suspend fun save(entity: Accommodation): Accommodation?
 
+    suspend fun update(projectionUpdate: ProjectionUpdate)
+
     suspend fun findById(accommodationId: UUID): Accommodation
 
     suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation>
-
-    suspend fun update(entity: AccommodationUpdate)
-
-    suspend fun update(entity: AccommodationUpdateRevision)
-
-    suspend fun update(entity: AccommodationUpdateStatus)
 
     suspend fun findTravelOfferByLocation(
         page: Int = 1,

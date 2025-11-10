@@ -27,7 +27,7 @@ data class Accommodation(
             name: String,
             location: LocationEnum,
             rent: Rent,
-        ): Pair<Accommodation, AccommodationCreatedEvent> {
+        ): Pair<Accommodation, List<AccommodationCreatedEvent>> {
             val accommodation =
                 Accommodation(
                     name = name,
@@ -43,11 +43,11 @@ data class Accommodation(
                     rent = rent,
                 )
 
-            return accommodation to event
+            return accommodation to listOf(event)
         }
     }
 
-    fun expire(): AccommodationEvent {
+    fun expire(): List<AccommodationEvent> {
         if (status != AccommodationStatusEnum.AVAILABLE) {
             throw AccommodationExpireFailedException(id, status)
         }
@@ -58,12 +58,12 @@ data class Accommodation(
 
         this.status = AccommodationStatusEnum.EXPIRED
 
-        return AccommodationExpiredEvent(
+        return listOf(AccommodationExpiredEvent(
             accommodationId = id,
-        )
+        ))
     }
 
-    fun book(bookingId: UUID): AccommodationEvent {
+    fun book(bookingId: UUID): List<AccommodationEvent> {
         statusCheck()
         if (this.status != AccommodationStatusEnum.AVAILABLE) {
             throw AccommodationBookingFailedException(id, status)
@@ -72,13 +72,13 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
 
-        return AccommodationBookedEvent(
+        return listOf(AccommodationBookedEvent(
             accommodationId = id,
             bookingId = bookingId,
-        )
+        ))
     }
 
-    fun cancelBooking(bookingId: UUID): AccommodationEvent {
+    fun cancelBooking(bookingId: UUID): List<AccommodationEvent> {
         statusCheck()
         if (this.status != AccommodationStatusEnum.BOOKED) {
             throw AccommodationBookingCancelFailedException(id, status)
@@ -91,10 +91,10 @@ data class Accommodation(
         this.bookingId = null
         this.status = AccommodationStatusEnum.AVAILABLE
 
-        return AccommodationBookingCanceledEvent(
+        return listOf(AccommodationBookingCanceledEvent(
             accommodationId = id,
             bookingId = bookingId,
-        )
+        ))
     }
 
     private fun statusCheck() {
@@ -105,7 +105,7 @@ data class Accommodation(
     }
 
     // TODO: Czy skoro mam metody compensate to nie powinny one zwracać odrazu compensateEventów?
-    fun compensateBook(bookingId: UUID): AccommodationEvent {
+    fun compensateBook(bookingId: UUID): List<AccommodationEvent> {
         if (this.bookingId != bookingId) {
             throw AccommodationBookingCancelFailedException(id, bookingId)
         }
@@ -113,13 +113,13 @@ data class Accommodation(
         this.bookingId = null
         this.status = AccommodationStatusEnum.AVAILABLE
 
-        return AccommodationBookingCanceledEvent(
+        return listOf(AccommodationBookingCanceledEvent(
             accommodationId = id,
             bookingId = bookingId,
-        )
+        ))
     }
 
-    fun compensateCancelBooking(bookingId: UUID): AccommodationEvent {
+    fun compensateCancelBooking(bookingId: UUID): List<AccommodationEvent> {
         if (this.bookingId != null) {
             throw AccommodationBookingFailedException(id)
         }
@@ -127,9 +127,9 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
 
-        return AccommodationBookedEvent(
+        return listOf(AccommodationBookedEvent(
             accommodationId = id,
             bookingId = bookingId,
-        )
+        ))
     }
 }

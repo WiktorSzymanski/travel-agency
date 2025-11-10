@@ -39,7 +39,7 @@ data class TravelOffer(
             commuteId: UUID,
             accommodationId: UUID,
             attractionId: UUID? = null,
-        ): Pair<TravelOffer, TravelOfferCreatedEvent> {
+        ): Pair<TravelOffer, List<TravelOfferCreatedEvent>> {
             val travelOffer =
                 TravelOffer(
                     id = UUID.randomUUID(),
@@ -58,53 +58,53 @@ data class TravelOffer(
                     attractionId = attractionId,
                 )
 
-            return travelOffer to event
+            return travelOffer to listOf(event)
         }
     }
 
-    fun makeUnavailable(): TravelOfferEvent {
+    fun makeUnavailable(): List<TravelOfferEvent> {
         if (this.status != TravelOfferStatusEnum.AVAILABLE) {
             throw TravelOfferMakeUnavailableFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.UNAVAILABLE
 
-        return TravelOfferMadeUnavailableEvent(
+        return listOf(TravelOfferMadeUnavailableEvent(
             travelOfferId = id,
-        )
+        ))
     }
 
-    fun makeAvailable(): TravelOfferEvent {
+    fun makeAvailable(): List<TravelOfferEvent> {
         if (this.status != TravelOfferStatusEnum.UNAVAILABLE) {
             throw TravelOfferMakeAvailableFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.AVAILABLE
 
-        return TravelOfferMadeAvailableEvent(
+        return listOf(TravelOfferMadeAvailableEvent(
             travelOfferId = id,
-        )
+        ))
     }
 
-    fun expire(): TravelOfferEvent {
+    fun expire(): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.AVAILABLE) {
             throw TravelOfferExpireFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.EXPIRED
 
-        return TravelOfferExpiredEvent(
+        return listOf(TravelOfferExpiredEvent(
             travelOfferId = id,
             commuteId = commuteId,
             accommodationId = accommodationId,
             attractionId = attractionId,
-        )
+        ))
     }
 
     fun reserve(
         bookingId: UUID,
         seat: Seat?,
-    ): TravelOfferEvent {
+    ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.AVAILABLE) {
             throw TravelOfferReserveFailedException(status)
         }
@@ -112,20 +112,20 @@ data class TravelOffer(
         this.status = TravelOfferStatusEnum.RESERVED
         this.bookingId = bookingId
 
-        return TravelOfferReservedEvent(
+        return listOf(TravelOfferReservedEvent(
             travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
             seat = seat,
-        )
+        ))
     }
 
     fun book(
         bookingId: UUID,
         seat: Seat?,
-    ): TravelOfferEvent {
+    ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RESERVED) {
             throw TravelOfferBookFailedException(status)
         }
@@ -136,20 +136,20 @@ data class TravelOffer(
 
         this.status = TravelOfferStatusEnum.BOOKED
 
-        return TravelOfferBookedEvent(
+        return listOf(TravelOfferBookedEvent(
             travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
             seat = seat,
-        )
+        ))
     }
 
     fun cancelReservation(
         bookingId: UUID,
         seat: Seat?,
-    ): TravelOfferEvent {
+    ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RESERVED) {
             throw TravelOfferReservationCancelFailedException(id, status)
         }
@@ -161,20 +161,20 @@ data class TravelOffer(
         this.bookingId = null
         this.status = TravelOfferStatusEnum.AVAILABLE
 
-        return TravelOfferReservationCanceledEvent(
+        return listOf(TravelOfferReservationCanceledEvent(
             travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
             seat = seat,
-        )
+        ))
     }
 
     fun releaseBooking(
         bookingId: UUID,
         seat: Seat?,
-    ): TravelOfferEvent {
+    ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.BOOKED) {
             throw TravelOfferBookingCancelFailedException(id, status)
         }
@@ -185,33 +185,33 @@ data class TravelOffer(
 
         this.status = TravelOfferStatusEnum.RELEASING
 
-        return TravelOfferReleaseEvent(
+        return listOf(TravelOfferReleaseEvent(
             travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
             seat = seat,
-        )
+        ))
     }
 
-    fun rebook(bookingId: UUID): TravelOfferEvent {
+    fun rebook(bookingId: UUID): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RELEASING) {
             throw TravelOfferRebookFailedException(id, status)
         }
 
         this.status = TravelOfferStatusEnum.BOOKED
 
-        return TravelOfferRebookedEvent(
+        return listOf(TravelOfferRebookedEvent(
             travelOfferId = id,
             bookingId = bookingId,
-        )
+        ))
     }
 
     fun cancelBooking(
         bookingId: UUID,
         seat: Seat?,
-    ): TravelOfferEvent {
+    ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RELEASING) {
             throw TravelOfferReleaseCompleteFailedException(id, status)
         }
@@ -223,13 +223,13 @@ data class TravelOffer(
         this.bookingId = null
         this.status = TravelOfferStatusEnum.AVAILABLE
 
-        return TravelOfferBookingCanceledEvent(
+        return listOf(TravelOfferBookingCanceledEvent(
             travelOfferId = id,
             accommodationId = accommodationId,
             commuteId = commuteId,
             attractionId = attractionId,
             bookingId = bookingId,
             seat = seat,
-        )
+        ))
     }
 }

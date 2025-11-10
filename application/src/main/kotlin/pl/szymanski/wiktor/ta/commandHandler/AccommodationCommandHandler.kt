@@ -15,7 +15,7 @@ import pl.szymanski.wiktor.ta.event.toCompensation
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
-    suspend fun handle(command: AccommodationCommand): Pair<Accommodation, AccommodationEvent> =
+    suspend fun handle(command: AccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
         when (command) {
             is CreateAccommodationCommand -> handle(command)
             is BookAccommodationCommand -> handle(command)
@@ -23,60 +23,60 @@ class AccommodationCommandHandler(
             is ExpireAccommodationCommand -> handle(command)
         }
 
-    private fun handle(command: CreateAccommodationCommand): Pair<Accommodation, AccommodationEvent> =
+    private fun handle(command: CreateAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
         Accommodation.create(
             command.name,
             command.location,
             command.rent,
         )
 
-    private suspend fun handle(command: BookAccommodationCommand): Pair<Accommodation, AccommodationEvent> =
+    private suspend fun handle(command: BookAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val event = it.book(command.bookingId)
-                it to event
+                val events = it.book(command.bookingId)
+                it to events
             }
 
-    private suspend fun handle(command: CancelAccommodationBookingCommand): Pair<Accommodation, AccommodationEvent> =
+    private suspend fun handle(command: CancelAccommodationBookingCommand): Pair<Accommodation, List<AccommodationEvent>> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val event = it.cancelBooking(command.bookingId)
-                it to event
+                val events = it.cancelBooking(command.bookingId)
+                it to events
             }
 
-    private suspend fun handle(command: ExpireAccommodationCommand): Pair<Accommodation, AccommodationEvent> =
+    private suspend fun handle(command: ExpireAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val event = it.expire()
-                it to event
+                val events = it.expire()
+                it to events
             }
 
-    suspend fun compensate(event: AccommodationEvent): Pair<Accommodation, AccommodationEvent> =
+    suspend fun compensate(event: AccommodationEvent): Pair<Accommodation, List<AccommodationEvent>> =
         when (event) {
             is AccommodationBookedEvent -> compensate(event)
             is AccommodationBookingCanceledEvent -> compensate(event)
             else -> throw IllegalArgumentException("Non compensatable event type: ${event::class.simpleName}")
         }.let {
-            val compensateEvent = it.second.toCompensation()
-            it.first to compensateEvent
+            val compensationEvents = it.second.map { ev -> ev.toCompensation() }
+            it.first to compensationEvents
         }
 
-    private suspend fun compensate(event: AccommodationBookedEvent): Pair<Accommodation, AccommodationEvent> =
+    private suspend fun compensate(event: AccommodationBookedEvent): Pair<Accommodation, List<AccommodationEvent>> =
         accommodationRepository
             .findById(event.accommodationId)
             .let {
-                val event = it.compensateBook(event.bookingId)
-                it to event
+                val events = it.compensateBook(event.bookingId)
+                it to events
             }
 
-    private suspend fun compensate(event: AccommodationBookingCanceledEvent): Pair<Accommodation, AccommodationEvent> =
+    private suspend fun compensate(event: AccommodationBookingCanceledEvent): Pair<Accommodation, List<AccommodationEvent>> =
         accommodationRepository
             .findById(event.accommodationId)
             .let {
-                val event = it.compensateCancelBooking(event.bookingId)
-                it to event
+                val events = it.compensateCancelBooking(event.bookingId)
+                it to events
             }
 }

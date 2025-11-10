@@ -24,7 +24,7 @@ import pl.szymanski.wiktor.ta.event.toCompensation
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
 ) {
-    suspend fun handle(command: TravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    suspend fun handle(command: TravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         when (command) {
             is BookTravelOfferCommand -> handle(command)
             is CancelBookTravelOfferCommand -> handle(command)
@@ -38,7 +38,7 @@ class TravelOfferCommandHandler(
             is MakeTravelOfferUnavailableCommand -> handle(command)
         }
 
-    private fun handle(command: CreateTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private fun handle(command: CreateTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         TravelOffer.create(
             command.name,
             command.commuteId,
@@ -46,79 +46,79 @@ class TravelOfferCommandHandler(
             command.attractionId,
         )
 
-    private suspend fun handle(command: BookTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: BookTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.book(command.bookingId, command.seat)
-                it to event
+                val events = it.book(command.bookingId, command.seat)
+                it to events
             }
 
-    private suspend fun handle(command: CancelBookTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: CancelBookTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.cancelBooking(command.bookingId, command.seat)
-                it to event
+                val events = it.cancelBooking(command.bookingId, command.seat)
+                it to events
             }
 
-    private suspend fun handle(command: ReleaseTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: ReleaseTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.releaseBooking(command.bookingId, command.seat)
-                it to event
+                val events = it.releaseBooking(command.bookingId, command.seat)
+                it to events
             }
 
-    private suspend fun handle(command: RebookTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: RebookTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.rebook(command.bookingId)
-                it to event
+                val events = it.rebook(command.bookingId)
+                it to events
             }
 
-    private suspend fun handle(command: ExpireTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: ExpireTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.expire()
-                it to event
+                val events = it.expire()
+                it to events
             }
 
-    private suspend fun handle(command: MakeTravelOfferUnavailableCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: MakeTravelOfferUnavailableCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.makeUnavailable()
-                it to event
+                val events = it.makeUnavailable()
+                it to events
             }
 
-    private suspend fun handle(command: MakeTravelOfferAvailableCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: MakeTravelOfferAvailableCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.makeAvailable()
-                it to event
+                val events = it.makeAvailable()
+                it to events
             }
 
-    private suspend fun handle(command: ReserveTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: ReserveTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.reserve(command.bookingId, command.seat)
-                it to event
+                val events = it.reserve(command.bookingId, command.seat)
+                it to events
             }
 
-    private suspend fun handle(command: CancelReserveTravelOfferCommand): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun handle(command: CancelReserveTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)
             .let {
-                val event = it.cancelReservation(command.bookingId, command.seat)
-                it to event
+                val events = it.cancelReservation(command.bookingId, command.seat)
+                it to events
             }
 
-    suspend fun compensate(event: TravelOfferEvent): Pair<TravelOffer, TravelOfferEvent> =
+    suspend fun compensate(event: TravelOfferEvent): Pair<TravelOffer, List<TravelOfferEvent>> =
         when (event) {
             is TravelOfferBookedEvent -> compensate(event)
             is TravelOfferBookingCanceledEvent -> compensate(event)
@@ -127,11 +127,12 @@ class TravelOfferCommandHandler(
             is TravelOfferReleaseEvent -> compensate(event)
             else -> throw IllegalArgumentException("Non compensatable event type: ${event::class.simpleName}")
         }.let {
-            val compensationEvent = it.second.toCompensation()
-            it.first to compensationEvent
+            val compensationEvents = it.second.map { ev -> ev.toCompensation() }
+            it.first to compensationEvents
         }
 
-    private suspend fun compensate(event: TravelOfferReleaseEvent): Pair<TravelOffer, TravelOfferEvent> =
+    // TODO: compensate should propably use it's own aggregate methods to be able to revert something even if date is past, on the other hand travelOffer does not know anything about dates
+    private suspend fun compensate(event: TravelOfferReleaseEvent): Pair<TravelOffer, List<TravelOfferEvent>> =
         handle(
             RebookTravelOfferCommand(
                 event.travelOfferId,
@@ -140,7 +141,7 @@ class TravelOfferCommandHandler(
             )
         )
 
-    private suspend fun compensate(event: TravelOfferBookedEvent): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun compensate(event: TravelOfferBookedEvent): Pair<TravelOffer, List<TravelOfferEvent>> =
         handle(
             CancelBookTravelOfferCommand(
                 event.travelOfferId,
@@ -150,7 +151,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun compensate(event: TravelOfferBookingCanceledEvent): Pair<TravelOffer, List<TravelOfferEvent>> =
         handle(
             BookTravelOfferCommand(
                 event.travelOfferId,
@@ -160,7 +161,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferReservedEvent): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun compensate(event: TravelOfferReservedEvent): Pair<TravelOffer, List<TravelOfferEvent>> =
         handle(
             CancelReserveTravelOfferCommand(
                 event.travelOfferId,
@@ -170,7 +171,7 @@ class TravelOfferCommandHandler(
             ),
         )
 
-    private suspend fun compensate(event: TravelOfferReservationCanceledEvent): Pair<TravelOffer, TravelOfferEvent> =
+    private suspend fun compensate(event: TravelOfferReservationCanceledEvent): Pair<TravelOffer, List<TravelOfferEvent>> =
         handle(
             ReserveTravelOfferCommand(
                 event.travelOfferId,

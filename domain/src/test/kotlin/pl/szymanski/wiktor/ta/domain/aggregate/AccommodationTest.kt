@@ -37,14 +37,15 @@ class AccommodationTest {
 
     @Test
     fun book_should_succeed_when_available() {
-        val event = accommodation.book(bookingId)
+        val events = accommodation.book(bookingId)
 
+        assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookedEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
         assertEquals(bookingId, accommodation.bookingId)
@@ -59,14 +60,15 @@ class AccommodationTest {
     @Test
     fun cancelBooking_should_clear_booking_if_user_matches() {
         accommodation.book(bookingId)
-        val event = accommodation.cancelBooking(bookingId)
+        val events = accommodation.cancelBooking(bookingId)
 
+        assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookingCanceledEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertNull(accommodation.bookingId)
     }
@@ -87,13 +89,14 @@ class AccommodationTest {
     @Test
     fun expire_should_succeed_if_available_and_from_is_past() {
         val accommodation = accommodation.copy(rent = rentPast)
-        val event = accommodation.expire()
+        val events = accommodation.expire()
 
+        assertEquals(1, events.size)
         assertEventEquals(
             AccommodationExpiredEvent(
                 accommodationId = accommodationId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(AccommodationStatusEnum.EXPIRED, accommodation.status)
     }
@@ -113,14 +116,15 @@ class AccommodationTest {
     @Test
     fun compensateBook_should_succeed_when_bookingId_matches() {
         accommodation.book(bookingId)
-        val event = accommodation.compensateBook(bookingId)
+        val events = accommodation.compensateBook(bookingId)
 
+        assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookingCanceledEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(AccommodationStatusEnum.AVAILABLE, accommodation.status)
         assertNull(accommodation.bookingId)
@@ -141,14 +145,15 @@ class AccommodationTest {
 
     @Test
     fun compensateCancelBooking_should_succeed_when_no_existing_booking() {
-        val event = accommodation.compensateCancelBooking(bookingId)
+        val events = accommodation.compensateCancelBooking(bookingId)
 
+        assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookedEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
         assertEquals(bookingId, accommodation.bookingId)

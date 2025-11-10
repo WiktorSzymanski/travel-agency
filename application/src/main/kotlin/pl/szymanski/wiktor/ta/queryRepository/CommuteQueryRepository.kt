@@ -11,17 +11,11 @@ import java.util.UUID
 interface CommuteQueryRepository {
     suspend fun save(entity: Commute): Commute?
 
+    suspend fun update(projectionUpdate: ProjectionUpdate)
+
     suspend fun findById(commuteId: UUID): Commute
 
     suspend fun findAllByStatus(status: CommuteStatusEnum): List<Commute>
-
-    suspend fun update(entity: CommuteUpdate)
-
-    suspend fun update(entity: CommuteUpdateRevision)
-
-    suspend fun update(entity: CommuteUpdateStatus)
-
-    suspend fun update(entity: CommuteCancelUpdate)
 
     suspend fun findStatistics(
         page: Int = 1,
@@ -30,29 +24,3 @@ interface CommuteQueryRepository {
         endDate: LocalDateTime,
     ): List<CommuteStatisticDto>
 }
-
-data class CommuteUpdate(
-    val id: UUID,
-    val bookingId: UUID? = null,
-    val seat: Seat? = null,
-    val revision: Int
-)
-
-data class CommuteUpdateRevision(
-    val id: UUID,
-    val revision: Int,
-    val event: Event
-)
-
-data class CommuteCancelUpdate(
-    val id: UUID,
-    val status: CommuteStatusEnum? = null,
-    val bookingId: UUID? = null,
-    val revision: Int
-)
-
-data class CommuteUpdateStatus(
-    val id: UUID,
-    val status: CommuteStatusEnum? = null,
-    val revision: Int
-)

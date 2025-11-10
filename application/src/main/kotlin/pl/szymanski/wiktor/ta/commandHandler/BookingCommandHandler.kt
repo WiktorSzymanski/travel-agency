@@ -16,7 +16,7 @@ import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
 class BookingCommandHandler(
     private val bookingRepository: BookingRepository,
 ) {
-    suspend fun handle(command: BookingCommand): Pair<Booking, BookingEvent> =
+    suspend fun handle(command: BookingCommand): Pair<Booking, List<BookingEvent>> =
         when (command) {
             is CreateBookingCommand -> handle(command)
             is ProcessBookingCommand -> handle(command)
@@ -28,66 +28,66 @@ class BookingCommandHandler(
             is ProcessCancelBookingCommand -> handle(command)
         }
 
-    private fun handle(command: CreateBookingCommand): Pair<Booking, BookingEvent> =
+    private fun handle(command: CreateBookingCommand): Pair<Booking, List<BookingEvent>> =
         Booking.create(
             userId = command.userId,
             travelOfferId = command.travelOfferId,
             seat = command.seat,
         )
 
-    private suspend fun handle(command: BookingRequestCancelCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: BookingRequestCancelCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.requestCancel()
-                it to event
+                val events = it.requestCancel()
+                it to events
             }
 
-    private suspend fun handle(command: ProcessBookingCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: ProcessBookingCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.process()
-                it to event
+                val events = it.process()
+                it to events
             }
 
-    private suspend fun handle(command: CompleteBookingCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: CompleteBookingCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.complete()
-                it to event
+                val events = it.complete()
+                it to events
             }
 
-    private suspend fun handle(command: CancelBookingCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: CancelBookingCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.cancel()
-                it to event
+                val events = it.cancel()
+                it to events
             }
 
-    private suspend fun handle(command: FailBookingCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: FailBookingCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.fail(command.message!!)
-                it to event
+                val events = it.fail(command.message!!)
+                it to events
             }
 
-    private suspend fun handle(command: FailCancelBookingCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: FailCancelBookingCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.failCancellation(command.message!!)
-                it to event
+                val events = it.failCancellation(command.message!!)
+                it to events
             }
 
-    private suspend fun handle(command: ProcessCancelBookingCommand): Pair<Booking, BookingEvent> =
+    private suspend fun handle(command: ProcessCancelBookingCommand): Pair<Booking, List<BookingEvent>> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val event = it.processCancellation()
-                it to event
+                val events = it.processCancellation()
+                it to events
             }
 }

@@ -140,7 +140,7 @@ class AttractionTest {
             AttractionFullEvent(
                 attractionId = attraction.id,
             ),
-            events[1],
+            events.last(),
         )
         assertEquals(AttractionStatusEnum.FULL, attraction.status)
         assertEquals(3, attraction.bookings.size)
@@ -171,7 +171,7 @@ class AttractionTest {
             AttractionAvailableEvent(
                 attractionId = attraction.id,
             ),
-            events[1],
+            events.last(),
         )
         assertEquals(AttractionStatusEnum.SCHEDULED, attraction.status)
         assertEquals(2, attraction.bookings.size)
@@ -260,7 +260,7 @@ class AttractionTest {
             AttractionAvailableEvent(
                 attractionId = attraction.id,
             ),
-            events[1],
+            events.last(),
         )
         assertEquals(AttractionStatusEnum.SCHEDULED, attraction.status)
         assertEquals(2, attraction.bookings.size)
@@ -318,7 +318,7 @@ class AttractionTest {
             AttractionFullEvent(
                 attractionId = attraction.id,
             ),
-            events[1],
+            events.last(),
         )
         assertEquals(AttractionStatusEnum.FULL, attraction.status)
         assertEquals(3, attraction.bookings.size)

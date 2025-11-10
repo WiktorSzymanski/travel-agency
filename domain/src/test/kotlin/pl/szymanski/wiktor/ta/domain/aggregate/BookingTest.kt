@@ -41,13 +41,13 @@ class BookingTest {
 
     @Test
     fun process_successfully_from_new() {
-        val event = booking.process()
+        val events = booking.process()
 
         assertEventEquals(
             ProcessBookingEvent(
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.PROCESSING, booking.status)
     }
@@ -62,26 +62,26 @@ class BookingTest {
     @Test
     fun complete_successfully_from_processing() {
         val booking = booking.copy(status = BookingState.PROCESSING)
-        val event = booking.complete()
+        val events = booking.complete()
 
         assertEventEquals(
             CompleteBookingEvent(
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.SUCCEEDED, booking.status)
     }
 
     @Test
     fun complete_successfully_from_new() {
-        val event = booking.complete()
+        val events = booking.complete()
 
         assertEventEquals(
             CompleteBookingEvent(
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.SUCCEEDED, booking.status)
     }
@@ -101,7 +101,7 @@ class BookingTest {
     @Test
     fun requestCancel_successfully_from_succeeded() {
         val booking = booking.copy(status = BookingState.SUCCEEDED)
-        val event = booking.requestCancel()
+        val events = booking.requestCancel()
 
         assertEventEquals(
             BookingCancelRequestedEvent(
@@ -109,7 +109,7 @@ class BookingTest {
                 travelOfferId = travelOfferId,
                 seat = seat,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.CANCEL_REQUESTED, booking.status)
     }
@@ -122,13 +122,13 @@ class BookingTest {
     @Test
     fun cancel_successfully_from_processing_cancellation() {
         val booking = booking.copy(status = BookingState.PROCESSING_CANCELLATION)
-        val event = booking.cancel()
+        val events = booking.cancel()
 
         assertEventEquals(
             CancelBookingEvent(
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.CANCELED, booking.status)
     }
@@ -142,13 +142,13 @@ class BookingTest {
     @Test
     fun processCancellation_successfully_from_cancel_requested() {
         val booking = booking.copy(status = BookingState.CANCEL_REQUESTED)
-        val event = booking.processCancellation()
+        val events = booking.processCancellation()
 
         assertEventEquals(
             ProcessCancelBookingEvent(
                 bookingId = bookingId,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.PROCESSING_CANCELLATION, booking.status)
     }
@@ -162,14 +162,14 @@ class BookingTest {
     fun fail_successfully_from_processing() {
         val booking = booking.copy(status = BookingState.PROCESSING)
         val message = "Something went wrong"
-        val event = booking.fail(message)
+        val events = booking.fail(message)
 
         assertEventEquals(
             FailBookingEvent(
                 bookingId = bookingId,
                 message = message,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.FAILED, booking.status)
         assertEquals(message, booking.message)
@@ -178,14 +178,14 @@ class BookingTest {
     @Test
     fun fail_successfully_from_new() {
         val message = "Validation failed"
-        val event = booking.fail(message)
+        val events = booking.fail(message)
 
         assertEventEquals(
             FailBookingEvent(
                 bookingId = bookingId,
                 message = message,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.FAILED, booking.status)
         assertEquals(message, booking.message)
@@ -211,14 +211,14 @@ class BookingTest {
     fun failCancellation_successfully_from_processing_cancellation() {
         val booking = booking.copy(status = BookingState.PROCESSING_CANCELLATION)
         val message = "Cancellation failed"
-        val event = booking.failCancellation(message)
+        val events = booking.failCancellation(message)
 
         assertEventEquals(
             FailCancelBookingEvent(
                 bookingId = bookingId,
                 message = message,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.SUCCEEDED, booking.status)
         assertEquals(message, booking.message)
@@ -228,14 +228,14 @@ class BookingTest {
     fun failCancellation_successfully_from_cancel_requested() {
         val booking = booking.copy(status = BookingState.CANCEL_REQUESTED)
         val message = "Cannot cancel"
-        val event = booking.failCancellation(message)
+        val events = booking.failCancellation(message)
 
         assertEventEquals(
             FailCancelBookingEvent(
                 bookingId = bookingId,
                 message = message,
             ),
-            event,
+            events.first(),
         )
         assertEquals(BookingState.SUCCEEDED, booking.status)
         assertEquals(message, booking.message)

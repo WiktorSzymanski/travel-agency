@@ -9,42 +9,10 @@ import java.util.UUID
 interface AttractionQueryRepository {
     suspend fun save(entity: Attraction): Attraction?
 
+    suspend fun update(projectionUpdate: ProjectionUpdate)
+
     suspend fun findById(attractionId: UUID): Attraction
 
     suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction>
 
-    suspend fun update(entity: AttractionUpdate)
-
-    suspend fun update(entity: AttractionUpdateRevision)
-
-    suspend fun update(entity: AttractionUpdateStatus)
-
-    suspend fun update(entity: AttractionCancelUpdate)
 }
-
-data class AttractionUpdate(
-    val id: UUID,
-    val status: AttractionStatusEnum? = null,
-    val bookingId: UUID? = null,
-    val revision: Int
-)
-
-data class AttractionUpdateRevision(
-    val id: UUID,
-    val bookingId: UUID? = null,
-    val revision: Int,
-    val event: Event
-)
-
-data class AttractionCancelUpdate(
-    val id: UUID,
-    val status: AttractionStatusEnum? = null,
-    val bookingId: UUID? = null,
-    val revision: Int
-)
-
-data class AttractionUpdateStatus(
-    val id: UUID,
-    val status: AttractionStatusEnum? = null,
-    val revision: Int
-)
