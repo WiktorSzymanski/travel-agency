@@ -80,27 +80,7 @@ data class Commute(
             throw CommuteBookSeatFailedException(id, status)
         }
 
-        val seatToBook =
-            when (seat) {
-                null -> {
-                    val availableSeats = this.seats.filter { !this.bookings.containsValue(it.toString()) }
-                    if (availableSeats.isEmpty()) {
-                        throw CommuteBookSeatFailedException(id)
-                    }
-                    availableSeats[0]
-                }
-                is Seat -> {
-                    if (!this.seats.contains(seat)) {
-                        throw CommuteBookSeatFailedException(seat, id)
-                    }
-
-                    if (this.bookings.containsValue(seat.toString())) {
-                        throw CommuteBookSeatFailedException(seat, id, true)
-                    }
-
-                    seat
-                }
-            }
+        val seatToBook = seat?.let { validateSeat(it) } ?: getFirstAvailableSeat()
 
         this.bookings[bookingId.toString()] = seatToBook.toString()
 
@@ -210,5 +190,23 @@ data class Commute(
         if (LocalDateTime.now().isBefore(this.departure.time)) return
 
         this.status = CommuteStatusEnum.EXPIRED
+    }
+
+    private fun getFirstAvailableSeat(): Seat {
+        val availableSeats = this.seats.filter { !this.bookings.containsValue(it.toString()) }
+        if (availableSeats.isEmpty()) {
+            throw CommuteBookSeatFailedException(id)
+        }
+        return availableSeats.first()
+    }
+
+    private fun validateSeat(seat: Seat): Seat {
+        if (!this.seats.contains(seat))
+            throw CommuteBookSeatFailedException(seat, id)
+
+        if (this.bookings.containsValue(seat.toString()))
+            throw CommuteBookSeatFailedException(seat, id, true)
+
+        return seat
     }
 }
