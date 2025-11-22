@@ -24,25 +24,25 @@ class TravelOfferEventHandler(
     private val travelOfferService: TravelOfferService,
 ) {
     fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
-        scope.launch { travelOfferReservedEventHandler() }
+//        scope.launch { travelOfferReservedEventHandler() }
         scope.launch { travelOfferReleaseEventHandler() }
     }
 
-    suspend fun travelOfferReservedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            EventBus.subscribe<TravelOfferReservedEvent> {
-                scope.launchCatching {
-                    BookingSaga(
-                        travelOfferCommandHandler,
-                        attractionCommandHandler,
-                        commuteCommandHandler,
-                        accommodationCommandHandler,
-                        travelOfferService,
-                        it,
-                    ).execute()
-                }
-            }
-        }
+//    suspend fun travelOfferReservedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
+//        coroutineScope {
+//            EventBus.subscribe<TravelOfferReservedEvent> {
+//                scope.launchCatching {
+//                    BookingSaga(
+//                        travelOfferCommandHandler,
+//                        attractionCommandHandler,
+//                        commuteCommandHandler,
+//                        accommodationCommandHandler,
+//                        travelOfferService,
+//                        it,
+//                    ).execute()
+//                }
+//            }
+//        }
 
     suspend fun travelOfferReleaseEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {

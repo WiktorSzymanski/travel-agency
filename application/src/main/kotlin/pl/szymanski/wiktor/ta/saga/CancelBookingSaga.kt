@@ -109,7 +109,7 @@ class CancelBookingSaga(
 
         if (acH.isFailure) {
             withRetry(maxRetries) {
-                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+//                commuteCommandHandler.compensate(cHEvent as CommuteEvent)
             }
             compensateTriggeringEvent(acH.exceptionOrNull()?.message ?: "Unknown error")
             return
@@ -126,10 +126,10 @@ class CancelBookingSaga(
 
             if (atH.isFailure) {
                 withRetry(maxRetries) {
-                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
+//                    commuteCommandHandler.compensate(cHEvent as CommuteEvent)
                 }
                 withRetry(maxRetries) {
-                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
+//                    accommodationCommandHandler.compensate(acHEvent as AccommodationEvent)
                 }
                 compensateTriggeringEvent(atH.exceptionOrNull()?.message ?: "Unknown error")
                 return
@@ -158,7 +158,7 @@ class CancelBookingSaga(
                     message = message
                 )
             )
-            withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
+//            withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
 
             if (!travelOfferService
                 .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)

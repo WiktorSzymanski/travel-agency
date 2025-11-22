@@ -9,6 +9,11 @@ import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelReserveTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelBookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelReserveTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CompensateReleaseTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.CompensateReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferAvailableCommand
@@ -18,11 +23,6 @@ import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import java.util.UUID
 import kotlin.test.Test
@@ -215,18 +215,15 @@ class TravelOfferCommandHandlerTest {
     @Test
     fun `compensate TravelOfferReleaseEvent should call travelOffer_rebook`() = runTest {
         // Given
-        val event = TravelOfferReleaseEvent(
-            correlationId = UUID.randomUUID(),
+        val command = CompensateReleaseTravelOfferCommand(
             travelOfferId = UUID.randomUUID(),
-            accommodationId = UUID.randomUUID(),
-            commuteId = UUID.randomUUID(),
-            attractionId = null,
-            bookingId = UUID.randomUUID(),
-            seat = null,
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
+            bookingId = UUID.randomUUID()
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { travelOfferRepository.findById(any()) }
@@ -236,18 +233,16 @@ class TravelOfferCommandHandlerTest {
     @Test
     fun `compensate TravelOfferBookedEvent should call travelOffer_cancelBooking`() = runTest {
         // Given
-        val event = TravelOfferBookedEvent(
-            correlationId = UUID.randomUUID(),
+        val command = CompensateBookTravelOfferCommand(
             travelOfferId = UUID.randomUUID(),
-            accommodationId = UUID.randomUUID(),
-            commuteId = UUID.randomUUID(),
-            attractionId = null,
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
             bookingId = UUID.randomUUID(),
-            seat = null,
+            seat = Seat("3", "D"),
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { travelOfferRepository.findById(any()) }
@@ -257,18 +252,16 @@ class TravelOfferCommandHandlerTest {
     @Test
     fun `compensate TravelOfferBookingCanceledEvent should call travelOffer_book`() = runTest {
         // Given
-        val event = TravelOfferBookingCanceledEvent(
-            correlationId = UUID.randomUUID(),
+        val command = CompensateCancelBookTravelOfferCommand(
             travelOfferId = UUID.randomUUID(),
-            accommodationId = UUID.randomUUID(),
-            commuteId = UUID.randomUUID(),
-            attractionId = null,
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
             bookingId = UUID.randomUUID(),
-            seat = null,
+            seat = Seat("3", "D"),
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { travelOfferRepository.findById(any()) }
@@ -278,18 +271,16 @@ class TravelOfferCommandHandlerTest {
     @Test
     fun `compensate TravelOfferReservedEvent should call travelOffer_cancelReservation`() = runTest {
         // Given
-        val event = TravelOfferReservedEvent(
-            correlationId = UUID.randomUUID(),
+        val command = CompensateReserveTravelOfferCommand(
             travelOfferId = UUID.randomUUID(),
-            accommodationId = UUID.randomUUID(),
-            commuteId = UUID.randomUUID(),
-            attractionId = null,
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
             bookingId = UUID.randomUUID(),
-            seat = null,
+            seat = Seat("3", "D"),
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { travelOfferRepository.findById(any()) }
@@ -299,18 +290,16 @@ class TravelOfferCommandHandlerTest {
     @Test
     fun `compensate TravelOfferReservationCanceledEvent should call travelOffer_reserve`() = runTest {
         // Given
-        val event = TravelOfferReservationCanceledEvent(
-            correlationId = UUID.randomUUID(),
+        val command = CompensateCancelReserveTravelOfferCommand(
             travelOfferId = UUID.randomUUID(),
-            accommodationId = UUID.randomUUID(),
-            commuteId = UUID.randomUUID(),
-            attractionId = null,
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
             bookingId = UUID.randomUUID(),
-            seat = null,
+            seat = Seat("3", "D"),
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { travelOfferRepository.findById(any()) }

@@ -3,11 +3,11 @@ package pl.szymanski.wiktor.ta.commandHandler
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookAttractionCommand
 import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookAttractionCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.event.toCompensation
@@ -21,6 +21,8 @@ class AttractionCommandHandler(
             is BookAttractionCommand -> handle(command)
             is CancelAttractionBookingCommand -> handle(command)
             is ExpireAttractionCommand -> handle(command)
+            is CompensateBookAttractionCommand -> compensate(command)
+            is CompensateCancelAttractionBookingCommand -> compensate(command)
         }
 
     private fun handle(command: CreateAttractionCommand): Pair<Attraction, List<AttractionEvent>> =
@@ -55,29 +57,19 @@ class AttractionCommandHandler(
                 it to events
             }
 
-    suspend fun compensate(event: AttractionEvent): Pair<Attraction, List<AttractionEvent>> =
-        when (event) {
-            is AttractionBookedEvent -> compensate(event)
-            is AttractionBookingCanceledEvent -> compensate(event)
-            else -> throw IllegalArgumentException("Non compensatable event type: ${event::class.simpleName}")
-        }.let {
-            val compensateEvents = it.second.map { e -> e.toCompensation() }
-            it.first to compensateEvents
-        }
-
-    private suspend fun compensate(event: AttractionBookedEvent): Pair<Attraction, List<AttractionEvent>> =
+    private suspend fun compensate(command: CompensateBookAttractionCommand): Pair<Attraction, List<AttractionEvent>> =
         attractionRepository
-            .findById(event.attractionId)
+            .findById(command.attractionId)
             .let {
-                val events = it.compensateBook(event.bookingId)
-                it to events
+                val events = it.compensateBook(command.bookingId)
+                it to events.map { ev -> ev.toCompensation() }
             }
 
-    private suspend fun compensate(event: AttractionBookingCanceledEvent): Pair<Attraction, List<AttractionEvent>> =
+    private suspend fun compensate(command: CompensateCancelAttractionBookingCommand): Pair<Attraction, List<AttractionEvent>> =
         attractionRepository
-            .findById(event.attractionId)
+            .findById(command.attractionId)
             .let {
-                val events = it.compensateCancelBooking(event.bookingId)
-                it to events
+                val events = it.compensateCancelBooking(command.bookingId)
+                it to events.map { ev -> ev.toCompensation() }
             }
 }

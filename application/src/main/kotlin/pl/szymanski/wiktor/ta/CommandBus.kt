@@ -11,22 +11,25 @@ import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 
-fun interface CommandHandler<C : Command> {
-    suspend fun handle(command: C)
+fun interface CommandHandler<C : Command, E> {
+    suspend fun handle(command: C): Pair<E, List<Event>>
 }
 
 object CommandBus {
-    private val handlers = mutableMapOf<Class<out Command>, CommandHandler<*>>()
+    private val handlers = mutableMapOf<Class<out Command>, CommandHandler<*, *>>()
 
-    fun <C : Command> registerHandler(commandType: Class<C>, handler: CommandHandler<C>) {
+    fun <C : Command, E> registerHandler(commandType: Class<C>, handler: CommandHandler<C, E>) {
         handlers[commandType] = handler
     }
 
-    suspend fun <C : Command> dispatch(command: C) {
-        val handler = handlers[command::class.java.superclass] as? CommandHandler<C>
+    suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<Event>> {
+        val handler = handlers[command::class.java.superclass] as? CommandHandler<C, E>
             ?: throw IllegalArgumentException("No handler registered for ${command::class.java.superclass}")
-        handler.handle(command)
+        return handler.handle(command)
     }
 
 

@@ -8,6 +8,9 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.BookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
 import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
@@ -105,14 +108,15 @@ class CommuteCommandHandlerTest {
     @Test
     fun `compensate CommuteBookedEvent should call commute_compensateBookSeat`() = runTest {
         // Given
-        val event = CommuteBookedEvent(
+        val command = CompensateBookCommuteCommand(
             commuteId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
-            seat = Seat("2", "C"),
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
+            bookingId = UUID.randomUUID()
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { commuteRepository.findById(any()) }
@@ -122,14 +126,16 @@ class CommuteCommandHandlerTest {
     @Test
     fun `compensate CommuteBookingCanceledEvent should call commute_compensateCancelBookedSeat`() = runTest {
         // Given
-        val event = CommuteBookingCanceledEvent(
+        val command = CompensateCancelCommuteBookingCommand(
             commuteId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
             bookingId = UUID.randomUUID(),
-            seat = Seat("3", "D"),
+            seat = Seat("3", "D")
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { commuteRepository.findById(any()) }

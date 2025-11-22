@@ -9,6 +9,7 @@ import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.launchCatching
@@ -21,7 +22,7 @@ class BookingEventHandler {
     suspend fun bookingCreatedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) = coroutineScope {
         EventBus.subscribe<BookingCreatedEvent> {
             scope.launchCatching {
-                CommandBus.dispatch(
+                CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
                     ReserveTravelOfferCommand(
                         it.travelOfferId,
                         it.correlationId!!,
@@ -37,7 +38,7 @@ class BookingEventHandler {
         EventBus.subscribe<BookingCancelRequestedEvent> {
             scope.launchCatching {
                 runCatching {
-                    CommandBus.dispatch(
+                    CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         ReleaseTravelOfferCommand(
                             it.travelOfferId,
                             it.correlationId!!,

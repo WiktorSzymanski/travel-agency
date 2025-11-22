@@ -8,6 +8,8 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.BookAttractionCommand
 import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookAttractionCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
@@ -102,13 +104,15 @@ class AttractionCommandHandlerTest {
     @Test
     fun `compensate AttractionBookedEvent should call attraction_compensateBook`() = runTest {
         // Given
-        val event = AttractionBookedEvent(
+        val command = CompensateBookAttractionCommand(
             attractionId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
+            bookingId = UUID.randomUUID()
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { attractionRepository.findById(any()) }
@@ -118,13 +122,15 @@ class AttractionCommandHandlerTest {
     @Test
     fun `compensate AttractionBookingCanceledEvent should call attraction_compensateCancelBooking`() = runTest {
         // Given
-        val event = AttractionBookingCanceledEvent(
+        val command = CompensateCancelAttractionBookingCommand(
             attractionId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
+            bookingId = UUID.randomUUID()
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { attractionRepository.findById(any()) }

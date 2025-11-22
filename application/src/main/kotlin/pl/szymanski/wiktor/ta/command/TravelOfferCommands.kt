@@ -71,3 +71,46 @@ data class MakeTravelOfferAvailableCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
 ) : TravelOfferCommand()
+
+sealed class CompensateTravelOfferCommand : TravelOfferCommand() {
+    abstract val eventId: UUID
+}
+
+data class CompensateBookTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+    val seat: Seat?,
+) : CompensateTravelOfferCommand()
+
+data class CompensateCancelBookTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+    val seat: Seat?,
+) : CompensateTravelOfferCommand()
+
+data class CompensateReserveTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+    val seat: Seat?,
+) : CompensateTravelOfferCommand()
+
+data class CompensateCancelReserveTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+    val seat: Seat?,
+) : CompensateTravelOfferCommand()
+
+data class CompensateReleaseTravelOfferCommand(
+    override val travelOfferId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+) : CompensateTravelOfferCommand()

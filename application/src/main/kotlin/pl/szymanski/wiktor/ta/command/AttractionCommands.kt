@@ -33,3 +33,21 @@ data class ExpireAttractionCommand(
     override val attractionId: UUID,
     override val correlationId: UUID,
 ) : AttractionCommand()
+
+sealed class CompensateAttractionCommand : AttractionCommand() {
+    abstract val eventId: UUID
+}
+
+data class CompensateBookAttractionCommand(
+    override val attractionId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+) : CompensateAttractionCommand()
+
+data class CompensateCancelAttractionBookingCommand(
+    override val attractionId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+) : CompensateAttractionCommand()

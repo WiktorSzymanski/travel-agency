@@ -34,3 +34,22 @@ data class ExpireCommuteCommand(
     override val commuteId: UUID,
     override val correlationId: UUID,
 ) : CommuteCommand()
+
+sealed class CompensateCommuteCommand : CommuteCommand() {
+    abstract val eventId: UUID
+}
+
+data class CompensateBookCommuteCommand(
+    override val commuteId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+) : CompensateCommuteCommand()
+
+data class CompensateCancelCommuteBookingCommand(
+    override val commuteId: UUID,
+    override val correlationId: UUID,
+    override val eventId: UUID,
+    val bookingId: UUID,
+    val seat: Seat,
+) : CompensateCommuteCommand()

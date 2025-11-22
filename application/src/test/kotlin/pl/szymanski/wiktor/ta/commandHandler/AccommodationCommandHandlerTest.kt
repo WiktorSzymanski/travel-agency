@@ -8,13 +8,13 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelAccommodationBookingCommand
 import pl.szymanski.wiktor.ta.command.CreateAccommodationCommand
 import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -105,13 +105,15 @@ class AccommodationCommandHandlerTest {
     @Test
     fun `compensate AccommodationBookedEvent should call accommodation_compensateBook`() = runTest {
         // Given
-        val event = AccommodationBookedEvent(
+        val command = CompensateBookAccommodationCommand(
             accommodationId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
+            bookingId = UUID.randomUUID()
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { accommodationRepository.findById(any()) }
@@ -121,13 +123,15 @@ class AccommodationCommandHandlerTest {
     @Test
     fun `compensate AccommodationBookingCanceledEvent should call accommodation_compensateCancelBooking`() = runTest {
         // Given
-        val event = AccommodationBookingCanceledEvent(
+        val command = CompensateCancelAccommodationBookingCommand(
             accommodationId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
+            correlationId = UUID.randomUUID(),
+            eventId = UUID.randomUUID(),
+            bookingId = UUID.randomUUID()
         )
 
         // When
-        handler.compensate(event)
+        handler.handle(command)
 
         // Then
         coVerify(exactly = 1) { accommodationRepository.findById(any()) }
