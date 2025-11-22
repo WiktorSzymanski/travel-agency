@@ -31,110 +31,123 @@ class AccommodationCommandHandlerTest {
     }
 
     @Test
-    fun `handle CreateAccommodationCommand should delegate to Accommodation_create`() = runTest {
-        // Given
-        val command = CreateAccommodationCommand(
-            accommodationId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            name = "AccommodationName",
-            location = LocationEnum.PARIS,
-            rent = Rent(
-                LocalDateTime.now().minusDays(2),
-                LocalDateTime.now().plusDays(5)
-            )
-        )
+    fun `handle CreateAccommodationCommand should delegate to Accommodation_create`() =
+        runTest {
+            // Given
+            val command =
+                CreateAccommodationCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    name = "AccommodationName",
+                    location = LocationEnum.PARIS,
+                    rent =
+                        Rent(
+                            LocalDateTime.now().minusDays(2),
+                            LocalDateTime.now().plusDays(5),
+                        ),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 0) { accommodationRepository.findById(any()) }
-        verify(exactly = 1) { Accommodation.create(any(), any(), any()) }
-    }
-
-    @Test
-    fun `handle BookAccommodationCommand should call accommodation_book`() = runTest {
-        // Given
-        val command = BookAccommodationCommand(
-            accommodationId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
-        )
-
-        // When
-        handler.handle(command)
-
-        // Then
-        coVerify(exactly = 1) { accommodationRepository.findById(any()) }
-        verify(exactly = 1) { accommodation.book(any()) }
-    }
+            // Then
+            coVerify(exactly = 0) { accommodationRepository.findById(any()) }
+            verify(exactly = 1) { Accommodation.create(any(), any(), any()) }
+        }
 
     @Test
-    fun `handle CancelAccommodationBookingCommand should call accommodation_cancelBooking`() = runTest {
-        // Given
-        val command = CancelAccommodationBookingCommand(
-            accommodationId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID(),
-        )
+    fun `handle BookAccommodationCommand should call accommodation_book`() =
+        runTest {
+            // Given
+            val command =
+                BookAccommodationCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    bookingId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { accommodationRepository.findById(any()) }
-        verify(exactly = 1) { accommodation.cancelBooking(any()) }
-    }
-
-    @Test
-    fun `handle ExpireAccommodationCommand should call accommodation_expire`() = runTest {
-        // Given
-        val command = ExpireAccommodationCommand(
-            accommodationId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-        )
-
-        // When
-        handler.handle(command)
-
-        // Then
-        coVerify(exactly = 1) { accommodationRepository.findById(any()) }
-        verify(exactly = 1) { accommodation.expire() }
-    }
+            // Then
+            coVerify(exactly = 1) { accommodationRepository.findById(any()) }
+            verify(exactly = 1) { accommodation.book(any()) }
+        }
 
     @Test
-    fun `compensate AccommodationBookedEvent should call accommodation_compensateBook`() = runTest {
-        // Given
-        val command = CompensateBookAccommodationCommand(
-            accommodationId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            eventId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID()
-        )
+    fun `handle CancelAccommodationBookingCommand should call accommodation_cancelBooking`() =
+        runTest {
+            // Given
+            val command =
+                CancelAccommodationBookingCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    bookingId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { accommodationRepository.findById(any()) }
-        verify(exactly = 1) { accommodation.compensateBook(any()) }
-    }
+            // Then
+            coVerify(exactly = 1) { accommodationRepository.findById(any()) }
+            verify(exactly = 1) { accommodation.cancelBooking(any()) }
+        }
 
     @Test
-    fun `compensate AccommodationBookingCanceledEvent should call accommodation_compensateCancelBooking`() = runTest {
-        // Given
-        val command = CompensateCancelAccommodationBookingCommand(
-            accommodationId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            eventId = UUID.randomUUID(),
-            bookingId = UUID.randomUUID()
-        )
+    fun `handle ExpireAccommodationCommand should call accommodation_expire`() =
+        runTest {
+            // Given
+            val command =
+                ExpireAccommodationCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { accommodationRepository.findById(any()) }
-        verify(exactly = 1) { accommodation.compensateCancelBooking(any()) }
-    }
+            // Then
+            coVerify(exactly = 1) { accommodationRepository.findById(any()) }
+            verify(exactly = 1) { accommodation.expire() }
+        }
+
+    @Test
+    fun `compensate AccommodationBookedEvent should call accommodation_compensateBook`() =
+        runTest {
+            // Given
+            val command =
+                CompensateBookAccommodationCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    eventId = UUID.randomUUID(),
+                    bookingId = UUID.randomUUID(),
+                )
+
+            // When
+            handler.handle(command)
+
+            // Then
+            coVerify(exactly = 1) { accommodationRepository.findById(any()) }
+            verify(exactly = 1) { accommodation.compensateBook(any()) }
+        }
+
+    @Test
+    fun `compensate AccommodationBookingCanceledEvent should call accommodation_compensateCancelBooking`() =
+        runTest {
+            // Given
+            val command =
+                CompensateCancelAccommodationBookingCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    eventId = UUID.randomUUID(),
+                    bookingId = UUID.randomUUID(),
+                )
+
+            // When
+            handler.handle(command)
+
+            // Then
+            coVerify(exactly = 1) { accommodationRepository.findById(any()) }
+            verify(exactly = 1) { accommodation.compensateCancelBooking(any()) }
+        }
 }

@@ -1,51 +1,51 @@
-//package pl.szymanski.wiktor.ta
+// package pl.szymanski.wiktor.ta
 //
-//import io.mockk.coEvery
-//import io.mockk.coVerify
-//import io.mockk.mockk
-//import kotlinx.coroutines.test.runTest
-//import pl.szymanski.wiktor.ta.command.AccommodationCommand
-//import pl.szymanski.wiktor.ta.command.AttractionCommand
-//import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
-//import pl.szymanski.wiktor.ta.command.BookAttractionCommand
-//import pl.szymanski.wiktor.ta.command.BookCommuteCommand
-//import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
-//import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
-//import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
-//import pl.szymanski.wiktor.ta.command.CommuteCommand
-//import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
-//import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
-//import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
-//import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
-//import pl.szymanski.wiktor.ta.domain.Seat
-//import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-//import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-//import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-//import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
-//import pl.szymanski.wiktor.ta.event.AccommodationBookedCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.AccommodationBookingCanceledCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.AttractionBookedCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.AttractionBookingCanceledCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
-//import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
-//import pl.szymanski.wiktor.ta.saga.BookingSaga
-//import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
-//import java.util.UUID
-//import kotlin.test.BeforeTest
-//import kotlin.test.Test
-//import kotlin.test.fail
+// import io.mockk.coEvery
+// import io.mockk.coVerify
+// import io.mockk.mockk
+// import kotlinx.coroutines.test.runTest
+// import pl.szymanski.wiktor.ta.command.AccommodationCommand
+// import pl.szymanski.wiktor.ta.command.AttractionCommand
+// import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
+// import pl.szymanski.wiktor.ta.command.BookAttractionCommand
+// import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+// import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
+// import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+// import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
+// import pl.szymanski.wiktor.ta.command.CommuteCommand
+// import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
+// import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
+// import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
+// import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+// import pl.szymanski.wiktor.ta.domain.Seat
+// import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+// import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+// import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
+// import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
+// import pl.szymanski.wiktor.ta.event.AccommodationBookedCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.AccommodationBookingCanceledCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.AttractionBookedCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.AttractionBookingCanceledCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.CommuteBookedCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.CommuteBookingCanceledCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.TravelOfferBookedCompensatedEvent
+// import pl.szymanski.wiktor.ta.event.TravelOfferBookingCanceledCompensatedEvent
+// import pl.szymanski.wiktor.ta.saga.BookingSaga
+// import pl.szymanski.wiktor.ta.service.TravelOfferStatusService
+// import java.util.UUID
+// import kotlin.test.BeforeTest
+// import kotlin.test.Test
+// import kotlin.test.fail
 //
-//class BookingSagaTest {
+// class BookingSagaTest {
 //    private val travelOfferCommandHandler = mockk<TravelOfferCommandHandler>(relaxed = true)
 //    private val attractionCommandHandler = mockk<AttractionCommandHandler>(relaxed = true)
 //    private val commuteCommandHandler = mockk<CommuteCommandHandler>(relaxed = true)
@@ -627,4 +627,4 @@
 //            coVerify(exactly = 0) { attractionCommandHandler.compensate(any<AttractionBookingCanceledEvent>()) }
 //            coVerify(exactly = 1) { travelOfferCommandHandler.compensate(any<TravelOfferBookingCanceledEvent>()) }
 //        }
-//}
+// }

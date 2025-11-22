@@ -18,16 +18,12 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.timeMet
-import java.util.UUID
 import java.time.Duration
+import java.util.UUID
 
 class OfferMaker(
     private val accommodationRepository: AccommodationQueryRepository,
@@ -43,7 +39,7 @@ class OfferMaker(
 
     // TODO: I think it's needed
     init {
-//        popExpiredHashes()
+        popExpiredHashes()
     }
 
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
@@ -73,10 +69,14 @@ class OfferMaker(
                         launch {
                             runCatching {
                                 travelOfferCommandHandler.handle(offerTriple.toCommand() as TravelOfferCommand)
-                            }.exceptionOrNull()?.let{
-                                if (it.message?.contains("E11000 duplicate key error collection") ?: false)
-                                    log.info("ERROR: E11000 duplicate key error collection while creating offer for $offerTriple triple. Maybe should save offers in bulk?")
-                                else throw it
+                            }.exceptionOrNull()?.let {
+                                if (it.message?.contains("E11000 duplicate key error collection") ?: false) {
+                                    log.info(
+                                        "ERROR: E11000 duplicate key error collection while creating offer for $offerTriple triple. Maybe should save offers in bulk?",
+                                    )
+                                } else {
+                                    throw it
+                                }
                             }
                         }
                         offerHashes.add(offerMatchHash)
@@ -121,7 +121,7 @@ class OfferMaker(
                 val validCommutes =
                     nearbyCommutes.filter {
                         it.arrival.time.isBefore(accommodation.rent.from) &&
-                                Duration.between(it.arrival.time, accommodation.rent.from).seconds <= creationWindowSeconds
+                            Duration.between(it.arrival.time, accommodation.rent.from).seconds <= creationWindowSeconds
                     }
 
                 validCommutes.flatMap { commute ->

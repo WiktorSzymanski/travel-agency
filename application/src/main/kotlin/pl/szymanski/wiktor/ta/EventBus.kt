@@ -12,14 +12,16 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 object EventBus {
-    private val log = LoggerFactory.getLogger(EventBus::class.java)
     lateinit var repository: EventRepository
 
     fun init(repository: EventRepository) {
         this.repository = repository
     }
 
-    suspend fun publish(event: Event, revision: Int) {
+    suspend fun publish(
+        event: Event,
+        revision: Int,
+    ) {
 //        log.info("Publishing event: {}", event)
         repository.save(event, revision)
     }

@@ -1,15 +1,18 @@
 package pl.szymanski.wiktor.ta.saga
 
 class Saga<T> {
-    private val steps: MutableList<Pair<(T) -> T, (T) -> Unit>> = mutableListOf()
+    private val steps: MutableList<Pair<suspend (T) -> T, suspend (T) -> Unit>> = mutableListOf()
 
-    fun addStep(operation: (T) -> T, compensation: (T) -> Unit): Saga<T> {
+    fun addStep(
+        operation: suspend (T) -> T,
+        compensation: suspend (T) -> Unit,
+    ): Saga<T> {
         steps.add(Pair(operation, compensation))
         return this
     }
 
-    fun process(context: T): Result<T> {
-        val executedSteps = mutableListOf<Pair<(T) -> T, (T) -> Unit>>()
+    suspend fun process(context: T): Result<T> {
+        val executedSteps = mutableListOf<Pair<suspend (T) -> T, suspend (T) -> Unit>>()
         var currentContext = context
 
         for (step in steps) {
@@ -25,9 +28,9 @@ class Saga<T> {
         return Result.success(currentContext)
     }
 
-    private fun runCompensation(
+    private suspend fun runCompensation(
         context: T,
-        executedSteps: List<Pair<(T) -> T, (T) -> Unit>>
+        executedSteps: List<Pair<suspend (T) -> T, suspend (T) -> Unit>>,
     ) {
         // Compensate all executed steps in reverse order
         for (step in executedSteps.reversed()) {

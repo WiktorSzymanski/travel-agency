@@ -1,7 +1,7 @@
 package pl.szymanski.wiktor.ta.query
 
-import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.dto.CommuteStatisticDto
+import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
 import java.time.LocalDateTime
 
 class CommuteStatisticsQuery(

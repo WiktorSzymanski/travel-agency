@@ -29,11 +29,17 @@ class BookingSaga(
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReservedEvent,
 ) {
-    private var accommodationCommand: AccommodationCommand = BookAccommodationCommand(
-        triggeringEvent.accommodationId,
-        triggeringEvent.correlationId!!,
-        triggeringEvent.bookingId,
+    private data class BookingContext(
+        val commuteEventId: UUID? = null,
+        val accommodationEventId: UUID? = null,
     )
+
+    private val accommodationCommand: AccommodationCommand =
+        BookAccommodationCommand(
+            triggeringEvent.accommodationId,
+            triggeringEvent.correlationId!!,
+            triggeringEvent.bookingId,
+        )
 
     private fun getCompensateAccommodationCommand(eventId: UUID): CompensateAccommodationCommand {
         return CompensateBookAccommodationCommand(
@@ -44,12 +50,13 @@ class BookingSaga(
         )
     }
 
-    private var commuteCommand: CommuteCommand = BookCommuteCommand(
-        triggeringEvent.commuteId,
-        triggeringEvent.correlationId!!,
-        triggeringEvent.bookingId,
-        triggeringEvent.seat,
-    )
+    private var commuteCommand: CommuteCommand =
+        BookCommuteCommand(
+            triggeringEvent.commuteId,
+            triggeringEvent.correlationId!!,
+            triggeringEvent.bookingId,
+            triggeringEvent.seat,
+        )
 
     private fun getCompensateCommuteCommand(eventId: UUID): CompensateCommuteCommand {
         return CompensateBookCommuteCommand(
@@ -60,13 +67,14 @@ class BookingSaga(
         )
     }
 
-    private var attractionCommand: AttractionCommand? = triggeringEvent.attractionId?.let {
-        BookAttractionCommand(
-            it,
-            triggeringEvent.correlationId!!,
-            triggeringEvent.bookingId,
-        )
-    }
+    private val attractionCommand: AttractionCommand? =
+        triggeringEvent.attractionId?.let {
+            BookAttractionCommand(
+                it,
+                triggeringEvent.correlationId!!,
+                triggeringEvent.bookingId,
+            )
+        }
 
     private fun getCompensateAttractionCommand(eventId: UUID): AttractionCommand {
         return CompensateBookAttractionCommand(
@@ -77,84 +85,85 @@ class BookingSaga(
         )
     }
 
-    private var bookingId: UUID = triggeringEvent.bookingId
-
+    private val bookingId: UUID = triggeringEvent.bookingId
 
     private val maxRetries = 30
-
 
     suspend fun execute() {
         EventBus.ignoreRevisionPublish(
             BookingSagaStartedEvent(
                 correlationId = triggeringEvent.correlationId!!,
                 bookingId = bookingId,
-            )
+            ),
         )
 
-        val cH = runCatching {
-            withRetry(maxRetries) {
-                CommandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
-            }
-        }
-
-        if (cH.isFailure) {
-            compensateTriggeringEvent(cH.exceptionOrNull()?.message ?: "Unknown error")
-            return
-        }
-
-        val (commute, commuteEvents) = cH.getOrThrow()
-
-        val acH = runCatching {
-            withRetry(maxRetries) {
-                CommandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
-            }
-        }
-
-        if (acH.isFailure) {
-            withRetry(maxRetries) {
-                CommandBus.dispatch<CommuteCommand, Commute>(
-                    getCompensateCommuteCommand(commuteEvents.first().eventId)
+        val saga =
+            Saga<BookingContext>()
+                .addStep(
+                    operation = { ctx ->
+                        val (_, events) =
+                            withRetry(maxRetries) {
+                                CommandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
+                            }
+                        ctx.copy(commuteEventId = events.first().eventId)
+                    },
+                    compensation = { ctx ->
+                        ctx.commuteEventId?.let { evId ->
+                            withRetry(maxRetries) {
+                                CommandBus.dispatch<CommuteCommand, Commute>(
+                                    getCompensateCommuteCommand(evId),
+                                )
+                            }
+                        }
+                    },
                 )
-            }
-            compensateTriggeringEvent(acH.exceptionOrNull()?.message ?: "Unknown error")
-            return
-        }
-
-        val (accommodation, accommodationEvents) = acH.getOrThrow()
+                .addStep(
+                    operation = { ctx ->
+                        val (_, events) =
+                            withRetry(maxRetries) {
+                                CommandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
+                            }
+                        ctx.copy(accommodationEventId = events.first().eventId)
+                    },
+                    compensation = { ctx ->
+                        ctx.accommodationEventId?.let { evId ->
+                            withRetry(maxRetries) {
+                                CommandBus.dispatch<AccommodationCommand, Accommodation>(
+                                    getCompensateAccommodationCommand(evId),
+                                )
+                            }
+                        }
+                    },
+                )
 
         if (attractionCommand != null) {
-            val atH = runCatching {
-                withRetry(maxRetries) {
-                    CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand!!)
-                }
-            }
-
-            if (atH.isFailure) {
-                withRetry(maxRetries) {
-                    CommandBus.dispatch<AccommodationCommand, Accommodation>(
-                        getCompensateAccommodationCommand(accommodationEvents.first().eventId)
-                    )
-                }
-                withRetry(maxRetries) {
-                    CommandBus.dispatch<CommuteCommand, Commute>(
-                        getCompensateCommuteCommand(commuteEvents.first().eventId)
-                    )
-                }
-                compensateTriggeringEvent(atH.exceptionOrNull()?.message ?: "Unknown error")
-                return
-            }
-
-            val atHEvent = atH.getOrNull()
+            saga.addStep(
+                operation = { ctx ->
+                    withRetry(maxRetries) {
+                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand!!)
+                    }
+                    ctx // no need to mutate context
+                },
+                compensation = { _ ->
+                    // No-op: there is no subsequent step that could fail after attraction
+                },
+            )
         }
 
-        EventBus.ignoreRevisionPublish(
-            BookingSagaCompletedEvent(
-                correlationId = triggeringEvent.correlationId!!,
-                bookingId = bookingId,
-                travelOfferId = triggeringEvent.travelOfferId,
-                seat = triggeringEvent.seat,
+        val result = saga.process(BookingContext())
+
+        if (result.isSuccess) {
+            EventBus.ignoreRevisionPublish(
+                BookingSagaCompletedEvent(
+                    correlationId = triggeringEvent.correlationId!!,
+                    bookingId = bookingId,
+                    travelOfferId = triggeringEvent.travelOfferId,
+                    seat = triggeringEvent.seat,
+                ),
             )
-        )
+        } else {
+            compensateTriggeringEvent(result.exceptionOrNull()?.message ?: "Unknown error")
+        }
     }
 
     suspend fun compensateTriggeringEvent(message: String) =
@@ -163,13 +172,13 @@ class BookingSaga(
                 BookingSagaFailedEvent(
                     correlationId = triggeringEvent.correlationId!!,
                     bookingId = bookingId,
-                    message = message
-                )
+                    message = message,
+                ),
             )
 //            withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
 
             if (!travelOfferService
-                .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
+                    .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
             ) {
                 withRetry(maxRetries) {
 //                    travelOfferCommandHandler.handle(

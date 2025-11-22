@@ -9,5 +9,5 @@ data class ProjectionUpdate(
 
 data class UpdateRecord<T>(
     val field: String,
-    val value: T
+    val value: T,
 )

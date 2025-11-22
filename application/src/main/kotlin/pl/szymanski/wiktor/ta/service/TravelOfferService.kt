@@ -19,10 +19,6 @@ class TravelOfferService(
     private val travelOfferRepository: TravelOfferQueryRepository,
     private val travelOfferCommandHandler: TravelOfferCommandHandler,
 ) {
-    companion object {
-        private val log = LoggerFactory.getLogger(TravelOfferService::class.java)
-    }
-
     suspend fun expireTravelOfferByCommute(
         commuteId: UUID,
         correlationId: UUID,
@@ -76,8 +72,8 @@ class TravelOfferService(
             travelOfferId,
         )?.let { (commuteStatus, accommodationStatus, attractionStatus) ->
             commuteStatus == CommuteStatusEnum.SCHEDULED &&
-                    accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
-                    (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
+                accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
+                (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
         } ?: throw IllegalArgumentException("Invalid travel offer id: $travelOfferId")
     }
 

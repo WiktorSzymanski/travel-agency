@@ -14,11 +14,11 @@ fun Accommodation.timeMet(): Boolean = this.rent.from.isBefore(LocalDateTime.now
 
 fun Commute.timeMet(): Boolean = this.departure.time.isBefore(LocalDateTime.now())
 
-//suspend fun <T> withRetry(
+// suspend fun <T> withRetry(
 //    maxRetries: Int,
 //    onException: KClass<out Exception> = ConcurrentModificationException::class,
 //    action: suspend () -> T,
-//): T {
+// ): T {
 //    var lastException: Throwable? = null
 //    repeat(maxRetries) {
 //        val res = runCatching { action() }
@@ -28,7 +28,7 @@ fun Commute.timeMet(): Boolean = this.departure.time.isBefore(LocalDateTime.now(
 //        if (!onException.isInstance(lastException)) throw lastException!!
 //    }
 //    throw lastException ?: IllegalStateException("No attempt made")
-//}
+// }
 
 suspend fun <T> withRetry(
     maxRetries: Int = 3,

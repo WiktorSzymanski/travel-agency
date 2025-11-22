@@ -1,10 +1,10 @@
 package pl.szymanski.wiktor.ta.query
 
-import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
 import java.util.UUID
 
 class TravelOfferQuery(
@@ -37,10 +37,8 @@ class TravelOfferQuery(
             location = location,
             status = status,
         )
-        
-    suspend fun countTravelOffersByStatus(
-        status: TravelOfferStatusEnum,
-    ): Int {
+
+    suspend fun countTravelOffersByStatus(status: TravelOfferStatusEnum): Int {
         return travelOfferRepository.countTravelOffersByStatus(status)
     }
 

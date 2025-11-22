@@ -1,25 +1,25 @@
-//package pl.szymanski.wiktor.ta.event
+// package pl.szymanski.wiktor.ta.event
 //
-//import pl.szymanski.wiktor.ta.domain.Seat
-//import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
-//import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
-//import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
-//import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-//import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-//import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
-//import java.util.UUID
-//import kotlin.test.Test
-//import kotlin.test.assertEquals
-//import kotlin.test.assertFailsWith
-//import kotlin.test.assertTrue
+// import pl.szymanski.wiktor.ta.domain.Seat
+// import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
+// import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
+// import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
+// import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+// import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+// import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
+// import java.util.UUID
+// import kotlin.test.Test
+// import kotlin.test.assertEquals
+// import kotlin.test.assertFailsWith
+// import kotlin.test.assertTrue
 //
-//class CompensationEventsTest {
+// class CompensationEventsTest {
 //    private val correlationId = UUID.randomUUID()
 //    private val userId = UUID.randomUUID()
 //    private val bookingId = UUID.randomUUID()
@@ -258,4 +258,4 @@
 //            event.toCompensation()
 //        }
 //    }
-//}
+// }

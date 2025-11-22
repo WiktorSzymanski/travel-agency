@@ -11,12 +11,12 @@ class BookingQuery(
     suspend fun getTravelOffersByUserId(
         page: Int,
         size: Int,
-        userId: UUID
+        userId: UUID,
     ) = bookingRepository.findTravelOfferDtoByUserId(page, size, userId)
 
     suspend fun getBookingsByUserId(
         page: Int,
         size: Int,
-        userId: UUID
+        userId: UUID,
     ) = bookingRepository.findByUserId(page, size, userId)
 }

@@ -31,134 +31,150 @@ class BookingCommandHandlerTest {
     }
 
     @Test
-    fun `handle CreateBookingCommand should delegate to Booking_create`() = runTest {
-        // Given
-        val command = CreateBookingCommand(
-            correlationId = UUID.randomUUID(),
-            travelOfferId = UUID.randomUUID(),
-            userId = UUID.randomUUID(),
-            seat = Seat("1", "A"),
-        )
+    fun `handle CreateBookingCommand should delegate to Booking_create`() =
+        runTest {
+            // Given
+            val command =
+                CreateBookingCommand(
+                    correlationId = UUID.randomUUID(),
+                    travelOfferId = UUID.randomUUID(),
+                    userId = UUID.randomUUID(),
+                    seat = Seat("1", "A"),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 0) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { Booking.create(any(), any(), any()) }
-    }
-
-    @Test
-    fun `handle BookingRequestCancelCommand should call booking_requestCancel`() = runTest {
-        // Given
-        val command = BookingRequestCancelCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-        )
-
-        // When
-        handler.handle(command)
-
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.requestCancel() }
-    }
+            // Then
+            coVerify(exactly = 0) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { Booking.create(any(), any(), any()) }
+        }
 
     @Test
-    fun `handle ProcessBookingCommand should call booking_process`() = runTest {
-        // Given
-        val command = ProcessBookingCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-        )
+    fun `handle BookingRequestCancelCommand should call booking_requestCancel`() =
+        runTest {
+            // Given
+            val command =
+                BookingRequestCancelCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.process() }
-    }
-
-    @Test
-    fun `handle CompleteBookingCommand should call booking_complete`() = runTest {
-        // Given
-        val command = CompleteBookingCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-        )
-
-        // When
-        handler.handle(command)
-
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.complete() }
-    }
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.requestCancel() }
+        }
 
     @Test
-    fun `handle CancelBookingCommand should call booking_cancel`() = runTest {
-        // Given
-        val command = CancelBookingCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-        )
+    fun `handle ProcessBookingCommand should call booking_process`() =
+        runTest {
+            // Given
+            val command =
+                ProcessBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.cancel() }
-    }
-
-    @Test
-    fun `handle FailBookingCommand should call booking_fail`() = runTest {
-        // Given
-        val command = FailBookingCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            message = "error message",
-        )
-
-        // When
-        handler.handle(command)
-
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.fail(any()) }
-    }
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.process() }
+        }
 
     @Test
-    fun `handle FailCancelBookingCommand should call booking_failCancellation`() = runTest {
-        // Given
-        val command = FailCancelBookingCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-            message = "cancellation failed",
-        )
+    fun `handle CompleteBookingCommand should call booking_complete`() =
+        runTest {
+            // Given
+            val command =
+                CompleteBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.failCancellation(any()) }
-    }
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.complete() }
+        }
 
     @Test
-    fun `handle ProcessCancelBookingCommand should call booking_processCancellation`() = runTest {
-        // Given
-        val command = ProcessCancelBookingCommand(
-            bookingId = UUID.randomUUID(),
-            correlationId = UUID.randomUUID(),
-        )
+    fun `handle CancelBookingCommand should call booking_cancel`() =
+        runTest {
+            // Given
+            val command =
+                CancelBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                )
 
-        // When
-        handler.handle(command)
+            // When
+            handler.handle(command)
 
-        // Then
-        coVerify(exactly = 1) { bookingRepository.findById(any()) }
-        verify(exactly = 1) { booking.processCancellation() }
-    }
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.cancel() }
+        }
+
+    @Test
+    fun `handle FailBookingCommand should call booking_fail`() =
+        runTest {
+            // Given
+            val command =
+                FailBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    message = "error message",
+                )
+
+            // When
+            handler.handle(command)
+
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.fail(any()) }
+        }
+
+    @Test
+    fun `handle FailCancelBookingCommand should call booking_failCancellation`() =
+        runTest {
+            // Given
+            val command =
+                FailCancelBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    message = "cancellation failed",
+                )
+
+            // When
+            handler.handle(command)
+
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.failCancellation(any()) }
+        }
+
+    @Test
+    fun `handle ProcessCancelBookingCommand should call booking_processCancellation`() =
+        runTest {
+            // Given
+            val command =
+                ProcessCancelBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                )
+
+            // When
+            handler.handle(command)
+
+            // Then
+            coVerify(exactly = 1) { bookingRepository.findById(any()) }
+            verify(exactly = 1) { booking.processCancellation() }
+        }
 }

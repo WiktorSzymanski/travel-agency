@@ -16,6 +16,6 @@ interface BookingQueryRepository {
     suspend fun findByUserId(
         page: Int = 1,
         size: Int = 20,
-        userId: UUID
+        userId: UUID,
     ): List<Booking>
 }
