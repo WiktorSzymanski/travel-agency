@@ -3,6 +3,10 @@ package pl.szymanski.wiktor.ta.domain.event
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
+sealed interface TravelOfferEvent : Event {
+    val travelOfferId: UUID
+}
+
 data class TravelOfferCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -94,4 +98,26 @@ data class TravelOfferMadeAvailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
+) : TravelOfferEvent
+
+data class TravelOfferBookedCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val travelOfferId: UUID,
+    val accommodationId: UUID,
+    val commuteId: UUID,
+    val attractionId: UUID?,
+    val bookingId: UUID,
+    val seat: Seat?,
+) : TravelOfferEvent
+
+data class TravelOfferBookingCanceledCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val travelOfferId: UUID,
+    val accommodationId: UUID,
+    val commuteId: UUID,
+    val attractionId: UUID?,
+    val bookingId: UUID,
+    val seat: Seat?,
 ) : TravelOfferEvent

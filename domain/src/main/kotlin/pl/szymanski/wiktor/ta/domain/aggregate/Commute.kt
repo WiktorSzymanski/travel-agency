@@ -131,7 +131,7 @@ data class Commute(
         }
 
         if (this.bookings.containsValue(seat.toString())) {
-            throw CommuteBookSeatFailedException(seat, id, true)
+            throw CommuteBookSeatFailedException.seatAlreadyBooked(seat, id)
         }
 
         this.bookings[bookingId.toString()] = seat.toString()
@@ -205,7 +205,7 @@ data class Commute(
             throw CommuteBookSeatFailedException(seat, id)
 
         if (this.bookings.containsValue(seat.toString()))
-            throw CommuteBookSeatFailedException(seat, id, true)
+            throw CommuteBookSeatFailedException.seatAlreadyBooked(seat, id)
 
         return seat
     }

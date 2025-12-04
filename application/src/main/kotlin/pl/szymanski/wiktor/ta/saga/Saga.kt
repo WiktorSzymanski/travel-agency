@@ -37,7 +37,7 @@ class Saga<T> {
             try {
                 step.second(context)
             } catch (e: Exception) {
-                // Log compensation failure if needed
+                // Intentionally suppressed: best-effort compensation shouldn't mask the original exception
             }
         }
     }

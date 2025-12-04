@@ -11,7 +11,6 @@ import pl.szymanski.wiktor.ta.command.BookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookAttractionCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
@@ -29,6 +28,9 @@ class BookingSaga(
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReservedEvent,
 ) {
+    companion object {
+        private const val DEFAULT_MAX_RETRIES = 30
+    }
     private data class BookingContext(
         val commuteEventId: UUID? = null,
         val accommodationEventId: UUID? = null,
@@ -76,18 +78,9 @@ class BookingSaga(
             )
         }
 
-    private fun getCompensateAttractionCommand(eventId: UUID): AttractionCommand {
-        return CompensateBookAttractionCommand(
-            attractionId = triggeringEvent.attractionId!!,
-            correlationId = triggeringEvent.correlationId!!,
-            eventId = eventId,
-            bookingId = triggeringEvent.bookingId,
-        )
-    }
-
     private val bookingId: UUID = triggeringEvent.bookingId
 
-    private val maxRetries = 30
+    private val maxRetries = DEFAULT_MAX_RETRIES
 
     suspend fun execute() {
         EventBus.ignoreRevisionPublish(
@@ -140,7 +133,7 @@ class BookingSaga(
             saga.addStep(
                 operation = { ctx ->
                     withRetry(maxRetries) {
-                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand!!)
+                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand)
                     }
                     ctx // no need to mutate context
                 },

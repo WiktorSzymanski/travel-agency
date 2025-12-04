@@ -14,6 +14,8 @@ fun Accommodation.timeMet(): Boolean = this.rent.from.isBefore(LocalDateTime.now
 
 fun Commute.timeMet(): Boolean = this.departure.time.isBefore(LocalDateTime.now())
 
+private const val ATTEMPTS_LOG_THRESHOLD = 25
+
 // suspend fun <T> withRetry(
 //    maxRetries: Int,
 //    onException: KClass<out Exception> = ConcurrentModificationException::class,
@@ -33,7 +35,7 @@ fun Commute.timeMet(): Boolean = this.departure.time.isBefore(LocalDateTime.now(
 suspend fun <T> withRetry(
     maxRetries: Int = 3,
     initialDelayMs: Long = 100,
-    maxDelayMs: Long = 10000,
+    maxDelayMs: Long = 10_000,
     backoffMultiplier: Double = 2.0,
     jitterFactor: Double = 0.1,
     onException: KClass<out Exception> = ConcurrentModificationException::class,
@@ -49,7 +51,8 @@ suspend fun <T> withRetry(
         lastException = result.exceptionOrNull()
         if (!onException.isInstance(lastException)) throw lastException!!
 
-        if (attempt > 25) {
+            // Log after a number of failed attempts to avoid noisy logs on transient errors
+        if (attempt > ATTEMPTS_LOG_THRESHOLD) {
             println("ERROR: ${lastException!!.message} \t Retrying attempt: $attempt")
         }
 
@@ -61,6 +64,7 @@ suspend fun <T> withRetry(
             currentDelay = (currentDelay * backoffMultiplier).toLong().coerceAtMost(maxDelayMs)
         }
     }
-    // TODO: WHEN THIS HAPPENS OPERATION SHOULD FAIL IN CONTROLLED MANER
-    throw lastException ?: IllegalStateException("No attempt made")
+    // When all retries are exhausted, rethrow the last exception if present, otherwise fail deliberately
+    lastException?.let { throw it }
+    error("No attempt made")
 }

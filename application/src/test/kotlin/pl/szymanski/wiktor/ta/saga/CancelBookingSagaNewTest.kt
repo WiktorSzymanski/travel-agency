@@ -1,7 +1,9 @@
-package pl.szymanski.wiktor.ta
+package pl.szymanski.wiktor.ta.saga
 
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import pl.szymanski.wiktor.ta.CommandBus
+import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
@@ -27,7 +29,6 @@ import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
-import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 import java.util.UUID
 import kotlin.test.BeforeTest

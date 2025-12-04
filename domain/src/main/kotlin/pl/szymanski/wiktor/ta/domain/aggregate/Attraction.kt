@@ -69,7 +69,6 @@ data class Attraction(
     fun book(bookingId: UUID): List<AttractionEvent> {
         statusCheck()
 
-        // If capacity is already reached, report as fully booked
         if (bookings.size >= capacity) {
             throw AttractionBookFailedException(id)
         }
@@ -110,7 +109,7 @@ data class Attraction(
             throw AttractionBookingCancelFailedException(bookingId, id)
         }
 
-        return listOfNotNull(
+        return listOf(
             AttractionBookingCanceledEvent(
                 attractionId = id,
                 bookingId = bookingId,
@@ -153,7 +152,7 @@ data class Attraction(
             throw AttractionBookingCancelFailedException(bookingId, id)
         }
 
-        return listOfNotNull(
+        return listOf(
             AttractionBookingCanceledEvent(
                 attractionId = id,
                 bookingId = bookingId,
@@ -178,7 +177,7 @@ data class Attraction(
 
         bookings.add(bookingId)
 
-        return listOfNotNull(
+        return listOf(
             AttractionBookedEvent(
                 attractionId = id,
                 bookingId = bookingId,

@@ -6,19 +6,19 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import java.util.UUID
 
 data class CommuteDateMetEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override val commuteId: UUID,
-    override var correlationId: UUID?,
-) : CommuteEvent
+    val eventId: UUID = UUID.randomUUID(),
+    val commuteId: UUID,
+    var correlationId: UUID?,
+)
 
 data class AccommodationDateMetEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
-    override var correlationId: UUID?,
-) : AccommodationEvent
+    val eventId: UUID = UUID.randomUUID(),
+    val accommodationId: UUID,
+    var correlationId: UUID?,
+)
 
 class AttractionDateMetEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override val attractionId: UUID,
-    override var correlationId: UUID?,
-) : AttractionEvent
+    val eventId: UUID = UUID.randomUUID(),
+    val attractionId: UUID,
+    var correlationId: UUID?,
+)

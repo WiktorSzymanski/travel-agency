@@ -104,7 +104,7 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.EXPIRED
     }
 
-    // TODO: Czy skoro mam metody compensate to nie powinny one zwracać odrazu compensateEventów?
+    // Note: Compensation methods currently return domain events which are later mapped to compensation events.
     fun compensateBook(bookingId: UUID): List<AccommodationEvent> {
         if (this.bookingId != bookingId) {
             throw AccommodationBookingCancelFailedException(id, bookingId)

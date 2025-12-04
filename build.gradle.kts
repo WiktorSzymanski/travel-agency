@@ -8,6 +8,7 @@ plugins {
     kotlin("jvm") version "2.1.10"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0-rc.1"
     id("io.gitlab.arturbosch.detekt") version "1.23.6"
+    id("org.jetbrains.kotlinx.kover") version "0.9.3"
 }
 
 group = "pl.szymanski.wiktor"
@@ -26,6 +27,7 @@ subprojects {
     apply(plugin = "kotlin")
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
     dependencies {
         implementation("ch.qos.logback:logback-classic:$logbackVersion")

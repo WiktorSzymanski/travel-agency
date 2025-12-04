@@ -4,6 +4,10 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
+sealed interface CommuteEvent : Event {
+    val commuteId: UUID
+}
+
 data class CommuteCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -46,4 +50,20 @@ data class CommuteAvailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val commuteId: UUID,
+) : CommuteEvent
+
+data class CommuteBookedCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val commuteId: UUID,
+    val bookingId: UUID,
+    val seat: Seat,
+) : CommuteEvent
+
+data class CommuteBookingCanceledCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val commuteId: UUID,
+    val bookingId: UUID,
+    val seat: Seat,
 ) : CommuteEvent

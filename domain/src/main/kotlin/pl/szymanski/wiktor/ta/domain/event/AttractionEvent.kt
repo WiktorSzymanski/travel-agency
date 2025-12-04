@@ -4,6 +4,10 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 import java.util.UUID
 
+sealed interface AttractionEvent : Event {
+    val attractionId: UUID
+}
+
 data class AttractionCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -44,4 +48,18 @@ data class AttractionAvailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val attractionId: UUID,
+) : AttractionEvent
+
+data class AttractionBookedCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val attractionId: UUID,
+    val bookingId: UUID,
+) : AttractionEvent
+
+data class AttractionBookingCanceledCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val attractionId: UUID,
+    val bookingId: UUID,
 ) : AttractionEvent

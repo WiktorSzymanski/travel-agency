@@ -1,3 +1,5 @@
+@file:Suppress("WildcardImport")
+
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum

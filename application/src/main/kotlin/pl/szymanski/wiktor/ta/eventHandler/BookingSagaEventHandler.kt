@@ -18,7 +18,7 @@ import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
-class BookingSagaEventHandler() {
+class BookingSagaEventHandler {
     suspend fun bookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             EventBus.subscribe<BookingSagaStartedEvent> {

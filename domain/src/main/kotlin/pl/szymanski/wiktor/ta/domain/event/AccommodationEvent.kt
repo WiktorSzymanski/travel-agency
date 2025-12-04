@@ -4,6 +4,10 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.util.UUID
 
+sealed interface AccommodationEvent : Event {
+    val accommodationId: UUID
+}
+
 data class AccommodationCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
@@ -31,4 +35,18 @@ data class AccommodationExpiredEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override var correlationId: UUID? = null,
     override val accommodationId: UUID,
+) : AccommodationEvent
+
+data class AccommodationBookedCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val accommodationId: UUID,
+    val bookingId: UUID,
+) : AccommodationEvent
+
+data class AccommodationBookingCanceledCompensatedEvent(
+    override val eventId: UUID = UUID.randomUUID(),
+    override var correlationId: UUID?,
+    override val accommodationId: UUID,
+    val bookingId: UUID,
 ) : AccommodationEvent

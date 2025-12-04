@@ -1,87 +1,27 @@
 package pl.szymanski.wiktor.ta.event
 
-import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
-import java.util.UUID
-
-data class AccommodationBookedCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val accommodationId: UUID,
-    val bookingId: UUID,
-) : AccommodationEvent
-
-data class AccommodationBookingCanceledCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val accommodationId: UUID,
-    val bookingId: UUID,
-) : AccommodationEvent
-
-data class AttractionBookedCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val attractionId: UUID,
-    val bookingId: UUID,
-) : AttractionEvent
-
-data class AttractionBookingCanceledCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val attractionId: UUID,
-    val bookingId: UUID,
-) : AttractionEvent
-
-data class CommuteBookedCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val commuteId: UUID,
-    val bookingId: UUID,
-    val seat: Seat,
-) : CommuteEvent
-
-data class CommuteBookingCanceledCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val commuteId: UUID,
-    val bookingId: UUID,
-    val seat: Seat,
-) : CommuteEvent
-
-data class TravelOfferBookedCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val travelOfferId: UUID,
-    val accommodationId: UUID,
-    val commuteId: UUID,
-    val attractionId: UUID?,
-    val bookingId: UUID,
-    val seat: Seat?,
-) : TravelOfferEvent
-
-data class TravelOfferBookingCanceledCompensatedEvent(
-    override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
-    override val travelOfferId: UUID,
-    val accommodationId: UUID,
-    val commuteId: UUID,
-    val attractionId: UUID?,
-    val bookingId: UUID,
-    val seat: Seat?,
-) : TravelOfferEvent
 
 fun AccommodationEvent.toCompensation(): AccommodationEvent =
     when (this) {

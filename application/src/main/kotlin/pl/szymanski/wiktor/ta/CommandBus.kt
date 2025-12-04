@@ -34,7 +34,7 @@ object CommandBus {
         return handler.handle(command)
     }
 
-    // TODO: shouldn't be in some CommandBus config file in infrastructure layer?
+    // Note: In a full application this setup typically lives in an infrastructure configuration module.
     fun setup(
         travelOfferCommandHandler: TravelOfferCommandHandler,
         bookingCommandHandler: BookingCommandHandler,

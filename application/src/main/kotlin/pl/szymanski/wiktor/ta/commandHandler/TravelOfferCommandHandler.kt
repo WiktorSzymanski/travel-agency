@@ -123,7 +123,7 @@ class TravelOfferCommandHandler(
                 it to events
             }
 
-    // TODO: compensate should probably use it's own aggregate methods to be able to revert something even if date is past, on the other hand travelOffer does not know anything about dates
+    // Note: compensation uses domain methods; consider dedicated compensation paths if business rules diverge.
     private suspend fun compensate(command: CompensateReleaseTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
         travelOfferRepository
             .findById(command.travelOfferId)

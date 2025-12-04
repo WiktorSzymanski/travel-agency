@@ -7,13 +7,20 @@ import java.util.UUID
 open class CommuteException(message: String) : DomainException(message)
 
 class CommuteBookSeatFailedException : CommuteException {
+    companion object {
+        fun seatAlreadyBooked(
+            seat: Seat,
+            commuteId: UUID,
+        ): CommuteBookSeatFailedException = CommuteBookSeatFailedException("Seat $seat already booked in Commute $commuteId")
+    }
+
     constructor(
         commuteId: UUID,
         status: CommuteStatusEnum,
     ) : super("Seat cannot be booked when Commute $commuteId not in SCHEDULED status, current status is $status")
     constructor(commuteId: UUID) : super("No available seats in Commute $commuteId")
     constructor(seat: Seat, commuteId: UUID) : super("Seat $seat not found in Commute $commuteId")
-    constructor(seat: Seat, commuteId: UUID, alreadyBooked: Boolean) : super("Seat $seat already booked in Commute $commuteId")
+    private constructor(message: String) : super(message)
 }
 
 class CommuteCancelBookedSeatFailedException : CommuteException {

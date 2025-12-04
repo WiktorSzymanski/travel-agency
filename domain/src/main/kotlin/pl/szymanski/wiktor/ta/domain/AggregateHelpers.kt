@@ -2,30 +2,36 @@ package pl.szymanski.wiktor.ta.domain
 
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
-import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
@@ -37,7 +43,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 
-// TODO: Those are meant to be taken out from the domain module, probably to infrastructure module
+// Note: These helpers could be moved to an infrastructure layer if modularization is introduced
 
 fun Accommodation.apply(
     event: AccommodationEvent,
@@ -70,7 +76,18 @@ fun Accommodation.apply(
                 status = AccommodationStatusEnum.EXPIRED,
                 
             )
-        else -> { this }
+        is AccommodationBookedCompensatedEvent ->
+            this.copy(
+                status = AccommodationStatusEnum.AVAILABLE,
+                bookingId = null,
+
+            )
+        is AccommodationBookingCanceledCompensatedEvent -> {
+            this.copy(
+                status = AccommodationStatusEnum.BOOKED,
+                bookingId = event.bookingId,
+            )
+        }
     }
 }
 
@@ -143,7 +160,33 @@ fun Attraction.apply(
                 status = AttractionStatusEnum.EXPIRED,
                 
             )
-        else -> { this }
+        is AttractionBookedCompensatedEvent -> {
+            val newBookings = this.bookings.toMutableList()
+            newBookings.removeIf { it == event.bookingId }
+            if (this.status == AttractionStatusEnum.FULL)
+                this.copy(
+                    bookings = newBookings,
+                    status = AttractionStatusEnum.SCHEDULED,
+                )
+            else
+                this.copy(
+                    bookings = newBookings,
+                )
+        }
+        is AttractionBookingCanceledCompensatedEvent -> {
+            val newBookings = this.bookings.toMutableList()
+            newBookings.add(event.bookingId)
+            if (newBookings.size >= this.capacity)
+                this.copy(
+                    bookings = newBookings,
+                    status = AttractionStatusEnum.FULL,
+                )
+            else
+                this.copy(
+                    bookings = newBookings,
+                )
+
+        }
     }
 }
 
@@ -217,7 +260,33 @@ fun Commute.apply(
                 status = CommuteStatusEnum.EXPIRED,
                 
             )
-        else -> { this }
+
+        is CommuteBookedCompensatedEvent -> {
+            val newBookings = this.bookings.toMutableMap()
+            newBookings.remove(event.bookingId.toString())
+            if (this.status == CommuteStatusEnum.FULL)
+                this.copy(
+                    bookings = newBookings,
+                    status = CommuteStatusEnum.SCHEDULED,
+                )
+            else
+                this.copy(
+                    bookings = newBookings,
+                )
+        }
+        is CommuteBookingCanceledCompensatedEvent -> {
+            val newBookings = this.bookings.toMutableMap()
+            newBookings[event.bookingId.toString()] = event.seat.toString()
+            if (newBookings.size >= this.seats.size)
+                this.copy(
+                    bookings = newBookings,
+                    status = CommuteStatusEnum.FULL,
+                )
+            else
+                this.copy(
+                    bookings = newBookings,
+                )
+        }
     }
 }
 
@@ -308,7 +377,19 @@ fun TravelOffer.apply(
                 bookingId = null,
                 
             )
-        else -> { this }
+
+        is TravelOfferBookedCompensatedEvent -> {
+            this.copy(
+                status = TravelOfferStatusEnum.AVAILABLE,
+                bookingId = null,
+            )
+        }
+        is TravelOfferBookingCanceledCompensatedEvent -> {
+            this.copy(
+                status = TravelOfferStatusEnum.BOOKED,
+                bookingId = event.bookingId,
+            )
+        }
     }
 }
 
@@ -328,7 +409,7 @@ fun TravelOffer.fromEvents(events: List<Pair<TravelOfferEvent, Int>>): TravelOff
             attractionId = createdEvent.attractionId,
         )
 
-    // Apply all events in order to reconstruct the current state
+    // Apply all events to reconstruct the current state
     for ((event, revision) in events) {
         travelOffer = travelOffer.apply(event, revision)
     }

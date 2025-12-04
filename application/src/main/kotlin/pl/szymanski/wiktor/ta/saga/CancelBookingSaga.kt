@@ -32,6 +32,9 @@ class CancelBookingSaga(
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReleaseEvent,
 ) {
+    companion object {
+        private const val DEFAULT_MAX_RETRIES = 30
+    }
     private data class CancelContext(
         val commuteEventId: UUID? = null,
         val commuteSeat: Seat? = null,
@@ -85,7 +88,7 @@ class CancelBookingSaga(
 
     private val bookingId: UUID = triggeringEvent.bookingId
 
-    private val maxRetries = 30
+    private val maxRetries = DEFAULT_MAX_RETRIES
 
     suspend fun execute() {
         EventBus.ignoreRevisionPublish(
@@ -140,7 +143,7 @@ class CancelBookingSaga(
             saga.addStep(
                 operation = { ctx ->
                     withRetry(maxRetries) {
-                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand!!)
+                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand)
                     }
                     ctx
                 },
