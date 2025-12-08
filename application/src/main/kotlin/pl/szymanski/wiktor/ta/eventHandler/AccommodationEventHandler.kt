@@ -11,11 +11,12 @@ import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class AccommodationEventHandler(
+    private val eventBus: EventBus,
     private val travelOfferService: TravelOfferService,
 ) {
     suspend fun accommodationExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<AccommodationExpiredEvent> {
+            eventBus.subscribe<AccommodationExpiredEvent> {
                 scope.launchCatching {
                     travelOfferService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
                 }
@@ -24,7 +25,7 @@ class AccommodationEventHandler(
 
     suspend fun accommodationBookedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<AccommodationBookedEvent> {
+            eventBus.subscribe<AccommodationBookedEvent> {
                 scope.launchCatching {
                     travelOfferService.makeTravelOfferUnavailableByAccommodation(it.accommodationId, it.correlationId!!)
                 }
@@ -33,7 +34,7 @@ class AccommodationEventHandler(
 
     suspend fun accommodationBookingCanceledEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<AccommodationBookingCanceledEvent> {
+            eventBus.subscribe<AccommodationBookingCanceledEvent> {
                 scope.launchCatching {
                     travelOfferService.makeTravelOfferAvailableByAccommodation(it.accommodationId, it.correlationId!!)
                 }

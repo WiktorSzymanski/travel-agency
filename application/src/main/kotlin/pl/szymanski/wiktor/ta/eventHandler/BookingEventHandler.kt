@@ -14,14 +14,14 @@ import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
-class BookingEventHandler {
+class BookingEventHandler (private val eventBus: EventBus) {
     companion object {
         private val log = LoggerFactory.getLogger(TravelOfferEventHandler::class.java)
     }
 
     suspend fun bookingCreatedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingCreatedEvent> {
+            eventBus.subscribe<BookingCreatedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         ReserveTravelOfferCommand(
@@ -37,7 +37,7 @@ class BookingEventHandler {
 
     suspend fun bookingCancelRequestedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingCancelRequestedEvent> {
+            eventBus.subscribe<BookingCancelRequestedEvent> {
                 scope.launchCatching {
                     runCatching {
                         CommandBus.dispatch<TravelOfferCommand, TravelOffer>(

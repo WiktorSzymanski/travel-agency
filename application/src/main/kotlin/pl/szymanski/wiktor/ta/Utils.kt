@@ -16,22 +16,6 @@ fun Commute.timeMet(): Boolean = this.departure.time.isBefore(LocalDateTime.now(
 
 private const val ATTEMPTS_LOG_THRESHOLD = 25
 
-// suspend fun <T> withRetry(
-//    maxRetries: Int,
-//    onException: KClass<out Exception> = ConcurrentModificationException::class,
-//    action: suspend () -> T,
-// ): T {
-//    var lastException: Throwable? = null
-//    repeat(maxRetries) {
-//        val res = runCatching { action() }
-//        if (res.isSuccess) return res.getOrThrow()
-//
-//        lastException = res.exceptionOrNull()
-//        if (!onException.isInstance(lastException)) throw lastException!!
-//    }
-//    throw lastException ?: IllegalStateException("No attempt made")
-// }
-
 suspend fun <T> withRetry(
     maxRetries: Int = 3,
     initialDelayMs: Long = 100,

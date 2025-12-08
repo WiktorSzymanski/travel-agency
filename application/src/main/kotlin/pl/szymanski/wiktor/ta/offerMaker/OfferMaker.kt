@@ -26,6 +26,7 @@ import java.time.Duration
 import java.util.UUID
 
 class OfferMaker(
+    private val eventBus: EventBus,
     private val accommodationRepository: AccommodationQueryRepository,
     private val attractionRepository: AttractionQueryRepository,
     private val commuteRepository: CommuteQueryRepository,
@@ -44,7 +45,7 @@ class OfferMaker(
 
     private fun popExpiredHashes(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch {
-            EventBus.subscribe<TravelOfferExpiredEvent> {
+            eventBus.subscribe<TravelOfferExpiredEvent> {
                 delay(EXPIRED_HASH_POP_DELAY_MS)
                 offerHashes.remove(
                     Triple(

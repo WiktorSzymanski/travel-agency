@@ -11,11 +11,12 @@ import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class CommuteEventHandler(
+    private val eventBus: EventBus,
     private val travelOfferService: TravelOfferService,
 ) {
     suspend fun commuteExpiredEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<CommuteExpiredEvent> {
+            eventBus.subscribe<CommuteExpiredEvent> {
                 scope.launchCatching {
                     travelOfferService.expireTravelOfferByCommute(it.commuteId, it.correlationId!!)
                 }
@@ -24,7 +25,7 @@ class CommuteEventHandler(
 
     suspend fun commuteBookedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<CommuteFullEvent> {
+            eventBus.subscribe<CommuteFullEvent> {
                 scope.launchCatching {
                     travelOfferService.makeTravelOfferUnavailableByCommute(it.commuteId, it.correlationId!!)
                 }
@@ -33,7 +34,7 @@ class CommuteEventHandler(
 
     suspend fun commuteBookingCanceledEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<CommuteAvailableEvent> {
+            eventBus.subscribe<CommuteAvailableEvent> {
                 scope.launchCatching {
                     travelOfferService.makeTravelOfferAvailableByCommute(it.commuteId, it.correlationId!!)
                 }

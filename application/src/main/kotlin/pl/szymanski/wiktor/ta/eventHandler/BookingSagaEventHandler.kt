@@ -18,10 +18,10 @@ import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
-class BookingSagaEventHandler {
+class BookingSagaEventHandler (private val eventBus: EventBus) {
     suspend fun bookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingSagaStartedEvent> {
+            eventBus.subscribe<BookingSagaStartedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<BookingCommand, Booking>(
                         ProcessBookingCommand(
@@ -35,7 +35,7 @@ class BookingSagaEventHandler {
 
     suspend fun bookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingSagaCompletedEvent> {
+            eventBus.subscribe<BookingSagaCompletedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<BookingCommand, Booking>(
                         CompleteBookingCommand(
@@ -49,7 +49,7 @@ class BookingSagaEventHandler {
 
     suspend fun bookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingSagaCompletedEvent> {
+            eventBus.subscribe<BookingSagaCompletedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         BookTravelOfferCommand(
@@ -65,7 +65,7 @@ class BookingSagaEventHandler {
 
     suspend fun bookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingSagaFailedEvent> {
+            eventBus.subscribe<BookingSagaFailedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<BookingCommand, Booking>(
                         FailBookingCommand(

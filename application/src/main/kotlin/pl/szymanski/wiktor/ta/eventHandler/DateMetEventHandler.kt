@@ -19,6 +19,7 @@ import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
 class DateMetEventHandler(
+    private val eventBus: EventBus,
     private val attractionCommandHandler: AttractionCommandHandler,
     private val commuteCommandHandler: CommuteCommandHandler,
     private val accommodationCommandHandler: AccommodationCommandHandler,
@@ -30,7 +31,7 @@ class DateMetEventHandler(
     }
 
     suspend fun commuteDateMetEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
-        EventBus.subscribe<CommuteDateMetEvent> {
+        eventBus.subscribe<CommuteDateMetEvent> {
             scope.launchCatching {
                 commuteCommandHandler.handle(
                     ExpireCommuteCommand(
@@ -43,7 +44,7 @@ class DateMetEventHandler(
     }
 
     suspend fun accommodationDateMetEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
-        EventBus.subscribe<AccommodationDateMetEvent> {
+        eventBus.subscribe<AccommodationDateMetEvent> {
             scope.launchCatching {
                 accommodationCommandHandler.handle(
                     ExpireAccommodationCommand(
@@ -56,7 +57,7 @@ class DateMetEventHandler(
     }
 
     suspend fun attractionDateMetEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
-        EventBus.subscribe<AttractionDateMetEvent> {
+        eventBus.subscribe<AttractionDateMetEvent> {
             scope.launchCatching {
                 attractionCommandHandler.handle(
                     ExpireAttractionCommand(

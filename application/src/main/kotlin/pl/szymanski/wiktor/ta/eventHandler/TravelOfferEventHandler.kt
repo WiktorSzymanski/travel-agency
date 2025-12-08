@@ -15,6 +15,7 @@ import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class TravelOfferEventHandler(
+    private val eventBus: EventBus,
     private val travelOfferService: TravelOfferService,
 ) {
     fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
@@ -40,9 +41,10 @@ class TravelOfferEventHandler(
 
     suspend fun travelOfferReleaseEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<TravelOfferReleaseEvent> {
+            eventBus.subscribe<TravelOfferReleaseEvent> {
                 scope.launchCatching {
                     CancelBookingSaga(
+                        eventBus,
                         travelOfferService,
                         it,
                     ).execute()

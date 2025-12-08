@@ -29,6 +29,7 @@ import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 
 class CancelBookingSaga(
+    private val eventBus: EventBus,
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReleaseEvent,
 ) {
@@ -91,7 +92,7 @@ class CancelBookingSaga(
     private val maxRetries = DEFAULT_MAX_RETRIES
 
     suspend fun execute() {
-        EventBus.ignoreRevisionPublish(
+        eventBus.publish(
             BookingCancelSagaStartedEvent(
                 correlationId = triggeringEvent.correlationId!!,
                 bookingId = bookingId,
@@ -156,7 +157,7 @@ class CancelBookingSaga(
         val result = saga.process(CancelContext())
 
         if (result.isSuccess) {
-            EventBus.ignoreRevisionPublish(
+            eventBus.publish(
                 BookingCancelSagaCompletedEvent(
                     correlationId = triggeringEvent.correlationId!!,
                     bookingId = bookingId,
@@ -171,7 +172,7 @@ class CancelBookingSaga(
 
     suspend fun compensateTriggeringEvent(message: String) =
         coroutineScope {
-            EventBus.ignoreRevisionPublish(
+            eventBus.publish(
                 BookingCancelSagaFailedEvent(
                     correlationId = triggeringEvent.correlationId!!,
                     bookingId = bookingId,

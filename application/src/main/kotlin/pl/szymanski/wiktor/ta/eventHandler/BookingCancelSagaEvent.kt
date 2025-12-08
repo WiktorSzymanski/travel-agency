@@ -18,10 +18,10 @@ import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
-class BookingCancelSagaEvent {
+class BookingCancelSagaEvent (private val eventBus: EventBus) {
     suspend fun cancelBookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingCancelSagaStartedEvent> {
+            eventBus.subscribe<BookingCancelSagaStartedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<BookingCommand, Booking>(
                         ProcessCancelBookingCommand(
@@ -35,7 +35,7 @@ class BookingCancelSagaEvent {
 
     suspend fun cancelBookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingCancelSagaCompletedEvent> {
+            eventBus.subscribe<BookingCancelSagaCompletedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<BookingCommand, Booking>(
                         CancelBookingCommand(
@@ -49,7 +49,7 @@ class BookingCancelSagaEvent {
 
     suspend fun cancelBookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingCancelSagaCompletedEvent> {
+            eventBus.subscribe<BookingCancelSagaCompletedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         CancelBookTravelOfferCommand(
@@ -65,7 +65,7 @@ class BookingCancelSagaEvent {
 
     suspend fun cancelBookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
-            EventBus.subscribe<BookingCancelSagaFailedEvent> {
+            eventBus.subscribe<BookingCancelSagaFailedEvent> {
                 scope.launchCatching {
                     CommandBus.dispatch<BookingCommand, Booking>(
                         FailCancelBookingCommand(

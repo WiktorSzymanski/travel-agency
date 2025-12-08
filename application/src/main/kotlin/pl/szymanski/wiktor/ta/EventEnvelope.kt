@@ -6,6 +6,7 @@ import java.util.UUID
 data class Metadata(
     val eventId: UUID,
     val correlationId: UUID,
+    val revision: Long,
 )
 
 data class EventEnvelope<out T : Event>(

@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta.saga
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.CommandBus
-import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
@@ -24,7 +23,6 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.Event
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
-import pl.szymanski.wiktor.ta.domain.repository.EventRepository
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
@@ -36,35 +34,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BookingSagaNewTest {
-    private class InMemoryEventRepository : EventRepository {
-        val events = mutableListOf<Event>()
-
-        override suspend fun save(
-            event: Event,
-            revision: Int,
-        ) {
-            events.add(event)
-        }
-
-        override suspend fun noRevisionSave(event: Event) {
-            events.add(event)
-        }
-
-        override suspend fun subscribe(
-            eventClass: Class<Event>,
-            positionPair: Pair<Long, Long>,
-            doOnEvent: suspend (Event) -> Unit,
-        ) {
-            // Not used in these tests
-        }
-    }
-
-    private lateinit var repo: InMemoryEventRepository
+    private lateinit var eventBus: DummyEventBus
 
     @BeforeTest
     fun setup() {
-        repo = InMemoryEventRepository()
-        EventBus.init(repo)
+        eventBus = DummyEventBus()
     }
 
     private fun reservedEvent(
@@ -161,15 +135,15 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, travelOfferService, triggering)
 
             // When
             saga.execute()
 
             // Then
-            val started = repo.events.filterIsInstance<BookingSagaStartedEvent>()
-            val completed = repo.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = repo.events.filterIsInstance<BookingSagaFailedEvent>()
+            val started = eventBus.events.filterIsInstance<BookingSagaStartedEvent>()
+            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
 
             assertEquals(1, started.size)
             assertEquals(1, completed.size)
@@ -225,14 +199,14 @@ class BookingSagaNewTest {
                 error("Attraction handler should not be called when attractionId is null, but got: $command")
             }
 
-            val saga = BookingSaga(travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, travelOfferService, triggering)
 
             // When
             saga.execute()
 
             // Then
-            val completed = repo.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = repo.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertTrue(!attractionCalled)
@@ -253,14 +227,14 @@ class BookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, travelOfferService, triggering)
 
             // When
             saga.execute()
 
             // Then
-            val completed = repo.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = repo.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertEquals(triggering.bookingId, failed.first().bookingId)
@@ -281,14 +255,14 @@ class BookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, travelOfferService, triggering)
 
             // When
             saga.execute()
 
             // Then
-            val completed = repo.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = repo.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertEquals(triggering.bookingId, failed.first().bookingId)
@@ -339,14 +313,14 @@ class BookingSagaNewTest {
             // Attraction should not be called
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, travelOfferService, triggering)
 
             // When
             saga.execute()
 
             // Then
-            val completed = repo.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = repo.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertTrue(commuteCompensated)
@@ -417,14 +391,14 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, travelOfferService, triggering)
 
             // When
             saga.execute()
 
             // Then
-            val completed = repo.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = repo.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertTrue(accommodationCompensated)
