@@ -2,7 +2,7 @@ package pl.szymanski.wiktor.ta.saga
 
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import pl.szymanski.wiktor.ta.CommandBus
+import pl.szymanski.wiktor.ta.DummyCommandBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
@@ -36,10 +36,12 @@ import kotlin.test.assertTrue
 
 class CancelBookingSagaNewTest {
     private lateinit var eventBus: DummyEventBus
+    private lateinit var commandBus: DummyCommandBus
 
     @BeforeTest
     fun setup() {
         eventBus = DummyEventBus()
+        commandBus = DummyCommandBus()
     }
 
     private fun releaseEvent(
@@ -61,18 +63,18 @@ class CancelBookingSagaNewTest {
     )
 
     private fun registerCommuteHandler(onCall: (CommuteCommand) -> Pair<Commute, List<Event>>) {
-        CommandBus.registerHandler(CommuteCommand::class.java) { c -> onCall(c) }
-        CommandBus.registerHandler(CompensateCommuteCommand::class.java) { c -> onCall(c) }
+        commandBus.registerHandler(CommuteCommand::class.java) { c -> onCall(c) }
+        commandBus.registerHandler(CompensateCommuteCommand::class.java) { c -> onCall(c) }
     }
 
     private fun registerAccommodationHandler(onCall: (AccommodationCommand) -> Pair<Accommodation, List<Event>>) {
-        CommandBus.registerHandler(AccommodationCommand::class.java) { c -> onCall(c) }
-        CommandBus.registerHandler(CompensateAccommodationCommand::class.java) { c -> onCall(c) }
+        commandBus.registerHandler(AccommodationCommand::class.java) { c -> onCall(c) }
+        commandBus.registerHandler(CompensateAccommodationCommand::class.java) { c -> onCall(c) }
     }
 
     private fun registerAttractionHandler(onCall: (AttractionCommand) -> Pair<Attraction, List<Event>>) {
-        CommandBus.registerHandler(AttractionCommand::class.java) { c -> onCall(c) }
-        CommandBus.registerHandler(CompensateAttractionCommand::class.java) { c -> onCall(c) }
+        commandBus.registerHandler(AttractionCommand::class.java) { c -> onCall(c) }
+        commandBus.registerHandler(CompensateAttractionCommand::class.java) { c -> onCall(c) }
     }
 
     @Test
@@ -133,7 +135,7 @@ class CancelBookingSagaNewTest {
                 }
             }
 
-            val saga = CancelBookingSaga(eventBus, travelOfferService, triggering)
+            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering)
 
             // When
             saga.execute()
@@ -196,7 +198,7 @@ class CancelBookingSagaNewTest {
                 }
             }
 
-            val saga = CancelBookingSaga(eventBus, travelOfferService, triggering)
+            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering)
 
             // When
             saga.execute()
@@ -224,7 +226,7 @@ class CancelBookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = CancelBookingSaga(eventBus, travelOfferService, triggering)
+            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering)
 
             // When
             saga.execute()
@@ -272,7 +274,7 @@ class CancelBookingSagaNewTest {
             // Attraction should not be called
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = CancelBookingSaga(eventBus, travelOfferService, triggering)
+            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering)
 
             // When
             saga.execute()
@@ -334,7 +336,7 @@ class CancelBookingSagaNewTest {
                 }
             }
 
-            val saga = CancelBookingSaga(eventBus, travelOfferService, triggering)
+            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering)
 
             // When
             saga.execute()
@@ -359,7 +361,7 @@ class CancelBookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = CancelBookingSaga(eventBus, travelOfferService, triggering)
+            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering)
 
             // When
             saga.execute()

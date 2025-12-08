@@ -18,12 +18,14 @@ import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
-class BookingSagaEventHandler (private val eventBus: EventBus) {
+class BookingSagaEventHandler (
+    private val eventBus: EventBus,
+    private val commandBus: CommandBus) {
     suspend fun bookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             eventBus.subscribe<BookingSagaStartedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<BookingCommand, Booking>(
+                    commandBus.dispatch<BookingCommand, Booking>(
                         ProcessBookingCommand(
                             it.bookingId,
                             it.correlationId!!,
@@ -37,7 +39,7 @@ class BookingSagaEventHandler (private val eventBus: EventBus) {
         coroutineScope {
             eventBus.subscribe<BookingSagaCompletedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<BookingCommand, Booking>(
+                    commandBus.dispatch<BookingCommand, Booking>(
                         CompleteBookingCommand(
                             it.bookingId,
                             it.correlationId!!,
@@ -51,7 +53,7 @@ class BookingSagaEventHandler (private val eventBus: EventBus) {
         coroutineScope {
             eventBus.subscribe<BookingSagaCompletedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
+                    commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         BookTravelOfferCommand(
                             travelOfferId = it.travelOfferId,
                             correlationId = it.correlationId!!,
@@ -67,7 +69,7 @@ class BookingSagaEventHandler (private val eventBus: EventBus) {
         coroutineScope {
             eventBus.subscribe<BookingSagaFailedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<BookingCommand, Booking>(
+                    commandBus.dispatch<BookingCommand, Booking>(
                         FailBookingCommand(
                             bookingId = it.bookingId,
                             correlationId = it.correlationId!!,

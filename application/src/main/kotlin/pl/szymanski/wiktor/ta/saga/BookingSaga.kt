@@ -26,6 +26,7 @@ import java.util.UUID
 
 class BookingSaga(
     private val eventBus: EventBus,
+    private val commandBus: CommandBus,
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReservedEvent,
 ) {
@@ -97,14 +98,14 @@ class BookingSaga(
                     operation = { ctx ->
                         val (_, events) =
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
+                                commandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
                             }
                         ctx.copy(commuteEventId = events.first().eventId)
                     },
                     compensation = { ctx ->
                         ctx.commuteEventId?.let { evId ->
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<CommuteCommand, Commute>(
+                                commandBus.dispatch<CommuteCommand, Commute>(
                                     getCompensateCommuteCommand(evId),
                                 )
                             }
@@ -115,14 +116,14 @@ class BookingSaga(
                     operation = { ctx ->
                         val (_, events) =
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
+                                commandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
                             }
                         ctx.copy(accommodationEventId = events.first().eventId)
                     },
                     compensation = { ctx ->
                         ctx.accommodationEventId?.let { evId ->
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<AccommodationCommand, Accommodation>(
+                                commandBus.dispatch<AccommodationCommand, Accommodation>(
                                     getCompensateAccommodationCommand(evId),
                                 )
                             }
@@ -134,7 +135,7 @@ class BookingSaga(
             saga.addStep(
                 operation = { ctx ->
                     withRetry(maxRetries) {
-                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand)
+                        commandBus.dispatch<AttractionCommand, Attraction>(attractionCommand)
                     }
                     ctx // no need to mutate context
                 },

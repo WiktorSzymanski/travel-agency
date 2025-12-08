@@ -10,9 +10,7 @@ import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateAttractionCommand
 import pl.szymanski.wiktor.ta.command.CompensateCancelAccommodationBookingCommand
-import pl.szymanski.wiktor.ta.command.CompensateCancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CompensateCancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.Seat
@@ -30,6 +28,7 @@ import java.util.UUID
 
 class CancelBookingSaga(
     private val eventBus: EventBus,
+    private val commandBus: CommandBus,
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReleaseEvent,
 ) {
@@ -105,7 +104,7 @@ class CancelBookingSaga(
                     operation = { ctx ->
                         val (_, events) =
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
+                                commandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
                             }
                         val e = events.first() as CommuteBookingCanceledEvent
                         ctx.copy(commuteEventId = e.eventId, commuteSeat = e.seat)
@@ -115,7 +114,7 @@ class CancelBookingSaga(
                         val seat = ctx.commuteSeat!!
 
                         withRetry(maxRetries) {
-                            CommandBus.dispatch<CommuteCommand, Commute>(
+                            commandBus.dispatch<CommuteCommand, Commute>(
                                 getCompensateCommuteCommand(evId, seat),
                             )
                         }
@@ -125,14 +124,14 @@ class CancelBookingSaga(
                     operation = { ctx ->
                         val (_, events) =
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
+                                commandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
                             }
                         ctx.copy(accommodationEventId = events.first().eventId)
                     },
                     compensation = { ctx ->
                         ctx.accommodationEventId?.let { evId ->
                             withRetry(maxRetries) {
-                                CommandBus.dispatch<AccommodationCommand, Accommodation>(
+                                commandBus.dispatch<AccommodationCommand, Accommodation>(
                                     getCompensateAccommodationCommand(evId),
                                 )
                             }
@@ -144,7 +143,7 @@ class CancelBookingSaga(
             saga.addStep(
                 operation = { ctx ->
                     withRetry(maxRetries) {
-                        CommandBus.dispatch<AttractionCommand, Attraction>(attractionCommand)
+                        commandBus.dispatch<AttractionCommand, Attraction>(attractionCommand)
                     }
                     ctx
                 },

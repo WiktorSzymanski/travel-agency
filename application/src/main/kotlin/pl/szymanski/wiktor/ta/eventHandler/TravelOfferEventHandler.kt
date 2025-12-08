@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
@@ -16,6 +17,7 @@ import pl.szymanski.wiktor.ta.service.TravelOfferService
 
 class TravelOfferEventHandler(
     private val eventBus: EventBus,
+    private val commandBus: CommandBus,
     private val travelOfferService: TravelOfferService,
 ) {
     fun setup(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
@@ -45,6 +47,7 @@ class TravelOfferEventHandler(
                 scope.launchCatching {
                     CancelBookingSaga(
                         eventBus,
+                        commandBus,
                         travelOfferService,
                         it,
                     ).execute()

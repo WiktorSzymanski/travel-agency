@@ -12,29 +12,25 @@ import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.Event
+import kotlin.collections.get
 
-fun interface CommandHandler<C : Command, E> {
-    suspend fun handle(command: C): Pair<E, List<Event>>
-}
-
-object CommandBus {
+class DummyCommandBus : CommandBus {
     private val handlers = mutableMapOf<Class<out Command>, CommandHandler<*, *>>()
 
-    fun <C : Command, E> registerHandler(
+    override fun <C : Command, E> registerHandler(
         commandType: Class<C>,
         handler: CommandHandler<C, E>,
     ) {
         handlers[commandType] = handler
     }
 
-    suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<Event>> {
+    override  suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<Event>> {
         val handler =
             handlers[command::class.java.superclass] as? CommandHandler<C, E>
                 ?: throw IllegalArgumentException("No handler registered for ${command::class.java.superclass}")
         return handler.handle(command)
     }
 
-    // Note: In a full application this setup typically lives in an infrastructure configuration module.
     fun setup(
         travelOfferCommandHandler: TravelOfferCommandHandler,
         bookingCommandHandler: BookingCommandHandler,
@@ -42,19 +38,19 @@ object CommandBus {
         attractionCommandHandler: AttractionCommandHandler,
         accommodationCommandHandler: AccommodationCommandHandler,
     ) {
-        CommandBus.registerHandler(TravelOfferCommand::class.java) {
+        this.registerHandler(TravelOfferCommand::class.java) {
             travelOfferCommandHandler.handle(it)
         }
-        CommandBus.registerHandler(BookingCommand::class.java) {
+        this.registerHandler(BookingCommand::class.java) {
             bookingCommandHandler.handle(it)
         }
-        CommandBus.registerHandler(CommuteCommand::class.java) {
+        this.registerHandler(CommuteCommand::class.java) {
             commuteCommandHandler.handle(it)
         }
-        CommandBus.registerHandler(AttractionCommand::class.java) {
+        this.registerHandler(AttractionCommand::class.java) {
             attractionCommandHandler.handle(it)
         }
-        CommandBus.registerHandler(AccommodationCommand::class.java) {
+        this.registerHandler(AccommodationCommand::class.java) {
             accommodationCommandHandler.handle(it)
         }
     }

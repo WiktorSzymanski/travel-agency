@@ -18,12 +18,15 @@ import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 
-class BookingCancelSagaEvent (private val eventBus: EventBus) {
+class BookingCancelSagaEvent (
+    private val eventBus: EventBus,
+    private val commandBus: CommandBus
+) {
     suspend fun cancelBookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
             eventBus.subscribe<BookingCancelSagaStartedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<BookingCommand, Booking>(
+                    commandBus.dispatch<BookingCommand, Booking>(
                         ProcessCancelBookingCommand(
                             it.bookingId,
                             it.correlationId!!,
@@ -37,7 +40,7 @@ class BookingCancelSagaEvent (private val eventBus: EventBus) {
         coroutineScope {
             eventBus.subscribe<BookingCancelSagaCompletedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<BookingCommand, Booking>(
+                    commandBus.dispatch<BookingCommand, Booking>(
                         CancelBookingCommand(
                             it.bookingId,
                             it.correlationId!!,
@@ -51,7 +54,7 @@ class BookingCancelSagaEvent (private val eventBus: EventBus) {
         coroutineScope {
             eventBus.subscribe<BookingCancelSagaCompletedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
+                    commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         CancelBookTravelOfferCommand(
                             travelOfferId = it.travelOfferId,
                             correlationId = it.correlationId!!,
@@ -67,7 +70,7 @@ class BookingCancelSagaEvent (private val eventBus: EventBus) {
         coroutineScope {
             eventBus.subscribe<BookingCancelSagaFailedEvent> {
                 scope.launchCatching {
-                    CommandBus.dispatch<BookingCommand, Booking>(
+                    commandBus.dispatch<BookingCommand, Booking>(
                         FailCancelBookingCommand(
                             bookingId = it.bookingId,
                             correlationId = it.correlationId!!,

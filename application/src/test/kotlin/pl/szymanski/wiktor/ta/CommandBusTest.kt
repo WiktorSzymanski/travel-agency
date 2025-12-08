@@ -16,65 +16,77 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import java.time.LocalDateTime
 import java.util.UUID
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-/**
- * Unit tests for CommandBus covering registration, dispatching and setup wiring.
- */
 class CommandBusTest {
-    // Simple sealed command hierarchy to validate superclass based lookup
-    sealed class ADummyCommand : Command {
-        abstract val id: UUID
-        override val correlationId: UUID = UUID.randomUUID()
+    private lateinit var commandBus: DummyCommandBus
+
+    @BeforeTest
+    fun setup() {
+        commandBus = DummyCommandBus()
     }
-
-    data class OperationOfADummyCommand(override val id: UUID = UUID.randomUUID()) : ADummyCommand()
-
-    data class DummyEvent(override val eventId: UUID = UUID.randomUUID(), override var correlationId: UUID? = null) : Event
-
-    // Separate sealed class to avoid cross-test interference with registered handlers
-    sealed class BDummyCommand : Command {
-        abstract val id: UUID
-        override val correlationId: UUID = UUID.randomUUID()
-    }
-
-    data class OperationOfBDummyCommand(override val id: UUID = UUID.randomUUID()) : BDummyCommand()
 
     @Test
     fun `dispatch should throw if no handler registered for command superclass`() =
         runTest {
             // Given
-            CommandBus.registerHandler(ADummyCommand::class.java) { command: ADummyCommand ->
-                assertIs<OperationOfADummyCommand>(command)
-                "OK" to listOf(DummyEvent(correlationId = command.correlationId))
+            commandBus.registerHandler(BookingCommand::class.java) { command: BookingCommand ->
+                assertIs<CreateBookingCommand>(command)
+                "OK" to listOf(
+                    ProcessBookingEvent(
+                        correlationId = command.correlationId,
+                        bookingId = UUID.randomUUID(),
+                    ),
+                )
             }
 
-            val command = OperationOfBDummyCommand()
+            val command =
+                CreateAccommodationCommand(
+                    accommodationId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    name = "Hotel",
+                    location = LocationEnum.PARIS,
+                    rent = Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1)),
+                )
 
             // When/Then
-            assertFailsWith<IllegalArgumentException> { CommandBus.dispatch<BDummyCommand, Any>(command) }
+            assertFailsWith<IllegalArgumentException> { commandBus.dispatch<AccommodationCommand, Any>(command) }
         }
 
     @Test
     fun `registerHandler should enable dispatch for subclass using superclass key`() =
         runTest {
             // Given
-            CommandBus.registerHandler(ADummyCommand::class.java) { command: ADummyCommand ->
-                assertIs<OperationOfADummyCommand>(command)
-                "OK" to listOf(DummyEvent(correlationId = command.correlationId))
+            commandBus.registerHandler(BookingCommand::class.java) { command: BookingCommand ->
+                assertIs<CreateBookingCommand>(command)
+                "OK" to listOf(
+                    ProcessBookingEvent(
+                        correlationId = command.correlationId,
+                        bookingId = UUID.randomUUID(),
+                    ),
+                )
             }
 
-            val command = OperationOfADummyCommand()
+            val command =
+                CreateBookingCommand(
+                    bookingId = UUID.randomUUID(),
+                    correlationId = UUID.randomUUID(),
+                    travelOfferId = UUID.randomUUID(),
+                    userId = UUID.randomUUID(),
+                    seat = null,
+                )
 
             // When
-            val (result, events) = CommandBus.dispatch<ADummyCommand, String>(command)
+            val (result, events) = commandBus.dispatch<BookingCommand, String>(command)
 
             // Then
             assertEquals("OK", result)
@@ -104,7 +116,7 @@ class CommandBusTest {
             coEvery { attractionHandler.handle(any()) } returns (attraction to emptyList<AttractionEvent>())
             coEvery { accommodationHandler.handle(any()) } returns (accommodation to emptyList<AccommodationEvent>())
 
-            CommandBus.setup(
+            commandBus.setup(
                 travelOfferHandler,
                 bookingHandler,
                 commuteHandler,
@@ -121,7 +133,7 @@ class CommandBusTest {
 
             // When
             val (_, toEvents) =
-                CommandBus.dispatch<TravelOfferCommand, TravelOffer>(
+                commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                     CreateTravelOfferCommand(
                         travelOfferId = travelOfferId,
                         correlationId = correlationId,
@@ -132,7 +144,7 @@ class CommandBusTest {
                     ),
                 )
             val (_, bEvents) =
-                CommandBus.dispatch<BookingCommand, Booking>(
+                commandBus.dispatch<BookingCommand, Booking>(
                     CreateBookingCommand(
                         bookingId = bookingId,
                         correlationId = correlationId,
@@ -142,7 +154,7 @@ class CommandBusTest {
                     ),
                 )
             val (_, cEvents) =
-                CommandBus.dispatch<CommuteCommand, Commute>(
+                commandBus.dispatch<CommuteCommand, Commute>(
                     CreateCommuteCommand(
                         commuteId = commuteId,
                         correlationId = correlationId,
@@ -153,7 +165,7 @@ class CommandBusTest {
                     ),
                 )
             val (_, aEvents) =
-                CommandBus.dispatch<AttractionCommand, Attraction>(
+                commandBus.dispatch<AttractionCommand, Attraction>(
                     CreateAttractionCommand(
                         attractionId = attractionId,
                         correlationId = correlationId,
@@ -164,7 +176,7 @@ class CommandBusTest {
                     ),
                 )
             val (_, accEvents) =
-                CommandBus.dispatch<AccommodationCommand, Accommodation>(
+                commandBus.dispatch<AccommodationCommand, Accommodation>(
                     CreateAccommodationCommand(
                         accommodationId = accommodationId,
                         correlationId = correlationId,
