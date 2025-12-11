@@ -53,3 +53,5 @@ class TravelOfferReservationCancelFailedException : TravelOfferException {
 class TravelOfferRebookFailedException(travelOfferId: UUID, status: TravelOfferStatusEnum) : TravelOfferException(
     "Cannot rebook TravelOffer $travelOfferId when in $status status",
 )
+
+class TravelOfferMissingCreatedEventException : TravelOfferException("First event must be TravelOfferCreatedEvent")

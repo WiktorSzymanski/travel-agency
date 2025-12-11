@@ -28,3 +28,5 @@ class AccommodationExpireFailedException : AccommodationException {
     ) : super("Accommodation $accommodationId cannot expire in status $status")
     constructor(accommodationId: UUID) : super("Accommodation $accommodationId cannot be expired before its rent start")
 }
+
+class AccommodationMissingCreatedEventException : AccommodationException("First event must be AccommodationCreatedEvent")

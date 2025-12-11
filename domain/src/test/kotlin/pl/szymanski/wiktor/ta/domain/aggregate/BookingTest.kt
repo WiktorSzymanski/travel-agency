@@ -6,6 +6,7 @@ import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.CompleteBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
@@ -31,7 +32,7 @@ class BookingTest {
         bookingId = UUID.randomUUID()
         userId = UUID.randomUUID()
         travelOfferId = UUID.randomUUID()
-        seat = Seat("1", "A")
+        seat = Seat.Picked("1", "A")
         booking =
             Booking(
                 id = bookingId,
@@ -39,6 +40,26 @@ class BookingTest {
                 travelOfferId = travelOfferId,
                 seat = seat,
             )
+    }
+
+    @Test
+    fun aggregate_should_return_booking_and_created_event() {
+        val (booking, events) = Booking.create(userId, seat, travelOfferId)
+
+        assertEventEquals(
+            BookingCreatedEvent(
+                bookingId = booking.id,
+                userId = userId,
+                travelOfferId = travelOfferId,
+                seat = seat
+            ),
+            events.first()
+        )
+
+        assertEquals(BookingState.NEW, booking.status)
+        assertEquals(userId, booking.userId)
+        assertEquals(travelOfferId, booking.travelOfferId)
+        assertEquals(seat, booking.seat)
     }
 
     @Test
@@ -72,7 +93,7 @@ class BookingTest {
             ),
             events.first(),
         )
-        assertEquals(BookingState.SUCCEEDED, booking.status)
+        assertEquals(BookingState.BOOKED, booking.status)
     }
 
     @Test
@@ -85,12 +106,12 @@ class BookingTest {
             ),
             events.first(),
         )
-        assertEquals(BookingState.SUCCEEDED, booking.status)
+        assertEquals(BookingState.BOOKED, booking.status)
     }
 
     @Test
     fun complete_fails_from_succeeded() {
-        val booking = booking.copy(status = BookingState.SUCCEEDED)
+        val booking = booking.copy(status = BookingState.BOOKED)
         assertFailsWith<BookingCompleteFailedException> { booking.complete() }
     }
 
@@ -102,7 +123,7 @@ class BookingTest {
 
     @Test
     fun requestCancel_successfully_from_succeeded() {
-        val booking = booking.copy(status = BookingState.SUCCEEDED)
+        val booking = booking.copy(status = BookingState.BOOKED)
         val events = booking.requestCancel()
 
         assertEventEquals(
@@ -195,7 +216,7 @@ class BookingTest {
 
     @Test
     fun fail_fails_from_succeeded() {
-        val booking = booking.copy(status = BookingState.SUCCEEDED)
+        val booking = booking.copy(status = BookingState.BOOKED)
         val message = "Test error"
 
         assertFailsWith<BookingFailFailedException> { booking.fail(message) }
@@ -222,7 +243,7 @@ class BookingTest {
             ),
             events.first(),
         )
-        assertEquals(BookingState.SUCCEEDED, booking.status)
+        assertEquals(BookingState.BOOKED, booking.status)
         assertEquals(message, booking.message)
     }
 
@@ -239,13 +260,13 @@ class BookingTest {
             ),
             events.first(),
         )
-        assertEquals(BookingState.SUCCEEDED, booking.status)
+        assertEquals(BookingState.BOOKED, booking.status)
         assertEquals(message, booking.message)
     }
 
     @Test
     fun failCancellation_fails_from_succeeded() {
-        val booking = booking.copy(status = BookingState.SUCCEEDED)
+        val booking = booking.copy(status = BookingState.BOOKED)
         val message = "Test error"
         assertFailsWith<BookingFailCancellationFailedException> { booking.failCancellation(message) }
     }

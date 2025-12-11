@@ -3,7 +3,9 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
@@ -11,6 +13,7 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationBookingCancelFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationBookingFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationExpireFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationMissingCreatedEventException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -44,6 +47,56 @@ data class Accommodation(
                 )
 
             return accommodation to listOf(event)
+        }
+    
+        fun fromEvents(events: List<AccommodationEvent>): Accommodation? {
+            if (events.isEmpty())
+                return null
+
+            val createdEvent = events.first()
+
+            if (createdEvent !is AccommodationCreatedEvent)
+                throw AccommodationMissingCreatedEventException()
+
+            val accommodation =
+                Accommodation(
+                    id = createdEvent.accommodationId,
+                    name = createdEvent.name,
+                    location = createdEvent.location,
+                    rent = createdEvent.rent,
+                )
+
+            for (event in events.drop(1)) accommodation.apply(event)
+
+            return accommodation
+        }
+    }
+
+    fun apply(event: AccommodationEvent): Unit = when (event) {
+        is AccommodationCreatedEvent -> Unit
+        
+        is AccommodationBookedEvent -> {
+            this.status = AccommodationStatusEnum.BOOKED
+            this.bookingId = event.bookingId
+        }
+
+        is AccommodationBookingCanceledEvent -> {
+            this.status = AccommodationStatusEnum.AVAILABLE
+            this.bookingId = null
+        }
+
+        is AccommodationExpiredEvent -> {
+            this.status = AccommodationStatusEnum.EXPIRED
+        }
+
+        is AccommodationBookedCompensatedEvent -> {
+            this.status = AccommodationStatusEnum.AVAILABLE
+            this.bookingId = null
+        }
+
+        is AccommodationBookingCanceledCompensatedEvent -> {
+            this.status = AccommodationStatusEnum.BOOKED
+            this.bookingId = event.bookingId
         }
     }
 

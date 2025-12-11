@@ -38,3 +38,5 @@ class CommuteExpireFailedException : CommuteException {
     constructor(commuteId: UUID) : super("Commute $commuteId cannot expire before its departure time")
     constructor(commuteId: UUID, status: CommuteStatusEnum) : super("Commute $commuteId cannot expire when not in $status status")
 }
+
+class CommuteMissingCreatedEventException : CommuteException("First event must be CommuteCreatedEvent")

@@ -39,7 +39,7 @@ class BookingCommandHandlerTest {
                     correlationId = UUID.randomUUID(),
                     travelOfferId = UUID.randomUUID(),
                     userId = UUID.randomUUID(),
-                    seat = Seat("1", "A"),
+                    seat = Seat.Picked("1", "A"),
                 )
 
             // When

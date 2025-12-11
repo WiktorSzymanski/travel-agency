@@ -11,6 +11,7 @@ import pl.szymanski.wiktor.ta.domain.exception.*
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import java.time.LocalDateTime
@@ -20,13 +21,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CommuteTest {
     private lateinit var commute: Commute
-    private val seat1 = Seat("1", "A")
-    private val seat2 = Seat("1", "B")
-    private val seat3 = Seat("1", "C")
+    private val seat1 = Seat.Picked("1", "A")
+    private val seat2 = Seat.Picked("1", "B")
+    private val seat3 = Seat.Picked("1", "C")
     private val bookingId = UUID.randomUUID()
 
     @BeforeTest
@@ -35,6 +38,35 @@ class CommuteTest {
         val arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusSeconds(20))
         val seats = listOf(seat1, seat2, seat3)
         commute = Commute(UUID.randomUUID(), "commute_name", departure, arrival, seats)
+    }
+
+    @Test
+    fun aggregate_should_return_commute_and_created_event() {
+        val departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusSeconds(30))
+        val arrival = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusSeconds(90))
+        val seats = listOf(seat1, seat2, seat3)
+
+        val (commute, events) = Commute.create(
+            name = "commute_name",
+            departure = departure,
+            arrival = arrival,
+            seats = seats,
+        )
+
+        assertEventEquals(
+            CommuteCreatedEvent(
+                commuteId = commute.id,
+                name = "commute_name",
+                departure = departure,
+                arrival = arrival,
+                seats = seats,
+            ),
+            events.first(),
+        )
+        assertEquals("commute_name", commute.name)
+        assertEquals(departure, commute.departure)
+        assertEquals(arrival, commute.arrival)
+        assertEquals(seats, commute.seats)
     }
 
     @Test
@@ -50,7 +82,7 @@ class CommuteTest {
             events.first(),
         )
         assertEquals(1, commute.bookings.size)
-        assertTrue(commute.bookings.contains(bookingId.toString()))
+        assertTrue(commute.bookings.contains(bookingId))
     }
 
     @Test
@@ -61,7 +93,7 @@ class CommuteTest {
 
     @Test
     fun cannot_book_unknown_seat() {
-        val unknownSeat = Seat("99", "Z")
+        val unknownSeat = Seat.Picked("99", "Z")
         assertFailsWith<CommuteBookSeatFailedException> { commute.bookSeat(bookingId, unknownSeat) }
     }
 
@@ -93,7 +125,7 @@ class CommuteTest {
             ),
             cEvent.first(),
         )
-        assertFalse(commute.bookings.containsKey(bookingId.toString()))
+        assertFalse(commute.bookings.containsKey(bookingId))
     }
 
     @Test
@@ -139,14 +171,14 @@ class CommuteTest {
 
     @Test
     fun bookSeat_with_null_seat_assigns_automatically() {
-        val events = commute.bookSeat(bookingId, null)
+        val events = commute.bookSeat(bookingId, Seat.Any)
 
         assertEquals(1, events.size)
         val event = events.first() as CommuteBookedEvent
         assertEquals(commute.id, event.commuteId)
         assertEquals(bookingId, event.bookingId)
         assertEquals(seat1, event.seat) // First available seat
-        assertTrue(commute.bookings.containsKey(bookingId.toString()))
+        assertTrue(commute.bookings.containsKey(bookingId))
     }
 
     @Test
@@ -155,12 +187,12 @@ class CommuteTest {
             commute.copy(
                 bookings =
                     mutableMapOf(
-                        UUID.randomUUID().toString() to "1|A",
-                        UUID.randomUUID().toString() to "1|B",
-                        UUID.randomUUID().toString() to "1|C",
+                        UUID.randomUUID() to Seat.Picked("1", "A"),
+                        UUID.randomUUID() to Seat.Picked("1", "B"),
+                        UUID.randomUUID() to Seat.Picked("1", "C"),
                     ),
             )
-        assertFailsWith<CommuteBookSeatFailedException> { commute.bookSeat(bookingId, null) }
+        assertFailsWith<CommuteBookSeatFailedException> { commute.bookSeat(bookingId, Seat.Any) }
     }
 
     @Test
@@ -258,13 +290,13 @@ class CommuteTest {
             ),
             events.first(),
         )
-        assertTrue(commute.bookings.containsKey(bookingId.toString()))
-        assertEquals(seat1.toString(), commute.bookings[bookingId.toString()])
+        assertTrue(commute.bookings.containsKey(bookingId))
+        assertEquals(seat1, commute.bookings[bookingId])
     }
 
     @Test
     fun compensateCancelBookedSeat_fails_when_seat_not_in_list() {
-        val unknownSeat = Seat("99", "Z")
+        val unknownSeat = Seat.Picked("99", "Z")
         assertFailsWith<CommuteBookSeatFailedException> { commute.compensateCancelBookedSeat(bookingId, unknownSeat) }
     }
 
@@ -312,7 +344,7 @@ class CommuteTest {
             ),
             events.first(),
         )
-        assertFalse(commute.bookings.containsKey(bookingId.toString()))
+        assertFalse(commute.bookings.containsKey(bookingId))
     }
 
     @Test
@@ -348,5 +380,64 @@ class CommuteTest {
             events[1],
         )
         assertEquals(CommuteStatusEnum.SCHEDULED, commute.status)
+    }
+
+    @Test
+    fun commute_apply_should_map_events_correctly() {
+        val id = UUID.randomUUID()
+        val bookingId = UUID.randomUUID()
+        val seat = Seat.Picked("1", "A")
+        val base = Commute(id, "c", LocationAndTime(LocationEnum.MADRID, LocalDateTime.now()), LocationAndTime(LocationEnum.BARCELONA, LocalDateTime.now().plusHours(5)), listOf(seat))
+
+        base.apply(CommuteCreatedEvent(commuteId = id, name = "n", departure = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now()), arrival = LocationAndTime(LocationEnum.ROME, LocalDateTime.now().plusHours(3)), seats = listOf(seat)))
+        assertEquals(id, base.id)
+        assertEquals("c", base.name)
+        assertEquals(CommuteStatusEnum.SCHEDULED, base.status)
+        assertEquals(0, base.bookings.size)
+
+        base.apply(CommuteBookedEvent(commuteId = id, bookingId = bookingId, seat = seat))
+        assertEquals(mapOf(bookingId to seat), base.bookings.toMap())
+
+        base.apply(CommuteFullEvent(commuteId = id))
+        assertEquals(CommuteStatusEnum.FULL, base.status)
+
+        base.apply(CommuteAvailableEvent(commuteId = id))
+        assertEquals(CommuteStatusEnum.SCHEDULED, base.status)
+
+        base.apply(CommuteBookingCanceledEvent(commuteId = id, bookingId = bookingId, seat = seat))
+        assertEquals(0, base.bookings.size)
+
+        base.apply(CommuteExpiredEvent(commuteId = id))
+        assertEquals(CommuteStatusEnum.EXPIRED, base.status)
+    }
+
+    @Test
+    fun commute_fromEvents_should_handle_empty_and_invalid_first_event() {
+        assertNull(Commute.fromEvents(emptyList()))
+        val invalid = listOf(CommuteBookedEvent(commuteId = UUID.randomUUID(), bookingId = UUID.randomUUID(), seat = Seat.Picked("1", "B")))
+        assertFailsWith<CommuteMissingCreatedEventException> { Commute.fromEvents(invalid) }
+    }
+
+    @Test
+    fun commute_fromEvents_should_rebuild_state() {
+        val id = UUID.randomUUID()
+        val bookingId = UUID.randomUUID()
+        val seat = Seat.Picked("2", "C")
+        val dep = LocationAndTime(LocationEnum.VALENCIA, LocalDateTime.now())
+        val arr = LocationAndTime(LocationEnum.MARSEILLE, LocalDateTime.now().plusHours(2))
+        val events = listOf(
+            CommuteCreatedEvent(commuteId = id, name = "comm", departure = dep, arrival = arr, seats = listOf(seat)),
+            CommuteBookedEvent(commuteId = id, bookingId = bookingId, seat = seat),
+            CommuteBookingCanceledEvent(commuteId = id, bookingId = bookingId, seat = seat),
+        )
+
+        val result = Commute.fromEvents(events)
+        assertNotNull(result)
+        assertEquals(id, result.id)
+        assertEquals("comm", result.name)
+        assertEquals(dep, result.departure)
+        assertEquals(arr, result.arrival)
+        assertEquals(0, result.bookings.size)
+        assertEquals(CommuteStatusEnum.SCHEDULED, result.status)
     }
 }

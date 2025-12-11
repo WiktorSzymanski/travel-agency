@@ -11,14 +11,14 @@ data class BookTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferCommand()
 
 data class ReleaseTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferCommand()
 
 data class RebookTravelOfferCommand(
@@ -31,21 +31,21 @@ data class CancelBookTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferCommand()
 
 data class ReserveTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-    val seat: Seat? = null,
+    val seat: Seat,
 ) : TravelOfferCommand()
 
 data class CancelReserveTravelOfferCommand(
     override val travelOfferId: UUID,
     override val correlationId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferCommand()
 
 data class CreateTravelOfferCommand(
@@ -81,7 +81,7 @@ data class CompensateBookTravelOfferCommand(
     override val correlationId: UUID,
     override val eventId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : CompensateTravelOfferCommand()
 
 data class CompensateCancelBookTravelOfferCommand(
@@ -89,7 +89,7 @@ data class CompensateCancelBookTravelOfferCommand(
     override val correlationId: UUID,
     override val eventId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : CompensateTravelOfferCommand()
 
 data class CompensateReserveTravelOfferCommand(
@@ -97,7 +97,7 @@ data class CompensateReserveTravelOfferCommand(
     override val correlationId: UUID,
     override val eventId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : CompensateTravelOfferCommand()
 
 data class CompensateCancelReserveTravelOfferCommand(
@@ -105,7 +105,7 @@ data class CompensateCancelReserveTravelOfferCommand(
     override val correlationId: UUID,
     override val eventId: UUID,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : CompensateTravelOfferCommand()
 
 data class CompensateReleaseTravelOfferCommand(

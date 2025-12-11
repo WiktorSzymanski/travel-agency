@@ -51,7 +51,7 @@ class CancelBookingSagaNewTest {
         attractionId: UUID? = UUID.randomUUID(),
         bookingId: UUID = UUID.randomUUID(),
         correlationId: UUID = UUID.randomUUID(),
-        seat: Seat = Seat("1", "A"),
+        seat: Seat = Seat.Picked("1", "A"),
     ) = TravelOfferReleaseEvent(
         travelOfferId = travelOfferId,
         accommodationId = accommodationId,

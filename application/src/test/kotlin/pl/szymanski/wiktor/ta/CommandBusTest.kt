@@ -82,7 +82,7 @@ class CommandBusTest {
                     correlationId = UUID.randomUUID(),
                     travelOfferId = UUID.randomUUID(),
                     userId = UUID.randomUUID(),
-                    seat = null,
+                    seat = Seat.Any,
                 )
 
             // When
@@ -150,7 +150,7 @@ class CommandBusTest {
                         correlationId = correlationId,
                         travelOfferId = travelOfferId,
                         userId = UUID.randomUUID(),
-                        seat = null,
+                        seat = Seat.Any,
                     ),
                 )
             val (_, cEvents) =
@@ -161,7 +161,7 @@ class CommandBusTest {
                         name = "Bus",
                         departure = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now()),
                         arrival = LocationAndTime(LocationEnum.LONDON, LocalDateTime.now().plusHours(1)),
-                        seats = listOf(Seat("1", "A")),
+                        seats = listOf(Seat.Picked("1", "A")),
                     ),
                 )
             val (_, aEvents) =

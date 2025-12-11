@@ -68,7 +68,7 @@ class TravelOfferCommandHandlerTest {
                     travelOfferId = UUID.randomUUID(),
                     correlationId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("1", "A"),
+                    seat = Seat.Picked("1", "A"),
                 )
 
             // When
@@ -88,7 +88,7 @@ class TravelOfferCommandHandlerTest {
                     travelOfferId = UUID.randomUUID(),
                     correlationId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("1", "B"),
+                    seat = Seat.Picked("1", "B"),
                 )
 
             // When
@@ -108,7 +108,7 @@ class TravelOfferCommandHandlerTest {
                     travelOfferId = UUID.randomUUID(),
                     correlationId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("2", "A"),
+                    seat = Seat.Picked("2", "A"),
                 )
 
             // When
@@ -128,7 +128,7 @@ class TravelOfferCommandHandlerTest {
                     travelOfferId = UUID.randomUUID(),
                     correlationId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("2", "B"),
+                    seat = Seat.Picked("2", "B"),
                 )
 
             // When
@@ -148,7 +148,7 @@ class TravelOfferCommandHandlerTest {
                     travelOfferId = UUID.randomUUID(),
                     correlationId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("3", "A"),
+                    seat = Seat.Picked("3", "A"),
                 )
 
             // When
@@ -262,7 +262,7 @@ class TravelOfferCommandHandlerTest {
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("3", "D"),
+                    seat = Seat.Picked("3", "D"),
                 )
 
             // When
@@ -283,7 +283,7 @@ class TravelOfferCommandHandlerTest {
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("3", "D"),
+                    seat = Seat.Picked("3", "D"),
                 )
 
             // When
@@ -304,7 +304,7 @@ class TravelOfferCommandHandlerTest {
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("3", "D"),
+                    seat = Seat.Picked("3", "D"),
                 )
 
             // When
@@ -325,7 +325,7 @@ class TravelOfferCommandHandlerTest {
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("3", "D"),
+                    seat = Seat.Picked("3", "D"),
                 )
 
             // When

@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.domain
 
-import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 
 enum class LocationEnum {
@@ -30,26 +29,18 @@ data class LocationAndTime(
 enum class BookingState {
     NEW,
     PROCESSING,
-    SUCCEEDED,
+    BOOKED,
     CANCEL_REQUESTED,
     PROCESSING_CANCELLATION,
     CANCELED,
     FAILED,
 }
 
-@Serializable
-data class Seat(
-    val row: String,
-    val column: String,
-) {
-    override fun toString(): String = "$row|$column"
-
-    companion object {
-        fun fromString(seat: String): Seat {
-            val (row, column) = seat.split("|")
-            return Seat(row, column)
-        }
-    }
+sealed interface Seat {
+    data object Any : Seat
+    data class Picked(
+        val row: String,
+        val column: String,) : Seat
 }
 
 data class Rent(

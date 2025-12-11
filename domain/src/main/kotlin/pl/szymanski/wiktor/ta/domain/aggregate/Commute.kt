@@ -4,8 +4,10 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
@@ -13,6 +15,7 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import pl.szymanski.wiktor.ta.domain.exception.CommuteBookSeatFailedException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteCancelBookedSeatFailedException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteExpireFailedException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteMissingCreatedEventException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -22,7 +25,7 @@ data class Commute(
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
     val seats: List<Seat>,
-    val bookings: MutableMap<String, String> = mutableMapOf(),
+    val bookings: MutableMap<UUID, Seat> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
 ) {
     companion object {
@@ -51,6 +54,63 @@ data class Commute(
 
             return commute to listOf(event)
         }
+
+        fun fromEvents(events: List<CommuteEvent>): Commute? {
+            if (events.isEmpty()) return null
+
+            val createdEvent = events.first()
+            if (createdEvent !is CommuteCreatedEvent)
+                throw CommuteMissingCreatedEventException()
+
+            val commute =
+                Commute(
+                    id = createdEvent.commuteId,
+                    name = createdEvent.name,
+                    departure = createdEvent.departure,
+                    arrival = createdEvent.arrival,
+                    seats = createdEvent.seats,
+                )
+
+            for (event in events.drop(1)) {
+                commute.apply(event)
+            }
+
+            return commute
+        }
+    }
+
+    fun apply(event: CommuteEvent): Unit = when (event) {
+        is CommuteCreatedEvent -> Unit
+
+        is CommuteBookedEvent -> {
+            this.bookings[event.bookingId] = event.seat
+        }
+
+        is CommuteFullEvent -> {
+            this.status = CommuteStatusEnum.FULL
+        }
+
+        is CommuteAvailableEvent -> {
+            this.status = CommuteStatusEnum.SCHEDULED
+        }
+
+        is CommuteBookingCanceledEvent -> {
+            this.bookings.remove(event.bookingId)
+            Unit
+        }
+
+        is CommuteExpiredEvent -> {
+            this.status = CommuteStatusEnum.EXPIRED
+        }
+
+        is CommuteBookedCompensatedEvent -> {
+            this.bookings.remove(event.bookingId)
+            Unit
+        }
+
+        is CommuteBookingCanceledCompensatedEvent -> {
+            this.bookings[event.bookingId] = event.seat
+        }
     }
 
     fun expire(): List<CommuteEvent> {
@@ -73,16 +133,19 @@ data class Commute(
 
     fun bookSeat(
         bookingId: UUID,
-        seat: Seat? = null,
+        seat: Seat,
     ): List<CommuteEvent> {
         statusCheck()
         if (this.status != CommuteStatusEnum.SCHEDULED) {
             throw CommuteBookSeatFailedException(id, status)
         }
 
-        val seatToBook = seat?.let { validateSeat(it) } ?: getFirstAvailableSeat()
+        val seatToBook = when (seat) {
+            is Seat.Any -> getFirstAvailableSeat()
+            is Seat.Picked -> validateSeat(seat)
+        }
 
-        this.bookings[bookingId.toString()] = seatToBook.toString()
+        this.bookings[bookingId] = seatToBook
 
         return listOfNotNull(
             CommuteBookedEvent(
@@ -104,15 +167,15 @@ data class Commute(
             throw CommuteCancelBookedSeatFailedException(bookingId, id, status)
         }
 
-        val seatStr =
-            this.bookings.remove(bookingId.toString())
+        val seat =
+            this.bookings.remove(bookingId)
                 ?: throw CommuteCancelBookedSeatFailedException(bookingId, id)
 
         return listOfNotNull(
             CommuteBookingCanceledEvent(
                 commuteId = id,
                 bookingId = bookingId,
-                seat = Seat.fromString(seatStr),
+                seat = seat,
             ),
             takeIf { seatsCheck() }?.let {
                 CommuteAvailableEvent(
@@ -130,11 +193,11 @@ data class Commute(
             throw CommuteBookSeatFailedException(seat, id)
         }
 
-        if (this.bookings.containsValue(seat.toString())) {
+        if (this.bookings.containsValue(seat)) {
             throw CommuteBookSeatFailedException.seatAlreadyBooked(seat, id)
         }
 
-        this.bookings[bookingId.toString()] = seat.toString()
+        this.bookings[bookingId] = seat
 
         return listOfNotNull(
             CommuteBookedEvent(
@@ -151,15 +214,15 @@ data class Commute(
     }
 
     fun compensateBookSeat(bookingId: UUID): List<CommuteEvent> {
-        val seatStr =
-            this.bookings.remove(bookingId.toString())
+        val seat =
+            this.bookings.remove(bookingId)
                 ?: throw CommuteCancelBookedSeatFailedException(bookingId, id)
 
         return listOfNotNull(
             CommuteBookingCanceledEvent(
                 commuteId = id,
                 bookingId = bookingId,
-                seat = Seat.fromString(seatStr),
+                seat = seat,
             ),
             takeIf { seatsCheck() }?.let {
                 CommuteAvailableEvent(
@@ -193,7 +256,7 @@ data class Commute(
     }
 
     private fun getFirstAvailableSeat(): Seat {
-        val availableSeats = this.seats.filter { !this.bookings.containsValue(it.toString()) }
+        val availableSeats = this.seats.filter { !this.bookings.containsValue(it) }
         if (availableSeats.isEmpty()) {
             throw CommuteBookSeatFailedException(id)
         }
@@ -204,7 +267,7 @@ data class Commute(
         if (!this.seats.contains(seat))
             throw CommuteBookSeatFailedException(seat, id)
 
-        if (this.bookings.containsValue(seat.toString()))
+        if (this.bookings.containsValue(seat))
             throw CommuteBookSeatFailedException.seatAlreadyBooked(seat, id)
 
         return seat

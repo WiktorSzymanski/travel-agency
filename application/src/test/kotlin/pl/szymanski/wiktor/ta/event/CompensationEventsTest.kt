@@ -27,7 +27,7 @@
 //    private val attractionId = UUID.randomUUID()
 //    private val commuteId = UUID.randomUUID()
 //    private val travelOfferId = UUID.randomUUID()
-//    private val seat = Seat("1", "A")
+//    private val seat = Seat.Picked("1", "A")
 //
 //    @Test
 //    fun `AccommodationBookedEvent toCompensation should return AccommodationBookedCompensatedEvent`() {

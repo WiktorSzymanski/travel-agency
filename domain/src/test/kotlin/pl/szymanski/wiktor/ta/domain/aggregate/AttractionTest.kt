@@ -9,14 +9,18 @@ import pl.szymanski.wiktor.ta.domain.exception.*
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AttractionTest {
@@ -34,6 +38,28 @@ class AttractionTest {
                 capacity = 3,
             )
         bookingId = UUID.randomUUID()
+    }
+
+    @Test
+    fun aggregate_should_return_attraction_and_created_event() {
+        val (attraction, events) = Attraction.create("attraction_name", LocationEnum.POZNAN, LocalDateTime.now().plusHours(1), 3)
+
+        assertEventEquals(
+            AttractionCreatedEvent(
+                attractionId = attraction.id,
+                name = "attraction_name",
+                location = LocationEnum.POZNAN,
+                date = attraction.date,
+                capacity = 3,
+            ),
+            events.first()
+        )
+
+        assertEquals("attraction_name", attraction.name)
+        assertEquals(LocationEnum.POZNAN, attraction.location)
+        assertEquals(3, attraction.capacity)
+        assertEquals(AttractionStatusEnum.SCHEDULED, attraction.status)
+        assertEquals(0, attraction.bookings.size)
     }
 
     @Test
@@ -375,5 +401,65 @@ class AttractionTest {
             events.last(),
         )
         assertEquals(AttractionStatusEnum.FULL, attraction.status)
+    }
+
+    @Test
+    fun attraction_apply_should_map_events_correctly() {
+        val id = UUID.randomUUID()
+        val bookingId = UUID.randomUUID()
+        val base = Attraction(id, "a", LocationEnum.VENICE, LocalDateTime.now().plusDays(5), 2)
+
+        base.apply(AttractionCreatedEvent(attractionId = id, name = "n", location = LocationEnum.ZERMATT, date = LocalDateTime.now().plusDays(1), capacity = 3))
+        assertEquals(id, base.id)
+        assertEquals("a", base.name)
+        assertEquals(AttractionStatusEnum.SCHEDULED, base.status)
+        assertEquals(0, base.bookings.size)
+
+        base.apply(AttractionBookedEvent(attractionId = id, bookingId = bookingId))
+        assertEquals(listOf(bookingId), base.bookings)
+
+        base.apply(AttractionFullEvent(attractionId = id))
+        assertEquals(AttractionStatusEnum.FULL, base.status)
+
+        base.apply(AttractionAvailableEvent(attractionId = id))
+        assertEquals(AttractionStatusEnum.SCHEDULED, base.status)
+
+        base.apply(AttractionBookingCanceledEvent(attractionId = id, bookingId = bookingId))
+        assertEquals(0, base.bookings.size)
+
+        base.apply(AttractionExpiredEvent(attractionId = id))
+        assertEquals(AttractionStatusEnum.EXPIRED, base.status)
+    }
+
+    @Test
+    fun attraction_fromEvents_should_handle_empty_and_invalid_first_event() {
+        assertNull(Attraction.fromEvents(emptyList()))
+        val id = UUID.randomUUID()
+        val invalid = listOf(AttractionBookedEvent(attractionId = id, bookingId = UUID.randomUUID()))
+        assertFailsWith<AttractionMissingCreatedEventException> { Attraction.fromEvents(invalid) }
+    }
+
+    @Test
+    fun attraction_fromEvents_should_rebuild_state() {
+        val id = UUID.randomUUID()
+        val bookingId = UUID.randomUUID()
+        val createdDate = LocalDateTime.now().plusDays(3)
+        val events = listOf(
+            AttractionCreatedEvent(attractionId = id, name = "tours", location = LocationEnum.PARIS, date = createdDate, capacity = 2),
+            AttractionBookedEvent(attractionId = id, bookingId = bookingId),
+            AttractionFullEvent(attractionId = id),
+            AttractionBookingCanceledEvent(attractionId = id, bookingId = bookingId),
+            AttractionAvailableEvent(attractionId = id),
+        )
+
+        val result = Attraction.fromEvents(events)
+        assertNotNull(result)
+        assertEquals(id, result.id)
+        assertEquals("tours", result.name)
+        assertEquals(LocationEnum.PARIS, result.location)
+        assertEquals(createdDate, result.date)
+        assertEquals(2, result.capacity)
+        assertEquals(AttractionStatusEnum.SCHEDULED, result.status)
+        assertEquals(0, result.bookings.size)
     }
 }

@@ -42,7 +42,7 @@ class CommuteCommandHandlerTest {
                     name = "CommuteName",
                     departure = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusDays(1)),
                     arrival = LocationAndTime(LocationEnum.LONDON, LocalDateTime.now().plusDays(2)),
-                    seats = listOf(Seat("1", "A")),
+                    seats = listOf(Seat.Picked("1", "A")),
                 )
 
             // When
@@ -62,7 +62,7 @@ class CommuteCommandHandlerTest {
                     commuteId = UUID.randomUUID(),
                     correlationId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("1", "B"),
+                    seat = Seat.Picked("1", "B"),
                 )
 
             // When
@@ -140,7 +140,7 @@ class CommuteCommandHandlerTest {
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
                     bookingId = UUID.randomUUID(),
-                    seat = Seat("3", "D"),
+                    seat = Seat.Picked("3", "D"),
                 )
 
             // When

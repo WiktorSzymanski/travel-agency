@@ -25,7 +25,7 @@ data class Booking(
     val id: UUID = UUID.randomUUID(),
     val userId: UUID,
     val travelOfferId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
     var status: BookingState = BookingState.NEW,
     var message: String? = null,
     val timestamp: LocalDateTime = LocalDateTime.now(),
@@ -33,7 +33,7 @@ data class Booking(
     companion object {
         fun create(
             userId: UUID,
-            seat: Seat? = null,
+            seat: Seat,
             travelOfferId: UUID,
         ): Pair<Booking, List<BookingCreatedEvent>> {
             val booking =
@@ -48,8 +48,7 @@ data class Booking(
                     bookingId = booking.id,
                     travelOfferId = travelOfferId,
                     userId = userId,
-                    seat = seat,
-                    state = booking.status,
+                    seat = seat
                 )
 
             return booking to listOf(event)
@@ -72,14 +71,14 @@ data class Booking(
             throw BookingCompleteFailedException()
         }
 
-        this.status = BookingState.SUCCEEDED
+        this.status = BookingState.BOOKED
         return listOf(CompleteBookingEvent(
             bookingId = id,
         ))
     }
 
     fun requestCancel(): List<BookingEvent> {
-        if (this.status != BookingState.SUCCEEDED) {
+        if (this.status != BookingState.BOOKED) {
             throw BookingCancelRequestFailedException()
         }
 
@@ -134,7 +133,7 @@ data class Booking(
             throw BookingFailCancellationFailedException(message)
         }
 
-        this.status = BookingState.SUCCEEDED
+        this.status = BookingState.BOOKED
         this.message = message
 
         return listOf(FailCancelBookingEvent(

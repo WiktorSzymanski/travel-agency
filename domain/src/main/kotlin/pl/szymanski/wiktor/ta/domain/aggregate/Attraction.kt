@@ -3,7 +3,9 @@ package pl.szymanski.wiktor.ta.domain.aggregate
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
@@ -12,6 +14,7 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import pl.szymanski.wiktor.ta.domain.exception.AttractionBookFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionBookingCancelFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionExpireFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionMissingCreatedEventException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -49,6 +52,69 @@ data class Attraction(
                 )
 
             return attraction to listOf(event)
+        }
+
+        fun fromEvents(events: List<AttractionEvent>): Attraction? {
+            if (events.isEmpty()) return null
+
+            val createdEvent = events.first()
+
+            if (createdEvent !is AttractionCreatedEvent)
+                throw AttractionMissingCreatedEventException()
+
+            val attraction =
+                Attraction(
+                    id = createdEvent.attractionId,
+                    name = createdEvent.name,
+                    location = createdEvent.location,
+                    date = createdEvent.date,
+                    capacity = createdEvent.capacity,
+                )
+
+            for (event in events.drop(1)) {
+                attraction.apply(event)
+            }
+
+            return attraction
+        }
+    }
+
+    fun apply(event: AttractionEvent): Unit = when (event) {
+        is AttractionCreatedEvent -> Unit
+
+        is AttractionBookedEvent -> {
+            this.bookings.add(event.bookingId)
+            Unit
+        }
+
+        is AttractionFullEvent -> {
+            this.status = AttractionStatusEnum.FULL
+        }
+
+
+        is AttractionAvailableEvent -> {
+            this.status = AttractionStatusEnum.SCHEDULED
+        }
+
+
+        is AttractionBookingCanceledEvent -> {
+            this.bookings.removeIf { it == event.bookingId }
+            Unit
+        }
+
+        is AttractionExpiredEvent -> {
+            this.status = AttractionStatusEnum.EXPIRED
+        }
+
+
+        is AttractionBookedCompensatedEvent -> {
+            this.bookings.removeIf { it == event.bookingId }
+            Unit
+        }
+
+        is AttractionBookingCanceledCompensatedEvent -> {
+            this.bookings.add(event.bookingId)
+            Unit
         }
     }
 

@@ -5,11 +5,25 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 
 @Serializable
+data class SeatDto(
+    val row: String,
+    val column: String,
+) {
+    companion object {
+        fun fromDomain(seat: Seat) = when (seat) {
+            is Seat.Any -> throw IllegalArgumentException("Seat Any cannot be serialized to DTO, it should be Picked by now")
+            is Seat.Picked -> SeatDto(seat.row, seat.column)
+        }
+
+    }
+}
+
+@Serializable
 data class BookingDto(
     val id: String,
     val userId: String,
     val travelOfferId: String,
-    val seat: Seat? = null,
+    val seat: SeatDto? = null,
     var status: String,
     var message: String? = null,
     val timestamp: String,
@@ -20,7 +34,7 @@ data class BookingDto(
                 id = booking.id.toString(),
                 userId = booking.userId.toString(),
                 travelOfferId = booking.travelOfferId.toString(),
-                seat = booking.seat,
+                seat = SeatDto.fromDomain(booking.seat),
                 status = booking.status.name,
                 message = booking.message,
                 timestamp = booking.timestamp.toString(),

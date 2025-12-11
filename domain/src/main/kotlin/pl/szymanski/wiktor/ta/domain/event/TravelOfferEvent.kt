@@ -25,7 +25,7 @@ data class TravelOfferReservedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferReservationCanceledEvent(
@@ -36,7 +36,7 @@ data class TravelOfferReservationCanceledEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferBookedEvent(
@@ -47,7 +47,7 @@ data class TravelOfferBookedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferReleaseEvent(
@@ -58,7 +58,7 @@ data class TravelOfferReleaseEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferBookingCanceledEvent(
@@ -69,7 +69,7 @@ data class TravelOfferBookingCanceledEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferRebookedEvent(
@@ -108,7 +108,7 @@ data class TravelOfferBookedCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent
 
 data class TravelOfferBookingCanceledCompensatedEvent(
@@ -119,5 +119,5 @@ data class TravelOfferBookingCanceledCompensatedEvent(
     val commuteId: UUID,
     val attractionId: UUID?,
     val bookingId: UUID,
-    val seat: Seat?,
+    val seat: Seat,
 ) : TravelOfferEvent

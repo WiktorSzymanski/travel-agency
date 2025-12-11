@@ -11,7 +11,6 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedFailedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
@@ -75,7 +74,6 @@ fun Event.copy(
         is ProcessBookingEvent -> copy(eventId = eventId, correlationId = correlationId)
         is CompleteBookingEvent -> copy(eventId = eventId, correlationId = correlationId)
         is BookingCancelRequestedEvent -> copy(eventId = eventId, correlationId = correlationId)
-        is BookingCancelRequestedFailedEvent -> copy(eventId = eventId, correlationId = correlationId)
         is CancelBookingEvent -> copy(eventId = eventId, correlationId = correlationId)
         is ProcessCancelBookingEvent -> copy(eventId = eventId, correlationId = correlationId)
         is FailBookingEvent -> copy(eventId = eventId, correlationId = correlationId)
