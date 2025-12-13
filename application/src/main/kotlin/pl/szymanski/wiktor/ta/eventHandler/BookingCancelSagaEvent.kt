@@ -17,6 +17,7 @@ import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import pl.szymanski.wiktor.ta.launchCatching
+import pl.szymanski.wiktor.ta.subscribe
 
 class BookingCancelSagaEvent (
     private val eventBus: EventBus,
@@ -28,8 +29,8 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         ProcessCancelBookingCommand(
-                            it.bookingId,
-                            it.correlationId!!,
+                            it.domainEvent.bookingId,
+                            it.metadata.correlationId,
                         ) as BookingCommand,
                     )
                 }
@@ -42,8 +43,8 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         CancelBookingCommand(
-                            it.bookingId,
-                            it.correlationId!!,
+                            it.domainEvent.bookingId,
+                            it.metadata.correlationId,
                         ) as BookingCommand,
                     )
                 }
@@ -56,10 +57,10 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         CancelBookTravelOfferCommand(
-                            travelOfferId = it.travelOfferId,
-                            correlationId = it.correlationId!!,
-                            bookingId = it.bookingId,
-                            seat = it.seat,
+                            it.domainEvent.bookingId,
+                            it.metadata.correlationId,
+                            bookingId = it.domainEvent.bookingId,
+                            seat = it.domainEvent.seat,
                         ) as TravelOfferCommand,
                     )
                 }
@@ -72,9 +73,9 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         FailCancelBookingCommand(
-                            bookingId = it.bookingId,
-                            correlationId = it.correlationId!!,
-                            message = it.message,
+                            bookingId = it.domainEvent.bookingId,
+                            correlationId = it.metadata.correlationId,
+                            message = it.domainEvent.message,
                         ) as BookingCommand,
                     )
                 }

@@ -13,6 +13,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.launchCatching
+import pl.szymanski.wiktor.ta.subscribe
 
 class BookingEventHandler (
     private val eventBus: EventBus,
@@ -27,10 +28,10 @@ class BookingEventHandler (
                 scope.launchCatching {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         ReserveTravelOfferCommand(
-                            it.travelOfferId,
-                            it.correlationId!!,
-                            it.bookingId,
-                            it.seat,
+                            it.domainEvent.travelOfferId,
+                            it.metadata.correlationId,
+                            it.domainEvent.bookingId,
+                            it.domainEvent.seat,
                         ) as TravelOfferCommand,
                     )
                 }
@@ -44,10 +45,10 @@ class BookingEventHandler (
                     runCatching {
                         commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                             ReleaseTravelOfferCommand(
-                                it.travelOfferId,
-                                it.correlationId!!,
-                                it.bookingId,
-                                it.seat,
+                                it.domainEvent.travelOfferId,
+                                it.metadata.correlationId,
+                                it.domainEvent.bookingId,
+                                it.domainEvent.seat,
                             ) as TravelOfferCommand,
                         )
                     }.onFailure { e ->

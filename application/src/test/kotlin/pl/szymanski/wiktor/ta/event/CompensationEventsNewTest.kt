@@ -43,7 +43,6 @@ class CompensationEventsNewTest {
     fun accommodationBooked_toCompensation_should_map_fields() {
         val event =
             AccommodationBookedEvent(
-                correlationId = correlationId,
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             )
@@ -51,7 +50,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is AccommodationBookedCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(accommodationId, compensationEvent.accommodationId)
         assertEquals(bookingId, compensationEvent.bookingId)
     }
@@ -60,7 +58,6 @@ class CompensationEventsNewTest {
     fun accommodationBookingCanceled_toCompensation_should_map_fields() {
         val event =
             AccommodationBookingCanceledEvent(
-                correlationId = correlationId,
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             )
@@ -68,7 +65,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is AccommodationBookingCanceledCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(accommodationId, compensationEvent.accommodationId)
         assertEquals(bookingId, compensationEvent.bookingId)
     }
@@ -77,7 +73,6 @@ class CompensationEventsNewTest {
     fun accommodationExpired_toCompensation_should_throw() {
         val event =
             AccommodationExpiredEvent(
-                correlationId = correlationId,
                 accommodationId = accommodationId,
             )
 
@@ -91,7 +86,6 @@ class CompensationEventsNewTest {
     fun attractionBooked_toCompensation_should_map_fields() {
         val event =
             AttractionBookedEvent(
-                correlationId = correlationId,
                 attractionId = attractionId,
                 bookingId = bookingId,
             )
@@ -99,7 +93,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is AttractionBookedCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(attractionId, compensationEvent.attractionId)
         assertEquals(bookingId, compensationEvent.bookingId)
     }
@@ -108,7 +101,6 @@ class CompensationEventsNewTest {
     fun attractionBookingCanceled_toCompensation_should_map_fields() {
         val event =
             AttractionBookingCanceledEvent(
-                correlationId = correlationId,
                 attractionId = attractionId,
                 bookingId = bookingId,
             )
@@ -116,7 +108,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is AttractionBookingCanceledCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(attractionId, compensationEvent.attractionId)
         assertEquals(bookingId, compensationEvent.bookingId)
     }
@@ -125,7 +116,6 @@ class CompensationEventsNewTest {
     fun attractionExpired_toCompensation_should_throw() {
         val event =
             AttractionExpiredEvent(
-                correlationId = correlationId,
                 attractionId = attractionId,
             )
 
@@ -139,7 +129,6 @@ class CompensationEventsNewTest {
     fun commuteBooked_toCompensation_should_map_fields() {
         val event =
             CommuteBookedEvent(
-                correlationId = correlationId,
                 commuteId = commuteId,
                 bookingId = bookingId,
                 seat = seat,
@@ -148,7 +137,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is CommuteBookedCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(commuteId, compensationEvent.commuteId)
         assertEquals(bookingId, compensationEvent.bookingId)
         assertEquals(seat, compensationEvent.seat)
@@ -158,7 +146,6 @@ class CompensationEventsNewTest {
     fun commuteBookingCanceled_toCompensation_should_map_fields() {
         val event =
             CommuteBookingCanceledEvent(
-                correlationId = correlationId,
                 commuteId = commuteId,
                 bookingId = bookingId,
                 seat = seat,
@@ -167,7 +154,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is CommuteBookingCanceledCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(commuteId, compensationEvent.commuteId)
         assertEquals(bookingId, compensationEvent.bookingId)
         assertEquals(seat, compensationEvent.seat)
@@ -177,7 +163,6 @@ class CompensationEventsNewTest {
     fun commuteExpired_toCompensation_should_return_original_event() {
         val event =
             CommuteExpiredEvent(
-                correlationId = correlationId,
                 commuteId = commuteId,
             )
 
@@ -191,7 +176,6 @@ class CompensationEventsNewTest {
     fun travelOfferBooked_toCompensation_should_map_fields() {
         val event =
             TravelOfferBookedEvent(
-                correlationId = correlationId,
                 travelOfferId = travelOfferId,
                 accommodationId = accommodationId,
                 commuteId = commuteId,
@@ -203,7 +187,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is TravelOfferBookedCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(travelOfferId, compensationEvent.travelOfferId)
         assertEquals(accommodationId, compensationEvent.accommodationId)
         assertEquals(commuteId, compensationEvent.commuteId)
@@ -216,7 +199,6 @@ class CompensationEventsNewTest {
     fun travelOfferBookingCanceled_toCompensation_should_map_fields() {
         val event =
             TravelOfferBookingCanceledEvent(
-                correlationId = correlationId,
                 travelOfferId = travelOfferId,
                 accommodationId = accommodationId,
                 commuteId = commuteId,
@@ -228,7 +210,6 @@ class CompensationEventsNewTest {
         val compensationEvent = event.toCompensation()
 
         assertTrue(compensationEvent is TravelOfferBookingCanceledCompensatedEvent)
-        assertEquals(correlationId, compensationEvent.correlationId)
         assertEquals(travelOfferId, compensationEvent.travelOfferId)
         assertEquals(accommodationId, compensationEvent.accommodationId)
         assertEquals(commuteId, compensationEvent.commuteId)
@@ -241,7 +222,6 @@ class CompensationEventsNewTest {
     fun travelOfferExpired_toCompensation_should_return_original_event() {
         val event =
             TravelOfferExpiredEvent(
-                correlationId = correlationId,
                 travelOfferId = travelOfferId,
                 accommodationId = accommodationId,
                 commuteId = commuteId,
@@ -255,7 +235,7 @@ class CompensationEventsNewTest {
 
     @Test
     fun travelOfferRebooked_toCompensation_should_return_original_event() {
-        val event = TravelOfferRebookedEvent(travelOfferId = travelOfferId, correlationId = correlationId, bookingId = bookingId)
+        val event = TravelOfferRebookedEvent(travelOfferId = travelOfferId, bookingId = bookingId)
 
         val result = event.toCompensation()
 
@@ -265,7 +245,6 @@ class CompensationEventsNewTest {
     @Test
     fun travelOfferReservationCanceled_toCompensation_should_return_original_event() {
         val event = TravelOfferReservationCanceledEvent(
-            correlationId = correlationId,
             travelOfferId = travelOfferId,
             accommodationId = accommodationId,
             commuteId = commuteId,

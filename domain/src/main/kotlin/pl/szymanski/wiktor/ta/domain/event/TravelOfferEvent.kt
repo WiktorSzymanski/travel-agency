@@ -9,7 +9,6 @@ sealed interface TravelOfferEvent : Event {
 
 data class TravelOfferCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val name: String,
     val commuteId: UUID,
@@ -19,7 +18,6 @@ data class TravelOfferCreatedEvent(
 
 data class TravelOfferReservedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -30,7 +28,6 @@ data class TravelOfferReservedEvent(
 
 data class TravelOfferReservationCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -41,7 +38,6 @@ data class TravelOfferReservationCanceledEvent(
 
 data class TravelOfferBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -52,7 +48,6 @@ data class TravelOfferBookedEvent(
 
 data class TravelOfferReleaseEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -63,7 +58,6 @@ data class TravelOfferReleaseEvent(
 
 data class TravelOfferBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -74,14 +68,12 @@ data class TravelOfferBookingCanceledEvent(
 
 data class TravelOfferRebookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val bookingId: UUID,
 ) : TravelOfferEvent
 
 data class TravelOfferExpiredEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -90,19 +82,16 @@ data class TravelOfferExpiredEvent(
 
 data class TravelOfferMadeUnavailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
 ) : TravelOfferEvent
 
 data class TravelOfferMadeAvailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val travelOfferId: UUID,
 ) : TravelOfferEvent
 
 data class TravelOfferBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,
@@ -113,7 +102,6 @@ data class TravelOfferBookedCompensatedEvent(
 
 data class TravelOfferBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     override val travelOfferId: UUID,
     val accommodationId: UUID,
     val commuteId: UUID,

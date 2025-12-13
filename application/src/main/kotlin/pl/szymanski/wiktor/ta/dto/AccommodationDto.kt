@@ -3,6 +3,8 @@ package pl.szymanski.wiktor.ta.dto
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 
+// TODO: DTOs to infrastructure layer
+
 @Serializable
 data class AccommodationDto(
     val id: String,

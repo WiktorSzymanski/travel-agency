@@ -594,12 +594,12 @@ class TravelOfferTest {
 
         // Given currently booked -> applying BookedCompensated should free it
         base.apply(AccommodationBookedEvent(accommodationId = id, bookingId = bookingId))
-        base.apply(AccommodationBookedCompensatedEvent(correlationId = null, accommodationId = id, bookingId = bookingId))
+        base.apply(AccommodationBookedCompensatedEvent(accommodationId = id, bookingId = bookingId))
         assertEquals(AccommodationStatusEnum.AVAILABLE, base.status)
         assertNull(base.bookingId)
 
         // Applying BookingCanceledCompensated should set it back to booked
-        base.apply(AccommodationBookingCanceledCompensatedEvent(correlationId = null, accommodationId = id, bookingId = bookingId))
+        base.apply(AccommodationBookingCanceledCompensatedEvent(accommodationId = id, bookingId = bookingId))
         assertEquals(AccommodationStatusEnum.BOOKED, base.status)
         assertEquals(bookingId, base.bookingId)
     }
@@ -615,14 +615,14 @@ class TravelOfferTest {
         a.apply(AttractionFullEvent(attractionId = id))
 
         // Applying BookedCompensated removes booking and makes it SCHEDULED again
-        a.apply(AttractionBookedCompensatedEvent(correlationId = null, attractionId = id, bookingId = bookingId))
+        a.apply(AttractionBookedCompensatedEvent(attractionId = id, bookingId = bookingId))
         assertEquals(0, a.bookings.size)
 
         a.apply(AttractionAvailableEvent(attractionId = id))
         assertEquals(AttractionStatusEnum.SCHEDULED, a.status)
 
         // Applying BookingCanceledCompensated adds a booking and makes it FULL (capacity=1)
-        a.apply(AttractionBookingCanceledCompensatedEvent(correlationId = null, attractionId = id, bookingId = bookingId))
+        a.apply(AttractionBookingCanceledCompensatedEvent(attractionId = id, bookingId = bookingId))
         assertEquals(1, a.bookings.size)
         // Status change (to FULL) is applied by a separate event
         a.apply(AttractionFullEvent(attractionId = id))
@@ -640,13 +640,13 @@ class TravelOfferTest {
         c.apply(CommuteFullEvent(commuteId = id))
         assertEquals(CommuteStatusEnum.FULL, c.status)
 
-        c.apply(CommuteBookedCompensatedEvent(correlationId = null, commuteId = id, bookingId = bookingId, seat = seat))
+        c.apply(CommuteBookedCompensatedEvent(commuteId = id, bookingId = bookingId, seat = seat))
         assertEquals(0, c.bookings.size)
 
         c.apply(CommuteAvailableEvent(commuteId = id))
         assertEquals(CommuteStatusEnum.SCHEDULED, c.status)
 
-        c.apply(CommuteBookingCanceledCompensatedEvent(correlationId = null, commuteId = id, bookingId = bookingId, seat = seat))
+        c.apply(CommuteBookingCanceledCompensatedEvent(commuteId = id, bookingId = bookingId, seat = seat))
         assertEquals(1, c.bookings.size)
         // Note: Full status is derived by domain logic separately; apply only reflects event state
     }
@@ -668,7 +668,7 @@ class TravelOfferTest {
         c2.apply(CommuteAvailableEvent(commuteId = id))
         assertEquals(CommuteStatusEnum.SCHEDULED, c2.status)
 
-        c2.apply(CommuteBookingCanceledCompensatedEvent(correlationId = null, commuteId = id, bookingId = bookingId, seat = seat))
+        c2.apply(CommuteBookingCanceledCompensatedEvent(commuteId = id, bookingId = bookingId, seat = seat))
         assertEquals(1, c2.bookings.size)
     }
 
@@ -686,12 +686,12 @@ class TravelOfferTest {
         assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
 
         // Applying BookedCompensated should free booking and set AVAILABLE
-        offer.apply(TravelOfferBookedCompensatedEvent(correlationId = null, travelOfferId = id, accommodationId = accId, commuteId = comId, attractionId = attrId, bookingId = bookingId, seat = seat))
+        offer.apply(TravelOfferBookedCompensatedEvent(travelOfferId = id, accommodationId = accId, commuteId = comId, attractionId = attrId, bookingId = bookingId, seat = seat))
         assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
         assertNull(offer.bookingId)
 
         // Applying BookingCanceledCompensated should go back to BOOKED
-        offer.apply(TravelOfferBookingCanceledCompensatedEvent(correlationId = null, travelOfferId = id, accommodationId = accId, commuteId = comId, attractionId = attrId, bookingId = bookingId, seat = seat))
+        offer.apply(TravelOfferBookingCanceledCompensatedEvent(travelOfferId = id, accommodationId = accId, commuteId = comId, attractionId = attrId, bookingId = bookingId, seat = seat))
         assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
         assertEquals(bookingId, offer.bookingId)
     }

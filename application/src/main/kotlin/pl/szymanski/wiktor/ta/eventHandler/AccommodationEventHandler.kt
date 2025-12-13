@@ -9,6 +9,7 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.service.TravelOfferService
+import pl.szymanski.wiktor.ta.subscribe
 
 class AccommodationEventHandler(
     private val eventBus: EventBus,
@@ -18,7 +19,7 @@ class AccommodationEventHandler(
         coroutineScope {
             eventBus.subscribe<AccommodationExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferService.expireTravelOfferByAccommodation(it.accommodationId, it.correlationId!!)
+                    travelOfferService.expireTravelOfferByAccommodation(it.domainEvent.accommodationId, it.metadata.correlationId)
                 }
             }
         }
@@ -27,7 +28,7 @@ class AccommodationEventHandler(
         coroutineScope {
             eventBus.subscribe<AccommodationBookedEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferUnavailableByAccommodation(it.accommodationId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferUnavailableByAccommodation(it.domainEvent.accommodationId, it.metadata.correlationId)
                 }
             }
         }
@@ -36,7 +37,7 @@ class AccommodationEventHandler(
         coroutineScope {
             eventBus.subscribe<AccommodationBookingCanceledEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferAvailableByAccommodation(it.accommodationId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferAvailableByAccommodation(it.domainEvent.accommodationId, it.metadata.correlationId)
                 }
             }
         }

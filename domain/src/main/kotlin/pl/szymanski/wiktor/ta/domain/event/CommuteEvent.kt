@@ -10,7 +10,6 @@ sealed interface CommuteEvent : Event {
 
 data class CommuteCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val commuteId: UUID,
     val name: String,
     val departure: LocationAndTime,
@@ -20,7 +19,6 @@ data class CommuteCreatedEvent(
 
 data class CommuteBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val commuteId: UUID,
     val bookingId: UUID,
     val seat: Seat,
@@ -28,7 +26,6 @@ data class CommuteBookedEvent(
 
 data class CommuteBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val commuteId: UUID,
     val bookingId: UUID,
     val seat: Seat,
@@ -36,25 +33,21 @@ data class CommuteBookingCanceledEvent(
 
 data class CommuteExpiredEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val commuteId: UUID,
 ) : CommuteEvent
 
 data class CommuteFullEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val commuteId: UUID,
 ) : CommuteEvent
 
 data class CommuteAvailableEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val commuteId: UUID,
 ) : CommuteEvent
 
 data class CommuteBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     override val commuteId: UUID,
     val bookingId: UUID,
     val seat: Seat,
@@ -62,7 +55,6 @@ data class CommuteBookedCompensatedEvent(
 
 data class CommuteBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     override val commuteId: UUID,
     val bookingId: UUID,
     val seat: Seat,

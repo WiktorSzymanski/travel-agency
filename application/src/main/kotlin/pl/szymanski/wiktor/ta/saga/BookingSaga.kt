@@ -3,6 +3,8 @@ package pl.szymanski.wiktor.ta.saga
 import kotlinx.coroutines.coroutineScope
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.EventEnvelope
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
@@ -29,6 +31,7 @@ class BookingSaga(
     private val commandBus: CommandBus,
     private val travelOfferService: TravelOfferService,
     private val triggeringEvent: TravelOfferReservedEvent,
+    private val triggeringEventMetadata: Metadata
 ) {
     companion object {
         private const val DEFAULT_MAX_RETRIES = 30
@@ -41,14 +44,14 @@ class BookingSaga(
     private val accommodationCommand: AccommodationCommand =
         BookAccommodationCommand(
             triggeringEvent.accommodationId,
-            triggeringEvent.correlationId!!,
+            triggeringEventMetadata.correlationId,
             triggeringEvent.bookingId,
         )
 
     private fun getCompensateAccommodationCommand(eventId: UUID): CompensateAccommodationCommand {
         return CompensateBookAccommodationCommand(
             accommodationId = triggeringEvent.accommodationId,
-            correlationId = triggeringEvent.correlationId!!,
+            correlationId = triggeringEventMetadata.correlationId,
             eventId = eventId,
             bookingId = triggeringEvent.bookingId,
         )
@@ -57,7 +60,7 @@ class BookingSaga(
     private var commuteCommand: CommuteCommand =
         BookCommuteCommand(
             triggeringEvent.commuteId,
-            triggeringEvent.correlationId!!,
+            triggeringEventMetadata.correlationId,
             triggeringEvent.bookingId,
             triggeringEvent.seat,
         )
@@ -65,7 +68,7 @@ class BookingSaga(
     private fun getCompensateCommuteCommand(eventId: UUID): CompensateCommuteCommand {
         return CompensateBookCommuteCommand(
             commuteId = triggeringEvent.commuteId,
-            correlationId = triggeringEvent.correlationId!!,
+            correlationId = triggeringEventMetadata.correlationId,
             eventId = eventId,
             bookingId = triggeringEvent.bookingId,
         )
@@ -75,7 +78,7 @@ class BookingSaga(
         triggeringEvent.attractionId?.let {
             BookAttractionCommand(
                 it,
-                triggeringEvent.correlationId!!,
+                triggeringEventMetadata.correlationId,
                 triggeringEvent.bookingId,
             )
         }
@@ -86,10 +89,13 @@ class BookingSaga(
 
     suspend fun execute() {
         eventBus.publish(
-            BookingSagaStartedEvent(
-                correlationId = triggeringEvent.correlationId!!,
-                bookingId = bookingId,
-            ),
+            EventEnvelope(
+                BookingSagaStartedEvent(
+                    bookingId = bookingId,
+                ),
+                triggeringEventMetadata
+            )
+
         )
 
         val saga =
@@ -149,12 +155,14 @@ class BookingSaga(
 
         if (result.isSuccess) {
             eventBus.publish(
-                BookingSagaCompletedEvent(
-                    correlationId = triggeringEvent.correlationId!!,
-                    bookingId = bookingId,
-                    travelOfferId = triggeringEvent.travelOfferId,
-                    seat = triggeringEvent.seat,
-                ),
+                EventEnvelope(
+                    BookingSagaCompletedEvent(
+                        bookingId = bookingId,
+                        travelOfferId = triggeringEvent.travelOfferId,
+                        seat = triggeringEvent.seat,
+                    ),
+                    triggeringEventMetadata,
+                )
             )
         } else {
             compensateTriggeringEvent(result.exceptionOrNull()?.message ?: "Unknown error")
@@ -164,11 +172,13 @@ class BookingSaga(
     suspend fun compensateTriggeringEvent(message: String) =
         coroutineScope {
             eventBus.publish(
-                BookingSagaFailedEvent(
-                    correlationId = triggeringEvent.correlationId!!,
-                    bookingId = bookingId,
-                    message = message,
-                ),
+                EventEnvelope(
+                    BookingSagaFailedEvent(
+                        bookingId = bookingId,
+                        message = message,
+                    ),
+                    triggeringEventMetadata,
+                )
             )
 //            withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
 

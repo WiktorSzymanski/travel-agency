@@ -8,20 +8,17 @@ interface SagaEvent : Event
 
 data class BookingSagaStartedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     val bookingId: UUID,
 ) : SagaEvent
 
 data class BookingSagaFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     val bookingId: UUID,
     val message: String,
 ) : SagaEvent
 
 data class BookingSagaCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     val bookingId: UUID,
     val travelOfferId: UUID,
     val seat: Seat,
@@ -29,20 +26,17 @@ data class BookingSagaCompletedEvent(
 
 data class BookingCancelSagaStartedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     val bookingId: UUID,
 ) : SagaEvent
 
 data class BookingCancelSagaFailedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     val bookingId: UUID,
     val message: String,
 ) : SagaEvent
 
 data class BookingCancelSagaCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     val bookingId: UUID,
     val travelOfferId: UUID,
     val seat: Seat,

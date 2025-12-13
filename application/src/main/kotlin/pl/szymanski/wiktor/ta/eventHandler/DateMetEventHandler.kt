@@ -17,6 +17,7 @@ import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
 import pl.szymanski.wiktor.ta.launchCatching
+import pl.szymanski.wiktor.ta.subscribe
 
 class DateMetEventHandler(
     private val eventBus: EventBus,
@@ -35,8 +36,8 @@ class DateMetEventHandler(
             scope.launchCatching {
                 commuteCommandHandler.handle(
                     ExpireCommuteCommand(
-                        commuteId = it.commuteId,
-                        correlationId = it.correlationId!!,
+                        commuteId = it.domainEvent.commuteId,
+                        correlationId = it.metadata.correlationId,
                     ) as CommuteCommand,
                 )
             }
@@ -48,8 +49,8 @@ class DateMetEventHandler(
             scope.launchCatching {
                 accommodationCommandHandler.handle(
                     ExpireAccommodationCommand(
-                        accommodationId = it.accommodationId,
-                        correlationId = it.correlationId!!,
+                        accommodationId = it.domainEvent.accommodationId,
+                        correlationId = it.metadata.correlationId,
                     ) as AccommodationCommand,
                 )
             }
@@ -61,8 +62,8 @@ class DateMetEventHandler(
             scope.launchCatching {
                 attractionCommandHandler.handle(
                     ExpireAttractionCommand(
-                        attractionId = it.attractionId,
-                        correlationId = it.correlationId!!,
+                        attractionId = it.domainEvent.attractionId,
+                        correlationId = it.metadata.correlationId,
                     ) as AttractionCommand,
                 )
             }

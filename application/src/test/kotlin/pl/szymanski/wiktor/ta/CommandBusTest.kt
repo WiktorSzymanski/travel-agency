@@ -43,7 +43,6 @@ class CommandBusTest {
                 assertIs<CreateBookingCommand>(command)
                 "OK" to listOf(
                     ProcessBookingEvent(
-                        correlationId = command.correlationId,
                         bookingId = UUID.randomUUID(),
                     ),
                 )
@@ -70,7 +69,6 @@ class CommandBusTest {
                 assertIs<CreateBookingCommand>(command)
                 "OK" to listOf(
                     ProcessBookingEvent(
-                        correlationId = command.correlationId,
                         bookingId = UUID.randomUUID(),
                     ),
                 )
@@ -91,7 +89,6 @@ class CommandBusTest {
             // Then
             assertEquals("OK", result)
             assertEquals(1, events.size)
-            assertEquals(command.correlationId, events.first().correlationId)
         }
 
     @Test

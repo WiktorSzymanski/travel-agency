@@ -21,6 +21,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryRepository.CommuteQueryRepository
+import pl.szymanski.wiktor.ta.subscribe
 import pl.szymanski.wiktor.ta.timeMet
 import java.time.Duration
 import java.util.UUID
@@ -49,9 +50,9 @@ class OfferMaker(
                 delay(EXPIRED_HASH_POP_DELAY_MS)
                 offerHashes.remove(
                     Triple(
-                        it.commuteId,
-                        it.accommodationId,
-                        it.attractionId,
+                        it.domainEvent.commuteId,
+                        it.domainEvent.accommodationId,
+                        it.domainEvent.attractionId,
                     ).hashCode(),
                 )
             }

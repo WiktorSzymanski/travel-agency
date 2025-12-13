@@ -9,6 +9,7 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.service.TravelOfferService
+import pl.szymanski.wiktor.ta.subscribe
 
 class AttractionEventHandler(
     private val eventBus: EventBus,
@@ -18,7 +19,7 @@ class AttractionEventHandler(
         coroutineScope {
             eventBus.subscribe<AttractionExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferService.expireTravelOfferByAttraction(it.attractionId, it.correlationId!!)
+                    travelOfferService.expireTravelOfferByAttraction(it.domainEvent.attractionId, it.metadata.correlationId)
                 }
             }
         }
@@ -27,7 +28,7 @@ class AttractionEventHandler(
         coroutineScope {
             eventBus.subscribe<AttractionFullEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferUnavailableByAttraction(it.attractionId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferUnavailableByAttraction(it.domainEvent.attractionId, it.metadata.correlationId)
                 }
             }
         }
@@ -36,7 +37,7 @@ class AttractionEventHandler(
         coroutineScope {
             eventBus.subscribe<AttractionAvailableEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferAvailableByAttraction(it.attractionId, it.correlationId!!)
+                    travelOfferService.makeTravelOfferAvailableByAttraction(it.domainEvent.attractionId, it.metadata.correlationId)
                 }
             }
         }

@@ -4,5 +4,4 @@ import java.util.UUID
 
 interface Event {
     val eventId: UUID
-    var correlationId: UUID?
 }

@@ -4,6 +4,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.CommandBusTest
 import pl.szymanski.wiktor.ta.DummyCommandBus
+import pl.szymanski.wiktor.ta.EventEnvelope
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
@@ -38,6 +40,8 @@ class BookingSagaNewTest {
     private lateinit var eventBus: DummyEventBus
     private lateinit var commandBus: DummyCommandBus
 
+    private val metadata = Metadata(UUID.randomUUID(), 1)
+
     @BeforeTest
     fun setup() {
         eventBus = DummyEventBus()
@@ -50,7 +54,6 @@ class BookingSagaNewTest {
         commuteId: UUID = UUID.randomUUID(),
         attractionId: UUID? = UUID.randomUUID(),
         bookingId: UUID = UUID.randomUUID(),
-        correlationId: UUID = UUID.randomUUID(),
         seat: Seat = Seat.Picked("1", "A"),
     ) = TravelOfferReservedEvent(
         travelOfferId = travelOfferId,
@@ -59,7 +62,6 @@ class BookingSagaNewTest {
         attractionId = attractionId,
         bookingId = bookingId,
         seat = seat,
-        correlationId = correlationId,
     )
 
     private fun registerCommuteHandler(onCall: (CommuteCommand) -> Pair<Commute, List<Event>>) {
@@ -97,8 +99,7 @@ class BookingSagaNewTest {
                                 CommuteBookedEvent(
                                     commuteId = command.commuteId,
                                     bookingId = command.bookingId,
-                                    seat = command.seat!!,
-                                    correlationId = command.correlationId,
+                                    seat = command.seat,
                                 ),
                             )
                     is CompensateBookCommuteCommand -> error("Should not compensate on success")
@@ -114,7 +115,6 @@ class BookingSagaNewTest {
                                 AccommodationBookedEvent(
                                     accommodationId = command.accommodationId,
                                     bookingId = command.bookingId,
-                                    correlationId = command.correlationId,
                                 ),
                             )
                     is CompensateBookAccommodationCommand -> error("Should not compensate on success")
@@ -130,7 +130,6 @@ class BookingSagaNewTest {
                                 AttractionBookedEvent(
                                     attractionId = command.attractionId,
                                     bookingId = command.bookingId,
-                                    correlationId = command.correlationId,
                                 ),
                             )
                     is CompensateBookAttractionCommand -> error("Should not compensate on success")
@@ -138,15 +137,15 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
 
             // When
             saga.execute()
 
             // Then
-            val started = eventBus.events.filterIsInstance<BookingSagaStartedEvent>()
-            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
+            val started = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaStartedEvent>()
+            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaFailedEvent>()
 
             assertEquals(1, started.size)
             assertEquals(1, completed.size)
@@ -174,8 +173,7 @@ class BookingSagaNewTest {
                                 CommuteBookedEvent(
                                     commuteId = command.commuteId,
                                     bookingId = command.bookingId,
-                                    seat = command.seat!!,
-                                    correlationId = command.correlationId,
+                                    seat = command.seat,
                                 ),
                             )
                     else -> error("Unexpected commute command: $command")
@@ -190,7 +188,6 @@ class BookingSagaNewTest {
                                 AccommodationBookedEvent(
                                     accommodationId = command.accommodationId,
                                     bookingId = command.bookingId,
-                                    correlationId = command.correlationId,
                                 ),
                             )
                     else -> error("Unexpected accommodation command: $command")
@@ -202,14 +199,14 @@ class BookingSagaNewTest {
                 error("Attraction handler should not be called when attractionId is null, but got: $command")
             }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
 
             // When
             saga.execute()
 
             // Then
-            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaFailedEvent>()
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertTrue(!attractionCalled)
@@ -230,14 +227,14 @@ class BookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
 
             // When
             saga.execute()
 
             // Then
-            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertEquals(triggering.bookingId, failed.first().bookingId)
@@ -258,14 +255,14 @@ class BookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
 
             // When
             saga.execute()
 
             // Then
-            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertEquals(triggering.bookingId, failed.first().bookingId)
@@ -291,8 +288,7 @@ class BookingSagaNewTest {
                             CommuteBookedEvent(
                                 commuteId = command.commuteId,
                                 bookingId = command.bookingId,
-                                seat = command.seat!!,
-                                correlationId = command.correlationId,
+                                seat = command.seat
                             )
                         commuteAgg to listOf(commuteBookedEvent)
                     }
@@ -316,14 +312,14 @@ class BookingSagaNewTest {
             // Attraction should not be called
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
 
             // When
             saga.execute()
 
             // Then
-            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertTrue(commuteCompensated)
@@ -353,8 +349,7 @@ class BookingSagaNewTest {
                             CommuteBookedEvent(
                                 commuteId = command.commuteId,
                                 bookingId = command.bookingId,
-                                seat = command.seat!!,
-                                correlationId = command.correlationId,
+                                seat = command.seat
                             )
                         commuteAgg to listOf(commuteBookedEvent)
                     }
@@ -374,7 +369,6 @@ class BookingSagaNewTest {
                             AccommodationBookedEvent(
                                 accommodationId = command.accommodationId,
                                 bookingId = command.bookingId,
-                                correlationId = command.correlationId,
                             )
                         accommodationAgg to listOf(accommodationBookedEvent)
                     }
@@ -394,14 +388,14 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering)
+            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
 
             // When
             saga.execute()
 
             // Then
-            val completed = eventBus.events.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertTrue(accommodationCompensated)

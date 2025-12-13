@@ -10,7 +10,6 @@ sealed interface AccommodationEvent : Event {
 
 data class AccommodationCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val accommodationId: UUID,
     val name: String,
     val location: LocationEnum,
@@ -19,34 +18,29 @@ data class AccommodationCreatedEvent(
 
 data class AccommodationBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val accommodationId: UUID,
     val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val accommodationId: UUID,
     val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationExpiredEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID? = null,
     override val accommodationId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     override val accommodationId: UUID,
     val bookingId: UUID,
 ) : AccommodationEvent
 
 data class AccommodationBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override var correlationId: UUID?,
     override val accommodationId: UUID,
     val bookingId: UUID,
 ) : AccommodationEvent

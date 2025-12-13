@@ -14,6 +14,7 @@ import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
 import pl.szymanski.wiktor.ta.service.TravelOfferService
+import pl.szymanski.wiktor.ta.subscribe
 
 class TravelOfferEventHandler(
     private val eventBus: EventBus,
@@ -49,7 +50,8 @@ class TravelOfferEventHandler(
                         eventBus,
                         commandBus,
                         travelOfferService,
-                        it,
+                        it.domainEvent,
+                        it.metadata
                     ).execute()
                 }
             }
