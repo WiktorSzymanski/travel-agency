@@ -10,7 +10,6 @@ import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.event.toCompensation
 
 class AttractionCommandHandler(
     private val attractionRepository: AttractionRepository,
@@ -62,7 +61,7 @@ class AttractionCommandHandler(
             .findById(command.attractionId)
             .let {
                 val events = it.compensateBook(command.bookingId)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 
     private suspend fun compensate(command: CompensateCancelAttractionBookingCommand): Pair<Attraction, List<AttractionEvent>> =
@@ -70,6 +69,6 @@ class AttractionCommandHandler(
             .findById(command.attractionId)
             .let {
                 val events = it.compensateCancelBooking(command.bookingId)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 }

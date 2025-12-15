@@ -7,7 +7,9 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.exception.*
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
@@ -190,7 +192,7 @@ class AccommodationTest {
 
         assertEquals(1, events.size)
         assertEventEquals(
-            AccommodationBookingCanceledEvent(
+            AccommodationBookedCompensatedEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             ),
@@ -219,7 +221,7 @@ class AccommodationTest {
 
         assertEquals(1, events.size)
         assertEventEquals(
-            AccommodationBookedEvent(
+            AccommodationBookingCanceledCompensatedEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
             ),

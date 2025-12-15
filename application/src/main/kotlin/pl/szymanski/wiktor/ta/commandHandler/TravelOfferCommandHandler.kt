@@ -19,7 +19,6 @@ import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
-import pl.szymanski.wiktor.ta.event.toCompensation
 
 class TravelOfferCommandHandler(
     private val travelOfferRepository: TravelOfferRepository,
@@ -129,7 +128,7 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let {
                 val events = it.rebook(command.bookingId)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 
     private suspend fun compensate(command: CompensateBookTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
@@ -138,7 +137,7 @@ class TravelOfferCommandHandler(
             .let {
                 val releaseEvents = it.releaseBooking(command.bookingId, command.seat)
                 val cancelEvents = it.cancelBooking(command.bookingId, command.seat)
-                it to (releaseEvents + cancelEvents).map { ev -> ev.toCompensation() }
+                it to (releaseEvents + cancelEvents)
             }
 
     private suspend fun compensate(command: CompensateCancelBookTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
@@ -147,7 +146,7 @@ class TravelOfferCommandHandler(
             .let {
                 val reserveEvents = it.reserve(command.bookingId, command.seat)
                 val bookEvents = it.book(command.bookingId, command.seat)
-                it to (reserveEvents + bookEvents).map { ev -> ev.toCompensation() }
+                it to (reserveEvents + bookEvents)
             }
 
     private suspend fun compensate(command: CompensateReserveTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
@@ -155,7 +154,7 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let {
                 val events = it.cancelReservation(command.bookingId, command.seat)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 
     private suspend fun compensate(command: CompensateCancelReserveTravelOfferCommand): Pair<TravelOffer, List<TravelOfferEvent>> =
@@ -163,6 +162,6 @@ class TravelOfferCommandHandler(
             .findById(command.travelOfferId)
             .let {
                 val events = it.reserve(command.bookingId, command.seat)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 }

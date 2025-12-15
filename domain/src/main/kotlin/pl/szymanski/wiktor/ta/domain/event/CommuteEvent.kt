@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-sealed interface CommuteEvent : Event {
+sealed interface CommuteEvent : DomainEvent {
     val commuteId: UUID
 }
 

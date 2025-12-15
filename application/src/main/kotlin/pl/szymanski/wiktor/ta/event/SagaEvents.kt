@@ -1,10 +1,11 @@
 package pl.szymanski.wiktor.ta.event
 
 import pl.szymanski.wiktor.ta.domain.Seat
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.DomainEvent
+import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import java.util.UUID
 
-interface SagaEvent : Event
+interface SagaEvent : PublishableEvent
 
 data class BookingSagaStartedEvent(
     override val eventId: UUID = UUID.randomUUID(),

@@ -6,10 +6,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
-import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
@@ -50,7 +46,7 @@ class TravelOfferEventHandler(
                         eventBus,
                         commandBus,
                         travelOfferService,
-                        it.domainEvent,
+                        it.event,
                         it.metadata
                     ).execute()
                 }

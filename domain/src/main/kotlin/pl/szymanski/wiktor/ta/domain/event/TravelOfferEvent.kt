@@ -3,7 +3,7 @@ package pl.szymanski.wiktor.ta.domain.event
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-sealed interface TravelOfferEvent : Event {
+sealed interface TravelOfferEvent : DomainEvent {
     val travelOfferId: UUID
 }
 

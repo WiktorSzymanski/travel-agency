@@ -1,22 +1,21 @@
 package pl.szymanski.wiktor.ta.event
 
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import java.util.UUID
+
+interface DateMetEvent : PublishableEvent
 
 data class CommuteDateMetEvent(
     override val eventId: UUID = UUID.randomUUID(),
     val commuteId: UUID,
-    var correlationId: UUID?,
-) : Event
+) : DateMetEvent
 
 data class AccommodationDateMetEvent(
     override val eventId: UUID = UUID.randomUUID(),
     val accommodationId: UUID,
-    var correlationId: UUID?,
-) : Event
+) : DateMetEvent
 
 class AttractionDateMetEvent(
     override val eventId: UUID = UUID.randomUUID(),
     val attractionId: UUID,
-    var correlationId: UUID?,
-) : Event
+) : DateMetEvent

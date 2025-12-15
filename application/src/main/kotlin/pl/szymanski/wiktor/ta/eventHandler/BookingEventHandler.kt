@@ -28,10 +28,10 @@ class BookingEventHandler (
                 scope.launchCatching {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         ReserveTravelOfferCommand(
-                            it.domainEvent.travelOfferId,
+                            it.event.travelOfferId,
                             it.metadata.correlationId,
-                            it.domainEvent.bookingId,
-                            it.domainEvent.seat,
+                            it.event.bookingId,
+                            it.event.seat,
                         ) as TravelOfferCommand,
                     )
                 }
@@ -45,10 +45,10 @@ class BookingEventHandler (
                     runCatching {
                         commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                             ReleaseTravelOfferCommand(
-                                it.domainEvent.travelOfferId,
+                                it.event.travelOfferId,
                                 it.metadata.correlationId,
-                                it.domainEvent.bookingId,
-                                it.domainEvent.seat,
+                                it.event.bookingId,
+                                it.event.seat,
                             ) as TravelOfferCommand,
                         )
                     }.onFailure { e ->

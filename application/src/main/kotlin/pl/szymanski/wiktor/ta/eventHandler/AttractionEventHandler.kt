@@ -19,7 +19,7 @@ class AttractionEventHandler(
         coroutineScope {
             eventBus.subscribe<AttractionExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferService.expireTravelOfferByAttraction(it.domainEvent.attractionId, it.metadata.correlationId)
+                    travelOfferService.expireTravelOfferByAttraction(it.event.attractionId, it.metadata.correlationId)
                 }
             }
         }
@@ -28,7 +28,7 @@ class AttractionEventHandler(
         coroutineScope {
             eventBus.subscribe<AttractionFullEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferUnavailableByAttraction(it.domainEvent.attractionId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferUnavailableByAttraction(it.event.attractionId, it.metadata.correlationId)
                 }
             }
         }
@@ -37,7 +37,7 @@ class AttractionEventHandler(
         coroutineScope {
             eventBus.subscribe<AttractionAvailableEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferAvailableByAttraction(it.domainEvent.attractionId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferAvailableByAttraction(it.event.attractionId, it.metadata.correlationId)
                 }
             }
         }

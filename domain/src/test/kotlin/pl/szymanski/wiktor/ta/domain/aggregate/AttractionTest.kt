@@ -7,12 +7,13 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.exception.*
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -247,7 +248,7 @@ class AttractionTest {
         val events = attraction.compensateBook(bookingId)
 
         assertEventEquals(
-            AttractionBookingCanceledEvent(
+            AttractionBookedCompensatedEvent(
                 attractionId = attraction.id,
                 bookingId = bookingId,
             ),
@@ -278,7 +279,7 @@ class AttractionTest {
 
         assertEquals(2, events.size)
         assertEventEquals(
-            AttractionBookingCanceledEvent(
+            AttractionBookedCompensatedEvent(
                 attractionId = attraction.id,
                 bookingId = id2,
             ),
@@ -299,7 +300,7 @@ class AttractionTest {
         val events = attraction.compensateCancelBooking(bookingId)
 
         assertEventEquals(
-            AttractionBookedEvent(
+            AttractionBookingCanceledCompensatedEvent(
                 attractionId = attraction.id,
                 bookingId = bookingId,
             ),
@@ -336,7 +337,7 @@ class AttractionTest {
 
         assertEquals(2, events.size)
         assertEventEquals(
-            AttractionBookedEvent(
+            AttractionBookingCanceledCompensatedEvent(
                 attractionId = attraction.id,
                 bookingId = bookingId,
             ),

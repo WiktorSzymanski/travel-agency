@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.util.UUID
 
-sealed interface AccommodationEvent : Event {
+sealed interface AccommodationEvent : DomainEvent {
     val accommodationId: UUID
 }
 

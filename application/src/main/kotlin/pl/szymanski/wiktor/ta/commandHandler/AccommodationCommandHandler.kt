@@ -10,7 +10,6 @@ import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.event.toCompensation
 
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
@@ -61,7 +60,7 @@ class AccommodationCommandHandler(
             .findById(command.accommodationId)
             .let {
                 val events = it.compensateBook(command.bookingId)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 
     private suspend fun compensate(command: CompensateCancelAccommodationBookingCommand): Pair<Accommodation, List<AccommodationEvent>> =
@@ -69,6 +68,6 @@ class AccommodationCommandHandler(
             .findById(command.accommodationId)
             .let {
                 val events = it.compensateCancelBooking(command.bookingId)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 }

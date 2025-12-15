@@ -23,7 +23,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.DomainEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
@@ -64,17 +64,17 @@ class CancelBookingSagaNewTest {
         seat = seat,
     )
 
-    private fun registerCommuteHandler(onCall: (CommuteCommand) -> Pair<Commute, List<Event>>) {
+    private fun registerCommuteHandler(onCall: (CommuteCommand) -> Pair<Commute, List<DomainEvent>>) {
         commandBus.registerHandler(CommuteCommand::class.java) { c -> onCall(c) }
         commandBus.registerHandler(CompensateCommuteCommand::class.java) { c -> onCall(c) }
     }
 
-    private fun registerAccommodationHandler(onCall: (AccommodationCommand) -> Pair<Accommodation, List<Event>>) {
+    private fun registerAccommodationHandler(onCall: (AccommodationCommand) -> Pair<Accommodation, List<DomainEvent>>) {
         commandBus.registerHandler(AccommodationCommand::class.java) { c -> onCall(c) }
         commandBus.registerHandler(CompensateAccommodationCommand::class.java) { c -> onCall(c) }
     }
 
-    private fun registerAttractionHandler(onCall: (AttractionCommand) -> Pair<Attraction, List<Event>>) {
+    private fun registerAttractionHandler(onCall: (AttractionCommand) -> Pair<Attraction, List<DomainEvent>>) {
         commandBus.registerHandler(AttractionCommand::class.java) { c -> onCall(c) }
         commandBus.registerHandler(CompensateAttractionCommand::class.java) { c -> onCall(c) }
     }
@@ -143,9 +143,9 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val started = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaStartedEvent>()
-            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val started = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaStartedEvent>()
+            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
 
             assertEquals(1, started.size)
             assertEquals(1, completed.size)
@@ -206,8 +206,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertTrue(!attractionCalled)
@@ -234,8 +234,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }
@@ -282,8 +282,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }
@@ -344,8 +344,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }
@@ -369,8 +369,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.domainEvent }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }

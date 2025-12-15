@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 import java.util.UUID
 
-sealed interface AttractionEvent : Event {
+sealed interface AttractionEvent : DomainEvent {
     val attractionId: UUID
 }
 

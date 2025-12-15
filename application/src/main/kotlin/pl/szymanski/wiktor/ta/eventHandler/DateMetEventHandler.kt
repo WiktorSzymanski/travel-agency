@@ -6,7 +6,6 @@ import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
@@ -36,9 +35,9 @@ class DateMetEventHandler(
             scope.launchCatching {
                 commuteCommandHandler.handle(
                     ExpireCommuteCommand(
-                        commuteId = it.domainEvent.commuteId,
+                        commuteId = it.event.commuteId,
                         correlationId = it.metadata.correlationId,
-                    ) as CommuteCommand,
+                    )
                 )
             }
         }
@@ -49,7 +48,7 @@ class DateMetEventHandler(
             scope.launchCatching {
                 accommodationCommandHandler.handle(
                     ExpireAccommodationCommand(
-                        accommodationId = it.domainEvent.accommodationId,
+                        accommodationId = it.event.accommodationId,
                         correlationId = it.metadata.correlationId,
                     ) as AccommodationCommand,
                 )
@@ -62,7 +61,7 @@ class DateMetEventHandler(
             scope.launchCatching {
                 attractionCommandHandler.handle(
                     ExpireAttractionCommand(
-                        attractionId = it.domainEvent.attractionId,
+                        attractionId = it.event.attractionId,
                         correlationId = it.metadata.correlationId,
                     ) as AttractionCommand,
                 )

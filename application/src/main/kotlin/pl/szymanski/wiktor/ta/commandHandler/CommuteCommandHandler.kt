@@ -10,8 +10,6 @@ import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.event.toCompensation
-
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
@@ -62,7 +60,7 @@ class CommuteCommandHandler(
             .findById(command.commuteId)
             .let {
                 val events = it.compensateBookSeat(command.bookingId)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 
     private suspend fun compensate(command: CompensateCancelCommuteBookingCommand): Pair<Commute, List<CommuteEvent>> =
@@ -70,6 +68,6 @@ class CommuteCommandHandler(
             .findById(command.commuteId)
             .let {
                 val events = it.compensateCancelBookedSeat(command.bookingId, command.seat)
-                it to events.map { ev -> ev.toCompensation() }
+                it to events
             }
 }

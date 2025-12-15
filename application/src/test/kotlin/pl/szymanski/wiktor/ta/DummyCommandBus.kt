@@ -11,7 +11,7 @@ import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.DomainEvent
 import kotlin.collections.get
 
 class DummyCommandBus : CommandBus {
@@ -24,7 +24,7 @@ class DummyCommandBus : CommandBus {
         handlers[commandType] = handler
     }
 
-    override  suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<Event>> {
+    override  suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<DomainEvent>> {
         val handler =
             handlers[command::class.java.superclass] as? CommandHandler<C, E>
                 ?: throw IllegalArgumentException("No handler registered for ${command::class.java.superclass}")

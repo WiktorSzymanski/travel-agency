@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import java.util.UUID
 
-interface BookingEvent : Event {
+sealed interface BookingEvent : DomainEvent {
     val bookingId: UUID
 }
 

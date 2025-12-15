@@ -1,9 +1,9 @@
 package pl.szymanski.wiktor.ta
 
-import pl.szymanski.wiktor.ta.domain.event.Event
+import pl.szymanski.wiktor.ta.domain.event.DomainEvent
 
 interface EventStore {
-    suspend fun append(event: Event, revision: Int)
-    suspend fun appendNoRevision(event: Event)
-    suspend fun getEvents(aggregateId: String): List<Event>
+    suspend fun append(event: DomainEvent, revision: Int)
+    suspend fun appendNoRevision(event: DomainEvent)
+    suspend fun getEvents(aggregateId: String): List<DomainEvent>
 }

@@ -19,7 +19,7 @@ class CommuteEventHandler(
         coroutineScope {
             eventBus.subscribe<CommuteExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferService.expireTravelOfferByCommute(it.domainEvent.commuteId, it.metadata.correlationId)
+                    travelOfferService.expireTravelOfferByCommute(it.event.commuteId, it.metadata.correlationId)
                 }
             }
         }
@@ -28,7 +28,7 @@ class CommuteEventHandler(
         coroutineScope {
             eventBus.subscribe<CommuteFullEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferUnavailableByCommute(it.domainEvent.commuteId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferUnavailableByCommute(it.event.commuteId, it.metadata.correlationId)
                 }
             }
         }
@@ -37,7 +37,7 @@ class CommuteEventHandler(
         coroutineScope {
             eventBus.subscribe<CommuteAvailableEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferAvailableByCommute(it.domainEvent.commuteId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferAvailableByCommute(it.event.commuteId, it.metadata.correlationId)
                 }
             }
         }

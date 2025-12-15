@@ -50,9 +50,9 @@ class OfferMaker(
                 delay(EXPIRED_HASH_POP_DELAY_MS)
                 offerHashes.remove(
                     Triple(
-                        it.domainEvent.commuteId,
-                        it.domainEvent.accommodationId,
-                        it.domainEvent.attractionId,
+                        it.event.commuteId,
+                        it.event.accommodationId,
+                        it.event.attractionId,
                     ).hashCode(),
                 )
             }

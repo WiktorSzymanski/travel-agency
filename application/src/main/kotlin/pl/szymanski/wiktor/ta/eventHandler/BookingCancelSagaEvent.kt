@@ -29,7 +29,7 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         ProcessCancelBookingCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
                         ) as BookingCommand,
                     )
@@ -43,7 +43,7 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         CancelBookingCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
                         ) as BookingCommand,
                     )
@@ -57,10 +57,10 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         CancelBookTravelOfferCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
-                            bookingId = it.domainEvent.bookingId,
-                            seat = it.domainEvent.seat,
+                            bookingId = it.event.bookingId,
+                            seat = it.event.seat,
                         ) as TravelOfferCommand,
                     )
                 }
@@ -73,9 +73,9 @@ class BookingCancelSagaEvent (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         FailCancelBookingCommand(
-                            bookingId = it.domainEvent.bookingId,
+                            bookingId = it.event.bookingId,
                             correlationId = it.metadata.correlationId,
-                            message = it.domainEvent.message,
+                            message = it.event.message,
                         ) as BookingCommand,
                     )
                 }

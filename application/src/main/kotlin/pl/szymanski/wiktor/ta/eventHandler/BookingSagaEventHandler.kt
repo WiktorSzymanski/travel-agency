@@ -28,7 +28,7 @@ class BookingSagaEventHandler (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         ProcessBookingCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
                         ) as BookingCommand,
                     )
@@ -42,7 +42,7 @@ class BookingSagaEventHandler (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         CompleteBookingCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
                         ) as BookingCommand,
                     )
@@ -56,10 +56,10 @@ class BookingSagaEventHandler (
                 scope.launchCatching {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         BookTravelOfferCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
-                            bookingId = it.domainEvent.bookingId,
-                            seat = it.domainEvent.seat,
+                            bookingId = it.event.bookingId,
+                            seat = it.event.seat,
                         ) as TravelOfferCommand,
                     )
                 }
@@ -72,9 +72,9 @@ class BookingSagaEventHandler (
                 scope.launchCatching {
                     commandBus.dispatch<BookingCommand, Booking>(
                         FailBookingCommand(
-                            it.domainEvent.bookingId,
+                            it.event.bookingId,
                             it.metadata.correlationId,
-                            message = it.domainEvent.message,
+                            message = it.event.message,
                         ) as BookingCommand,
                     )
                 }

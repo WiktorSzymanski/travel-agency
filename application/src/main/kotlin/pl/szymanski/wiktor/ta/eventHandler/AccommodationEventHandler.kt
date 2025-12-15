@@ -19,7 +19,7 @@ class AccommodationEventHandler(
         coroutineScope {
             eventBus.subscribe<AccommodationExpiredEvent> {
                 scope.launchCatching {
-                    travelOfferService.expireTravelOfferByAccommodation(it.domainEvent.accommodationId, it.metadata.correlationId)
+                    travelOfferService.expireTravelOfferByAccommodation(it.event.accommodationId, it.metadata.correlationId)
                 }
             }
         }
@@ -28,7 +28,7 @@ class AccommodationEventHandler(
         coroutineScope {
             eventBus.subscribe<AccommodationBookedEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferUnavailableByAccommodation(it.domainEvent.accommodationId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferUnavailableByAccommodation(it.event.accommodationId, it.metadata.correlationId)
                 }
             }
         }
@@ -37,7 +37,7 @@ class AccommodationEventHandler(
         coroutineScope {
             eventBus.subscribe<AccommodationBookingCanceledEvent> {
                 scope.launchCatching {
-                    travelOfferService.makeTravelOfferAvailableByAccommodation(it.domainEvent.accommodationId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferAvailableByAccommodation(it.event.accommodationId, it.metadata.correlationId)
                 }
             }
         }

@@ -9,7 +9,9 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.exception.*
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
@@ -283,7 +285,7 @@ class CommuteTest {
 
         assertEquals(1, events.size)
         assertEventEquals(
-            CommuteBookedEvent(
+            CommuteBookingCanceledCompensatedEvent(
                 commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat1,
@@ -314,7 +316,7 @@ class CommuteTest {
 
         assertEquals(2, events.size)
         assertEventEquals(
-            CommuteBookedEvent(
+            CommuteBookingCanceledCompensatedEvent(
                 commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat3,
@@ -337,7 +339,7 @@ class CommuteTest {
 
         assertEquals(1, events.size)
         assertEventEquals(
-            CommuteBookingCanceledEvent(
+            CommuteBookedCompensatedEvent(
                 commuteId = commute.id,
                 bookingId = bookingId,
                 seat = seat1,
@@ -366,7 +368,7 @@ class CommuteTest {
 
         assertEquals(2, events.size)
         assertEventEquals(
-            CommuteBookingCanceledEvent(
+            CommuteBookedCompensatedEvent(
                 commuteId = commute.id,
                 bookingId = id2,
                 seat = seat2,
