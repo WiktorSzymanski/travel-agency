@@ -476,7 +476,6 @@ class TravelOfferTest {
 
         val base = TravelOffer(id, "t", comId, accId, attrId)
 
-        // Created event is ignored by in-aggregate apply; state is set on creation or fromEvents
         base.apply(TravelOfferCreatedEvent(travelOfferId = id, name = "X", commuteId = comId, accommodationId = accId, attractionId = attrId))
         assertEquals(id, base.id)
         assertEquals("t", base.name)
@@ -520,7 +519,6 @@ class TravelOfferTest {
 
         val base = TravelOffer(id, "t", comId, accId, attrId)
 
-        // First apply a reservation to set RESERVED state with bookingId
         base.apply(
             TravelOfferReservedEvent(
                 travelOfferId = id,
@@ -534,7 +532,6 @@ class TravelOfferTest {
         assertEquals(TravelOfferStatusEnum.RESERVED, base.status)
         assertEquals(bookingId, base.bookingId)
 
-        // Then apply ReservationCanceled -> should become AVAILABLE and clear bookingId
         base.apply(
             TravelOfferReservationCanceledEvent(
                 travelOfferId = id,
@@ -585,20 +582,17 @@ class TravelOfferTest {
         assertEquals(attrId, result.attractionId)
     }
 
-    // Compensation branches (apply)
     @Test
     fun accommodation_apply_compensation_events_should_update_state() {
         val id = UUID.randomUUID()
         val bookingId = UUID.randomUUID()
         val base = Accommodation(id, "acc", LocationEnum.PARIS, Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1)))
 
-        // Given currently booked -> applying BookedCompensated should free it
         base.apply(AccommodationBookedEvent(accommodationId = id, bookingId = bookingId))
         base.apply(AccommodationBookedCompensatedEvent(accommodationId = id, bookingId = bookingId))
         assertEquals(AccommodationStatusEnum.AVAILABLE, base.status)
         assertNull(base.bookingId)
 
-        // Applying BookingCanceledCompensated should set it back to booked
         base.apply(AccommodationBookingCanceledCompensatedEvent(accommodationId = id, bookingId = bookingId))
         assertEquals(AccommodationStatusEnum.BOOKED, base.status)
         assertEquals(bookingId, base.bookingId)
@@ -610,21 +604,18 @@ class TravelOfferTest {
         val bookingId = UUID.randomUUID()
         val a = Attraction(id, "a", LocationEnum.VENICE, LocalDateTime.now().plusDays(1), 1)
 
-        // Fill to FULL
         a.apply(AttractionBookedEvent(attractionId = id, bookingId = bookingId))
         a.apply(AttractionFullEvent(attractionId = id))
 
-        // Applying BookedCompensated removes booking and makes it SCHEDULED again
         a.apply(AttractionBookedCompensatedEvent(attractionId = id, bookingId = bookingId))
         assertEquals(0, a.bookings.size)
 
         a.apply(AttractionAvailableEvent(attractionId = id))
         assertEquals(AttractionStatusEnum.SCHEDULED, a.status)
 
-        // Applying BookingCanceledCompensated adds a booking and makes it FULL (capacity=1)
         a.apply(AttractionBookingCanceledCompensatedEvent(attractionId = id, bookingId = bookingId))
         assertEquals(1, a.bookings.size)
-        // Status change (to FULL) is applied by a separate event
+
         a.apply(AttractionFullEvent(attractionId = id))
         assertEquals(AttractionStatusEnum.FULL, a.status)
     }
@@ -694,5 +685,76 @@ class TravelOfferTest {
         offer.apply(TravelOfferBookingCanceledCompensatedEvent(travelOfferId = id, accommodationId = accId, commuteId = comId, attractionId = attrId, bookingId = bookingId, seat = seat))
         assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
         assertEquals(bookingId, offer.bookingId)
+    }
+
+    // Compensation methods (domain)
+    @Test
+    fun compensateBook_should_succeed_when_bookingId_matches() {
+        // Given
+        offer.reserve(bookingId, seat)
+        offer.book(bookingId, seat)
+
+        // When
+        val events = offer.compensateBook(bookingId, seat)
+
+        // Then
+        assertEventEquals(
+            TravelOfferBookedCompensatedEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                bookingId = bookingId,
+                seat = seat,
+            ),
+            events.first(),
+        )
+        assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
+        assertNull(offer.bookingId)
+    }
+
+    @Test
+    fun compensateBook_should_fail_when_bookingId_does_not_match() {
+        // Given
+        val other = UUID.randomUUID()
+        offer.reserve(other, seat)
+        offer.book(other, seat)
+
+        // Then
+        assertFailsWith<TravelOfferBookingCancelFailedException> { offer.compensateBook(bookingId, seat) }
+    }
+
+    @Test
+    fun compensateCancelBooking_should_succeed_when_no_active_booking() {
+        // Given
+        assertNull(offer.bookingId)
+        assertEquals(TravelOfferStatusEnum.AVAILABLE, offer.status)
+
+        // When
+        val events = offer.compensateCancelBooking(bookingId, seat)
+
+        // Then
+        assertEventEquals(
+            TravelOfferBookingCanceledCompensatedEvent(
+                travelOfferId = travelOfferId,
+                accommodationId = accommodationId,
+                commuteId = commuteId,
+                attractionId = attractionId,
+                bookingId = bookingId,
+                seat = seat,
+            ),
+            events.first(),
+        )
+        assertEquals(TravelOfferStatusEnum.BOOKED, offer.status)
+        assertEquals(bookingId, offer.bookingId)
+    }
+
+    @Test
+    fun compensateCancelBooking_should_fail_when_active_booking_exists() {
+        // Given
+        offer.reserve(bookingId, seat)
+
+        // Then
+        assertFailsWith<TravelOfferBookFailedException> { offer.compensateCancelBooking(UUID.randomUUID(), seat) }
     }
 }

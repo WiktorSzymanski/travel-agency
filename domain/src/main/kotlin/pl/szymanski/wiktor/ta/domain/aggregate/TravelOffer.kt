@@ -311,4 +311,48 @@ data class TravelOffer(
             seat = seat,
         ))
     }
+
+    fun compensateBook(
+        bookingId: UUID,
+        seat: Seat,
+    ): List<TravelOfferEvent> {
+        if (this.bookingId != bookingId) {
+            throw TravelOfferBookingCancelFailedException(id, bookingId)
+        }
+
+        this.status = TravelOfferStatusEnum.AVAILABLE
+        this.bookingId = null
+
+        return listOf(TravelOfferBookedCompensatedEvent(
+            travelOfferId = id,
+            accommodationId = accommodationId,
+            commuteId = commuteId,
+            attractionId = attractionId,
+            bookingId = bookingId,
+            seat = seat,
+        ))
+    }
+
+    fun compensateCancelBooking(
+        bookingId: UUID,
+        seat: Seat,
+    ): List<TravelOfferEvent> {
+        if (this.bookingId != null) {
+            throw TravelOfferBookFailedException(status)
+        }
+
+        this.status = TravelOfferStatusEnum.BOOKED
+        this.bookingId = bookingId
+
+        return listOf(TravelOfferBookingCanceledCompensatedEvent(
+            travelOfferId = id,
+            accommodationId = accommodationId,
+            commuteId = commuteId,
+            attractionId = attractionId,
+            bookingId = bookingId,
+            seat = seat,
+        ))
+    }
+    
+    
 }

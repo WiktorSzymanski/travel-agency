@@ -219,7 +219,7 @@ data class Attraction(
         }
 
         return listOf(
-            AttractionBookingCanceledEvent(
+            AttractionBookedCompensatedEvent(
                 attractionId = id,
                 bookingId = bookingId,
             ),
@@ -244,7 +244,7 @@ data class Attraction(
         bookings.add(bookingId)
 
         return listOf(
-            AttractionBookedEvent(
+            AttractionBookingCanceledCompensatedEvent(
                 attractionId = id,
                 bookingId = bookingId,
             ),

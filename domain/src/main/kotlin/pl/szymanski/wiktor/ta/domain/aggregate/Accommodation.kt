@@ -166,7 +166,7 @@ data class Accommodation(
         this.bookingId = null
         this.status = AccommodationStatusEnum.AVAILABLE
 
-        return listOf(AccommodationBookingCanceledEvent(
+        return listOf(AccommodationBookedCompensatedEvent(
             accommodationId = id,
             bookingId = bookingId,
         ))
@@ -180,7 +180,7 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
 
-        return listOf(AccommodationBookedEvent(
+        return listOf(AccommodationBookingCanceledCompensatedEvent(
             accommodationId = id,
             bookingId = bookingId,
         ))

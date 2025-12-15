@@ -200,7 +200,7 @@ data class Commute(
         this.bookings[bookingId] = seat
 
         return listOfNotNull(
-            CommuteBookedEvent(
+            CommuteBookingCanceledCompensatedEvent(
                 commuteId = id,
                 bookingId = bookingId,
                 seat = seat,
@@ -219,7 +219,7 @@ data class Commute(
                 ?: throw CommuteCancelBookedSeatFailedException(bookingId, id)
 
         return listOfNotNull(
-            CommuteBookingCanceledEvent(
+            CommuteBookedCompensatedEvent(
                 commuteId = id,
                 bookingId = bookingId,
                 seat = seat,

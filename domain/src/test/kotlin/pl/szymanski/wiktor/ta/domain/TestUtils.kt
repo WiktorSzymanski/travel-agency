@@ -26,7 +26,9 @@ import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
@@ -63,8 +65,10 @@ fun Event.copy(
         is TravelOfferReservedEvent -> copy(eventId = eventId)
         is TravelOfferReservationCanceledEvent -> copy(eventId = eventId)
         is TravelOfferBookedEvent -> copy(eventId = eventId)
+        is TravelOfferBookedCompensatedEvent -> copy(eventId = eventId)
         is TravelOfferReleaseEvent -> copy(eventId = eventId)
         is TravelOfferBookingCanceledEvent -> copy(eventId = eventId)
+        is TravelOfferBookingCanceledCompensatedEvent -> copy(eventId = eventId)
         is TravelOfferRebookedEvent -> copy(eventId = eventId)
         is TravelOfferExpiredEvent -> copy(eventId = eventId)
         is TravelOfferMadeUnavailableEvent -> copy(eventId = eventId)
