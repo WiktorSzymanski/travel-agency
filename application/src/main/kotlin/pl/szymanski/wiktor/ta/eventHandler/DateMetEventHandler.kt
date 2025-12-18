@@ -4,8 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
-import pl.szymanski.wiktor.ta.command.AccommodationCommand
-import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
@@ -50,7 +48,7 @@ class DateMetEventHandler(
                     ExpireAccommodationCommand(
                         accommodationId = it.event.accommodationId,
                         correlationId = it.metadata.correlationId,
-                    ) as AccommodationCommand,
+                    )
                 )
             }
         }
@@ -63,7 +61,7 @@ class DateMetEventHandler(
                     ExpireAttractionCommand(
                         attractionId = it.event.attractionId,
                         correlationId = it.metadata.correlationId,
-                    ) as AttractionCommand,
+                    )
                 )
             }
         }

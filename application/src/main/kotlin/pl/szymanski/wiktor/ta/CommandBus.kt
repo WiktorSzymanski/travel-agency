@@ -10,4 +10,5 @@ fun interface CommandHandler<C : Command, E> {
 interface CommandBus {
     fun <C : Command, E> registerHandler(commandType: Class<C>, handler: CommandHandler<C, E>)
     suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<DomainEvent>>
+    suspend fun dispatch(command: Command)
 }

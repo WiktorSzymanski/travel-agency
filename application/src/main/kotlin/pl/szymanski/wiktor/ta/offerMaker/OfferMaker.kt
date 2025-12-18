@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
-import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
@@ -70,7 +69,7 @@ class OfferMaker(
                     if (!offerHashes.contains(offerMatchHash)) {
                         launch {
                             runCatching {
-                                travelOfferCommandHandler.handle(offerTriple.toCommand() as TravelOfferCommand)
+                                travelOfferCommandHandler.handle(offerTriple.toCommand())
                             }.exceptionOrNull()?.let {
                                 if (it.message?.contains("E11000 duplicate key error collection") ?: false) {
                                     log.info(

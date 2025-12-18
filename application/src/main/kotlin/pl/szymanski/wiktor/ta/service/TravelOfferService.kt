@@ -1,14 +1,13 @@
 package pl.szymanski.wiktor.ta.service
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.slf4j.LoggerFactory
+import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.command.ExpireTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferAvailableCommand
 import pl.szymanski.wiktor.ta.command.MakeTravelOfferUnavailableCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
-import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
@@ -17,186 +16,166 @@ import java.util.UUID
 
 class TravelOfferService(
     private val travelOfferRepository: TravelOfferQueryRepository,
-    private val travelOfferCommandHandler: TravelOfferCommandHandler,
+    private val commandBus: CommandBus,
 ) {
+    private val log = LoggerFactory.getLogger(this::class.java)
+
+    private suspend fun forEachOffer(
+        id: UUID,
+        correlationId: UUID,
+        findOffers: suspend (UUID) -> List<UUID>,
+        eligible: suspend (UUID) -> Boolean = { true },
+        buildCommand: (UUID, UUID) -> TravelOfferCommand,
+    ) = supervisorScope {
+        val offerIds = findOffers(id)
+        offerIds.forEach { offerId ->
+            launch {
+                try {
+                    if (!eligible(offerId)) return@launch
+                    val command = buildCommand(offerId, correlationId)
+                    commandBus.dispatch(command)
+                } catch (ex: Exception) {
+                    log.debug(
+                        "TravelOfferService batch error for offer={} corrId={}: {}",
+                        offerId,
+                        correlationId,
+                        ex.message
+                    )
+                }
+            }
+        }
+    }
+
     suspend fun expireTravelOfferByCommute(
         commuteId: UUID,
         correlationId: UUID,
-    ) {
-        travelOfferRepository
-            .findByCommuteId(commuteId)
-            .map {
-                travelOfferCommandHandler.handle(
-                    ExpireTravelOfferCommand(
-                        travelOfferId = it,
-                        correlationId = correlationId,
-                    ) as TravelOfferCommand,
-                )
-            }
-    }
+    ) : Unit = forEachOffer(
+        id = commuteId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByCommuteId,
+        buildCommand = { offerId, corrId -> ExpireTravelOfferCommand(offerId, corrId) }
+    )
 
     suspend fun expireTravelOfferByAttraction(
         attractionId: UUID,
         correlationId: UUID,
-    ) {
-        travelOfferRepository
-            .findByAttractionId(attractionId)
-            .map {
-                travelOfferCommandHandler.handle(
-                    ExpireTravelOfferCommand(
-                        travelOfferId = it,
-                        correlationId = correlationId,
-                    ) as TravelOfferCommand,
-                )
-            }
-    }
+    ) : Unit = forEachOffer(
+        id = attractionId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByAttractionId,
+        buildCommand = { offerId, corrId -> ExpireTravelOfferCommand(offerId, corrId) }
+    )
 
     suspend fun expireTravelOfferByAccommodation(
         accommodationId: UUID,
         correlationId: UUID,
-    ) {
-        travelOfferRepository
-            .findByAccommodationId(accommodationId)
-            .map {
-                travelOfferCommandHandler.handle(
-                    ExpireTravelOfferCommand(
-                        travelOfferId = it,
-                        correlationId = correlationId,
-                    ) as TravelOfferCommand,
-                )
-            }
-    }
+    ) : Unit = forEachOffer(
+        id = accommodationId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByAccommodationId,
+        buildCommand = { offerId, corrId -> ExpireTravelOfferCommand(travelOfferId = offerId, correlationId = corrId ) }
+    )
 
     suspend fun checkTravelOfferComponentsAvailability(travelOfferId: UUID): Boolean {
         return travelOfferRepository.findStatusesOfComponents(
             travelOfferId,
         )?.let { (commuteStatus, accommodationStatus, attractionStatus) ->
             commuteStatus == CommuteStatusEnum.SCHEDULED &&
-                accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
-                (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
+            accommodationStatus == AccommodationStatusEnum.AVAILABLE &&
+            (attractionStatus == null || attractionStatus == AttractionStatusEnum.SCHEDULED)
         } ?: throw IllegalArgumentException("Invalid travel offer id: $travelOfferId")
     }
 
     suspend fun makeTravelOfferUnavailableByCommute(
         commuteId: UUID,
         correlationId: UUID,
-    ) = coroutineScope {
-        travelOfferRepository
-            .findByCommuteId(commuteId)
-            .map {
-                async {
-                    runCatching {
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }
-            }.awaitAll()
-    }
+    ) : Unit = forEachOffer(
+        id = commuteId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByCommuteId,
+        buildCommand = { offerId, corrId ->
+            MakeTravelOfferUnavailableCommand(
+                travelOfferId = offerId,
+                correlationId = corrId,
+            )
+        },
+    )
 
     suspend fun makeTravelOfferUnavailableByAttraction(
         attractionId: UUID,
         correlationId: UUID,
-    ) = coroutineScope {
-        travelOfferRepository
-            .findByAttractionId(attractionId)
-            .map {
-                async {
-                    runCatching {
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }
-            }.awaitAll()
-    }
+    ) : Unit = forEachOffer(
+        id = attractionId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByAttractionId,
+        buildCommand = { offerId, corrId ->
+            MakeTravelOfferUnavailableCommand(
+                travelOfferId = offerId,
+                correlationId = corrId,
+            )
+        },
+    )
 
     suspend fun makeTravelOfferUnavailableByAccommodation(
         accommodationId: UUID,
         correlationId: UUID,
-    ) = coroutineScope {
-        travelOfferRepository
-            .findByAccommodationId(accommodationId)
-            .map {
-                async {
-                    runCatching {
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferUnavailableCommand(
-                                travelOfferId = it,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }
-            }.awaitAll()
-    }
+    ) : Unit = forEachOffer(
+        id = accommodationId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByAccommodationId,
+        buildCommand = { offerId, corrId ->
+            MakeTravelOfferUnavailableCommand(
+                travelOfferId = offerId,
+                correlationId = corrId,
+            )
+        },
+    )
 
     suspend fun makeTravelOfferAvailableByCommute(
         commuteId: UUID,
         correlationId: UUID,
-    ) = coroutineScope {
-        travelOfferRepository
-            .findByCommuteId(commuteId)
-            .map {
-                async {
-                    runCatching {
-                        if (!checkTravelOfferComponentsAvailability(it)) return@async
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferAvailableCommand(
-                                travelOfferId = it,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }
-            }.awaitAll()
-    }
+    ) : Unit = forEachOffer(
+        id = commuteId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByCommuteId,
+        eligible = ::checkTravelOfferComponentsAvailability,
+        buildCommand = { offerId, corrId ->
+            MakeTravelOfferAvailableCommand(
+                travelOfferId = offerId,
+                correlationId = corrId,
+            )
+        },
+    )
 
     suspend fun makeTravelOfferAvailableByAttraction(
         attractionId: UUID,
         correlationId: UUID,
-    ) = coroutineScope {
-        travelOfferRepository
-            .findByAttractionId(attractionId)
-            .map {
-                async {
-                    runCatching {
-                        if (!checkTravelOfferComponentsAvailability(it)) return@async
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferAvailableCommand(
-                                travelOfferId = it,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }
-            }.awaitAll()
-    }
+    ) : Unit = forEachOffer(
+        id = attractionId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByAttractionId,
+        eligible = ::checkTravelOfferComponentsAvailability,
+        buildCommand = { offerId, corrId ->
+            MakeTravelOfferAvailableCommand(
+                travelOfferId = offerId,
+                correlationId = corrId,
+            )
+        },
+    )
 
     suspend fun makeTravelOfferAvailableByAccommodation(
         accommodationId: UUID,
         correlationId: UUID,
-    ) = coroutineScope {
-        travelOfferRepository
-            .findByAccommodationId(accommodationId)
-            .map {
-                async {
-                    runCatching {
-                        if (!checkTravelOfferComponentsAvailability(it)) return@async
-                        travelOfferCommandHandler.handle(
-                            MakeTravelOfferAvailableCommand(
-                                travelOfferId = it,
-                                correlationId = correlationId,
-                            ) as TravelOfferCommand,
-                        )
-                    }
-                }
-            }.awaitAll()
-    }
+    ) : Unit = forEachOffer(
+        id = accommodationId,
+        correlationId = correlationId,
+        findOffers = travelOfferRepository::findByAccommodationId,
+        eligible = ::checkTravelOfferComponentsAvailability,
+        buildCommand = { offerId, corrId ->
+            MakeTravelOfferAvailableCommand(
+                travelOfferId = offerId,
+                correlationId = corrId,
+            )
+        },
+    )
 }

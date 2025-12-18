@@ -30,7 +30,7 @@ class BookingSagaEventHandler (
                         ProcessBookingCommand(
                             it.event.bookingId,
                             it.metadata.correlationId,
-                        ) as BookingCommand,
+                        )
                     )
                 }
             }
@@ -44,7 +44,7 @@ class BookingSagaEventHandler (
                         CompleteBookingCommand(
                             it.event.bookingId,
                             it.metadata.correlationId,
-                        ) as BookingCommand,
+                        )
                     )
                 }
             }
@@ -60,7 +60,7 @@ class BookingSagaEventHandler (
                             it.metadata.correlationId,
                             bookingId = it.event.bookingId,
                             seat = it.event.seat,
-                        ) as TravelOfferCommand,
+                        )
                     )
                 }
             }
@@ -75,7 +75,7 @@ class BookingSagaEventHandler (
                             it.event.bookingId,
                             it.metadata.correlationId,
                             message = it.event.message,
-                        ) as BookingCommand,
+                        )
                     )
                 }
             }

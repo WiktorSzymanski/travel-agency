@@ -31,7 +31,7 @@ class BookingCancelSagaEvent (
                         ProcessCancelBookingCommand(
                             it.event.bookingId,
                             it.metadata.correlationId,
-                        ) as BookingCommand,
+                        )
                     )
                 }
             }
@@ -45,7 +45,7 @@ class BookingCancelSagaEvent (
                         CancelBookingCommand(
                             it.event.bookingId,
                             it.metadata.correlationId,
-                        ) as BookingCommand,
+                        )
                     )
                 }
             }
@@ -61,7 +61,7 @@ class BookingCancelSagaEvent (
                             it.metadata.correlationId,
                             bookingId = it.event.bookingId,
                             seat = it.event.seat,
-                        ) as TravelOfferCommand,
+                        )
                     )
                 }
             }
@@ -76,7 +76,7 @@ class BookingCancelSagaEvent (
                             bookingId = it.event.bookingId,
                             correlationId = it.metadata.correlationId,
                             message = it.event.message,
-                        ) as BookingCommand,
+                        )
                     )
                 }
             }

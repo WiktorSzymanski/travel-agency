@@ -18,9 +18,7 @@ import pl.szymanski.wiktor.ta.subscribe
 class BookingEventHandler (
     private val eventBus: EventBus,
     private val commandBus: CommandBus) {
-    companion object {
-        private val log = LoggerFactory.getLogger(TravelOfferEventHandler::class.java)
-    }
+    private val log = LoggerFactory.getLogger(this::class.java)
 
     suspend fun bookingCreatedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
         coroutineScope {
@@ -32,7 +30,7 @@ class BookingEventHandler (
                             it.metadata.correlationId,
                             it.event.bookingId,
                             it.event.seat,
-                        ) as TravelOfferCommand,
+                        )
                     )
                 }
             }
@@ -49,7 +47,7 @@ class BookingEventHandler (
                                 it.metadata.correlationId,
                                 it.event.bookingId,
                                 it.event.seat,
-                            ) as TravelOfferCommand,
+                            )
                         )
                     }.onFailure { e ->
                         log.error("Failed to release travel offer event: $it", e)
