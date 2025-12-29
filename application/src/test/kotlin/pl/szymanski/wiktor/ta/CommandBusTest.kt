@@ -5,7 +5,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.command.*
-import pl.szymanski.wiktor.ta.commandHandler.*
+import pl.szymanski.wiktor.ta.commandhandler.*
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent

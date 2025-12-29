@@ -3,8 +3,8 @@ package pl.szymanski.wiktor.ta.query
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
-import pl.szymanski.wiktor.ta.queryRepository.AccommodationQueryRepository
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
+import pl.szymanski.wiktor.ta.queryrepository.AccommodationQueryRepository
+import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository
 import java.util.UUID
 
 class TravelOfferQuery(

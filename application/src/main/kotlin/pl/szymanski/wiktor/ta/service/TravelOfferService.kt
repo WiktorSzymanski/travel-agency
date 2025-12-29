@@ -11,7 +11,7 @@ import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
-import pl.szymanski.wiktor.ta.queryRepository.TravelOfferQueryRepository
+import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository
 import java.util.UUID
 
 class TravelOfferService(

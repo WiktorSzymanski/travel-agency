@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.query
 
-import pl.szymanski.wiktor.ta.queryRepository.BookingQueryRepository
+import pl.szymanski.wiktor.ta.queryrepository.BookingQueryRepository
 import java.util.UUID
 
 class BookingQuery(

@@ -6,11 +6,11 @@ import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
-import pl.szymanski.wiktor.ta.commandHandler.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.BookingCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.commandHandler.TravelOfferCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
 import kotlin.collections.get
 
