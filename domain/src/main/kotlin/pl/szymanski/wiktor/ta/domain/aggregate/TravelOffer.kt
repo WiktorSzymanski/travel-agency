@@ -25,6 +25,7 @@ import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReleaseCompleteFailedE
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReserveFailedException
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReservationCancelFailedException
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferMissingCreatedEventException
+import pl.szymanski.wiktor.ta.domain.exception.TravelOfferEmptyEventListException
 import java.util.UUID
 
 data class TravelOffer(
@@ -64,8 +65,8 @@ data class TravelOffer(
             return travelOffer to listOf(event)
         }
 
-        fun fromEvents(events: List<TravelOfferEvent>): TravelOffer? {
-            if (events.isEmpty()) return null
+        fun fromEvents(events: List<TravelOfferEvent>): TravelOffer {
+            if (events.isEmpty()) throw TravelOfferEmptyEventListException()
 
             val createdEvent = events.first()
 

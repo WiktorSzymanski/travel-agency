@@ -40,3 +40,5 @@ class CommuteExpireFailedException : CommuteException {
 }
 
 class CommuteMissingCreatedEventException : CommuteException("First event must be CommuteCreatedEvent")
+
+class CommuteEmptyEventListException : CommuteException("Commute events list cannot be empty")

@@ -143,9 +143,9 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val started = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaStartedEvent>()
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val started = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaStartedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
 
             assertEquals(1, started.size)
             assertEquals(1, completed.size)
@@ -206,8 +206,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertTrue(!attractionCalled)
@@ -234,8 +234,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }
@@ -282,8 +282,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }
@@ -344,8 +344,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }
@@ -369,8 +369,8 @@ class CancelBookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingCancelSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
         }

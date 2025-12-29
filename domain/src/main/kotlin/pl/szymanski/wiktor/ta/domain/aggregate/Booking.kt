@@ -18,6 +18,8 @@ import pl.szymanski.wiktor.ta.domain.exception.BookingFailCancellationFailedExce
 import pl.szymanski.wiktor.ta.domain.exception.BookingFailFailedException
 import pl.szymanski.wiktor.ta.domain.exception.BookingProcessCancellationFailedException
 import pl.szymanski.wiktor.ta.domain.exception.BookingProcessFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingEmptyEventListException
+import pl.szymanski.wiktor.ta.domain.exception.BookingMissingCreatedEventException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -52,6 +54,45 @@ data class Booking(
                 )
 
             return booking to listOf(event)
+        }
+
+        fun fromEvents(events: List<BookingEvent>): Booking {
+            if (events.isEmpty()) throw BookingEmptyEventListException()
+
+            val createdEvent = events.first()
+            if (createdEvent !is BookingCreatedEvent) throw BookingMissingCreatedEventException()
+
+            val booking = Booking(
+                id = createdEvent.bookingId,
+                userId = createdEvent.userId,
+                travelOfferId = createdEvent.travelOfferId,
+                seat = createdEvent.seat,
+            )
+
+            for (event in events.drop(1)) {
+                booking.apply(event)
+            }
+
+            return booking
+        }
+    }
+
+    fun apply(event: BookingEvent) {
+        when (event) {
+            is BookingCreatedEvent -> {}
+            is ProcessBookingEvent -> this.status = BookingState.PROCESSING
+            is CompleteBookingEvent -> this.status = BookingState.BOOKED
+            is BookingCancelRequestedEvent -> this.status = BookingState.CANCEL_REQUESTED
+            is ProcessCancelBookingEvent -> this.status = BookingState.PROCESSING_CANCELLATION
+            is CancelBookingEvent -> this.status = BookingState.CANCELED
+            is FailBookingEvent -> {
+                this.status = BookingState.FAILED
+                this.message = event.message
+            }
+            is FailCancelBookingEvent -> {
+                this.status = BookingState.BOOKED
+                this.message = event.message
+            }
         }
     }
 

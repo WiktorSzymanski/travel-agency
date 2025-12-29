@@ -141,9 +141,9 @@ class BookingSagaNewTest {
             saga.execute()
 
             // Then
-            val started = eventBus.events.map { it.event }.filterIsInstance<BookingSagaStartedEvent>()
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            val started = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaStartedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
 
             assertEquals(1, started.size)
             assertEquals(1, completed.size)
@@ -203,8 +203,8 @@ class BookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertTrue(!attractionCalled)
@@ -231,8 +231,8 @@ class BookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertEquals(triggering.bookingId, failed.first().bookingId)
@@ -259,8 +259,8 @@ class BookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertEquals(triggering.bookingId, failed.first().bookingId)
@@ -316,8 +316,8 @@ class BookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertTrue(commuteCompensated)
@@ -392,8 +392,8 @@ class BookingSagaNewTest {
             saga.execute()
 
             // Then
-            val completed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.events.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
+            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
             assertTrue(completed.isEmpty())
             assertEquals(1, failed.size)
             assertTrue(accommodationCompensated)

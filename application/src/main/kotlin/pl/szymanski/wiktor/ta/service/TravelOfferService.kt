@@ -33,7 +33,7 @@ class TravelOfferService(
                 try {
                     if (!eligible(offerId)) return@launch
                     val command = buildCommand(offerId, correlationId)
-                    commandBus.dispatch(command)
+                    commandBus.dispatchAndForget(command)
                 } catch (ex: Exception) {
                     log.debug(
                         "TravelOfferService batch error for offer={} corrId={}: {}",

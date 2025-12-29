@@ -30,3 +30,5 @@ class AccommodationExpireFailedException : AccommodationException {
 }
 
 class AccommodationMissingCreatedEventException : AccommodationException("First event must be AccommodationCreatedEvent")
+
+class AccommodationEmptyEventListException : AccommodationException("Accommodation events list cannot be empty")

@@ -434,7 +434,7 @@ class AttractionTest {
 
     @Test
     fun attraction_fromEvents_should_handle_empty_and_invalid_first_event() {
-        assertNull(Attraction.fromEvents(emptyList()))
+        assertFailsWith<AttractionEmptyEventListException> { Attraction.fromEvents(emptyList()) }
         val id = UUID.randomUUID()
         val invalid = listOf(AttractionBookedEvent(attractionId = id, bookingId = UUID.randomUUID()))
         assertFailsWith<AttractionMissingCreatedEventException> { Attraction.fromEvents(invalid) }

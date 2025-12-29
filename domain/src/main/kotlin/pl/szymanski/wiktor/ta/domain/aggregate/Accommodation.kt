@@ -14,6 +14,7 @@ import pl.szymanski.wiktor.ta.domain.exception.AccommodationBookingCancelFailedE
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationBookingFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationExpireFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationMissingCreatedEventException
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationEmptyEventListException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -49,9 +50,9 @@ data class Accommodation(
             return accommodation to listOf(event)
         }
     
-        fun fromEvents(events: List<AccommodationEvent>): Accommodation? {
+        fun fromEvents(events: List<AccommodationEvent>): Accommodation {
             if (events.isEmpty())
-                return null
+                throw AccommodationEmptyEventListException()
 
             val createdEvent = events.first()
 

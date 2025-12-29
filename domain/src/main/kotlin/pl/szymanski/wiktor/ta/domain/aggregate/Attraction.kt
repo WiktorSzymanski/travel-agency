@@ -15,6 +15,7 @@ import pl.szymanski.wiktor.ta.domain.exception.AttractionBookFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionBookingCancelFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionExpireFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionMissingCreatedEventException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionEmptyEventListException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -54,8 +55,8 @@ data class Attraction(
             return attraction to listOf(event)
         }
 
-        fun fromEvents(events: List<AttractionEvent>): Attraction? {
-            if (events.isEmpty()) return null
+        fun fromEvents(events: List<AttractionEvent>): Attraction {
+            if (events.isEmpty()) throw AttractionEmptyEventListException()
 
             val createdEvent = events.first()
 

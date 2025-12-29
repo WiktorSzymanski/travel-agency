@@ -55,3 +55,5 @@ class TravelOfferRebookFailedException(travelOfferId: UUID, status: TravelOfferS
 )
 
 class TravelOfferMissingCreatedEventException : TravelOfferException("First event must be TravelOfferCreatedEvent")
+
+class TravelOfferEmptyEventListException : TravelOfferException("Travel offer events list cannot be empty")

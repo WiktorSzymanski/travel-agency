@@ -16,6 +16,7 @@ import pl.szymanski.wiktor.ta.domain.exception.CommuteBookSeatFailedException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteCancelBookedSeatFailedException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteExpireFailedException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteMissingCreatedEventException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteEmptyEventListException
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -55,8 +56,9 @@ data class Commute(
             return commute to listOf(event)
         }
 
-        fun fromEvents(events: List<CommuteEvent>): Commute? {
-            if (events.isEmpty()) return null
+        fun fromEvents(events: List<CommuteEvent>): Commute {
+            if (events.isEmpty())
+                throw CommuteEmptyEventListException()
 
             val createdEvent = events.first()
             if (createdEvent !is CommuteCreatedEvent)

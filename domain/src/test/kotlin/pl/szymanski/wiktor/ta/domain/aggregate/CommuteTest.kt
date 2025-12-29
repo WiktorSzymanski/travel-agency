@@ -415,7 +415,7 @@ class CommuteTest {
 
     @Test
     fun commute_fromEvents_should_handle_empty_and_invalid_first_event() {
-        assertNull(Commute.fromEvents(emptyList()))
+        assertFailsWith<CommuteEmptyEventListException> { Commute.fromEvents(emptyList()) }
         val invalid = listOf(CommuteBookedEvent(commuteId = UUID.randomUUID(), bookingId = UUID.randomUUID(), seat = Seat.Picked("1", "B")))
         assertFailsWith<CommuteMissingCreatedEventException> { Commute.fromEvents(invalid) }
     }

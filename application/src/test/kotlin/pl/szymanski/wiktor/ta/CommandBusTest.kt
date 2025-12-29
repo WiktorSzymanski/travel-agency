@@ -112,7 +112,7 @@ class CommandBusTest {
             coEvery { attractionHandler.handle(any()) } returns (attraction to emptyList<AttractionEvent>())
             coEvery { accommodationHandler.handle(any()) } returns (accommodation to emptyList<AccommodationEvent>())
 
-            commandBus.setup(
+            commandBus = DummyCommandBus(
                 travelOfferHandler,
                 bookingHandler,
                 commuteHandler,

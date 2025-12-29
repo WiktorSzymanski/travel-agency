@@ -19,3 +19,7 @@ class BookingFailFailedException(originalMessage: String) : BookingException(
 class BookingFailCancellationFailedException(originalMessage: String) : BookingException(
     "Cancel Booking can only be failed in PROCESSING_CANCELLATION or CANCEL_REQUESTED state. Original message: $originalMessage",
 )
+
+class BookingEmptyEventListException : BookingException("Booking events list cannot be empty")
+
+class BookingMissingCreatedEventException : BookingException("First event must be BookingCreatedEvent")

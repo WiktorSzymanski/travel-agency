@@ -548,7 +548,7 @@ class TravelOfferTest {
 
     @Test
     fun travelOffer_fromEvents_should_handle_empty_and_invalid_first_event() {
-        assertNull(TravelOffer.fromEvents(emptyList()))
+        assertFailsWith<TravelOfferEmptyEventListException> { TravelOffer.fromEvents(emptyList()) }
         val dummy = TravelOffer(UUID.randomUUID(), "t", UUID.randomUUID(), UUID.randomUUID(), null)
         val invalid = listOf(TravelOfferReservedEvent(travelOfferId = dummy.id, accommodationId = dummy.accommodationId, commuteId = dummy.commuteId, attractionId = dummy.attractionId, bookingId = UUID.randomUUID(), seat = Seat.Any))
         assertFailsWith<TravelOfferMissingCreatedEventException> { TravelOffer.fromEvents(invalid) }

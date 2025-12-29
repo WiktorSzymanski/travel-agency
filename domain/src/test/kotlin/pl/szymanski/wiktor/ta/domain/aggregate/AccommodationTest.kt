@@ -266,8 +266,8 @@ class AccommodationTest {
 
     @Test
     fun accommodation_fromEvents_should_handle_empty_and_invalid_first_event() {
-        // empty -> null
-        assertNull(Accommodation.fromEvents(emptyList()))
+        // empty -> throws
+        assertFailsWith<AccommodationEmptyEventListException> { Accommodation.fromEvents(emptyList()) }
 
         // first not created -> throws
         val dummyId = UUID.randomUUID()

@@ -24,14 +24,23 @@ class DummyCommandBus : CommandBus {
         handlers[commandType] = handler
     }
 
-    override  suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<DomainEvent>> {
+    override suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<DomainEvent>> {
         val handler =
             handlers[command::class.java.superclass] as? CommandHandler<C, E>
                 ?: throw IllegalArgumentException("No handler registered for ${command::class.java.superclass}")
         return handler.handle(command)
     }
 
-    fun setup(
+    override suspend fun dispatchAndForget(command: Command) {
+        val handler =
+            handlers[command::class.java.superclass] as? CommandHandler<Command, Any>
+                ?: throw IllegalArgumentException("No handler registered for ${command::class.java.superclass}")
+        handler.handle(command)
+    }
+
+    constructor()
+
+    constructor(
         travelOfferCommandHandler: TravelOfferCommandHandler,
         bookingCommandHandler: BookingCommandHandler,
         commuteCommandHandler: CommuteCommandHandler,

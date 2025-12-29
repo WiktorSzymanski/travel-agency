@@ -276,4 +276,31 @@ class BookingTest {
         val message = "Test error"
         assertFailsWith<BookingFailCancellationFailedException> { booking.failCancellation(message) }
     }
+
+    @Test
+    fun booking_fromEvents_should_handle_empty_and_invalid_first_event() {
+        assertFailsWith<BookingEmptyEventListException> { Booking.fromEvents(emptyList()) }
+        val invalid = listOf(ProcessBookingEvent(bookingId = bookingId))
+        assertFailsWith<BookingMissingCreatedEventException> { Booking.fromEvents(invalid) }
+    }
+
+    @Test
+    fun booking_fromEvents_should_rebuild_state() {
+        val events = listOf(
+            BookingCreatedEvent(bookingId = bookingId, travelOfferId = travelOfferId, userId = userId, seat = seat),
+            ProcessBookingEvent(bookingId = bookingId),
+            CompleteBookingEvent(bookingId = bookingId),
+            BookingCancelRequestedEvent(bookingId = bookingId, travelOfferId = travelOfferId, seat = seat),
+            ProcessCancelBookingEvent(bookingId = bookingId),
+            FailCancelBookingEvent(bookingId = bookingId, message = "Retry later")
+        )
+
+        val result = Booking.fromEvents(events)
+        assertEquals(bookingId, result.id)
+        assertEquals(userId, result.userId)
+        assertEquals(travelOfferId, result.travelOfferId)
+        assertEquals(seat, result.seat)
+        assertEquals(BookingState.BOOKED, result.status)
+        assertEquals("Retry later", result.message)
+    }
 }

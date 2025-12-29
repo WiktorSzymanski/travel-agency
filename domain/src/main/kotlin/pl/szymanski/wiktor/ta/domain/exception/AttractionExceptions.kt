@@ -25,3 +25,5 @@ class AttractionBookingCancelFailedException : AttractionException {
 class AttractionExpireFailedException(attractionId: UUID) : AttractionException("Attraction $attractionId cannot expire before its date")
 
 class AttractionMissingCreatedEventException : AttractionException("First event must be AttractionCreatedEvent")
+
+class AttractionEmptyEventListException : AttractionException("Attraction events list cannot be empty")
