@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 class DummyEventBus : EventBus {
     val emittedEvents = mutableListOf<EventEnvelope<out PublishableEvent>>()
-    private val _events = MutableSharedFlow<EventEnvelope<out PublishableEvent>>()
+    private val _events = MutableSharedFlow<EventEnvelope<out PublishableEvent>>(extraBufferCapacity = 100)
     val events = _events.asSharedFlow()
 
     override suspend fun publish(event: EventEnvelope<out PublishableEvent>) {
@@ -31,6 +31,10 @@ class DummyEventBus : EventBus {
         eventType: KClass<T>,
         onEvent: suspend (EventEnvelope<T>) -> Unit
     ) {
-        events.filter { it.eventType == eventType.java.simpleName }.collect { event -> onEvent(event as EventEnvelope<T>) }
+        events.collect { event ->
+            if (event.eventType == eventType.java.simpleName) {
+                onEvent(event as EventEnvelope<T>)
+            }
+        }
     }
 }

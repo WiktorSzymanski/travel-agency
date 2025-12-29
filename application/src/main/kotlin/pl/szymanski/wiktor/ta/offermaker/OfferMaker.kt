@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.offermaker
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
@@ -21,14 +22,15 @@ class OfferMaker (
     private val eventBus: EventBus,
     private val commandBus: CommandBus,
     private val resourceService: ActiveResourceService,
-    private val creationWindowSeconds: Long = 3
+    private val creationWindowSeconds: Long = 3,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
 
     init {
         setupSubscriptions()
     }
 
-    private fun setupSubscriptions(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
+    private fun setupSubscriptions() {
         scope.launch {
             eventBus.subscribe<CommuteCreatedEvent> { eventEnvelope ->
                 val event = eventEnvelope.event

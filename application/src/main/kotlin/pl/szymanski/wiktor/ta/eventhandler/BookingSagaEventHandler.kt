@@ -2,7 +2,9 @@ package pl.szymanski.wiktor.ta.eventhandler
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
@@ -16,16 +18,21 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
-import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.subscribe
 
 class BookingSagaEventHandler (
     private val eventBus: EventBus,
-    private val commandBus: CommandBus) {
-    suspend fun bookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingSagaStartedEvent> {
-                scope.launchCatching {
+    private val commandBus: CommandBus,
+    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+) : EventHandler(scope) {
+    init {
+        setupHandlers()
+    }
+
+    suspend fun bookingSagaStartedEventHandler() =
+        eventBus.subscribe<BookingSagaStartedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<BookingCommand, Booking>(
                         ProcessBookingCommand(
                             it.event.bookingId,
@@ -36,10 +43,10 @@ class BookingSagaEventHandler (
             }
         }
 
-    suspend fun bookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingSagaCompletedEvent> {
-                scope.launchCatching {
+    suspend fun bookingSagaCompletedEventHandler() =
+        eventBus.subscribe<BookingSagaCompletedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<BookingCommand, Booking>(
                         CompleteBookingCommand(
                             it.event.bookingId,
@@ -50,13 +57,13 @@ class BookingSagaEventHandler (
             }
         }
 
-    suspend fun bookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingSagaCompletedEvent> {
-                scope.launchCatching {
+    suspend fun bookingSagaCompletedEventHandler2() =
+        eventBus.subscribe<BookingSagaCompletedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         BookTravelOfferCommand(
-                            it.event.bookingId,
+                            it.event.travelOfferId,
                             it.metadata.correlationId,
                             bookingId = it.event.bookingId,
                             seat = it.event.seat,
@@ -66,10 +73,10 @@ class BookingSagaEventHandler (
             }
         }
 
-    suspend fun bookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingSagaFailedEvent> {
-                scope.launchCatching {
+    suspend fun bookingSagaFailedEventHandler() =
+        eventBus.subscribe<BookingSagaFailedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<BookingCommand, Booking>(
                         FailBookingCommand(
                             it.event.bookingId,
@@ -80,4 +87,11 @@ class BookingSagaEventHandler (
                 }
             }
         }
+
+    override fun getHandlers(): List<suspend () -> Unit> = listOf(
+        { bookingSagaStartedEventHandler() },
+        { bookingSagaCompletedEventHandler() },
+        { bookingSagaCompletedEventHandler2() },
+        { bookingSagaFailedEventHandler() },
+    )
 }

@@ -2,7 +2,9 @@ package pl.szymanski.wiktor.ta.eventhandler
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.BookingCommand
@@ -16,17 +18,21 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
-import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.subscribe
 
-class BookingCancelSagaEvent (
+class BookingCancelSagaEventHandler (
     private val eventBus: EventBus,
-    private val commandBus: CommandBus
-) {
-    suspend fun cancelBookingSagaStartedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingCancelSagaStartedEvent> {
-                scope.launchCatching {
+    private val commandBus: CommandBus,
+    scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+) : EventHandler(scope) {
+    init {
+        setupHandlers()
+    }
+
+    suspend fun cancelBookingSagaStartedEventHandler() =
+        eventBus.subscribe<BookingCancelSagaStartedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<BookingCommand, Booking>(
                         ProcessCancelBookingCommand(
                             it.event.bookingId,
@@ -37,10 +43,10 @@ class BookingCancelSagaEvent (
             }
         }
 
-    suspend fun cancelBookingSagaCompletedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingCancelSagaCompletedEvent> {
-                scope.launchCatching {
+    suspend fun cancelBookingSagaCompletedEventHandler() =
+        eventBus.subscribe<BookingCancelSagaCompletedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<BookingCommand, Booking>(
                         CancelBookingCommand(
                             it.event.bookingId,
@@ -51,13 +57,13 @@ class BookingCancelSagaEvent (
             }
         }
 
-    suspend fun cancelBookingSagaCompletedEventHandler2(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingCancelSagaCompletedEvent> {
-                scope.launchCatching {
+    suspend fun cancelBookingSagaCompletedEventHandler2() =
+        eventBus.subscribe<BookingCancelSagaCompletedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                         CancelBookTravelOfferCommand(
-                            it.event.bookingId,
+                            it.event.travelOfferId,
                             it.metadata.correlationId,
                             bookingId = it.event.bookingId,
                             seat = it.event.seat,
@@ -67,10 +73,10 @@ class BookingCancelSagaEvent (
             }
         }
 
-    suspend fun cancelBookingSagaFailedEventHandler(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) =
-        coroutineScope {
-            eventBus.subscribe<BookingCancelSagaFailedEvent> {
-                scope.launchCatching {
+    suspend fun cancelBookingSagaFailedEventHandler() =
+        eventBus.subscribe<BookingCancelSagaFailedEvent> {
+            coroutineScope {
+                launch {
                     commandBus.dispatch<BookingCommand, Booking>(
                         FailCancelBookingCommand(
                             bookingId = it.event.bookingId,
@@ -81,4 +87,11 @@ class BookingCancelSagaEvent (
                 }
             }
         }
+
+    override fun getHandlers(): List<suspend () -> Unit> = listOf(
+        { cancelBookingSagaStartedEventHandler() },
+        { cancelBookingSagaCompletedEventHandler() },
+        { cancelBookingSagaCompletedEventHandler2() },
+        { cancelBookingSagaFailedEventHandler() },
+    )
 }
