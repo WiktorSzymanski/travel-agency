@@ -8,14 +8,12 @@ import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.launchCatching
 import pl.szymanski.wiktor.ta.subscribe
-import java.time.Duration
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -29,12 +27,6 @@ class OfferMaker (
     init {
         setupSubscriptions()
     }
-
-    fun getActiveCommutes() = resourceService.getCommutes()
-
-    fun getActiveAttractions() = resourceService.getAttractions()
-
-    fun getActiveAccommodations() = resourceService.getAccommodations()
 
     private fun setupSubscriptions(scope: CoroutineScope = CoroutineScope(Dispatchers.Default)) {
         scope.launch {

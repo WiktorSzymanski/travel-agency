@@ -31,6 +31,6 @@ class DummyEventBus : EventBus {
         eventType: KClass<T>,
         onEvent: suspend (EventEnvelope<T>) -> Unit
     ) {
-        events.filter { it.eventType == eventType.java.simpleName }.collectLatest { event -> onEvent(event as EventEnvelope<T>) }
+        events.filter { it.eventType == eventType.java.simpleName }.collect { event -> onEvent(event as EventEnvelope<T>) }
     }
 }

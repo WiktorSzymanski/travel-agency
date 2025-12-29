@@ -4,6 +4,7 @@ import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.mockk
 import io.mockk.spyk
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import pl.szymanski.wiktor.ta.DummyCommandBus
@@ -33,40 +34,43 @@ class OfferMakerTest {
     private val resourceRepository = InMemoryActiveResourceRepository()
     private val resourceService = ActiveResourceService(resourceRepository)
 
-    val offerMaker = spyk(
+    private val offerMaker =
         OfferMaker(
             eventBus = eventBus,
             commandBus = commandBus,
             resourceService = resourceService,
             creationWindowSeconds = 3
         )
-    )
 
     @Test
-    fun `should add commuteEvent`() = runBlocking {
+    fun `should add Commute`() = runBlocking {
         val eventEnvelope = getCommuteCreatedEvent(LocationEnum.LONDON, 10L)
 
         eventBus.publish(eventEnvelope)
 
-        val commutes = offerMaker.getActiveCommutes()
+        delay(200)
+
+        val commutes = resourceService.getCommutes()
 
         assertEquals(1, commutes.size)
         assertEquals(eventEnvelope.event.commuteId, commutes[0].id)
-        assertEquals(0, offerMaker.getActiveAttractions().size)
-        assertEquals(0, offerMaker.getActiveAccommodations().size)
+        assertEquals(0, resourceService.getAttractions().size)
+        assertEquals(0, resourceService.getAccommodations().size)
     }
 
     @Test
-    fun `should add attractionEvent`() = runBlocking {
+    fun `should add Attraction`() = runBlocking {
         val eventEnvelope = getAttractionCreatedEvent(LocationEnum.LONDON, 10L)
         eventBus.publish(eventEnvelope)
 
-        val attractions = offerMaker.getActiveAttractions()
+        delay(200)
+
+        val attractions = resourceService.getAttractions()
 
         assertEquals(1, attractions.size)
         assertEquals(eventEnvelope.event.attractionId, attractions[0].id)
-        assertEquals(0, offerMaker.getActiveCommutes().size)
-        assertEquals(0, offerMaker.getActiveAccommodations().size)
+        assertEquals(0, resourceService.getCommutes().size)
+        assertEquals(0, resourceService.getAccommodations().size)
     }
 
     @Test
@@ -75,12 +79,14 @@ class OfferMakerTest {
 
         eventBus.publish(eventEnvelope)
 
-        val accommodations = offerMaker.getActiveAccommodations()
+        delay(200)
+
+        val accommodations = resourceService.getAccommodations()
 
         assertEquals(1, accommodations.size)
         assertEquals(eventEnvelope.event.accommodationId, accommodations[0].id)
-        assertEquals(0, offerMaker.getActiveAttractions().size)
-        assertEquals(0, offerMaker.getActiveCommutes().size)
+        assertEquals(0, resourceService.getAttractions().size)
+        assertEquals(0, resourceService.getCommutes().size)
     }
 
     @Test
@@ -89,7 +95,10 @@ class OfferMakerTest {
         val commuteEventEnvelope = getCommuteCreatedEvent(LocationEnum.LONDON, 6L)
 
         eventBus.publish(accommodationEventEnvelope)
+        delay(100)
         eventBus.publish(commuteEventEnvelope)
+
+        delay(200)
 
         coVerify(exactly = 1) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
@@ -101,8 +110,12 @@ class OfferMakerTest {
         val attractionEventEnvelope = getAttractionCreatedEvent(LocationEnum.LONDON, 10L)
 
         eventBus.publish(accommodationEventEnvelope)
+        delay(100)
         eventBus.publish(commuteEventEnvelope)
+        delay(100)
         eventBus.publish(attractionEventEnvelope)
+
+        delay(200)
 
         coVerify(exactly = 2) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
@@ -115,6 +128,8 @@ class OfferMakerTest {
         eventBus.publish(accommodationEventEnvelope)
         eventBus.publish(commuteEventEnvelope)
 
+        delay(200)
+
         coVerify(exactly = 0) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
 
@@ -126,6 +141,8 @@ class OfferMakerTest {
         eventBus.publish(accommodationEventEnvelope)
         eventBus.publish(commuteEventEnvelope)
 
+        delay(200)
+
         coVerify(exactly = 0) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
 
@@ -136,6 +153,8 @@ class OfferMakerTest {
 
         eventBus.publish(accommodationEventEnvelope)
         eventBus.publish(commuteEventEnvelope)
+
+        delay(200)
 
         coVerify(exactly = 0) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
@@ -149,6 +168,8 @@ class OfferMakerTest {
         eventBus.publish(accommodationEventEnvelope)
         eventBus.publish(commuteEventEnvelope)
         eventBus.publish(attractionEventEnvelope)
+
+        delay(200)
 
         // Should create 1 offer (without attraction)
         coVerify(exactly = 1) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
@@ -164,6 +185,8 @@ class OfferMakerTest {
         eventBus.publish(commuteEventEnvelope)
         eventBus.publish(attractionEventEnvelope)
 
+        delay(200)
+
         // Should create 1 offer (without attraction)
         coVerify(exactly = 1) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
@@ -177,6 +200,8 @@ class OfferMakerTest {
         eventBus.publish(commuteEventEnvelope)
         eventBus.publish(commuteEventEnvelope)
 
+        delay(200)
+
         coVerify(exactly = 1) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
     }
 
@@ -188,26 +213,31 @@ class OfferMakerTest {
         eventBus.publish(accommodationEventEnvelope)
         eventBus.publish(commuteEventEnvelope)
 
+        delay(200)
+
         coVerify(exactly = 0) { travelOfferCommandHandler.handle(any()) }
-        assertEquals(0, offerMaker.getActiveAccommodations().size)
-        assertEquals(0, offerMaker.getActiveCommutes().size)
+        assertEquals(0, resourceService.getAccommodations().size)
+        assertEquals(0, resourceService.getCommutes().size)
     }
 
     @Test
     fun `should clean up expired events from active lists`() = runBlocking {
         val expiredCommute = getCommuteCreatedEvent(LocationEnum.LONDON, 1L)
         eventBus.publish(expiredCommute)
-        assertEquals(1, offerMaker.getActiveCommutes().size)
+
+        delay(200)
+
+        assertEquals(1, resourceService.getCommutes().size)
 
         kotlinx.coroutines.delay(2000)
 
         val newCommute = getCommuteCreatedEvent(LocationEnum.LONDON, 10L)
         eventBus.publish(newCommute)
 
-        kotlinx.coroutines.delay(200)
+        delay(200)
 
-        assertEquals(1, offerMaker.getActiveCommutes().size)
-        assertEquals(newCommute.event.commuteId, offerMaker.getActiveCommutes()[0].id)
+        assertEquals(1, resourceService.getCommutes().size)
+        assertEquals(newCommute.event.commuteId, resourceService.getCommutes()[0].id)
     }
 
     @Test
