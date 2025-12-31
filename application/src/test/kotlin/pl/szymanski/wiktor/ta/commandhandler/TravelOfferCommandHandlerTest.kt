@@ -22,7 +22,12 @@ import pl.szymanski.wiktor.ta.command.RebookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.repository.TravelOfferRepository
 import java.util.UUID
 import kotlin.test.Test
@@ -31,6 +36,11 @@ class TravelOfferCommandHandlerTest {
     private val travelOfferRepository = mockk<TravelOfferRepository>()
     private val handler = TravelOfferCommandHandler(travelOfferRepository)
     private val travelOffer = mockk<TravelOffer>(relaxed = true)
+
+    private val commuteId = CommuteId.generate()
+    private val accommodationId = AccommodationId.generate()
+    private val attractionId = AttractionId.generate()
+    private val travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId)
 
     init {
         mockkObject(TravelOffer.Companion)
@@ -43,12 +53,12 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CreateTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                     name = "Trip X",
-                    commuteId = UUID.randomUUID(),
-                    accommodationId = UUID.randomUUID(),
-                    attractionId = UUID.randomUUID(),
+                    commuteId = commuteId,
+                    accommodationId = accommodationId,
+                    attractionId = attractionId,
                 )
 
             // When
@@ -65,9 +75,9 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 ReserveTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("1", "A"),
                 )
 
@@ -85,9 +95,9 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CancelReserveTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("1", "B"),
                 )
 
@@ -105,9 +115,9 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 BookTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("2", "A"),
                 )
 
@@ -125,9 +135,9 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CancelBookTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("2", "B"),
                 )
 
@@ -145,9 +155,9 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 ReleaseTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "A"),
                 )
 
@@ -165,9 +175,9 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 RebookTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -184,7 +194,7 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 ExpireTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -202,7 +212,7 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 MakeTravelOfferAvailableCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -220,7 +230,7 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 MakeTravelOfferUnavailableCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -238,10 +248,10 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CompensateReleaseTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -258,10 +268,10 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CompensateBookTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "D"),
                 )
 
@@ -279,10 +289,10 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CompensateCancelBookTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "D"),
                 )
 
@@ -300,10 +310,10 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CompensateReserveTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "D"),
                 )
 
@@ -321,10 +331,10 @@ class TravelOfferCommandHandlerTest {
             // Given
             val command =
                 CompensateCancelReserveTravelOfferCommand(
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = travelOfferId,
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "D"),
                 )
 

@@ -9,7 +9,11 @@ import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
@@ -154,9 +158,9 @@ class OfferMaker (
     }
 
     private suspend fun createOffers(
-        commuteId: UUID,
+        commuteId: CommuteId,
         commuteName: String,
-        accommodationId: UUID,
+        accommodationId: AccommodationId,
         accommodationName: String,
         accommodationLocation: LocationEnum,
         accommodationRentFrom: LocalDateTime,
@@ -164,7 +168,7 @@ class OfferMaker (
         correlationId: UUID
     ) {
         // Create basic offer (no attraction)
-        dispatchCreateOffer(commuteId, commuteName, accommodationId, accommodationName, null, null, correlationId)
+        dispatchCreateOffer(commuteId, commuteName, accommodationId, accommodationName, AttractionId.Empty, null, correlationId)
 
         // Find matching attractions for this pair
         val matchedAttractions = resourceService.getAttractions(
@@ -189,11 +193,11 @@ class OfferMaker (
     }
 
     private suspend fun dispatchCreateOffer(
-        commuteId: UUID,
+        commuteId: CommuteId,
         commuteName: String,
-        accommodationId: UUID,
+        accommodationId: AccommodationId,
         accommodationName: String,
-        attractionId: UUID?,
+        attractionId: AttractionId,
         attractionName: String?,
         correlationId: UUID
     ) {
@@ -201,7 +205,7 @@ class OfferMaker (
 
         if (resourceService.addOfferTripleIfUnique(triple)) {
             val command = CreateTravelOfferCommand(
-                travelOfferId = UUID.randomUUID(),
+                travelOfferId = TravelOfferId.from(UUID.randomUUID()), // TODO: What to do with those, Id in command is meaning less, aggregate upon creating creates its own
                 correlationId = correlationId,
                 name = "$commuteName $accommodationName${attractionName?.let { " $it" } ?: ""}",
                 commuteId = commuteId,

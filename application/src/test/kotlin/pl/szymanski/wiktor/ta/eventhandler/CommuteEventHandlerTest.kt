@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
@@ -22,7 +23,7 @@ class CommuteEventHandlerTest {
     fun `should handle CommuteExpiredEvent`() = runTest(UnconfinedTestDispatcher()) {
         CommuteEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val commuteId = UUID.randomUUID()
+        val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -35,14 +36,14 @@ class CommuteEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.expireTravelOfferByCommute(commuteId, correlationId) }
+        coVerify { travelOfferService.expireTravelOffer(commuteId, correlationId) }
     }
 
     @Test
     fun `should handle CommuteFullEvent`() = runTest(UnconfinedTestDispatcher()) {
         CommuteEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val commuteId = UUID.randomUUID()
+        val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -55,14 +56,14 @@ class CommuteEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.makeTravelOfferUnavailableByCommute(commuteId, correlationId) }
+        coVerify { travelOfferService.makeTravelOfferUnavailable(commuteId, correlationId) }
     }
 
     @Test
     fun `should handle CommuteAvailableEvent`() = runTest(UnconfinedTestDispatcher()) {
         CommuteEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val commuteId = UUID.randomUUID()
+        val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -75,6 +76,6 @@ class CommuteEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.makeTravelOfferAvailableByCommute(commuteId, correlationId) }
+        coVerify { travelOfferService.makeTravelOfferAvailable(commuteId, correlationId) }
     }
 }

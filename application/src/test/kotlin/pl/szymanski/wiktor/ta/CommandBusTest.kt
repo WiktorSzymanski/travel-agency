@@ -42,14 +42,14 @@ class CommandBusTest {
                 assertIs<CreateBookingCommand>(command)
                 "OK" to listOf(
                     ProcessBookingEvent(
-                        bookingId = UUID.randomUUID(),
+                        bookingId = BookingId.generate(),
                     ),
                 )
             }
 
             val command =
                 CreateAccommodationCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
                     name = "Hotel",
                     location = LocationEnum.PARIS,
@@ -68,16 +68,16 @@ class CommandBusTest {
                 assertIs<CreateBookingCommand>(command)
                 "OK" to listOf(
                     ProcessBookingEvent(
-                        bookingId = UUID.randomUUID(),
+                        bookingId = BookingId.generate(),
                     ),
                 )
             }
 
             val command =
                 CreateBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = TravelOfferId.from(UUID.randomUUID()),
                     userId = UUID.randomUUID(),
                     seat = Seat.Any,
                 )
@@ -121,11 +121,12 @@ class CommandBusTest {
             )
 
             val correlationId = UUID.randomUUID()
-            val travelOfferId = UUID.randomUUID()
-            val bookingId = UUID.randomUUID()
-            val accommodationId = UUID.randomUUID()
-            val attractionId = UUID.randomUUID()
-            val commuteId = UUID.randomUUID()
+
+            val bookingId = BookingId.generate()
+            val accommodationId = AccommodationId.generate()
+            val attractionId = AttractionId.generate()
+            val commuteId = CommuteId.generate()
+            val travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId)
 
             // When
             val (_, toEvents) =

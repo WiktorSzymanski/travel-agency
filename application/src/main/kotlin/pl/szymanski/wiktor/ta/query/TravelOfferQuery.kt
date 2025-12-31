@@ -2,10 +2,10 @@ package pl.szymanski.wiktor.ta.query
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.queryrepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository
-import java.util.UUID
 
 class TravelOfferQuery(
     private val travelOfferRepository: TravelOfferQueryRepository,
@@ -22,7 +22,7 @@ class TravelOfferQuery(
         size: Int,
     ): List<TravelOfferDto> = travelOfferRepository.findTravelOfferDto(page, size, status)
 
-    suspend fun getTravelOfferById(travelOfferId: UUID): TravelOfferDto =
+    suspend fun getTravelOfferById(travelOfferId: TravelOfferId): TravelOfferDto =
         travelOfferRepository.findTravelOfferDto(travelOfferId = travelOfferId).firstOrNull() ?: throw NoSuchElementException()
 
     suspend fun getTravelOfferByLocation(

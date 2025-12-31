@@ -21,26 +21,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class BookingTest {
-    private lateinit var booking: Booking
-    private lateinit var bookingId: UUID
-    private lateinit var userId: UUID
-    private lateinit var travelOfferId: UUID
-    private lateinit var seat: Seat
 
-    @BeforeTest
-    fun setup() {
-        bookingId = UUID.randomUUID()
-        userId = UUID.randomUUID()
-        travelOfferId = UUID.randomUUID()
-        seat = Seat.Picked("1", "A")
-        booking =
-            Booking(
-                id = bookingId,
-                userId = userId,
-                travelOfferId = travelOfferId,
-                seat = seat,
-            )
-    }
+    private var bookingId: BookingId = BookingId.generate()
+    private  var userId: UUID = UUID.randomUUID()
+    private val travelOfferId: TravelOfferId = TravelOfferId.from(UUID.randomUUID())
+    private var seat: Seat = Seat.Picked("1", "A")
+
+    private val booking: Booking =
+        Booking(
+            id = bookingId,
+            userId = userId,
+            travelOfferId = travelOfferId,
+            seat = seat,
+        )
 
     @Test
     fun aggregate_should_return_booking_and_created_event() {

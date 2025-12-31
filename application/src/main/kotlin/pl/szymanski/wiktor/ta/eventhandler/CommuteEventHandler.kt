@@ -17,15 +17,15 @@ class CommuteEventHandler(
     private val travelOfferService: TravelOfferService,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EventHandler(scope) {
+
     init {
         setupHandlers()
     }
-
     suspend fun commuteExpiredEventHandler() =
         eventBus.subscribe<CommuteExpiredEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.expireTravelOfferByCommute(it.event.commuteId, it.metadata.correlationId)
+                    travelOfferService.expireTravelOffer(it.event.commuteId, it.metadata.correlationId)
                 }
             }
         }
@@ -34,7 +34,7 @@ class CommuteEventHandler(
         eventBus.subscribe<CommuteFullEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.makeTravelOfferUnavailableByCommute(it.event.commuteId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferUnavailable(it.event.commuteId, it.metadata.correlationId)
                 }
             }
         }
@@ -43,7 +43,7 @@ class CommuteEventHandler(
         eventBus.subscribe<CommuteAvailableEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.makeTravelOfferAvailableByCommute(it.event.commuteId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferAvailable(it.event.commuteId, it.metadata.correlationId)
                 }
             }
         }

@@ -8,6 +8,11 @@ import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import pl.szymanski.wiktor.ta.saga.DummyEventBus
@@ -25,11 +30,11 @@ class TravelOfferEventHandlerTest {
     fun `should handle TravelOfferReleaseEvent`() = runTest(UnconfinedTestDispatcher()) {
         TravelOfferEventHandler(eventBus, commandBus, travelOfferService, backgroundScope)
 
-        val travelOfferId = UUID.randomUUID()
-        val accommodationId = UUID.randomUUID()
-        val commuteId = UUID.randomUUID()
-        val attractionId = UUID.randomUUID()
-        val bookingId = UUID.randomUUID()
+        val accommodationId = AccommodationId.generate()
+        val commuteId = CommuteId.generate()
+        val attractionId = AttractionId.generate()
+        val travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId)
+        val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
         val seat = Seat.Any
 

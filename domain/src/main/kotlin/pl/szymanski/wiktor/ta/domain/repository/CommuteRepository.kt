@@ -1,11 +1,12 @@
 package pl.szymanski.wiktor.ta.domain.repository
 
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import java.util.UUID
 
 interface CommuteRepository {
-    suspend fun findById(id: UUID): Commute
+    suspend fun findById(id: CommuteId): Commute
 
     suspend fun create(
         entity: Commute,

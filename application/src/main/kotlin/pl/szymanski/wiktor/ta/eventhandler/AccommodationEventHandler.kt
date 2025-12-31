@@ -17,15 +17,15 @@ class AccommodationEventHandler(
     private val travelOfferService: TravelOfferService,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EventHandler(scope) {
+
     init {
         setupHandlers()
     }
-
     suspend fun accommodationExpiredEventHandler() =
         eventBus.subscribe<AccommodationExpiredEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.expireTravelOfferByAccommodation(it.event.accommodationId, it.metadata.correlationId)
+                    travelOfferService.expireTravelOffer(it.event.accommodationId, it.metadata.correlationId)
                 }
             }
         }
@@ -34,7 +34,7 @@ class AccommodationEventHandler(
         eventBus.subscribe<AccommodationBookedEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.makeTravelOfferUnavailableByAccommodation(it.event.accommodationId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferUnavailable(it.event.accommodationId, it.metadata.correlationId)
                 }
             }
         }
@@ -43,7 +43,7 @@ class AccommodationEventHandler(
         eventBus.subscribe<AccommodationBookingCanceledEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.makeTravelOfferAvailableByAccommodation(it.event.accommodationId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferAvailable(it.event.accommodationId, it.metadata.correlationId)
                 }
             }
         }

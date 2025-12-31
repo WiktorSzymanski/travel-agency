@@ -14,6 +14,8 @@ import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -35,7 +37,7 @@ class AttractionCommandHandlerTest {
             // Given
             val command =
                 CreateAttractionCommand(
-                    attractionId = UUID.randomUUID(),
+                    attractionId = AttractionId.generate(),
                     correlationId = UUID.randomUUID(),
                     name = "AttractionName",
                     location = LocationEnum.PARIS,
@@ -57,9 +59,9 @@ class AttractionCommandHandlerTest {
             // Given
             val command =
                 BookAttractionCommand(
-                    attractionId = UUID.randomUUID(),
+                    attractionId = AttractionId.generate(),
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -76,9 +78,9 @@ class AttractionCommandHandlerTest {
             // Given
             val command =
                 CancelAttractionBookingCommand(
-                    attractionId = UUID.randomUUID(),
+                    attractionId = AttractionId.generate(),
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -95,7 +97,7 @@ class AttractionCommandHandlerTest {
             // Given
             val command =
                 ExpireAttractionCommand(
-                    attractionId = UUID.randomUUID(),
+                    attractionId = AttractionId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -113,10 +115,10 @@ class AttractionCommandHandlerTest {
             // Given
             val command =
                 CompensateBookAttractionCommand(
-                    attractionId = UUID.randomUUID(),
+                    attractionId = AttractionId.generate(),
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -133,10 +135,10 @@ class AttractionCommandHandlerTest {
             // Given
             val command =
                 CompensateCancelAttractionBookingCommand(
-                    attractionId = UUID.randomUUID(),
+                    attractionId = AttractionId.generate(),
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When

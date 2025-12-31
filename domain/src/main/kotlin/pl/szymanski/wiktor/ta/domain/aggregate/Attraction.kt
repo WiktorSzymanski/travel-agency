@@ -17,15 +17,14 @@ import pl.szymanski.wiktor.ta.domain.exception.AttractionExpireFailedException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionEmptyEventListException
 import java.time.LocalDateTime
-import java.util.UUID
 
 data class Attraction(
-    val id: UUID = UUID.randomUUID(),
+    val id: AttractionId = AttractionId.generate(),
     val name: String,
     val location: LocationEnum,
     val date: LocalDateTime,
     val capacity: Int,
-    val bookings: MutableList<UUID> = mutableListOf(),
+    val bookings: MutableList<BookingId> = mutableListOf(),
     var status: AttractionStatusEnum = AttractionStatusEnum.SCHEDULED,
 ) {
     companion object {
@@ -133,7 +132,7 @@ data class Attraction(
         )
     }
 
-    fun book(bookingId: UUID): List<AttractionEvent> {
+    fun book(bookingId: BookingId): List<AttractionEvent> {
         statusCheck()
 
         if (bookings.size >= capacity) {
@@ -163,7 +162,7 @@ data class Attraction(
         )
     }
 
-    fun cancelBooking(bookingId: UUID): List<AttractionEvent> {
+    fun cancelBooking(bookingId: BookingId): List<AttractionEvent> {
         statusCheck()
 
         if (!listOf(AttractionStatusEnum.SCHEDULED, AttractionStatusEnum.FULL).contains(this.status)) {
@@ -212,7 +211,7 @@ data class Attraction(
         this.status = AttractionStatusEnum.EXPIRED
     }
 
-    fun compensateBook(bookingId: UUID): List<AttractionEvent> {
+    fun compensateBook(bookingId: BookingId): List<AttractionEvent> {
         val removed = bookings.removeIf { it == bookingId }
 
         if (!removed) {
@@ -232,7 +231,7 @@ data class Attraction(
         )
     }
 
-    fun compensateCancelBooking(bookingId: UUID): List<AttractionEvent> {
+    fun compensateCancelBooking(bookingId: BookingId): List<AttractionEvent> {
         if (bookings.any { it == bookingId }) {
             throw AttractionBookFailedException(bookingId, id)
         }

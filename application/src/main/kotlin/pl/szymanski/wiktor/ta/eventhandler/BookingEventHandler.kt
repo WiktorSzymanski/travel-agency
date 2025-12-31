@@ -11,6 +11,7 @@ import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.command.ReleaseTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.ReserveTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.TravelOfferCommand
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
@@ -21,11 +22,11 @@ class BookingEventHandler (
     private val commandBus: CommandBus,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EventHandler(scope) {
-    private val log = LoggerFactory.getLogger(this::class.java)
 
     init {
         setupHandlers()
     }
+    private val log = LoggerFactory.getLogger(this::class.java)
 
     suspend fun bookingCreatedEventHandler() =
         eventBus.subscribe<BookingCreatedEvent> {

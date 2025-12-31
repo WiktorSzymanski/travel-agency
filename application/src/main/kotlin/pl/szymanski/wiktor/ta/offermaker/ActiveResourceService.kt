@@ -2,8 +2,11 @@ package pl.szymanski.wiktor.ta.offermaker
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
@@ -22,6 +25,6 @@ class ActiveResourceService(private val repository: ActiveResourceRepository) {
     fun addAccommodation(event: AccommodationCreatedEvent) = repository.saveAccommodation(Accommodation.fromEvents(listOf(event)))
     fun addAttraction(event: AttractionCreatedEvent) = repository.saveAttraction(Attraction.fromEvents(listOf(event)))
 
-    fun addOfferTripleIfUnique(triple: Triple<UUID, UUID, UUID?>): Boolean =
+    fun addOfferTripleIfUnique(triple: Triple<CommuteId, AccommodationId, AttractionId>): Boolean =
         repository.addOfferTripleIfUnique(triple)
 }

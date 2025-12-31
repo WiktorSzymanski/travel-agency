@@ -25,10 +25,10 @@ class BookingCancelSagaEventHandler (
     private val commandBus: CommandBus,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EventHandler(scope) {
+
     init {
         setupHandlers()
     }
-
     suspend fun cancelBookingSagaStartedEventHandler() =
         eventBus.subscribe<BookingCancelSagaStartedEvent> {
             coroutineScope {

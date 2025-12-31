@@ -16,14 +16,13 @@ import pl.szymanski.wiktor.ta.domain.exception.AccommodationExpireFailedExceptio
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationEmptyEventListException
 import java.time.LocalDateTime
-import java.util.UUID
 
 data class Accommodation(
-    val id: UUID = UUID.randomUUID(),
+    val id: AccommodationId = AccommodationId.generate(),
     val name: String,
     val location: LocationEnum,
     val rent: Rent,
-    var bookingId: UUID? = null,
+    var bookingId: BookingId = BookingId.Empty,
     var status: AccommodationStatusEnum = AccommodationStatusEnum.AVAILABLE,
 ) {
     companion object {
@@ -83,7 +82,7 @@ data class Accommodation(
 
         is AccommodationBookingCanceledEvent -> {
             this.status = AccommodationStatusEnum.AVAILABLE
-            this.bookingId = null
+            this.bookingId = BookingId.Empty
         }
 
         is AccommodationExpiredEvent -> {
@@ -92,7 +91,7 @@ data class Accommodation(
 
         is AccommodationBookedCompensatedEvent -> {
             this.status = AccommodationStatusEnum.AVAILABLE
-            this.bookingId = null
+            this.bookingId = BookingId.Empty
         }
 
         is AccommodationBookingCanceledCompensatedEvent -> {
@@ -117,7 +116,7 @@ data class Accommodation(
         ))
     }
 
-    fun book(bookingId: UUID): List<AccommodationEvent> {
+    fun book(bookingId: BookingId): List<AccommodationEvent> {
         statusCheck()
         if (this.status != AccommodationStatusEnum.AVAILABLE) {
             throw AccommodationBookingFailedException(id, status)
@@ -132,7 +131,7 @@ data class Accommodation(
         ))
     }
 
-    fun cancelBooking(bookingId: UUID): List<AccommodationEvent> {
+    fun cancelBooking(bookingId: BookingId): List<AccommodationEvent> {
         statusCheck()
         if (this.status != AccommodationStatusEnum.BOOKED) {
             throw AccommodationBookingCancelFailedException(id, status)
@@ -142,7 +141,7 @@ data class Accommodation(
             throw AccommodationBookingCancelFailedException(id, bookingId)
         }
 
-        this.bookingId = null
+        this.bookingId = BookingId.Empty
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return listOf(AccommodationBookingCanceledEvent(
@@ -159,12 +158,12 @@ data class Accommodation(
     }
 
     // Note: Compensation methods currently return domain events which are later mapped to compensation events.
-    fun compensateBook(bookingId: UUID): List<AccommodationEvent> {
+    fun compensateBook(bookingId: BookingId): List<AccommodationEvent> {
         if (this.bookingId != bookingId) {
             throw AccommodationBookingCancelFailedException(id, bookingId)
         }
 
-        this.bookingId = null
+        this.bookingId = BookingId.Empty
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return listOf(AccommodationBookedCompensatedEvent(
@@ -173,8 +172,8 @@ data class Accommodation(
         ))
     }
 
-    fun compensateCancelBooking(bookingId: UUID): List<AccommodationEvent> {
-        if (this.bookingId != null) {
+    fun compensateCancelBooking(bookingId: BookingId): List<AccommodationEvent> {
+        if (this.bookingId != BookingId.Empty) {
             throw AccommodationBookingFailedException(id)
         }
 

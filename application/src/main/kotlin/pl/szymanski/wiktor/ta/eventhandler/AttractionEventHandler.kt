@@ -6,6 +6,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
@@ -17,6 +18,7 @@ class AttractionEventHandler(
     private val travelOfferService: TravelOfferService,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EventHandler(scope) {
+
     init {
         setupHandlers()
     }
@@ -25,7 +27,7 @@ class AttractionEventHandler(
         eventBus.subscribe<AttractionExpiredEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.expireTravelOfferByAttraction(it.event.attractionId, it.metadata.correlationId)
+                    travelOfferService.expireTravelOffer(it.event.attractionId as AttractionId.Present, it.metadata.correlationId)
                 }
             }
         }
@@ -34,8 +36,8 @@ class AttractionEventHandler(
         eventBus.subscribe<AttractionFullEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.makeTravelOfferUnavailableByAttraction(
-                        it.event.attractionId,
+                    travelOfferService.makeTravelOfferUnavailable(
+                        it.event.attractionId as AttractionId.Present,
                         it.metadata.correlationId
                     )
                 }
@@ -46,7 +48,7 @@ class AttractionEventHandler(
         eventBus.subscribe<AttractionAvailableEvent> {
             coroutineScope {
                 launch {
-                    travelOfferService.makeTravelOfferAvailableByAttraction(it.event.attractionId, it.metadata.correlationId)
+                    travelOfferService.makeTravelOfferAvailable(it.event.attractionId as AttractionId.Present, it.metadata.correlationId)
                 }
             }
         }

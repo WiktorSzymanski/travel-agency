@@ -6,6 +6,7 @@ import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -16,7 +17,7 @@ class AccommodationDtoTest {
             from = LocalDateTime.of(2025, 2, 1, 14, 0),
             till = LocalDateTime.of(2025, 2, 7, 10, 0),
         )
-        val bookingId = UUID.randomUUID()
+        val bookingId = BookingId.generate()
         val acc = Accommodation(
             name = "Hotel Plaza",
             location = LocationEnum.ROME,

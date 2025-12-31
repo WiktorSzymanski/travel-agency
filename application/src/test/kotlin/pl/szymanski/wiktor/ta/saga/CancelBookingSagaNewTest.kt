@@ -18,8 +18,13 @@ import pl.szymanski.wiktor.ta.command.CompensateCancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
@@ -48,15 +53,13 @@ class CancelBookingSagaNewTest {
     }
 
     private fun releaseEvent(
-        travelOfferId: UUID = UUID.randomUUID(),
-        accommodationId: UUID = UUID.randomUUID(),
-        commuteId: UUID = UUID.randomUUID(),
-        attractionId: UUID? = UUID.randomUUID(),
-        bookingId: UUID = UUID.randomUUID(),
-        correlationId: UUID = UUID.randomUUID(),
+        accommodationId: AccommodationId = AccommodationId.generate(),
+        commuteId: CommuteId = CommuteId.generate(),
+        attractionId: AttractionId = AttractionId.generate(),
+        bookingId: BookingId = BookingId.generate(),
         seat: Seat = Seat.Picked("1", "A"),
     ) = TravelOfferReleaseEvent(
-        travelOfferId = travelOfferId,
+        travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId),
         accommodationId = accommodationId,
         commuteId = commuteId,
         attractionId = attractionId,
@@ -83,7 +86,7 @@ class CancelBookingSagaNewTest {
     fun `cancel saga success with attraction should complete and publish events`() =
         runTest {
             // Given
-            val triggering = releaseEvent(attractionId = UUID.randomUUID())
+            val triggering = releaseEvent(attractionId = AttractionId.generate())
 
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
@@ -99,7 +102,7 @@ class CancelBookingSagaNewTest {
                                 CommuteBookingCanceledEvent(
                                     commuteId = triggering.commuteId,
                                     bookingId = triggering.bookingId,
-                                    seat = triggering.seat!!,
+                                    seat = triggering.seat,
                                 ),
                             )
                     is CompensateCancelCommuteBookingCommand -> error("Should not compensate on success")
@@ -128,7 +131,7 @@ class CancelBookingSagaNewTest {
                         attractionAgg to
                             listOf(
                                 AttractionBookingCanceledEvent(
-                                    attractionId = triggering.attractionId!!,
+                                    attractionId = triggering.attractionId,
                                     bookingId = triggering.bookingId,
                                 ),
                             )
@@ -158,7 +161,7 @@ class CancelBookingSagaNewTest {
     fun `cancel saga success without attraction should complete and not call attraction handler`() =
         runTest {
             // Given
-            val triggering = releaseEvent(attractionId = null)
+            val triggering = releaseEvent(attractionId = AttractionId.Empty)
 
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
@@ -173,7 +176,7 @@ class CancelBookingSagaNewTest {
                                 CommuteBookingCanceledEvent(
                                     commuteId = triggering.commuteId,
                                     bookingId = triggering.bookingId,
-                                    seat = triggering.seat!!,
+                                    seat = triggering.seat,
                                 ),
                             )
                     else -> error("Unexpected commute command: $command")
@@ -244,7 +247,7 @@ class CancelBookingSagaNewTest {
     fun `cancel saga accommodation failure should publish failed and not call attraction`() =
         runTest {
             // Given
-            val triggering = releaseEvent(attractionId = UUID.randomUUID())
+            val triggering = releaseEvent(attractionId = AttractionId.generate())
 
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
@@ -257,7 +260,7 @@ class CancelBookingSagaNewTest {
                                 CommuteBookingCanceledEvent(
                                     commuteId = triggering.commuteId,
                                     bookingId = triggering.bookingId,
-                                    seat = triggering.seat!!,
+                                    seat = triggering.seat,
                                 ),
                             )
                     is CompensateCancelCommuteBookingCommand -> mockk<Commute>(relaxed = true) to emptyList()
@@ -292,7 +295,7 @@ class CancelBookingSagaNewTest {
     fun `cancel saga attraction failure should publish failed`() =
         runTest {
             // Given
-            val triggering = releaseEvent(attractionId = UUID.randomUUID())
+            val triggering = releaseEvent(attractionId = AttractionId.generate())
 
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
@@ -354,7 +357,7 @@ class CancelBookingSagaNewTest {
     fun `cancel saga without attraction and commute failure should publish failed`() =
         runTest {
             // Given
-            val triggering = releaseEvent(attractionId = null)
+            val triggering = releaseEvent(attractionId = AttractionId.Empty)
 
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 

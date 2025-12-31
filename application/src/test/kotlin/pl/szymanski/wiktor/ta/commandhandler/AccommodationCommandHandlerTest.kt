@@ -15,6 +15,8 @@ import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -36,7 +38,7 @@ class AccommodationCommandHandlerTest {
             // Given
             val command =
                 CreateAccommodationCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
                     name = "AccommodationName",
                     location = LocationEnum.PARIS,
@@ -61,9 +63,9 @@ class AccommodationCommandHandlerTest {
             // Given
             val command =
                 BookAccommodationCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -80,9 +82,9 @@ class AccommodationCommandHandlerTest {
             // Given
             val command =
                 CancelAccommodationBookingCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -99,7 +101,7 @@ class AccommodationCommandHandlerTest {
             // Given
             val command =
                 ExpireAccommodationCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -117,10 +119,10 @@ class AccommodationCommandHandlerTest {
             // Given
             val command =
                 CompensateBookAccommodationCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -137,10 +139,10 @@ class AccommodationCommandHandlerTest {
             // Given
             val command =
                 CompensateCancelAccommodationBookingCommand(
-                    accommodationId = UUID.randomUUID(),
+                    accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When

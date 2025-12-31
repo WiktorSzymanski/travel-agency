@@ -5,9 +5,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import pl.szymanski.wiktor.ta.EventBus
 
 abstract class EventHandler(
-    protected val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    protected val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
     private val handlerJobs = mutableListOf<Job>()
 

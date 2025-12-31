@@ -2,8 +2,11 @@ package pl.szymanski.wiktor.ta.offermaker
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import java.util.UUID
 
 interface ActiveResourceRepository {
@@ -23,6 +26,6 @@ interface ActiveResourceRepository {
     fun removeAccommodation(id: UUID)
     fun removeAttraction(id: UUID)
 
-    fun getLastCreatedOffersTriples(): List<Triple<UUID, UUID, UUID?>>
-    fun addOfferTripleIfUnique(triple: Triple<UUID, UUID, UUID?>): Boolean
+    fun getLastCreatedOffersTriples(): List<Triple<CommuteId, AccommodationId, AttractionId>>
+    fun addOfferTripleIfUnique(triple: Triple<CommuteId, AccommodationId, AttractionId>): Boolean
 }

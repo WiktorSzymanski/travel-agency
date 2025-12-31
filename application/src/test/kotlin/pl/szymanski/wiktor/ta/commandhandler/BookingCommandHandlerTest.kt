@@ -16,6 +16,8 @@ import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
 import java.util.UUID
 import kotlin.test.Test
@@ -36,8 +38,9 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 CreateBookingCommand(
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
-                    travelOfferId = UUID.randomUUID(),
+                    travelOfferId = TravelOfferId.from(UUID.randomUUID()),
                     userId = UUID.randomUUID(),
                     seat = Seat.Picked("1", "A"),
                 )
@@ -56,7 +59,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 BookingRequestCancelCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -74,7 +77,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 ProcessBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -92,7 +95,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 CompleteBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -110,7 +113,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 CancelBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -128,7 +131,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 FailBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                     message = "error message",
                 )
@@ -147,7 +150,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 FailCancelBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                     message = "cancellation failed",
                 )
@@ -166,7 +169,7 @@ class BookingCommandHandlerTest {
             // Given
             val command =
                 ProcessCancelBookingCommand(
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 

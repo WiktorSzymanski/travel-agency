@@ -15,7 +15,9 @@ import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -37,7 +39,7 @@ class CommuteCommandHandlerTest {
             // Given
             val command =
                 CreateCommuteCommand(
-                    commuteId = UUID.randomUUID(),
+                    commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
                     name = "CommuteName",
                     departure = LocationAndTime(LocationEnum.PARIS, LocalDateTime.now().plusDays(1)),
@@ -59,9 +61,9 @@ class CommuteCommandHandlerTest {
             // Given
             val command =
                 BookCommuteCommand(
-                    commuteId = UUID.randomUUID(),
+                    commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("1", "B"),
                 )
 
@@ -79,9 +81,9 @@ class CommuteCommandHandlerTest {
             // Given
             val command =
                 CancelCommuteBookingCommand(
-                    commuteId = UUID.randomUUID(),
+                    commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -98,7 +100,7 @@ class CommuteCommandHandlerTest {
             // Given
             val command =
                 ExpireCommuteCommand(
-                    commuteId = UUID.randomUUID(),
+                    commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
                 )
 
@@ -116,10 +118,10 @@ class CommuteCommandHandlerTest {
             // Given
             val command =
                 CompensateBookCommuteCommand(
-                    commuteId = UUID.randomUUID(),
+                    commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                 )
 
             // When
@@ -136,10 +138,10 @@ class CommuteCommandHandlerTest {
             // Given
             val command =
                 CompensateCancelCommuteBookingCommand(
-                    commuteId = UUID.randomUUID(),
+                    commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
                     eventId = UUID.randomUUID(),
-                    bookingId = UUID.randomUUID(),
+                    bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "D"),
                 )
 

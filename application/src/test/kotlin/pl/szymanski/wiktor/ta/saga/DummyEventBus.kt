@@ -32,7 +32,7 @@ class DummyEventBus : EventBus {
         onEvent: suspend (EventEnvelope<T>) -> Unit
     ) {
         events.collect { event ->
-            if (event.eventType == eventType.java.simpleName) {
+            if (event.eventType == eventType.simpleName) {
                 onEvent(event as EventEnvelope<T>)
             }
         }

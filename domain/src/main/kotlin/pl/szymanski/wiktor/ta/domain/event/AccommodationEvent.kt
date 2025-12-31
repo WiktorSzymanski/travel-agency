@@ -2,15 +2,17 @@ package pl.szymanski.wiktor.ta.domain.event
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.util.UUID
 
 sealed interface AccommodationEvent : DomainEvent {
-    val accommodationId: UUID
+    val accommodationId: AccommodationId
 }
 
 data class AccommodationCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
+    override val accommodationId: AccommodationId,
     val name: String,
     val location: LocationEnum,
     val rent: Rent,
@@ -18,29 +20,29 @@ data class AccommodationCreatedEvent(
 
 data class AccommodationBookedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
-    val bookingId: UUID,
+    override val accommodationId: AccommodationId,
+    val bookingId: BookingId,
 ) : AccommodationEvent
 
 data class AccommodationBookingCanceledEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
-    val bookingId: UUID,
+    override val accommodationId: AccommodationId,
+    val bookingId: BookingId,
 ) : AccommodationEvent
 
 data class AccommodationExpiredEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
+    override val accommodationId: AccommodationId,
 ) : AccommodationEvent
 
 data class AccommodationBookedCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
-    val bookingId: UUID,
+    override val accommodationId: AccommodationId,
+    val bookingId: BookingId,
 ) : AccommodationEvent
 
 data class AccommodationBookingCanceledCompensatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
-    override val accommodationId: UUID,
-    val bookingId: UUID,
+    override val accommodationId: AccommodationId,
+    val bookingId: BookingId,
 ) : AccommodationEvent

@@ -14,7 +14,6 @@ import pl.szymanski.wiktor.ta.commandhandler.*
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.saga.DummyEventBus
 import java.time.LocalDateTime
-import java.util.UUID
 import kotlin.test.Test
 
 class OfferMakerTest {

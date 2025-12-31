@@ -16,6 +16,8 @@ import pl.szymanski.wiktor.ta.command.CompensateCancelAccommodationBookingComman
 import pl.szymanski.wiktor.ta.command.CompensateCancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
@@ -48,7 +50,7 @@ class CancelBookingSaga(
         CancelAccommodationBookingCommand(
             triggeringEvent.accommodationId,
             triggeringEventMetadata.correlationId,
-            triggeringEvent.bookingId,
+            (triggeringEvent.bookingId as BookingId.Present),
         )
 
     private fun getCompensateAccommodationCommand(eventId: UUID): CompensateAccommodationCommand {
@@ -56,7 +58,7 @@ class CancelBookingSaga(
             accommodationId = triggeringEvent.accommodationId,
             correlationId = triggeringEventMetadata.correlationId,
             eventId = eventId,
-            bookingId = triggeringEvent.bookingId,
+            bookingId = (triggeringEvent.bookingId as BookingId.Present),
         )
     }
 
@@ -81,15 +83,16 @@ class CancelBookingSaga(
     }
 
     private val attractionCommand: AttractionCommand? =
-        triggeringEvent.attractionId?.let {
-            CancelAttractionBookingCommand(
-                it,
+        when (val attractionId = triggeringEvent.attractionId) {
+            is AttractionId.Present -> CancelAttractionBookingCommand(
+                attractionId,
                 triggeringEventMetadata.correlationId,
-                triggeringEvent.bookingId,
+                (triggeringEvent.bookingId as BookingId.Present),
             )
+            is AttractionId.Empty -> null
         }
 
-    private val bookingId: UUID = triggeringEvent.bookingId
+    private val bookingId: BookingId = triggeringEvent.bookingId
 
     private val maxRetries = DEFAULT_MAX_RETRIES
 

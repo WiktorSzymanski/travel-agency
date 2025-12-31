@@ -8,6 +8,7 @@ import pl.szymanski.wiktor.ta.command.CompensateCancelAttractionBookingCommand
 import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
 

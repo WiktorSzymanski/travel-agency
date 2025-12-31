@@ -1,27 +1,29 @@
 package pl.szymanski.wiktor.ta.command
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.time.LocalDateTime
 import java.util.UUID
 
 sealed class AttractionCommand : Command {
-    abstract val attractionId: UUID
+    abstract val attractionId: AttractionId
 }
 
 data class BookAttractionCommand(
-    override val attractionId: UUID,
+    override val attractionId: AttractionId,
     override val correlationId: UUID,
-    val bookingId: UUID,
+    val bookingId: BookingId,
 ) : AttractionCommand()
 
 data class CancelAttractionBookingCommand(
-    override val attractionId: UUID,
+    override val attractionId: AttractionId,
     override val correlationId: UUID,
-    val bookingId: UUID,
+    val bookingId: BookingId,
 ) : AttractionCommand()
 
 data class CreateAttractionCommand(
-    override val attractionId: UUID,
+    override val attractionId: AttractionId,
     override val correlationId: UUID,
     val name: String,
     val location: LocationEnum,
@@ -30,7 +32,7 @@ data class CreateAttractionCommand(
 ) : AttractionCommand()
 
 data class ExpireAttractionCommand(
-    override val attractionId: UUID,
+    override val attractionId: AttractionId,
     override val correlationId: UUID,
 ) : AttractionCommand()
 
@@ -39,15 +41,15 @@ sealed class CompensateAttractionCommand : AttractionCommand() {
 }
 
 data class CompensateBookAttractionCommand(
-    override val attractionId: UUID,
+    override val attractionId: AttractionId,
     override val correlationId: UUID,
     override val eventId: UUID,
-    val bookingId: UUID,
+    val bookingId: BookingId,
 ) : CompensateAttractionCommand()
 
 data class CompensateCancelAttractionBookingCommand(
-    override val attractionId: UUID,
+    override val attractionId: AttractionId,
     override val correlationId: UUID,
     override val eventId: UUID,
-    val bookingId: UUID,
+    val bookingId: BookingId,
 ) : CompensateAttractionCommand()

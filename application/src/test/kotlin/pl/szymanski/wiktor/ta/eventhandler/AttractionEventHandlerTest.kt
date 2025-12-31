@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
@@ -22,7 +23,7 @@ class AttractionEventHandlerTest {
     fun `should handle AttractionExpiredEvent`() = runTest(UnconfinedTestDispatcher()) {
         AttractionEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val attractionId = UUID.randomUUID()
+        val attractionId = AttractionId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -35,14 +36,14 @@ class AttractionEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.expireTravelOfferByAttraction(attractionId, correlationId) }
+        coVerify { travelOfferService.expireTravelOffer(attractionId, correlationId) }
     }
 
     @Test
     fun `should handle AttractionFullEvent`() = runTest(UnconfinedTestDispatcher()) {
         AttractionEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val attractionId = UUID.randomUUID()
+        val attractionId = AttractionId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -55,14 +56,14 @@ class AttractionEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.makeTravelOfferUnavailableByAttraction(attractionId, correlationId) }
+        coVerify { travelOfferService.makeTravelOfferUnavailable(attractionId, correlationId) }
     }
 
     @Test
     fun `should handle AttractionAvailableEvent`() = runTest(UnconfinedTestDispatcher()) {
         AttractionEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val attractionId = UUID.randomUUID()
+        val attractionId = AttractionId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -75,6 +76,6 @@ class AttractionEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.makeTravelOfferAvailableByAttraction(attractionId, correlationId) }
+        coVerify { travelOfferService.makeTravelOfferAvailable(attractionId, correlationId) }
     }
 }

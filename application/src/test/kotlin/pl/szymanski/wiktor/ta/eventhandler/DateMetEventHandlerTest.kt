@@ -12,6 +12,9 @@ import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
 import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
@@ -35,7 +38,7 @@ class DateMetEventHandlerTest {
             backgroundScope
         )
 
-        val commuteId = UUID.randomUUID()
+        val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -68,7 +71,7 @@ class DateMetEventHandlerTest {
             backgroundScope
         )
 
-        val accommodationId = UUID.randomUUID()
+        val accommodationId = AccommodationId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -101,7 +104,7 @@ class DateMetEventHandlerTest {
             backgroundScope
         )
 
-        val attractionId = UUID.randomUUID()
+        val attractionId = AttractionId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(

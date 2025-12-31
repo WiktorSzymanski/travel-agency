@@ -7,14 +7,16 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 
+// TODO: Current DTO's are views not DTO's that will be saved in database
+
 @Serializable
 data class TravelOfferDto(
     val id: String,
     val name: String,
     val commute: CommuteDto,
     val accommodation: AccommodationDto,
-    val attraction: AttractionDto? = null,
-    val booking: String? = null,
+    val attraction: AttractionDto,
+    val booking: String,
     val status: String = TravelOfferStatusEnum.AVAILABLE.name,
 ) {
     companion object {
@@ -29,8 +31,8 @@ data class TravelOfferDto(
                 name = travelOffer.name,
                 commute = CommuteDto.fromDomain(commute),
                 accommodation = AccommodationDto.fromDomain(accommodation),
-                attraction = if (attraction != null) AttractionDto.fromDomain(attraction) else null,
-                booking = travelOffer.bookingId?.toString(),
+                attraction = AttractionDto.fromDomain(attraction),
+                booking = travelOffer.bookingId.toString(),
                 status = travelOffer.status.name,
             )
         }

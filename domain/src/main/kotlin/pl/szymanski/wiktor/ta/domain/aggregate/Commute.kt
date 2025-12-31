@@ -21,12 +21,12 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 data class Commute(
-    val id: UUID = UUID.randomUUID(),
+    val id: CommuteId = CommuteId.generate(),
     val name: String,
     val departure: LocationAndTime,
     val arrival: LocationAndTime,
     val seats: List<Seat>,
-    val bookings: MutableMap<UUID, Seat> = mutableMapOf(),
+    val bookings: MutableMap<BookingId, Seat> = mutableMapOf(),
     var status: CommuteStatusEnum = CommuteStatusEnum.SCHEDULED,
 ) {
     companion object {
@@ -134,7 +134,7 @@ data class Commute(
     }
 
     fun bookSeat(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<CommuteEvent> {
         statusCheck()
@@ -163,7 +163,7 @@ data class Commute(
         )
     }
 
-    fun cancelBookedSeat(bookingId: UUID): List<CommuteEvent> {
+    fun cancelBookedSeat(bookingId: BookingId): List<CommuteEvent> {
         statusCheck()
         if (!listOf(CommuteStatusEnum.SCHEDULED, CommuteStatusEnum.FULL).contains(this.status)) {
             throw CommuteCancelBookedSeatFailedException(bookingId, id, status)
@@ -188,7 +188,7 @@ data class Commute(
     }
 
     fun compensateCancelBookedSeat(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<CommuteEvent> {
         if (!this.seats.contains(seat)) {
@@ -215,7 +215,7 @@ data class Commute(
         )
     }
 
-    fun compensateBookSeat(bookingId: UUID): List<CommuteEvent> {
+    fun compensateBookSeat(bookingId: BookingId): List<CommuteEvent> {
         val seat =
             this.bookings.remove(bookingId)
                 ?: throw CommuteCancelBookedSeatFailedException(bookingId, id)

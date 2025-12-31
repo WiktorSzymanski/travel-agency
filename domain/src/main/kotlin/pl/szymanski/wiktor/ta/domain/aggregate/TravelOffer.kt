@@ -26,27 +26,26 @@ import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReserveFailedException
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReservationCancelFailedException
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferEmptyEventListException
-import java.util.UUID
 
 data class TravelOffer(
-    val id: UUID,
+    val id: TravelOfferId,
     val name: String,
-    val commuteId: UUID,
-    val accommodationId: UUID,
-    val attractionId: UUID? = null,
-    var bookingId: UUID? = null,
+    val commuteId: CommuteId,
+    val accommodationId: AccommodationId,
+    val attractionId: AttractionId = AttractionId.Empty,
+    var bookingId: BookingId = BookingId.Empty,
     var status: TravelOfferStatusEnum = TravelOfferStatusEnum.AVAILABLE,
 ) {
     companion object {
         fun create(
             name: String,
-            commuteId: UUID,
-            accommodationId: UUID,
-            attractionId: UUID?,
+            commuteId: CommuteId,
+            accommodationId: AccommodationId,
+            attractionId: AttractionId,
         ): Pair<TravelOffer, List<TravelOfferCreatedEvent>> {
             val travelOffer =
                 TravelOffer(
-                    id = UUID.randomUUID(),
+                    id = TravelOfferId.generate(commuteId, accommodationId, attractionId),
                     name = name,
                     commuteId = commuteId,
                     accommodationId = accommodationId,
@@ -89,7 +88,7 @@ data class TravelOffer(
     }
 
     fun apply(event: TravelOfferEvent): Unit = when (event) {
-        is TravelOfferCreatedEvent -> Unit
+        is TravelOfferCreatedEvent -> throw IllegalArgumentException("Cannot apply TravelOfferCreatedEvent to existing TravelOffer ($id)")
 
         is TravelOfferMadeUnavailableEvent -> {
             this.status = TravelOfferStatusEnum.UNAVAILABLE
@@ -115,7 +114,7 @@ data class TravelOffer(
 
         is TravelOfferReservationCanceledEvent -> {
             this.status = TravelOfferStatusEnum.AVAILABLE
-            this.bookingId = null
+            this.bookingId = BookingId.Empty
         }
 
         is TravelOfferReleaseEvent -> {
@@ -128,12 +127,12 @@ data class TravelOffer(
 
         is TravelOfferBookingCanceledEvent -> {
             this.status = TravelOfferStatusEnum.AVAILABLE
-            this.bookingId = null
+            this.bookingId = BookingId.Empty
         }
 
         is TravelOfferBookedCompensatedEvent -> {
             this.status = TravelOfferStatusEnum.AVAILABLE
-            this.bookingId = null
+            this.bookingId = BookingId.Empty
         }
 
         is TravelOfferBookingCanceledCompensatedEvent -> {
@@ -182,7 +181,7 @@ data class TravelOffer(
     }
 
     fun reserve(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.AVAILABLE) {
@@ -203,7 +202,7 @@ data class TravelOffer(
     }
 
     fun book(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RESERVED) {
@@ -227,7 +226,7 @@ data class TravelOffer(
     }
 
     fun cancelReservation(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RESERVED) {
@@ -238,7 +237,7 @@ data class TravelOffer(
             throw TravelOfferReservationCancelFailedException(id, bookingId)
         }
 
-        this.bookingId = null
+        this.bookingId = BookingId.Empty
         this.status = TravelOfferStatusEnum.AVAILABLE
 
         return listOf(TravelOfferReservationCanceledEvent(
@@ -252,7 +251,7 @@ data class TravelOffer(
     }
 
     fun releaseBooking(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.BOOKED) {
@@ -275,7 +274,7 @@ data class TravelOffer(
         ))
     }
 
-    fun rebook(bookingId: UUID): List<TravelOfferEvent> {
+    fun rebook(bookingId: BookingId): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RELEASING) {
             throw TravelOfferRebookFailedException(id, status)
         }
@@ -289,7 +288,7 @@ data class TravelOffer(
     }
 
     fun cancelBooking(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
         if (status != TravelOfferStatusEnum.RELEASING) {
@@ -300,7 +299,7 @@ data class TravelOffer(
             throw TravelOfferReleaseCompleteFailedException(id, bookingId)
         }
 
-        this.bookingId = null
+        this.bookingId = BookingId.Empty
         this.status = TravelOfferStatusEnum.AVAILABLE
 
         return listOf(TravelOfferBookingCanceledEvent(
@@ -314,7 +313,7 @@ data class TravelOffer(
     }
 
     fun compensateBook(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
         if (this.bookingId != bookingId) {
@@ -322,7 +321,7 @@ data class TravelOffer(
         }
 
         this.status = TravelOfferStatusEnum.AVAILABLE
-        this.bookingId = null
+        this.bookingId = BookingId.Empty
 
         return listOf(TravelOfferBookedCompensatedEvent(
             travelOfferId = id,
@@ -335,10 +334,10 @@ data class TravelOffer(
     }
 
     fun compensateCancelBooking(
-        bookingId: UUID,
+        bookingId: BookingId,
         seat: Seat,
     ): List<TravelOfferEvent> {
-        if (this.bookingId != null) {
+        if (this.bookingId != BookingId.Empty) {
             throw TravelOfferBookFailedException(status)
         }
 

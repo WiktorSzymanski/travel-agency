@@ -15,6 +15,8 @@ import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
@@ -75,15 +77,16 @@ class BookingSaga(
     }
 
     private val attractionCommand: AttractionCommand? =
-        triggeringEvent.attractionId?.let {
-            BookAttractionCommand(
-                it,
+        when (val attractionId = triggeringEvent.attractionId) {
+            is AttractionId.Present -> BookAttractionCommand(
+                attractionId,
                 triggeringEventMetadata.correlationId,
                 triggeringEvent.bookingId,
             )
+            is AttractionId.Empty -> null
         }
 
-    private val bookingId: UUID = triggeringEvent.bookingId
+    private val bookingId: BookingId = triggeringEvent.bookingId
 
     private val maxRetries = DEFAULT_MAX_RETRIES
 

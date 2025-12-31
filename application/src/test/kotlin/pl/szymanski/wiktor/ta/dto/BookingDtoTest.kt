@@ -6,13 +6,14 @@ import kotlin.test.assertFailsWith
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import java.util.UUID
 
 class BookingDtoTest {
     @Test
     fun `fromDomain maps fields with picked seat`() {
         val userId = UUID.randomUUID()
-        val offerId = UUID.randomUUID()
+        val offerId = TravelOfferId.from(UUID.randomUUID())
         val booking = Booking(
             userId = userId,
             travelOfferId = offerId,
@@ -37,7 +38,7 @@ class BookingDtoTest {
     @Test
     fun `SeatDto fromDomain throws for Seat Any`() {
         val userId = UUID.randomUUID()
-        val offerId = UUID.randomUUID()
+        val offerId = TravelOfferId.from(UUID.randomUUID())
         val booking = Booking(
             userId = userId,
             travelOfferId = offerId,

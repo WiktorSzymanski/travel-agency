@@ -17,8 +17,13 @@ import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
@@ -47,14 +52,13 @@ class BookingSagaNewTest {
     }
 
     private fun reservedEvent(
-        travelOfferId: UUID = UUID.randomUUID(),
-        accommodationId: UUID = UUID.randomUUID(),
-        commuteId: UUID = UUID.randomUUID(),
-        attractionId: UUID? = UUID.randomUUID(),
-        bookingId: UUID = UUID.randomUUID(),
+        accommodationId: AccommodationId = AccommodationId.generate(),
+        commuteId: CommuteId = CommuteId.generate(),
+        attractionId: AttractionId = AttractionId.generate(),
+        bookingId: BookingId = BookingId.generate(),
         seat: Seat = Seat.Picked("1", "A"),
     ) = TravelOfferReservedEvent(
-        travelOfferId = travelOfferId,
+        travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId),
         accommodationId = accommodationId,
         commuteId = commuteId,
         attractionId = attractionId,
@@ -86,7 +90,7 @@ class BookingSagaNewTest {
             val accommodationAgg = mockk<Accommodation>(relaxed = true)
             val attractionAgg = mockk<Attraction>(relaxed = true)
 
-            val triggering = reservedEvent(attractionId = UUID.randomUUID())
+            val triggering = reservedEvent(attractionId = AttractionId.generate())
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { command ->
@@ -160,7 +164,7 @@ class BookingSagaNewTest {
             val accommodationAgg = mockk<Accommodation>(relaxed = true)
             var attractionCalled = false
 
-            val triggering = reservedEvent(attractionId = null)
+            val triggering = reservedEvent(attractionId = AttractionId.Empty)
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { command ->
@@ -242,7 +246,7 @@ class BookingSagaNewTest {
     fun `saga commute failure without attraction should publish failed and stop`() =
         runTest {
             // Given
-            val triggering = reservedEvent(attractionId = null)
+            val triggering = reservedEvent(attractionId = AttractionId.Empty)
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { _ ->
@@ -271,10 +275,9 @@ class BookingSagaNewTest {
         runTest {
             // Given
             val commuteAgg = mockk<Commute>(relaxed = true)
-            val accommodationAgg = mockk<Accommodation>(relaxed = true)
             var commuteCompensated = false
 
-            val triggering = reservedEvent(attractionId = null)
+            val triggering = reservedEvent(attractionId = AttractionId.Empty)
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             lateinit var commuteBookedEvent: CommuteBookedEvent
@@ -329,12 +332,11 @@ class BookingSagaNewTest {
             // Given
             val commuteAgg = mockk<Commute>(relaxed = true)
             val accommodationAgg = mockk<Accommodation>(relaxed = true)
-            val attractionAgg = mockk<Attraction>(relaxed = true)
 
             var commuteCompensated = false
             var accommodationCompensated = false
 
-            val triggering = reservedEvent(attractionId = UUID.randomUUID())
+            val triggering = reservedEvent(attractionId = AttractionId.generate())
             val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             lateinit var commuteBookedEvent: CommuteBookedEvent

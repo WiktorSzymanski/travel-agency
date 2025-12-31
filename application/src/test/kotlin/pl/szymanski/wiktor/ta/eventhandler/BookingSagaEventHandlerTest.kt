@@ -13,7 +13,9 @@ import pl.szymanski.wiktor.ta.command.FailBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
@@ -29,7 +31,7 @@ class BookingSagaEventHandlerTest {
     fun `should handle BookingSagaStartedEvent`() = runTest(UnconfinedTestDispatcher()) {
         BookingSagaEventHandler(eventBus, commandBus, backgroundScope)
 
-        val bookingId = UUID.randomUUID()
+        val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -56,8 +58,8 @@ class BookingSagaEventHandlerTest {
     fun `should handle BookingSagaCompletedEvent`() = runTest(UnconfinedTestDispatcher()) {
         BookingSagaEventHandler(eventBus, commandBus, backgroundScope)
 
-        val bookingId = UUID.randomUUID()
-        val travelOfferId = UUID.randomUUID()
+        val bookingId = BookingId.generate()
+        val travelOfferId = TravelOfferId.from(UUID.randomUUID())
         val correlationId = UUID.randomUUID()
         val seat = Seat.Any
 
@@ -98,7 +100,7 @@ class BookingSagaEventHandlerTest {
     fun `should handle BookingSagaFailedEvent`() = runTest(UnconfinedTestDispatcher()) {
         BookingSagaEventHandler(eventBus, commandBus, backgroundScope)
 
-        val bookingId = UUID.randomUUID()
+        val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
         val message = "Error message"
 

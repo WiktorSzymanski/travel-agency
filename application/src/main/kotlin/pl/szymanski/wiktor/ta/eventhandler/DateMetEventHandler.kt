@@ -24,10 +24,10 @@ class DateMetEventHandler(
     private val accommodationCommandHandler: AccommodationCommandHandler,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) : EventHandler(scope) {
+
     init {
         setupHandlers()
     }
-
     suspend fun commuteDateMetEventHandler() =
         eventBus.subscribe<CommuteDateMetEvent> {
             coroutineScope {

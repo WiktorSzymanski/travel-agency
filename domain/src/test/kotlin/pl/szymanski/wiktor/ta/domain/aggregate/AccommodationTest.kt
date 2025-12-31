@@ -14,17 +14,15 @@ import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import java.time.LocalDateTime
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 class AccommodationTest {
-    private lateinit var accommodationId: UUID
-    private lateinit var bookingId: UUID
+    private var accommodationId: AccommodationId = AccommodationId.generate()
+    private var bookingId: BookingId = BookingId.generate()
     private lateinit var now: LocalDateTime
     private lateinit var rentFuture: Rent
     private lateinit var rentPast: Rent
@@ -32,8 +30,8 @@ class AccommodationTest {
 
     @BeforeTest
     fun setup() {
-        accommodationId = UUID.randomUUID()
-        bookingId = UUID.randomUUID()
+        accommodationId = AccommodationId.generate()
+        bookingId = BookingId.generate()
         now = LocalDateTime.now()
         rentFuture = Rent(from = now.plusSeconds(1), till = now.plusSeconds(5))
         rentPast = Rent(from = now.minusSeconds(5), till = now.minusSeconds(1))
@@ -100,7 +98,7 @@ class AccommodationTest {
             ),
             events.first(),
         )
-        assertNull(accommodation.bookingId)
+        assertEquals(BookingId.Empty, accommodation.bookingId)
     }
 
     @Test
@@ -110,7 +108,7 @@ class AccommodationTest {
 
     @Test
     fun cancelBooking_should_fail_if_wrong_user() {
-        val randomBookingId = UUID.randomUUID()
+        val randomBookingId = BookingId.generate()
         accommodation.book(randomBookingId)
 
         assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.cancelBooking(bookingId) }
@@ -150,7 +148,7 @@ class AccommodationTest {
     @Test
     fun cancelBooking_should_fail_when_expired_and_not_change_state() {
         // Prepare EXPIRED with a preset bookingId; statusCheck should early-return and not mutate state
-        val presetBooking = UUID.randomUUID()
+        val presetBooking = BookingId.generate()
         accommodation = accommodation.copy(status = AccommodationStatusEnum.EXPIRED, bookingId = presetBooking)
 
         assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.cancelBooking(presetBooking) }
@@ -199,12 +197,12 @@ class AccommodationTest {
             events.first(),
         )
         assertEquals(AccommodationStatusEnum.AVAILABLE, accommodation.status)
-        assertNull(accommodation.bookingId)
+        assertEquals(BookingId.Empty, accommodation.bookingId)
     }
 
     @Test
     fun compensateBook_should_fail_when_bookingId_does_not_match() {
-        val randomBookingId = UUID.randomUUID()
+        val randomBookingId = BookingId.generate()
         accommodation.book(randomBookingId)
 
         assertFailsWith<AccommodationBookingCancelFailedException> { accommodation.compensateBook(bookingId) }
@@ -233,7 +231,7 @@ class AccommodationTest {
 
     @Test
     fun compensateCancelBooking_should_fail_when_booking_already_exists() {
-        val randomBookingId = UUID.randomUUID()
+        val randomBookingId = BookingId.generate()
         accommodation.book(randomBookingId)
 
         assertFailsWith<AccommodationBookingFailedException> { accommodation.compensateCancelBooking(bookingId) }
@@ -241,8 +239,8 @@ class AccommodationTest {
 
     @Test
     fun accommodation_apply_should_map_events_correctly() {
-        val id = UUID.randomUUID()
-        val bookingId = UUID.randomUUID()
+        val id = AccommodationId.generate()
+        val bookingId = BookingId.generate()
         val acc = Accommodation(id, "acc", LocationEnum.PARIS, Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1)))
 
         // Created event is ignored by in-aggregate apply; state is set on creation or fromEvents
@@ -258,7 +256,7 @@ class AccommodationTest {
 
         acc.apply(AccommodationBookingCanceledEvent(accommodationId = id, bookingId = bookingId))
         assertEquals(AccommodationStatusEnum.AVAILABLE, acc.status)
-        assertNull(acc.bookingId)
+        assertEquals(BookingId.Empty, acc.bookingId)
 
         acc.apply(AccommodationExpiredEvent(accommodationId = id))
         assertEquals(AccommodationStatusEnum.EXPIRED, acc.status)
@@ -270,15 +268,15 @@ class AccommodationTest {
         assertFailsWith<AccommodationEmptyEventListException> { Accommodation.fromEvents(emptyList()) }
 
         // first not created -> throws
-        val dummyId = UUID.randomUUID()
-        val notCreatedFirst = listOf(AccommodationBookedEvent(accommodationId = dummyId, bookingId = UUID.randomUUID()))
+        val dummyId = AccommodationId.generate()
+        val notCreatedFirst = listOf(AccommodationBookedEvent(accommodationId = dummyId, bookingId = BookingId.generate()))
         assertFailsWith<AccommodationMissingCreatedEventException> { Accommodation.fromEvents(notCreatedFirst) }
     }
 
     @Test
     fun accommodation_fromEvents_should_rebuild_state() {
-        val id = UUID.randomUUID()
-        val bookingId = UUID.randomUUID()
+        val id = AccommodationId.generate()
+        val bookingId = BookingId.generate()
         val events = listOf(
             AccommodationCreatedEvent(
                 accommodationId = id,
@@ -297,6 +295,22 @@ class AccommodationTest {
         assertEquals("acc", result.name)
         assertEquals(LocationEnum.ROME, result.location)
         assertEquals(AccommodationStatusEnum.EXPIRED, result.status)
-        assertNull(result.bookingId)
+        assertEquals(BookingId.Empty, result.bookingId)
+    }
+
+    @Test
+    fun accommodation_apply_compensation_events_should_update_state() {
+        val accommodation = Accommodation(accommodationId, "acc", LocationEnum.PARIS,
+            Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1))
+        )
+
+        accommodation.apply(AccommodationBookedEvent(accommodationId = accommodationId, bookingId = bookingId))
+        accommodation.apply(AccommodationBookedCompensatedEvent(accommodationId = accommodationId, bookingId = bookingId))
+        assertEquals(AccommodationStatusEnum.AVAILABLE, accommodation.status)
+        assertEquals(accommodation.bookingId, BookingId.Empty)
+
+        accommodation.apply(AccommodationBookingCanceledCompensatedEvent(accommodationId = accommodationId, bookingId = bookingId))
+        assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
+        assertEquals(bookingId, accommodation.bookingId)
     }
 }

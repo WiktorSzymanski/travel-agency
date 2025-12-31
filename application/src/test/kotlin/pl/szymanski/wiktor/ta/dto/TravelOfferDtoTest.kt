@@ -2,12 +2,14 @@ package pl.szymanski.wiktor.ta.dto
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import pl.szymanski.wiktor.ta.domain.*
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -48,10 +50,10 @@ class TravelOfferDtoTest {
         val commute = sampleCommute()
         val accommodation = sampleAccommodation()
         val attraction = sampleAttraction()
-        val bookingId = UUID.randomUUID()
+        val bookingId = BookingId.generate()
 
         val travelOffer = TravelOffer(
-            id = UUID.randomUUID(),
+            id = TravelOfferId.generate(commute.id, accommodation.id, attraction.id),
             name = "Offer 1",
             commuteId = commute.id,
             accommodationId = accommodation.id,
@@ -66,9 +68,8 @@ class TravelOfferDtoTest {
         assertEquals("Offer 1", dto.name)
         assertEquals(commute.id.toString(), dto.commute.id)
         assertEquals(accommodation.id.toString(), dto.accommodation.id)
-        // attraction present
-        kotlin.test.assertNotNull(dto.attraction)
-        assertEquals(attraction.id.toString(), dto.attraction!!.id)
+        assert(dto.attraction is AttractionDto.Present)
+        assertEquals(attraction.id.toString(), (dto.attraction as AttractionDto.Present).id)
         assertEquals(bookingId.toString(), dto.booking)
         assertEquals("BOOKED", dto.status)
     }
@@ -79,12 +80,12 @@ class TravelOfferDtoTest {
         val accommodation = sampleAccommodation()
 
         val travelOffer = TravelOffer(
-            id = UUID.randomUUID(),
+            id = TravelOfferId.generate(commute.id, accommodation.id, AttractionId.Empty),
             name = "Offer 2",
             commuteId = commute.id,
             accommodationId = accommodation.id,
-            attractionId = null,
-            bookingId = null,
+            attractionId = AttractionId.Empty,
+            bookingId = BookingId.Empty,
             status = TravelOfferStatusEnum.AVAILABLE,
         )
 
@@ -94,8 +95,8 @@ class TravelOfferDtoTest {
         assertEquals("Offer 2", dto.name)
         assertEquals(commute.id.toString(), dto.commute.id)
         assertEquals(accommodation.id.toString(), dto.accommodation.id)
-        assertNull(dto.attraction)
-        assertNull(dto.booking)
+        assertEquals(dto.attraction.toString(), AttractionId.Empty.toString())
+        assertEquals(dto.booking, BookingId.Empty.toString())
         assertEquals("AVAILABLE", dto.status)
     }
 }

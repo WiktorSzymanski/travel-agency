@@ -2,17 +2,20 @@ package pl.szymanski.wiktor.ta.offermaker
 
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class InMemoryActiveResourceRepository : ActiveResourceRepository {
-    private val commutes = ConcurrentHashMap<UUID, Commute>()
-    private val accommodations = ConcurrentHashMap<UUID, Accommodation>()
-    private val attractions = ConcurrentHashMap<UUID, Attraction>()
-    private val offerTriples = Collections.synchronizedSet(mutableSetOf<Triple<UUID, UUID, UUID?>>())
+    private val commutes = ConcurrentHashMap<CommuteId, Commute>()
+    private val accommodations = ConcurrentHashMap<AccommodationId, Accommodation>()
+    private val attractions = ConcurrentHashMap<AttractionId, Attraction>()
+    private val offerTriples = Collections.synchronizedSet(mutableSetOf<Triple<CommuteId, AccommodationId, AttractionId>>())
 
     override fun getCommutes(location: LocationEnum?, arrival: LocalDateTimeRange?): List<Commute> {
         val now = LocalDateTime.now()
@@ -59,19 +62,19 @@ class InMemoryActiveResourceRepository : ActiveResourceRepository {
     }
 
     override fun removeCommute(id: UUID) {
-        commutes.remove(id)
+        commutes.remove(CommuteId.from(id))
     }
 
     override fun removeAccommodation(id: UUID) {
-        accommodations.remove(id)
+        accommodations.remove(AccommodationId.from(id))
     }
 
     override fun removeAttraction(id: UUID) {
-        attractions.remove(id)
+        attractions.remove(AttractionId.from(id))
     }
 
-    override fun getLastCreatedOffersTriples(): List<Triple<UUID, UUID, UUID?>> = offerTriples.toList()
+    override fun getLastCreatedOffersTriples(): List<Triple<CommuteId, AccommodationId, AttractionId>> = offerTriples.toList()
 
-    override fun addOfferTripleIfUnique(triple: Triple<UUID, UUID, UUID?>): Boolean =
+    override fun addOfferTripleIfUnique(triple: Triple<CommuteId, AccommodationId, AttractionId>): Boolean =
         offerTriples.add(triple)
 }

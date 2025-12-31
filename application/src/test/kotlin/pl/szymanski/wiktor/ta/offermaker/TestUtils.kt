@@ -6,6 +6,9 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
@@ -15,7 +18,7 @@ import java.util.UUID
 fun getAccommodationCreatedEvent(location: LocationEnum, secondsInFuture: Long) = EventEnvelope(
     AccommodationCreatedEvent(
         UUID.randomUUID(),
-        UUID.randomUUID(),
+        AccommodationId.generate(),
         "accommodation",
         location,
         Rent(
@@ -32,7 +35,7 @@ fun getAccommodationCreatedEvent(location: LocationEnum, secondsInFuture: Long) 
 fun getCommuteCreatedEvent(location: LocationEnum, secondsInFuture: Long) =  EventEnvelope(
     CommuteCreatedEvent(
         UUID.randomUUID(),
-        UUID.randomUUID(),
+        CommuteId.generate(),
         "commute",
         LocationAndTime(LocationEnum.POZNAN, LocalDateTime.now().plusSeconds(secondsInFuture)),
         LocationAndTime(location, LocalDateTime.now().plusSeconds(secondsInFuture + 1)),
@@ -47,7 +50,7 @@ fun getCommuteCreatedEvent(location: LocationEnum, secondsInFuture: Long) =  Eve
 fun getAttractionCreatedEvent(location: LocationEnum, secondsInFuture: Long) =  EventEnvelope(
     AttractionCreatedEvent(
         UUID.randomUUID(),
-        UUID.randomUUID(),
+        AttractionId.generate(),
         "attraction",
         location,
         LocalDateTime.now().plusSeconds(secondsInFuture),

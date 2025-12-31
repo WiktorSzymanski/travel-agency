@@ -6,6 +6,7 @@ import kotlin.test.assertTrue
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import java.time.LocalDateTime
 import java.util.UUID
@@ -22,7 +23,7 @@ class CommuteDtoTest {
             departure = dep,
             arrival = arr,
             seats = listOf(seat1, seat2),
-            bookings = mutableMapOf(UUID.randomUUID() to seat1),
+            bookings = mutableMapOf(BookingId.generate() to seat1),
         )
 
         val dto = CommuteDto.fromDomain(commute)

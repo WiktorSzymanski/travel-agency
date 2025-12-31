@@ -6,6 +6,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
@@ -22,8 +24,8 @@ class AccommodationEventHandlerTest {
     fun `should handle AccommodationBookingCanceledEvent`() = runTest(UnconfinedTestDispatcher()) {
         AccommodationEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val accommodationId = UUID.randomUUID()
-        val bookingId = UUID.randomUUID()
+        val accommodationId = AccommodationId.generate()
+        val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -37,14 +39,14 @@ class AccommodationEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.makeTravelOfferAvailableByAccommodation(accommodationId, correlationId) }
+        coVerify { travelOfferService.makeTravelOfferAvailable(accommodationId, correlationId) }
     }
 
     @Test
     fun `should handle AccommodationExpiredEvent`() = runTest(UnconfinedTestDispatcher()) {
         AccommodationEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val accommodationId = UUID.randomUUID()
+        val accommodationId = AccommodationId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -57,15 +59,15 @@ class AccommodationEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.expireTravelOfferByAccommodation(accommodationId, correlationId) }
+        coVerify { travelOfferService.expireTravelOffer(accommodationId, correlationId) }
     }
 
     @Test
     fun `should handle AccommodationBookedEvent`() = runTest(UnconfinedTestDispatcher()) {
         AccommodationEventHandler(eventBus, travelOfferService, backgroundScope)
 
-        val accommodationId = UUID.randomUUID()
-        val bookingId = UUID.randomUUID()
+        val accommodationId = AccommodationId.generate()
+        val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
 
         eventBus.publish(EventEnvelope(
@@ -79,6 +81,6 @@ class AccommodationEventHandlerTest {
             )
         ))
 
-        coVerify { travelOfferService.makeTravelOfferUnavailableByAccommodation(accommodationId, correlationId) }
+        coVerify { travelOfferService.makeTravelOfferUnavailable(accommodationId, correlationId) }
     }
 }
