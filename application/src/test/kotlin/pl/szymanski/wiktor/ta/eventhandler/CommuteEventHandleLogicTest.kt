@@ -2,7 +2,6 @@ package pl.szymanski.wiktor.ta.eventhandler
 
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
@@ -10,23 +9,20 @@ import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
-import pl.szymanski.wiktor.ta.saga.DummyEventBus
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 import java.util.UUID
 import kotlin.test.Test
 
-class CommuteEventHandlerTest {
-    private val eventBus = DummyEventBus()
+class CommuteEventHandleLogicTest {
     private val travelOfferService = mockk<TravelOfferService>(relaxed = true)
+    private val logic = CommuteEventHandleLogic(travelOfferService)
 
     @Test
-    fun `should handle CommuteExpiredEvent`() = runTest(UnconfinedTestDispatcher()) {
-        CommuteEventHandler(eventBus, travelOfferService, backgroundScope)
-
+    fun `should handle CommuteExpiredEvent`() = runTest {
         val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onExpiredEvent(EventEnvelope(
             CommuteExpiredEvent(
                 commuteId = commuteId,
             ),
@@ -40,13 +36,11 @@ class CommuteEventHandlerTest {
     }
 
     @Test
-    fun `should handle CommuteFullEvent`() = runTest(UnconfinedTestDispatcher()) {
-        CommuteEventHandler(eventBus, travelOfferService, backgroundScope)
-
+    fun `should handle CommuteFullEvent`() = runTest {
         val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onBookedEvent(EventEnvelope(
             CommuteFullEvent(
                 commuteId = commuteId,
             ),
@@ -60,13 +54,11 @@ class CommuteEventHandlerTest {
     }
 
     @Test
-    fun `should handle CommuteAvailableEvent`() = runTest(UnconfinedTestDispatcher()) {
-        CommuteEventHandler(eventBus, travelOfferService, backgroundScope)
-
+    fun `should handle CommuteAvailableEvent`() = runTest {
         val commuteId = CommuteId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onCanceledEvent(EventEnvelope(
             CommuteAvailableEvent(
                 commuteId = commuteId,
             ),

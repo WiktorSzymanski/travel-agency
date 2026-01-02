@@ -2,7 +2,6 @@ package pl.szymanski.wiktor.ta.eventhandler
 
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
@@ -11,24 +10,21 @@ import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
-import pl.szymanski.wiktor.ta.saga.DummyEventBus
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 import java.util.UUID
 import kotlin.test.Test
 
-class AccommodationEventHandlerTest {
-    private val eventBus = DummyEventBus()
+class AccommodationEventHandleLogicTest {
     private val travelOfferService = mockk<TravelOfferService>(relaxed = true)
+    private val logic = AccommodationEventHandleLogic(travelOfferService)
 
     @Test
-    fun `should handle AccommodationBookingCanceledEvent`() = runTest(UnconfinedTestDispatcher()) {
-        AccommodationEventHandler(eventBus, travelOfferService, backgroundScope)
-
+    fun `should handle AccommodationBookingCanceledEvent`() = runTest {
         val accommodationId = AccommodationId.generate()
         val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onCanceledEvent(EventEnvelope(
             AccommodationBookingCanceledEvent(
                 accommodationId = accommodationId,
                 bookingId = bookingId,
@@ -43,13 +39,11 @@ class AccommodationEventHandlerTest {
     }
 
     @Test
-    fun `should handle AccommodationExpiredEvent`() = runTest(UnconfinedTestDispatcher()) {
-        AccommodationEventHandler(eventBus, travelOfferService, backgroundScope)
-
+    fun `should handle AccommodationExpiredEvent`() = runTest {
         val accommodationId = AccommodationId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onExpiredEvent(EventEnvelope(
             AccommodationExpiredEvent(
                 accommodationId = accommodationId,
             ),
@@ -63,17 +57,13 @@ class AccommodationEventHandlerTest {
     }
 
     @Test
-    fun `should handle AccommodationBookedEvent`() = runTest(UnconfinedTestDispatcher()) {
-        AccommodationEventHandler(eventBus, travelOfferService, backgroundScope)
-
+    fun `should handle AccommodationBookedEvent`() = runTest {
         val accommodationId = AccommodationId.generate()
-        val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
-            AccommodationBookedEvent(
+        logic.onBookedEvent(EventEnvelope(
+            AccommodationExpiredEvent(
                 accommodationId = accommodationId,
-                bookingId = bookingId,
             ),
             Metadata(
                 correlationId,

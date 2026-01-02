@@ -2,15 +2,16 @@ package pl.szymanski.wiktor.ta.eventhandler
 
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
+import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CompleteBookingCommand
 import pl.szymanski.wiktor.ta.command.FailBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
+import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
@@ -19,22 +20,19 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
-import pl.szymanski.wiktor.ta.saga.DummyEventBus
 import java.util.UUID
 import kotlin.test.Test
 
-class BookingSagaEventHandlerTest {
-    private val eventBus = DummyEventBus()
+class BookingSagaEventHandleLogicTest {
     private val commandBus = mockk<CommandBus>(relaxed = true)
+    private val logic = BookingSagaEventHandleLogic(commandBus)
 
     @Test
-    fun `should handle BookingSagaStartedEvent`() = runTest(UnconfinedTestDispatcher()) {
-        BookingSagaEventHandler(eventBus, commandBus, backgroundScope)
-
+    fun `should handle BookingSagaStartedEvent`() = runTest {
         val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onStartedEvent(EventEnvelope(
             BookingSagaStartedEvent(
                 bookingId = bookingId,
             ),
@@ -45,29 +43,27 @@ class BookingSagaEventHandlerTest {
         ))
 
         coVerify {
-            commandBus.dispatch<ProcessBookingCommand, Booking>(
+            commandBus.dispatch<BookingCommand, Booking>(
                 ProcessBookingCommand(
-                    bookingId = bookingId,
-                    correlationId = correlationId,
+                    bookingId,
+                    correlationId,
                 )
             )
         }
     }
 
     @Test
-    fun `should handle BookingSagaCompletedEvent`() = runTest(UnconfinedTestDispatcher()) {
-        BookingSagaEventHandler(eventBus, commandBus, backgroundScope)
-
+    fun `should handle BookingSagaCompletedEvent`() = runTest {
         val bookingId = BookingId.generate()
         val travelOfferId = TravelOfferId.from(UUID.randomUUID())
         val correlationId = UUID.randomUUID()
         val seat = Seat.Any
 
-        eventBus.publish(EventEnvelope(
+        logic.onCompletedEvent(EventEnvelope(
             BookingSagaCompletedEvent(
                 bookingId = bookingId,
                 travelOfferId = travelOfferId,
-                seat = seat,
+                seat = seat
             ),
             Metadata(
                 correlationId,
@@ -76,19 +72,39 @@ class BookingSagaEventHandlerTest {
         ))
 
         coVerify {
-            commandBus.dispatch<CompleteBookingCommand, Booking>(
+            commandBus.dispatch<BookingCommand, Booking>(
                 CompleteBookingCommand(
-                    bookingId = bookingId,
-                    correlationId = correlationId,
+                    bookingId,
+                    correlationId,
                 )
             )
         }
+    }
+
+    @Test
+    fun `should handle BookingSagaCompletedEvent2`() = runTest {
+        val bookingId = BookingId.generate()
+        val travelOfferId = TravelOfferId.from(UUID.randomUUID())
+        val correlationId = UUID.randomUUID()
+        val seat = Seat.Any
+
+        logic.onCompletedEvent2(EventEnvelope(
+            BookingSagaCompletedEvent(
+                bookingId = bookingId,
+                travelOfferId = travelOfferId,
+                seat = seat
+            ),
+            Metadata(
+                correlationId,
+                0
+            )
+        ))
 
         coVerify {
-            commandBus.dispatch<BookTravelOfferCommand, TravelOffer>(
+            commandBus.dispatch<TravelOfferCommand, TravelOffer>(
                 BookTravelOfferCommand(
-                    travelOfferId = travelOfferId,
-                    correlationId = correlationId,
+                    travelOfferId,
+                    correlationId,
                     bookingId = bookingId,
                     seat = seat,
                 )
@@ -97,14 +113,12 @@ class BookingSagaEventHandlerTest {
     }
 
     @Test
-    fun `should handle BookingSagaFailedEvent`() = runTest(UnconfinedTestDispatcher()) {
-        BookingSagaEventHandler(eventBus, commandBus, backgroundScope)
-
+    fun `should handle BookingSagaFailedEvent`() = runTest {
         val bookingId = BookingId.generate()
         val correlationId = UUID.randomUUID()
-        val message = "Error message"
+        val message = "Error"
 
-        eventBus.publish(EventEnvelope(
+        logic.onFailedEvent(EventEnvelope(
             BookingSagaFailedEvent(
                 bookingId = bookingId,
                 message = message,
@@ -116,7 +130,7 @@ class BookingSagaEventHandlerTest {
         ))
 
         coVerify {
-            commandBus.dispatch<FailBookingCommand, Booking>(
+            commandBus.dispatch<BookingCommand, Booking>(
                 FailBookingCommand(
                     bookingId = bookingId,
                     correlationId = correlationId,

@@ -2,7 +2,6 @@ package pl.szymanski.wiktor.ta.eventhandler
 
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
@@ -10,23 +9,20 @@ import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
-import pl.szymanski.wiktor.ta.saga.DummyEventBus
 import pl.szymanski.wiktor.ta.service.TravelOfferService
 import java.util.UUID
 import kotlin.test.Test
 
-class AttractionEventHandlerTest {
-    private val eventBus = DummyEventBus()
+class AttractionEventHandleLogicTest {
     private val travelOfferService = mockk<TravelOfferService>(relaxed = true)
+    private val logic = AttractionEventHandleLogic(travelOfferService)
 
     @Test
-    fun `should handle AttractionExpiredEvent`() = runTest(UnconfinedTestDispatcher()) {
-        AttractionEventHandler(eventBus, travelOfferService, backgroundScope)
-
-        val attractionId = AttractionId.generate()
+    fun `should handle AttractionExpiredEvent`() = runTest {
+        val attractionId = AttractionId.generate() as AttractionId.Present
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onExpiredEvent(EventEnvelope(
             AttractionExpiredEvent(
                 attractionId = attractionId,
             ),
@@ -40,13 +36,11 @@ class AttractionEventHandlerTest {
     }
 
     @Test
-    fun `should handle AttractionFullEvent`() = runTest(UnconfinedTestDispatcher()) {
-        AttractionEventHandler(eventBus, travelOfferService, backgroundScope)
-
-        val attractionId = AttractionId.generate()
+    fun `should handle AttractionFullEvent`() = runTest {
+        val attractionId = AttractionId.generate() as AttractionId.Present
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onBookedEvent(EventEnvelope(
             AttractionFullEvent(
                 attractionId = attractionId,
             ),
@@ -60,13 +54,11 @@ class AttractionEventHandlerTest {
     }
 
     @Test
-    fun `should handle AttractionAvailableEvent`() = runTest(UnconfinedTestDispatcher()) {
-        AttractionEventHandler(eventBus, travelOfferService, backgroundScope)
-
-        val attractionId = AttractionId.generate()
+    fun `should handle AttractionAvailableEvent`() = runTest {
+        val attractionId = AttractionId.generate() as AttractionId.Present
         val correlationId = UUID.randomUUID()
 
-        eventBus.publish(EventEnvelope(
+        logic.onBookingCanceledEvent(EventEnvelope(
             AttractionAvailableEvent(
                 attractionId = attractionId,
             ),

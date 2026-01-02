@@ -1,11 +1,7 @@
 package pl.szymanski.wiktor.ta.offermaker
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import pl.szymanski.wiktor.ta.CommandBus
-import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
@@ -17,69 +13,46 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
-import pl.szymanski.wiktor.ta.launchCatching
-import pl.szymanski.wiktor.ta.subscribe
 import java.time.LocalDateTime
 import java.util.UUID
 
-class OfferMaker (
-    private val eventBus: EventBus,
+class OfferMakerLogic(
     private val commandBus: CommandBus,
     private val resourceService: ActiveResourceService,
-    private val creationWindowSeconds: Long = 3,
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val creationWindowSeconds: Long = 3
 ) {
 
-    init {
-        setupSubscriptions()
+    suspend fun onCommuteCreatedEvent(envelope: EventEnvelope<CommuteCreatedEvent>) {
+        val event = envelope.event
+
+        if (event.departure.time.isBefore(LocalDateTime.now()))
+            return
+
+        resourceService.addCommute(event)
+
+        matchWithCommute(event, envelope.metadata.correlationId)
     }
 
-    private fun setupSubscriptions() {
-        scope.launch {
-            eventBus.subscribe<CommuteCreatedEvent> { eventEnvelope ->
-                val event = eventEnvelope.event
+    suspend fun onAccommodationCreatedEvent(envelope: EventEnvelope<AccommodationCreatedEvent>) {
+        val event = envelope.event
 
-                if (event.departure.time.isBefore(LocalDateTime.now()))
-                    return@subscribe
+        if (event.rent.from.isBefore(LocalDateTime.now()))
+            return
 
-                resourceService.addCommute(event)
+        resourceService.addAccommodation(event)
 
-                // CHECK: shouldn't this whole code in subscribe be run in different thread
-                scope.launchCatching {
-                    matchWithCommute(event, eventEnvelope.metadata.correlationId)
-                }
-            }
-        }
+        matchWithAccommodation(event, envelope.metadata.correlationId)
+    }
 
-        scope.launch {
-            eventBus.subscribe<AccommodationCreatedEvent> { eventEnvelope ->
-                val event = eventEnvelope.event
+    suspend fun onAttractionCreatedEvent(envelope: EventEnvelope<AttractionCreatedEvent>) {
+        val event = envelope.event
 
-                if (event.rent.from.isBefore(LocalDateTime.now()))
-                    return@subscribe
+        if (event.date.isBefore(LocalDateTime.now()))
+            return
 
-                resourceService.addAccommodation(event)
+        resourceService.addAttraction(event)
 
-                scope.launchCatching {
-                    matchWithAccommodation(event, eventEnvelope.metadata.correlationId)
-                }
-            }
-        }
-
-        scope.launch {
-            eventBus.subscribe<AttractionCreatedEvent> { eventEnvelope ->
-                val event = eventEnvelope.event
-
-                if (event.date.isBefore(LocalDateTime.now()))
-                    return@subscribe
-
-                resourceService.addAttraction(event)
-
-                scope.launchCatching {
-                    matchWithAttraction(event, eventEnvelope.metadata.correlationId)
-                }
-            }
-        }
+        matchWithAttraction(event, envelope.metadata.correlationId)
     }
 
     private suspend fun matchWithCommute(newCommute: CommuteCreatedEvent, correlationId: UUID) {
@@ -205,7 +178,7 @@ class OfferMaker (
 
         if (resourceService.addOfferTripleIfUnique(triple)) {
             val command = CreateTravelOfferCommand(
-                travelOfferId = TravelOfferId.from(UUID.randomUUID()), // TODO: What to do with those, Id in command is meaning less, aggregate upon creating creates its own
+                travelOfferId = TravelOfferId.from(UUID.randomUUID()),
                 correlationId = correlationId,
                 name = "$commuteName $accommodationName${attractionName?.let { " $it" } ?: ""}",
                 commuteId = commuteId,
