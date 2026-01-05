@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.eventhandler
+package pl.szymanski.wiktor.ta.eventHandlerLogic
 
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -7,7 +7,6 @@ import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationExpiredEvent
 import pl.szymanski.wiktor.ta.service.TravelOfferService

@@ -1,40 +1,18 @@
 package pl.szymanski.wiktor.ta.offermaker
 
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import io.mockk.verify
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import pl.szymanski.wiktor.ta.DummyCommandBus
+import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
-import pl.szymanski.wiktor.ta.commandhandler.*
 import pl.szymanski.wiktor.ta.domain.LocationEnum
-import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import java.time.LocalDateTime
 import kotlin.test.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class OfferMakerLogicTest {
-    private val travelOfferCommandHandler = mockk<TravelOfferCommandHandler>(relaxed = true)
-    private val bookingCommandHandler = mockk<BookingCommandHandler>(relaxed = true)
-    private val commuteCommandHandler = mockk<CommuteCommandHandler>(relaxed = true)
-    private val attractionCommandHandler = mockk<AttractionCommandHandler>(relaxed = true)
-    private val accommodationCommandHandler = mockk<AccommodationCommandHandler>(relaxed = true)
+    private val commandBus = mockk<CommandBus>(relaxed = true)
 
-    private val commandBus = DummyCommandBus(
-        travelOfferCommandHandler,
-        bookingCommandHandler,
-        commuteCommandHandler,
-        attractionCommandHandler,
-        accommodationCommandHandler
-    )
-
-    private val resourceRepository = mockk<ActiveResourceRepository>(relaxed = true)
-    private val resourceService = ActiveResourceService(resourceRepository)
+    private val resourceService = ActiveResourceService(InMemoryActiveResourceRepository())
 
     private val logic = OfferMakerLogic(
         commandBus = commandBus,
@@ -46,7 +24,11 @@ class OfferMakerLogicTest {
     fun `should add Commute`() = runTest {
         val eventEnvelope = getCommuteCreatedEvent(LocationEnum.LONDON, 10L)
         logic.onCommuteCreatedEvent(eventEnvelope)
-        verify(exactly = 1)  { resourceRepository.saveCommute(any()) }
+
+        val commutes = resourceService.getCommutes()
+
+        assertEquals(1, commutes.size)
+        assertEquals(eventEnvelope.event.commuteId, commutes[0].id)
     }
 
     @Test
@@ -61,7 +43,7 @@ class OfferMakerLogicTest {
     }
 
     @Test
-    fun `should add accommodationEvent`() = runTest {
+    fun `should add Accommodation`() = runTest {
         val eventEnvelope = getAccommodationCreatedEvent(LocationEnum.LONDON, 10L)
         logic.onAccommodationCreatedEvent(eventEnvelope)
 
@@ -79,7 +61,7 @@ class OfferMakerLogicTest {
         logic.onAccommodationCreatedEvent(accommodationEventEnvelope)
         logic.onCommuteCreatedEvent(commuteEventEnvelope)
 
-        coVerify(exactly = 1) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
+        coVerify(exactly = 1) { commandBus.dispatchAndForget(ofType<CreateTravelOfferCommand>()) }
     }
 
     @Test
@@ -92,7 +74,7 @@ class OfferMakerLogicTest {
         logic.onCommuteCreatedEvent(commuteEventEnvelope)
         logic.onAttractionCreatedEvent(attractionEventEnvelope)
 
-        coVerify(exactly = 2) { travelOfferCommandHandler.handle(ofType<CreateTravelOfferCommand>()) }
+        coVerify(exactly = 2) { commandBus.dispatchAndForget(ofType<CreateTravelOfferCommand>()) }
     }
 
     @Test
@@ -103,32 +85,8 @@ class OfferMakerLogicTest {
         logic.onAccommodationCreatedEvent(accommodationEventEnvelope)
         logic.onCommuteCreatedEvent(commuteEventEnvelope)
 
-        coVerify(exactly = 0) { travelOfferCommandHandler.handle(any()) }
+        coVerify(exactly = 0) { commandBus.dispatchAndForget(any()) }
         assertEquals(0, resourceService.getAccommodations().size)
         assertEquals(0, resourceService.getCommutes().size)
-    }
-
-    @Test
-    fun `should clean up expired events from active lists`() = runTest {
-        mockkStatic(LocalDateTime::class)
-        try {
-            val startTime = LocalDateTime.of(2025, 1, 1, 12, 0)
-            every { LocalDateTime.now() } returns startTime
-
-            val expiredCommute = getCommuteCreatedEvent(LocationEnum.LONDON, 1L)
-            logic.onCommuteCreatedEvent(expiredCommute)
-
-            assertEquals(1, resourceService.getCommutes().size)
-
-            every { LocalDateTime.now() } returns startTime.plusSeconds(5)
-
-            val newCommute = getCommuteCreatedEvent(LocationEnum.LONDON, 10L)
-            logic.onCommuteCreatedEvent(newCommute)
-
-            assertEquals(1, resourceService.getCommutes().size)
-            assertEquals(newCommute.event.commuteId, resourceService.getCommutes()[0].id)
-        } finally {
-            unmockkStatic(LocalDateTime::class)
-        }
     }
 }

@@ -6,6 +6,7 @@ import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
@@ -23,44 +24,44 @@ class OfferMakerLogic(
 ) {
 
     suspend fun onCommuteCreatedEvent(envelope: EventEnvelope<CommuteCreatedEvent>) {
-        val event = envelope.event
+        val commute = Commute.fromEvents(listOf(envelope.event))
 
-        if (event.departure.time.isBefore(LocalDateTime.now()))
+        if (commute.departure.time.isBefore(LocalDateTime.now()))
             return
 
-        resourceService.addCommute(event)
+        resourceService.addCommute(commute)
 
-        matchWithCommute(event, envelope.metadata.correlationId)
+        matchWithCommute(commute, envelope.metadata.correlationId)
     }
 
     suspend fun onAccommodationCreatedEvent(envelope: EventEnvelope<AccommodationCreatedEvent>) {
-        val event = envelope.event
+        val accommodation = Accommodation.fromEvents(listOf(envelope.event))
 
-        if (event.rent.from.isBefore(LocalDateTime.now()))
+        if (accommodation.rent.from.isBefore(LocalDateTime.now()))
             return
 
-        resourceService.addAccommodation(event)
+        resourceService.addAccommodation(accommodation)
 
-        matchWithAccommodation(event, envelope.metadata.correlationId)
+        matchWithAccommodation(accommodation, envelope.metadata.correlationId)
     }
 
     suspend fun onAttractionCreatedEvent(envelope: EventEnvelope<AttractionCreatedEvent>) {
-        val event = envelope.event
+        val attraction = Attraction.fromEvents(listOf(envelope.event))
 
-        if (event.date.isBefore(LocalDateTime.now()))
+        if (attraction.date.isBefore(LocalDateTime.now()))
             return
 
-        resourceService.addAttraction(event)
+        resourceService.addAttraction(attraction)
 
-        matchWithAttraction(event, envelope.metadata.correlationId)
+        matchWithAttraction(attraction, envelope.metadata.correlationId)
     }
 
-    private suspend fun matchWithCommute(newCommute: CommuteCreatedEvent, correlationId: UUID) {
+    private suspend fun matchWithCommute(newCommute: Commute, correlationId: UUID) {
         val matches = resourceService.getAccommodations(
-            location = newCommute.arrival.location,
-            rentFrom = LocalDateTimeRange(
-                from = newCommute.arrival.time,
-                till = newCommute.arrival.time.plusSeconds(creationWindowSeconds)
+            newCommute.arrival.location,
+            LocalDateTimeRange(
+                newCommute.arrival.time,
+                newCommute.arrival.time.plusSeconds(creationWindowSeconds)
             )
         )
 
@@ -69,7 +70,7 @@ class OfferMakerLogic(
         }
     }
 
-    private suspend fun matchWithAccommodation(newAccommodation: AccommodationCreatedEvent, correlationId: UUID) {
+    private suspend fun matchWithAccommodation(newAccommodation: Accommodation, correlationId: UUID) {
         val matchingCommutes = resourceService.getCommutes(
             location = newAccommodation.location,
             arrival = LocalDateTimeRange(
@@ -83,7 +84,7 @@ class OfferMakerLogic(
         }
     }
 
-    private suspend fun matchWithAttraction(newAttraction: AttractionCreatedEvent, correlationId: UUID) {
+    private suspend fun matchWithAttraction(newAttraction: Attraction, correlationId: UUID) {
         val matchedAccommodations = resourceService.getAccommodations(
             location = newAttraction.location,
             rentFrom = LocalDateTimeRange(till = newAttraction.date),
@@ -102,88 +103,52 @@ class OfferMakerLogic(
             )
             matchingCommutes.forEach { commute ->
                 dispatchCreateOffer(
-                    commuteId = commute.id,
-                    commuteName = commute.name,
-                    accommodationId = accommodation.id,
-                    accommodationName = accommodation.name,
-                    attractionId = newAttraction.attractionId,
-                    attractionName = newAttraction.name,
-                    correlationId = correlationId
+                    commute,
+                    accommodation,
+                    newAttraction,
+                    correlationId
                 )
             }
         }
     }
 
-    private suspend fun createOffers(commute: CommuteCreatedEvent, accommodation: Accommodation, correlationId: UUID) {
-        createOffers(
-            commute.commuteId, commute.name,
-            accommodation.id, accommodation.name, accommodation.location, accommodation.rent.from, accommodation.rent.till,
-            correlationId
-        )
-    }
+    private suspend fun createOffers(commute: Commute, accommodation: Accommodation, correlationId: UUID) {
+        dispatchCreateOffer(commute, accommodation, null, correlationId)
 
-    private suspend fun createOffers(commute: Commute, accommodation: AccommodationCreatedEvent, correlationId: UUID) {
-        createOffers(
-            commute.id, commute.name,
-            accommodation.accommodationId, accommodation.name, accommodation.location, accommodation.rent.from, accommodation.rent.till,
-            correlationId
-        )
-    }
-
-    private suspend fun createOffers(
-        commuteId: CommuteId,
-        commuteName: String,
-        accommodationId: AccommodationId,
-        accommodationName: String,
-        accommodationLocation: LocationEnum,
-        accommodationRentFrom: LocalDateTime,
-        accommodationRentTill: LocalDateTime,
-        correlationId: UUID
-    ) {
-        // Create basic offer (no attraction)
-        dispatchCreateOffer(commuteId, commuteName, accommodationId, accommodationName, AttractionId.Empty, null, correlationId)
-
-        // Find matching attractions for this pair
         val matchedAttractions = resourceService.getAttractions(
-            location = accommodationLocation,
-            date = LocalDateTimeRange(
-                from = accommodationRentFrom,
-                till = accommodationRentTill
+            accommodation.location,
+            LocalDateTimeRange(
+                accommodation.rent.from,
+                accommodation.rent.till
             )
         )
 
         matchedAttractions.forEach { attraction ->
             dispatchCreateOffer(
-                commuteId,
-                commuteName,
-                accommodationId,
-                accommodationName,
-                attraction.id,
-                attraction.name,
+                commute,
+                accommodation,
+                attraction,
                 correlationId
             )
         }
     }
 
     private suspend fun dispatchCreateOffer(
-        commuteId: CommuteId,
-        commuteName: String,
-        accommodationId: AccommodationId,
-        accommodationName: String,
-        attractionId: AttractionId,
-        attractionName: String?,
+        commute: Commute,
+        accommodation: Accommodation,
+        attraction: Attraction?,
         correlationId: UUID
     ) {
-        val triple = Triple(commuteId, accommodationId, attractionId)
+        val triple = Triple(commute.id, accommodation.id, attraction?.id ?: AttractionId.Empty)
 
         if (resourceService.addOfferTripleIfUnique(triple)) {
             val command = CreateTravelOfferCommand(
                 travelOfferId = TravelOfferId.from(UUID.randomUUID()),
                 correlationId = correlationId,
-                name = "$commuteName $accommodationName${attractionName?.let { " $it" } ?: ""}",
-                commuteId = commuteId,
-                accommodationId = accommodationId,
-                attractionId = attractionId
+                name = "${commute.name} ${accommodation.name} ${attraction?.let { " ${it.name}" } ?: ""}",
+                commuteId = commute.id,
+                accommodationId = accommodation.id,
+                attractionId = attraction?.id ?: AttractionId.Empty
             )
             commandBus.dispatchAndForget(command)
         }

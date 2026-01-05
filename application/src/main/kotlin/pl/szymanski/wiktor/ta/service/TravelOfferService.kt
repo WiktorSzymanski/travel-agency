@@ -19,6 +19,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository
 import java.util.UUID
 
+// TODO: can't this be in TravelOfferCommandHandler?
 class TravelOfferService(
     private val travelOfferRepository: TravelOfferQueryRepository,
     private val commandBus: CommandBus,

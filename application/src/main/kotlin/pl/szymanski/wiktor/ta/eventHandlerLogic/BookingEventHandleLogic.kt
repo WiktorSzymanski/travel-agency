@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.eventhandler
+package pl.szymanski.wiktor.ta.eventHandlerLogic
 
 import org.slf4j.LoggerFactory
 import pl.szymanski.wiktor.ta.CommandBus

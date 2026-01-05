@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.eventhandler
+package pl.szymanski.wiktor.ta.eventHandlerLogic
 
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -9,9 +9,6 @@ import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.ExpireAccommodationCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
-import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
-import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
-import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction

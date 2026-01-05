@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.eventhandler
+package pl.szymanski.wiktor.ta.eventHandlerLogic
 
 import io.mockk.coVerify
 import io.mockk.mockk

@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.eventhandler
+package pl.szymanski.wiktor.ta.eventHandlerLogic
 
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent

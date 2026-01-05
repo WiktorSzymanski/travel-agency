@@ -27,6 +27,7 @@ import pl.szymanski.wiktor.ta.domain.exception.TravelOfferReservationCancelFaile
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.exception.TravelOfferEmptyEventListException
 
+//TODO: REMOVE travelOffer
 data class TravelOffer(
     val id: TravelOfferId,
     val name: String,
