@@ -1,5 +1,8 @@
 package pl.szymanski.wiktor.ta.saga
 
+import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
 enum class SagaType {
@@ -9,15 +12,29 @@ enum class SagaType {
 
 enum class SagaStatus {
     NEW,
-    PROCESSING,
+    COMMUTE_PENDING,
+    ACCOMMODATION_PENDING,
+    ATTRACTION_PENDING,
     COMPLETED,
     FAILED,
 }
 
-data class SagaState(
-    private val id: UUID,
-    private val type: SagaType,
-    private val status: SagaStatus,
-    private val data: String,
-    private val version: Int
+data class SagaContext(
+    var commuteEventId: UUID? = null,
+    var accommodationEventId: UUID? = null,
 )
+
+data class SagaState(
+    val id: UUID = UUID.randomUUID(),
+    val type: SagaType,
+    var status: SagaStatus = SagaStatus.NEW,
+    val travelOffer: TravelOffer,
+    val bookingId: BookingId,
+    val seat: Seat,
+    var sagaContext: SagaContext = SagaContext(),
+    var retryCount: Int = 0,
+    var version: Int = 1
+) {
+    fun incrementRetryCount() = retryCount++
+    fun incrementVersion() = version++
+}
