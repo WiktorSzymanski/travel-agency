@@ -15,6 +15,7 @@ import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookAttractionCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
+import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
@@ -23,16 +24,15 @@ import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
-import pl.szymanski.wiktor.ta.service.TravelOfferService
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -57,13 +57,12 @@ class BookingSagaNewTest {
         attractionId: AttractionId = AttractionId.generate(),
         bookingId: BookingId = BookingId.generate(),
         seat: Seat = Seat.Picked("1", "A"),
-    ) = TravelOfferReservedEvent(
-        travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId),
-        accommodationId = accommodationId,
-        commuteId = commuteId,
-        attractionId = attractionId,
+    ) = BookingCreatedEvent(
+        travelOffer = TravelOffer(commuteId, accommodationId, attractionId),
         bookingId = bookingId,
         seat = seat,
+        userId = UUID.randomUUID(),
+        state = BookingState.NEW,
     )
 
     private fun registerCommuteHandler(onCall: (CommuteCommand) -> Pair<Commute, List<DomainEvent>>) {
@@ -91,7 +90,6 @@ class BookingSagaNewTest {
             val attractionAgg = mockk<Attraction>(relaxed = true)
 
             val triggering = reservedEvent(attractionId = AttractionId.generate())
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { command ->
                 when (command) {
@@ -139,7 +137,13 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
+            val saga = BookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata)
 
             // When
             saga.execute()
@@ -153,7 +157,6 @@ class BookingSagaNewTest {
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertEquals(triggering.bookingId, completed.first().bookingId)
-            assertEquals(triggering.travelOfferId, completed.first().travelOfferId)
         }
 
     @Test
@@ -165,7 +168,6 @@ class BookingSagaNewTest {
             var attractionCalled = false
 
             val triggering = reservedEvent(attractionId = AttractionId.Empty)
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { command ->
                 when (command) {
@@ -201,7 +203,13 @@ class BookingSagaNewTest {
                 error("Attraction handler should not be called when attractionId is null, but got: $command")
             }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
+            val saga = BookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata)
 
             // When
             saga.execute()
@@ -219,7 +227,6 @@ class BookingSagaNewTest {
         runTest {
             // Given
             val triggering = reservedEvent()
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { _ ->
                 throw IllegalStateException("Commute booking failed")
@@ -229,7 +236,13 @@ class BookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
+            val saga = BookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata)
 
             // When
             saga.execute()
@@ -247,7 +260,6 @@ class BookingSagaNewTest {
         runTest {
             // Given
             val triggering = reservedEvent(attractionId = AttractionId.Empty)
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             registerCommuteHandler { _ ->
                 throw IllegalStateException("Commute booking failed")
@@ -257,8 +269,13 @@ class BookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
-
+            val saga = BookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata)
             // When
             saga.execute()
 
@@ -278,7 +295,6 @@ class BookingSagaNewTest {
             var commuteCompensated = false
 
             val triggering = reservedEvent(attractionId = AttractionId.Empty)
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             lateinit var commuteBookedEvent: CommuteBookedEvent
 
@@ -313,7 +329,13 @@ class BookingSagaNewTest {
             // Attraction should not be called
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
+            val saga = BookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata)
 
             // When
             saga.execute()
@@ -337,7 +359,6 @@ class BookingSagaNewTest {
             var accommodationCompensated = false
 
             val triggering = reservedEvent(attractionId = AttractionId.generate())
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             lateinit var commuteBookedEvent: CommuteBookedEvent
             lateinit var accommodationBookedEvent: AccommodationBookedEvent
@@ -388,7 +409,13 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
+            val saga = BookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata)
 
             // When
             saga.execute()

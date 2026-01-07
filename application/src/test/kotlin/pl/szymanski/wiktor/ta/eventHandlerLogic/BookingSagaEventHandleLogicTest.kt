@@ -6,17 +6,14 @@ import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
-import pl.szymanski.wiktor.ta.command.BookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.CompleteBookingCommand
 import pl.szymanski.wiktor.ta.command.FailBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
-import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
@@ -55,14 +52,12 @@ class BookingSagaEventHandleLogicTest {
     @Test
     fun `should handle BookingSagaCompletedEvent`() = runTest {
         val bookingId = BookingId.generate()
-        val travelOfferId = TravelOfferId.from(UUID.randomUUID())
         val correlationId = UUID.randomUUID()
         val seat = Seat.Any
 
         logic.onCompletedEvent(EventEnvelope(
             BookingSagaCompletedEvent(
                 bookingId = bookingId,
-                travelOfferId = travelOfferId,
                 seat = seat
             ),
             Metadata(
@@ -76,37 +71,6 @@ class BookingSagaEventHandleLogicTest {
                 CompleteBookingCommand(
                     bookingId,
                     correlationId,
-                )
-            )
-        }
-    }
-
-    @Test
-    fun `should handle BookingSagaCompletedEvent2`() = runTest {
-        val bookingId = BookingId.generate()
-        val travelOfferId = TravelOfferId.from(UUID.randomUUID())
-        val correlationId = UUID.randomUUID()
-        val seat = Seat.Any
-
-        logic.onCompletedEvent2(EventEnvelope(
-            BookingSagaCompletedEvent(
-                bookingId = bookingId,
-                travelOfferId = travelOfferId,
-                seat = seat
-            ),
-            Metadata(
-                correlationId,
-                0
-            )
-        ))
-
-        coVerify {
-            commandBus.dispatch<TravelOfferCommand, TravelOffer>(
-                BookTravelOfferCommand(
-                    travelOfferId,
-                    correlationId,
-                    bookingId = bookingId,
-                    seat = seat,
                 )
             )
         }

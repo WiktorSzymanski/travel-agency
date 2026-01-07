@@ -31,18 +31,6 @@ import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookedCompensatedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferBookingCanceledCompensatedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferExpiredEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeAvailableEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferMadeUnavailableEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferRebookedEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservationCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReservedEvent
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -69,18 +57,6 @@ fun DomainEvent.copy(
         is CommuteExpiredEvent -> copy(eventId = eventId)
         is CommuteFullEvent -> copy(eventId = eventId)
         is CommuteAvailableEvent -> copy(eventId = eventId)
-        is TravelOfferCreatedEvent -> copy(eventId = eventId)
-        is TravelOfferReservedEvent -> copy(eventId = eventId)
-        is TravelOfferReservationCanceledEvent -> copy(eventId = eventId)
-        is TravelOfferBookedEvent -> copy(eventId = eventId)
-        is TravelOfferBookedCompensatedEvent -> copy(eventId = eventId)
-        is TravelOfferReleaseEvent -> copy(eventId = eventId)
-        is TravelOfferBookingCanceledEvent -> copy(eventId = eventId)
-        is TravelOfferBookingCanceledCompensatedEvent -> copy(eventId = eventId)
-        is TravelOfferRebookedEvent -> copy(eventId = eventId)
-        is TravelOfferExpiredEvent -> copy(eventId = eventId)
-        is TravelOfferMadeUnavailableEvent -> copy(eventId = eventId)
-        is TravelOfferMadeAvailableEvent -> copy(eventId = eventId)
         is BookingCreatedEvent -> copy(eventId = eventId)
         is ProcessBookingEvent -> copy(eventId = eventId)
         is CompleteBookingEvent -> copy(eventId = eventId)

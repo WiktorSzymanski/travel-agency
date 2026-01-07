@@ -26,7 +26,7 @@ import java.util.UUID
 data class Booking(
     val id: BookingId = BookingId.generate(),
     val userId: UUID,
-    val travelOfferId: TravelOfferId,
+    val travelOffer: TravelOffer,
     val seat: Seat,
     var status: BookingState = BookingState.NEW,
     var message: String? = null,
@@ -36,19 +36,19 @@ data class Booking(
         fun create(
             userId: UUID,
             seat: Seat,
-            travelOfferId: TravelOfferId,
+            travelOffer: TravelOffer,
         ): Pair<Booking, List<BookingCreatedEvent>> {
             val booking =
                 Booking(
                     userId = userId,
-                    travelOfferId = travelOfferId,
+                    travelOffer = travelOffer,
                     seat = seat,
                 )
 
             val event =
                 BookingCreatedEvent(
                     bookingId = booking.id,
-                    travelOfferId = travelOfferId,
+                    travelOffer = travelOffer,
                     userId = userId,
                     seat = seat
                 )
@@ -65,7 +65,7 @@ data class Booking(
             val booking = Booking(
                 id = createdEvent.bookingId,
                 userId = createdEvent.userId,
-                travelOfferId = createdEvent.travelOfferId,
+                travelOffer = createdEvent.travelOffer,
                 seat = createdEvent.seat,
             )
 
@@ -127,7 +127,7 @@ data class Booking(
 
         return listOf(BookingCancelRequestedEvent(
             bookingId = id,
-            travelOfferId = travelOfferId,
+            travelOffer = travelOffer,
             seat = seat,
         ))
     }

@@ -5,12 +5,10 @@ import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.command.CommuteCommand
-import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.commandhandler.TravelOfferCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
 import kotlin.collections.get
 
@@ -41,15 +39,11 @@ class DummyCommandBus : CommandBus {
     constructor()
 
     constructor(
-        travelOfferCommandHandler: TravelOfferCommandHandler,
         bookingCommandHandler: BookingCommandHandler,
         commuteCommandHandler: CommuteCommandHandler,
         attractionCommandHandler: AttractionCommandHandler,
         accommodationCommandHandler: AccommodationCommandHandler,
     ) {
-        this.registerHandler(TravelOfferCommand::class.java) {
-            travelOfferCommandHandler.handle(it)
-        }
         this.registerHandler(BookingCommand::class.java) {
             bookingCommandHandler.handle(it)
         }

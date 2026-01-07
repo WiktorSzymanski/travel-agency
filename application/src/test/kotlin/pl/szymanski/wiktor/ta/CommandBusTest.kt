@@ -16,7 +16,6 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferEvent
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.BeforeTest
@@ -77,7 +76,10 @@ class CommandBusTest {
                 CreateBookingCommand(
                     bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
-                    travelOfferId = TravelOfferId.from(UUID.randomUUID()),
+                    travelOffer = TravelOffer(
+                        CommuteId.generate(),
+                        AccommodationId.generate(),
+                    ),
                     userId = UUID.randomUUID(),
                     seat = Seat.Any,
                 )
@@ -94,7 +96,6 @@ class CommandBusTest {
     fun `setup should wire handlers for all command groups and dispatch correctly`() =
         runTest {
             // Given
-            val travelOfferHandler = mockk<TravelOfferCommandHandler>()
             val bookingHandler = mockk<BookingCommandHandler>()
             val commuteHandler = mockk<CommuteCommandHandler>()
             val attractionHandler = mockk<AttractionCommandHandler>()
@@ -106,14 +107,12 @@ class CommandBusTest {
             val attraction = mockk<Attraction>(relaxed = true)
             val accommodation = mockk<Accommodation>(relaxed = true)
 
-            coEvery { travelOfferHandler.handle(any()) } returns (travelOffer to emptyList<TravelOfferEvent>())
             coEvery { bookingHandler.handle(any()) } returns (booking to emptyList<BookingEvent>())
             coEvery { commuteHandler.handle(any()) } returns (commute to emptyList<CommuteEvent>())
             coEvery { attractionHandler.handle(any()) } returns (attraction to emptyList<AttractionEvent>())
             coEvery { accommodationHandler.handle(any()) } returns (accommodation to emptyList<AccommodationEvent>())
 
             commandBus = DummyCommandBus(
-                travelOfferHandler,
                 bookingHandler,
                 commuteHandler,
                 attractionHandler,
@@ -126,26 +125,14 @@ class CommandBusTest {
             val accommodationId = AccommodationId.generate()
             val attractionId = AttractionId.generate()
             val commuteId = CommuteId.generate()
-            val travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId)
 
             // When
-            val (_, toEvents) =
-                commandBus.dispatch<TravelOfferCommand, TravelOffer>(
-                    CreateTravelOfferCommand(
-                        travelOfferId = travelOfferId,
-                        correlationId = correlationId,
-                        name = "Trip",
-                        commuteId = commuteId,
-                        accommodationId = accommodationId,
-                        attractionId = attractionId,
-                    ),
-                )
             val (_, bEvents) =
                 commandBus.dispatch<BookingCommand, Booking>(
                     CreateBookingCommand(
                         bookingId = bookingId,
                         correlationId = correlationId,
-                        travelOfferId = travelOfferId,
+                        travelOffer = travelOffer,
                         userId = UUID.randomUUID(),
                         seat = Seat.Any,
                     ),
@@ -184,13 +171,11 @@ class CommandBusTest {
                 )
 
             // Then
-            coVerify(exactly = 1) { travelOfferHandler.handle(any()) }
             coVerify(exactly = 1) { bookingHandler.handle(any()) }
             coVerify(exactly = 1) { commuteHandler.handle(any()) }
             coVerify(exactly = 1) { attractionHandler.handle(any()) }
             coVerify(exactly = 1) { accommodationHandler.handle(any()) }
 
-            assertTrue(toEvents.isEmpty())
             assertTrue(bEvents.isEmpty())
             assertTrue(cEvents.isEmpty())
             assertTrue(aEvents.isEmpty())

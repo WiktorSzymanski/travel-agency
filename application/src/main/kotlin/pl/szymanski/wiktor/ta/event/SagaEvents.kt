@@ -2,7 +2,7 @@ package pl.szymanski.wiktor.ta.event
 
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import java.util.UUID
 
@@ -22,7 +22,6 @@ data class BookingSagaFailedEvent(
 data class BookingSagaCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     val bookingId: BookingId,
-    val travelOfferId: TravelOfferId,
     val seat: Seat,
 ) : SagaEvent
 
@@ -40,6 +39,5 @@ data class BookingCancelSagaFailedEvent(
 data class BookingCancelSagaCompletedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     val bookingId: BookingId,
-    val travelOfferId: TravelOfferId,
     val seat: Seat,
 ) : SagaEvent

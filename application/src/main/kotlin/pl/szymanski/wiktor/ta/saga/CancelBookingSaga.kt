@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.saga
 
-import kotlinx.coroutines.coroutineScope
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.EventEnvelope
@@ -21,25 +20,22 @@ import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
-import pl.szymanski.wiktor.ta.service.TravelOfferService
 import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
 
 class CancelBookingSaga(
     private val eventBus: EventBus,
     private val commandBus: CommandBus,
-    private val travelOfferService: TravelOfferService,
-    private val triggeringEvent: TravelOfferReleaseEvent,
-    private val triggeringEventMetadata: Metadata,
+    private val travelOffer: TravelOffer,
+    private val seat: Seat,
+    private val bookingId: BookingId,
+    private val metadata: Metadata
 ) {
-    companion object {
-        private const val DEFAULT_MAX_RETRIES = 30
-    }
     private data class CancelContext(
         val commuteEventId: UUID? = null,
         val commuteSeat: Seat? = null,
@@ -48,25 +44,25 @@ class CancelBookingSaga(
 
     private val accommodationCommand: AccommodationCommand =
         CancelAccommodationBookingCommand(
-            triggeringEvent.accommodationId,
-            triggeringEventMetadata.correlationId,
-            (triggeringEvent.bookingId as BookingId.Present),
+            travelOffer.accommodationId,
+            metadata.correlationId,
+            bookingId
         )
 
     private fun getCompensateAccommodationCommand(eventId: UUID): CompensateAccommodationCommand {
         return CompensateCancelAccommodationBookingCommand(
-            accommodationId = triggeringEvent.accommodationId,
-            correlationId = triggeringEventMetadata.correlationId,
+            accommodationId = travelOffer.accommodationId,
+            correlationId = metadata.correlationId,
             eventId = eventId,
-            bookingId = (triggeringEvent.bookingId as BookingId.Present),
+            bookingId = bookingId
         )
     }
 
     private val commuteCommand: CommuteCommand =
         CancelCommuteBookingCommand(
-            triggeringEvent.commuteId,
-            triggeringEventMetadata.correlationId,
-            triggeringEvent.bookingId,
+            travelOffer.commuteId,
+            metadata.correlationId,
+            bookingId,
         )
 
     private fun getCompensateCommuteCommand(
@@ -74,27 +70,25 @@ class CancelBookingSaga(
         seat: Seat,
     ): CompensateCommuteCommand {
         return CompensateCancelCommuteBookingCommand(
-            commuteId = triggeringEvent.commuteId,
-            correlationId = triggeringEventMetadata.correlationId,
+            commuteId = travelOffer.commuteId,
+            correlationId = metadata.correlationId,
             eventId = eventId,
-            bookingId = triggeringEvent.bookingId,
+            bookingId = bookingId,
             seat = seat,
         )
     }
 
     private val attractionCommand: AttractionCommand? =
-        when (val attractionId = triggeringEvent.attractionId) {
+        when (val attractionId = travelOffer.attractionId) {
             is AttractionId.Present -> CancelAttractionBookingCommand(
                 attractionId,
-                triggeringEventMetadata.correlationId,
-                (triggeringEvent.bookingId as BookingId.Present),
+                metadata.correlationId,
+                bookingId
             )
             is AttractionId.Empty -> null
         }
 
-    private val bookingId: BookingId = triggeringEvent.bookingId
-
-    private val maxRetries = DEFAULT_MAX_RETRIES
+    private val maxRetries = 5
 
     suspend fun execute() {
         eventBus.publish(
@@ -102,7 +96,7 @@ class CancelBookingSaga(
                 BookingCancelSagaStartedEvent(
                     bookingId = bookingId,
                 ),
-                triggeringEventMetadata
+                metadata
             )
         )
 
@@ -168,41 +162,21 @@ class CancelBookingSaga(
                 EventEnvelope(
                     BookingCancelSagaCompletedEvent(
                         bookingId = bookingId,
-                        travelOfferId = triggeringEvent.travelOfferId,
-                        seat = triggeringEvent.seat,
+                        seat = seat,
                     ),
-                    triggeringEventMetadata
+                    metadata
                 )
             )
         } else {
-            compensateTriggeringEvent(result.exceptionOrNull()?.message ?: "Unknown error")
-        }
-    }
-
-    suspend fun compensateTriggeringEvent(message: String) =
-        coroutineScope {
             eventBus.publish(
                 EventEnvelope(
                     BookingCancelSagaFailedEvent(
                         bookingId = bookingId,
-                        message = message,
+                        message = result.exceptionOrNull()?.message ?: "Unknown error",
                     ),
-                    triggeringEventMetadata
+                    metadata
                 )
             )
-            // withRetry(maxRetries) { travelOfferCommandHandler.compensate(triggeringEvent) }
-
-            if (!travelOfferService
-                    .checkTravelOfferComponentsAvailability(triggeringEvent.travelOfferId)
-            ) {
-                withRetry(maxRetries) {
-                    // travelOfferCommandHandler.handle(
-                    //     MakeTravelOfferUnavailableCommand(
-                    //         triggeringEvent.travelOfferId,
-                    //         triggeringEvent.correlationId!!,
-                    //     ) as TravelOfferCommand,
-                    // )
-                }
-            }
         }
+    }
 }

@@ -3,7 +3,7 @@ package pl.szymanski.wiktor.ta.domain.event
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
 sealed interface BookingEvent : DomainEvent {
@@ -13,7 +13,7 @@ sealed interface BookingEvent : DomainEvent {
 data class BookingCreatedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override val bookingId: BookingId,
-    val travelOfferId: TravelOfferId,
+    val travelOffer: TravelOffer,
     val userId: UUID,
     val seat: Seat,
     val state: BookingState = BookingState.NEW
@@ -32,7 +32,7 @@ data class CompleteBookingEvent(
 data class BookingCancelRequestedEvent(
     override val eventId: UUID = UUID.randomUUID(),
     override val bookingId: BookingId,
-    val travelOfferId: TravelOfferId,
+    val travelOffer: TravelOffer,
     val seat: Seat,
 ) : BookingEvent
 

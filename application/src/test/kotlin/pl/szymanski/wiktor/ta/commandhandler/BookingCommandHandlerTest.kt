@@ -15,9 +15,11 @@ import pl.szymanski.wiktor.ta.command.FailCancelBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
 import java.util.UUID
 import kotlin.test.Test
@@ -40,7 +42,10 @@ class BookingCommandHandlerTest {
                 CreateBookingCommand(
                     bookingId = BookingId.generate(),
                     correlationId = UUID.randomUUID(),
-                    travelOfferId = TravelOfferId.from(UUID.randomUUID()),
+                    travelOffer = TravelOffer(
+                        CommuteId.generate(),
+                        AccommodationId.generate(),
+                    ),
                     userId = UUID.randomUUID(),
                     seat = Seat.Picked("1", "A"),
                 )

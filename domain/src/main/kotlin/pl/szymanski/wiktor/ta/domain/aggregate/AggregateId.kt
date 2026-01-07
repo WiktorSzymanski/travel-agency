@@ -36,19 +36,6 @@ value class CommuteId(override val value: UUID) : TravelOfferComponentId {
     }
 }
 
-@JvmInline
-value class TravelOfferId(override val value: UUID) : AggregateId {
-    companion object {
-        fun generate(commuteId: CommuteId, accommodationId: AccommodationId, attractionId: AttractionId): TravelOfferId =
-            TravelOfferId(
-                UUID.nameUUIDFromBytes(
-                    "${commuteId}${accommodationId}${attractionId}".toByteArray(Charsets.UTF_8)
-                )
-            )
-        fun from(value: UUID): TravelOfferId = TravelOfferId(value)
-    }
-}
-
 sealed interface BookingId {
     data object Empty : BookingId
 

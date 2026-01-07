@@ -1,8 +1,10 @@
 package pl.szymanski.wiktor.ta.dto
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.transactions.transaction
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 
 @Serializable
 data class SeatDto(
@@ -22,7 +24,7 @@ data class SeatDto(
 data class BookingDto(
     val id: String,
     val userId: String,
-    val travelOfferId: String,
+    val travelOffer: TravelOfferDto,
     val seat: SeatDto? = null,
     var status: String,
     var message: String? = null,
@@ -33,7 +35,7 @@ data class BookingDto(
             BookingDto(
                 id = booking.id.toString(),
                 userId = booking.userId.toString(),
-                travelOfferId = booking.travelOfferId.toString(),
+                travelOffer = TravelOfferDto.fromDomain(booking.travelOffer),
                 seat = SeatDto.fromDomain(booking.seat),
                 status = booking.status.name,
                 message = booking.message,

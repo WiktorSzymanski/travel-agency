@@ -2,15 +2,11 @@ package pl.szymanski.wiktor.ta.offermaker
 
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
-import pl.szymanski.wiktor.ta.command.CreateTravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
@@ -142,15 +138,16 @@ class OfferMakerLogic(
         val triple = Triple(commute.id, accommodation.id, attraction?.id ?: AttractionId.Empty)
 
         if (resourceService.addOfferTripleIfUnique(triple)) {
-            val command = CreateTravelOfferCommand(
-                travelOfferId = TravelOfferId.from(UUID.randomUUID()),
-                correlationId = correlationId,
-                name = "${commute.name} ${accommodation.name} ${attraction?.let { " ${it.name}" } ?: ""}",
-                commuteId = commute.id,
-                accommodationId = accommodation.id,
-                attractionId = attraction?.id ?: AttractionId.Empty
-            )
-            commandBus.dispatchAndForget(command)
+//           create travelOffer but only in projection
+//            val command = CreateTravelOfferCommand(
+//                travelOfferId = TravelOfferId.from(UUID.randomUUID()),
+//                correlationId = correlationId,
+//                name = "${commute.name} ${accommodation.name} ${attraction?.let { " ${it.name}" } ?: ""}",
+//                commuteId = commute.id,
+//                accommodationId = accommodation.id,
+//                attractionId = attraction?.id ?: AttractionId.Empty
+//            )
+//            commandBus.dispatchAndForget(command)
         }
     }
 }

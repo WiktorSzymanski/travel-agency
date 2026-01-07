@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 
@@ -11,29 +12,16 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 
 @Serializable
 data class TravelOfferDto(
-    val id: String,
-    val name: String,
-    val commute: CommuteDto,
-    val accommodation: AccommodationDto,
-    val attraction: AttractionDto,
-    val booking: String,
-    val status: String = TravelOfferStatusEnum.AVAILABLE.name,
+    val commuteId: String,
+    val accommodationId: String,
+    val attractionId: String,
 ) {
     companion object {
-        fun fromDomain(
-            travelOffer: TravelOffer,
-            commute: Commute,
-            accommodation: Accommodation,
-            attraction: Attraction?,
-        ): TravelOfferDto {
+        fun fromDomain(travelOffer: TravelOffer): TravelOfferDto {
             return TravelOfferDto(
-                id = travelOffer.id.toString(),
-                name = travelOffer.name,
-                commute = CommuteDto.fromDomain(commute),
-                accommodation = AccommodationDto.fromDomain(accommodation),
-                attraction = AttractionDto.fromDomain(attraction),
-                booking = travelOffer.bookingId.toString(),
-                status = travelOffer.status.name,
+                commuteId = travelOffer.commuteId.toString(),
+                accommodationId = travelOffer.accommodationId.toString(),
+                attractionId = travelOffer.attractionId.toString(),
             )
         }
     }

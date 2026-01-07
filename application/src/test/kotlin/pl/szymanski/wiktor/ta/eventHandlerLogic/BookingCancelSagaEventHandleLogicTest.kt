@@ -7,16 +7,16 @@ import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.BookingCommand
-import pl.szymanski.wiktor.ta.command.CancelBookTravelOfferCommand
 import pl.szymanski.wiktor.ta.command.CancelBookingCommand
 import pl.szymanski.wiktor.ta.command.FailCancelBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
-import pl.szymanski.wiktor.ta.command.TravelOfferCommand
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
@@ -55,14 +55,12 @@ class BookingCancelSagaEventHandleLogicTest {
     @Test
     fun `should handle BookingCancelSagaCompletedEvent`() = runTest {
         val bookingId = BookingId.generate()
-        val travelOfferId = TravelOfferId.from(UUID.randomUUID())
         val correlationId = UUID.randomUUID()
         val seat = Seat.Any
 
         logic.onCompletedEvent(EventEnvelope(
             BookingCancelSagaCompletedEvent(
                 bookingId = bookingId,
-                travelOfferId = travelOfferId,
                 seat = seat
             ),
             Metadata(
@@ -76,37 +74,6 @@ class BookingCancelSagaEventHandleLogicTest {
                 CancelBookingCommand(
                     bookingId,
                     correlationId,
-                )
-            )
-        }
-    }
-
-    @Test
-    fun `should handle BookingCancelSagaCompletedEvent2`() = runTest {
-        val bookingId = BookingId.generate()
-        val travelOfferId = TravelOfferId.from(UUID.randomUUID())
-        val correlationId = UUID.randomUUID()
-        val seat = Seat.Any
-
-        logic.onCompletedEvent2(EventEnvelope(
-            BookingCancelSagaCompletedEvent(
-                bookingId = bookingId,
-                travelOfferId = travelOfferId,
-                seat = seat
-            ),
-            Metadata(
-                correlationId,
-                0
-            )
-        ))
-
-        coVerify {
-            commandBus.dispatch<TravelOfferCommand, TravelOffer>(
-                CancelBookTravelOfferCommand(
-                    travelOfferId,
-                    correlationId,
-                    bookingId = bookingId,
-                    seat = seat,
                 )
             )
         }

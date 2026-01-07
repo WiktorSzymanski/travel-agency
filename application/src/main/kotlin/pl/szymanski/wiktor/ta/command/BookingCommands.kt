@@ -2,7 +2,7 @@ package pl.szymanski.wiktor.ta.command
 
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
 sealed class BookingCommand : Command {
@@ -12,7 +12,7 @@ sealed class BookingCommand : Command {
 data class CreateBookingCommand(
     override val bookingId: BookingId,
     override val correlationId: UUID,
-    val travelOfferId: TravelOfferId,
+    val travelOffer: TravelOffer,
     val userId: UUID,
     val seat: Seat
 ) : BookingCommand()

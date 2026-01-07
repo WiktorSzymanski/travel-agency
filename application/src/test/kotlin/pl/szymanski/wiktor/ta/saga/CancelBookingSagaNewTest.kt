@@ -24,16 +24,15 @@ import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookingCanceledEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookingCanceledEvent
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
-import pl.szymanski.wiktor.ta.domain.event.TravelOfferReleaseEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
-import pl.szymanski.wiktor.ta.service.TravelOfferService
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -58,11 +57,8 @@ class CancelBookingSagaNewTest {
         attractionId: AttractionId = AttractionId.generate(),
         bookingId: BookingId = BookingId.generate(),
         seat: Seat = Seat.Picked("1", "A"),
-    ) = TravelOfferReleaseEvent(
-        travelOfferId = TravelOfferId.generate(commuteId, accommodationId, attractionId),
-        accommodationId = accommodationId,
-        commuteId = commuteId,
-        attractionId = attractionId,
+    ) = BookingCancelRequestedEvent(
+        travelOffer = TravelOffer(commuteId, accommodationId, attractionId),
         bookingId = bookingId,
         seat = seat,
     )
@@ -88,8 +84,6 @@ class CancelBookingSagaNewTest {
             // Given
             val triggering = releaseEvent(attractionId = AttractionId.generate())
 
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
-
             val commuteAgg = mockk<Commute>(relaxed = true)
             val accommodationAgg = mockk<Accommodation>(relaxed = true)
             val attractionAgg = mockk<Attraction>(relaxed = true)
@@ -100,7 +94,7 @@ class CancelBookingSagaNewTest {
                         commuteAgg to
                             listOf(
                                 CommuteBookingCanceledEvent(
-                                    commuteId = triggering.commuteId,
+                                    commuteId = triggering.travelOffer.commuteId,
                                     bookingId = triggering.bookingId,
                                     seat = triggering.seat,
                                 ),
@@ -116,7 +110,7 @@ class CancelBookingSagaNewTest {
                         accommodationAgg to
                             listOf(
                                 AccommodationBookingCanceledEvent(
-                                    accommodationId = triggering.accommodationId,
+                                    accommodationId = triggering.travelOffer.accommodationId,
                                     bookingId = triggering.bookingId,
                                 ),
                             )
@@ -131,7 +125,7 @@ class CancelBookingSagaNewTest {
                         attractionAgg to
                             listOf(
                                 AttractionBookingCanceledEvent(
-                                    attractionId = triggering.attractionId,
+                                    attractionId = triggering.travelOffer.attractionId,
                                     bookingId = triggering.bookingId,
                                 ),
                             )
@@ -140,7 +134,14 @@ class CancelBookingSagaNewTest {
                 }
             }
 
-            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
+            val saga = CancelBookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata
+            )
 
             // When
             saga.execute()
@@ -154,7 +155,6 @@ class CancelBookingSagaNewTest {
             assertEquals(1, completed.size)
             assertTrue(failed.isEmpty())
             assertEquals(triggering.bookingId, completed.first().bookingId)
-            assertEquals(triggering.travelOfferId, completed.first().travelOfferId)
         }
 
     @Test
@@ -162,8 +162,6 @@ class CancelBookingSagaNewTest {
         runTest {
             // Given
             val triggering = releaseEvent(attractionId = AttractionId.Empty)
-
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
 
             val commuteAgg = mockk<Commute>(relaxed = true)
             val accommodationAgg = mockk<Accommodation>(relaxed = true)
@@ -174,7 +172,7 @@ class CancelBookingSagaNewTest {
                         commuteAgg to
                             listOf(
                                 CommuteBookingCanceledEvent(
-                                    commuteId = triggering.commuteId,
+                                    commuteId = triggering.travelOffer.commuteId,
                                     bookingId = triggering.bookingId,
                                     seat = triggering.seat,
                                 ),
@@ -195,7 +193,7 @@ class CancelBookingSagaNewTest {
                         accommodationAgg to
                             listOf(
                                 AccommodationBookingCanceledEvent(
-                                    accommodationId = triggering.accommodationId,
+                                    accommodationId = triggering.travelOffer.accommodationId,
                                     bookingId = triggering.bookingId,
                                 ),
                             )
@@ -203,8 +201,14 @@ class CancelBookingSagaNewTest {
                 }
             }
 
-            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
-
+            val saga = CancelBookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata
+            )
             // When
             saga.execute()
 
@@ -222,8 +226,6 @@ class CancelBookingSagaNewTest {
             // Given
             val triggering = releaseEvent()
 
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
-
             registerCommuteHandler { _ ->
                 throw IllegalStateException("Commute cancel failed")
             }
@@ -231,8 +233,14 @@ class CancelBookingSagaNewTest {
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
-
+            val saga = CancelBookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata
+            )
             // When
             saga.execute()
 
@@ -249,8 +257,6 @@ class CancelBookingSagaNewTest {
             // Given
             val triggering = releaseEvent(attractionId = AttractionId.generate())
 
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
-
             val commuteAgg = mockk<Commute>(relaxed = true)
             registerCommuteHandler { command ->
                 when (command) {
@@ -258,7 +264,7 @@ class CancelBookingSagaNewTest {
                         commuteAgg to
                             listOf(
                                 CommuteBookingCanceledEvent(
-                                    commuteId = triggering.commuteId,
+                                    commuteId = triggering.travelOffer.commuteId,
                                     bookingId = triggering.bookingId,
                                     seat = triggering.seat,
                                 ),
@@ -279,8 +285,14 @@ class CancelBookingSagaNewTest {
             // Attraction should not be called
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
-
+            val saga = CancelBookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata
+            )
             // When
             saga.execute()
 
@@ -297,8 +309,6 @@ class CancelBookingSagaNewTest {
             // Given
             val triggering = releaseEvent(attractionId = AttractionId.generate())
 
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
-
             val commuteAgg = mockk<Commute>(relaxed = true)
             val accommodationAgg = mockk<Accommodation>(relaxed = true)
 
@@ -308,7 +318,7 @@ class CancelBookingSagaNewTest {
                         commuteAgg to
                             listOf(
                                 CommuteBookingCanceledEvent(
-                                    commuteId = triggering.commuteId,
+                                    commuteId = triggering.travelOffer.commuteId,
                                     bookingId = triggering.bookingId,
                                     seat = triggering.seat,
                                 ),
@@ -324,7 +334,7 @@ class CancelBookingSagaNewTest {
                         accommodationAgg to
                             listOf(
                                 AccommodationBookingCanceledEvent(
-                                    accommodationId = triggering.accommodationId,
+                                    accommodationId = triggering.travelOffer.accommodationId,
                                     bookingId = triggering.bookingId,
                                 ),
                             )
@@ -341,8 +351,14 @@ class CancelBookingSagaNewTest {
                 }
             }
 
-            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
-
+            val saga = CancelBookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata
+            )
             // When
             saga.execute()
 
@@ -359,15 +375,19 @@ class CancelBookingSagaNewTest {
             // Given
             val triggering = releaseEvent(attractionId = AttractionId.Empty)
 
-            val travelOfferService = mockk<TravelOfferService>(relaxed = true)
-
             registerCommuteHandler { _ -> throw IllegalStateException("Commute cancel failed") }
             // Handlers that must not be called
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = CancelBookingSaga(eventBus, commandBus, travelOfferService, triggering, metadata)
-
+            val saga = CancelBookingSaga(
+                eventBus,
+                commandBus,
+                triggering.travelOffer,
+                triggering.seat,
+                triggering.bookingId,
+                metadata
+            )
             // When
             saga.execute()
 

@@ -31,7 +31,7 @@ class BookingCommandHandler(
     private fun handle(command: CreateBookingCommand): Pair<Booking, List<BookingEvent>> =
         Booking.create(
             userId = command.userId,
-            travelOfferId = command.travelOfferId,
+            travelOffer = command.travelOffer,
             seat = command.seat,
         )
 

@@ -1,5 +1,3 @@
-@file:Suppress("WildcardImport")
-
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.BookingState
@@ -24,26 +22,30 @@ class BookingTest {
 
     private var bookingId: BookingId = BookingId.generate()
     private  var userId: UUID = UUID.randomUUID()
-    private val travelOfferId: TravelOfferId = TravelOfferId.from(UUID.randomUUID())
+    private val travelOffer: TravelOffer = TravelOffer(
+        CommuteId.generate(),
+        AccommodationId.generate(),
+        AttractionId.generate(),
+    )
     private var seat: Seat = Seat.Picked("1", "A")
 
     private val booking: Booking =
         Booking(
             id = bookingId,
             userId = userId,
-            travelOfferId = travelOfferId,
+            travelOffer = travelOffer,
             seat = seat,
         )
 
     @Test
     fun aggregate_should_return_booking_and_created_event() {
-        val (booking, events) = Booking.create(userId, seat, travelOfferId)
+        val (booking, events) = Booking.create(userId, seat, travelOffer)
 
         assertEventEquals(
             BookingCreatedEvent(
                 bookingId = booking.id,
                 userId = userId,
-                travelOfferId = travelOfferId,
+                travelOffer = travelOffer,
                 seat = seat
             ),
             events.first()
@@ -51,7 +53,7 @@ class BookingTest {
 
         assertEquals(BookingState.NEW, booking.status)
         assertEquals(userId, booking.userId)
-        assertEquals(travelOfferId, booking.travelOfferId)
+        assertEquals(travelOffer, booking.travelOffer)
         assertEquals(seat, booking.seat)
     }
 
@@ -122,7 +124,7 @@ class BookingTest {
         assertEventEquals(
             BookingCancelRequestedEvent(
                 bookingId = bookingId,
-                travelOfferId = travelOfferId,
+                travelOffer = travelOffer,
                 seat = seat,
             ),
             events.first(),
@@ -280,10 +282,10 @@ class BookingTest {
     @Test
     fun booking_fromEvents_should_rebuild_state() {
         val events = listOf(
-            BookingCreatedEvent(bookingId = bookingId, travelOfferId = travelOfferId, userId = userId, seat = seat),
+            BookingCreatedEvent(bookingId = bookingId, travelOffer = travelOffer, userId = userId, seat = seat),
             ProcessBookingEvent(bookingId = bookingId),
             CompleteBookingEvent(bookingId = bookingId),
-            BookingCancelRequestedEvent(bookingId = bookingId, travelOfferId = travelOfferId, seat = seat),
+            BookingCancelRequestedEvent(bookingId = bookingId, travelOffer = travelOffer, seat = seat),
             ProcessCancelBookingEvent(bookingId = bookingId),
             FailCancelBookingEvent(bookingId = bookingId, message = "Retry later")
         )
@@ -291,7 +293,7 @@ class BookingTest {
         val result = Booking.fromEvents(events)
         assertEquals(bookingId, result.id)
         assertEquals(userId, result.userId)
-        assertEquals(travelOfferId, result.travelOfferId)
+        assertEquals(travelOffer, result.travelOffer)
         assertEquals(seat, result.seat)
         assertEquals(BookingState.BOOKED, result.status)
         assertEquals("Retry later", result.message)
