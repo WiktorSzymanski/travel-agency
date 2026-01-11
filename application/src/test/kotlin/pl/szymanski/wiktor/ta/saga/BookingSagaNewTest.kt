@@ -30,6 +30,7 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
+import pl.szymanski.wiktor.ta.domain.exception.CommuteException
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
@@ -42,6 +43,8 @@ import kotlin.test.assertTrue
 class BookingSagaNewTest {
     private lateinit var eventBus: DummyEventBus
     private lateinit var commandBus: DummyCommandBus
+
+    val stateRepo = mockk<SagaRepository>(relaxed = true)
 
     private val metadata = Metadata(UUID.randomUUID(), 1)
 
@@ -137,16 +140,25 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(
+
+
+            val sagaState = SagaState(
+                id = UUID.randomUUID(),
+                type = SagaType.BOOKING,
+                travelOffer = triggering.travelOffer,
+                bookingId = triggering.bookingId,
+                seat = triggering.seat,
+            )
+
+            val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                triggering.travelOffer,
-                triggering.seat,
-                triggering.bookingId,
+                stateRepo,
+                sagaState,
                 metadata)
 
             // When
-            saga.execute()
+            saga.executeOrResume()
 
             // Then
             val started = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaStartedEvent>()
@@ -203,16 +215,26 @@ class BookingSagaNewTest {
                 error("Attraction handler should not be called when attractionId is null, but got: $command")
             }
 
-            val saga = BookingSaga(
+
+
+            val sagaState = SagaState(
+                id = UUID.randomUUID(),
+                type = SagaType.BOOKING,
+                travelOffer = triggering.travelOffer,
+                bookingId = triggering.bookingId,
+                seat = triggering.seat,
+            )
+
+            val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                triggering.travelOffer,
-                triggering.seat,
-                triggering.bookingId,
+                stateRepo,
+                sagaState,
                 metadata)
 
             // When
-            saga.execute()
+            saga.executeOrResume()
+
 
             // Then
             val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
@@ -229,23 +251,32 @@ class BookingSagaNewTest {
             val triggering = reservedEvent()
 
             registerCommuteHandler { _ ->
-                throw IllegalStateException("Commute booking failed")
+                throw CommuteException("Commute booking failed")
             }
 
             // Handlers that must not be called
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(
+
+            val sagaState = SagaState(
+                id = UUID.randomUUID(),
+                type = SagaType.BOOKING,
+                travelOffer = triggering.travelOffer,
+                bookingId = triggering.bookingId,
+                seat = triggering.seat,
+            )
+
+            val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                triggering.travelOffer,
-                triggering.seat,
-                triggering.bookingId,
+                stateRepo,
+                sagaState,
                 metadata)
 
             // When
-            saga.execute()
+            saga.executeOrResume()
+
 
             // Then
             val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
@@ -262,22 +293,33 @@ class BookingSagaNewTest {
             val triggering = reservedEvent(attractionId = AttractionId.Empty)
 
             registerCommuteHandler { _ ->
-                throw IllegalStateException("Commute booking failed")
+                throw CommuteException("Commute booking failed")
             }
 
             // Handlers that must not be called
             registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
+            
 
-            val saga = BookingSaga(
+
+            val sagaState = SagaState(
+                id = UUID.randomUUID(),
+                type = SagaType.BOOKING,
+                travelOffer = triggering.travelOffer,
+                bookingId = triggering.bookingId,
+                seat = triggering.seat,
+            )
+
+            val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                triggering.travelOffer,
-                triggering.seat,
-                triggering.bookingId,
+                stateRepo,
+                sagaState,
                 metadata)
+
             // When
-            saga.execute()
+            saga.executeOrResume()
+
 
             // Then
             val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
@@ -329,16 +371,26 @@ class BookingSagaNewTest {
             // Attraction should not be called
             registerAttractionHandler { command -> error("Attraction should not be called: $command") }
 
-            val saga = BookingSaga(
+
+
+            val sagaState = SagaState(
+                id = UUID.randomUUID(),
+                type = SagaType.BOOKING,
+                travelOffer = triggering.travelOffer,
+                bookingId = triggering.bookingId,
+                seat = triggering.seat,
+            )
+
+            val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                triggering.travelOffer,
-                triggering.seat,
-                triggering.bookingId,
+                stateRepo,
+                sagaState,
                 metadata)
 
             // When
-            saga.execute()
+            saga.executeOrResume()
+
 
             // Then
             val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
@@ -409,16 +461,23 @@ class BookingSagaNewTest {
                 }
             }
 
-            val saga = BookingSaga(
+            val sagaState = SagaState(
+                type = SagaType.BOOKING,
+                travelOffer = triggering.travelOffer,
+                bookingId = triggering.bookingId,
+                seat = triggering.seat,
+            )
+
+            val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                triggering.travelOffer,
-                triggering.seat,
-                triggering.bookingId,
+                stateRepo,
+                sagaState,
                 metadata)
 
             // When
-            saga.execute()
+            saga.executeOrResume()
+
 
             // Then
             val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
@@ -428,4 +487,68 @@ class BookingSagaNewTest {
             assertTrue(accommodationCompensated)
             assertTrue(commuteCompensated)
         }
+
+//    val l = listOf(
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.NEW
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.PROCESSING,
+//            step = SagaStep.PENDING_COMMUTE
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.PROCESSING,
+//            step = SagaStep.PENDING_ACCOMMODATION
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.PROCESSING,
+//            step = SagaStep.PENDING_ATTRACTION
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.COMPLETED
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.COMPENSATING,
+//            step = SagaStep.COMPENSATING_ACCOMMODATION
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.COMPENSATING,
+//            step = SagaStep.COMPENSATING_COMMUTE
+//        ),
+//        SagaState(
+//            type = SagaType.BOOKING,
+//            travelOffer = triggering.travelOffer,
+//            bookingId = triggering.bookingId,
+//            seat = triggering.seat,
+//            status = SagaStatus.FAILED
+//        ),
+//    )
 }

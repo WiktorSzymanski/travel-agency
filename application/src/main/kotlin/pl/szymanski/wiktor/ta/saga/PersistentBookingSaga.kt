@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.saga
 
+import kotlinx.coroutines.delay
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.EventEnvelope
@@ -14,69 +15,62 @@ import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
-import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
-import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.exception.CommuteException
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
-import pl.szymanski.wiktor.ta.withRetry
 import java.util.UUID
+import kotlin.reflect.KClass
 
 class PersistentBookingSaga(
-    private val id: UUID,
     private val eventBus: EventBus,
     private val commandBus: CommandBus,
     private val stateRepo: SagaRepository,
-    private val travelOffer: TravelOffer,
-    private val seat: Seat,
-    private val bookingId: BookingId,
+    private val sagaState: SagaState,
     private val metadata: Metadata
 ) {
     private val accommodationCommand: AccommodationCommand =
         BookAccommodationCommand(
-            travelOffer.accommodationId,
+            sagaState.travelOffer.accommodationId,
             metadata.correlationId,
-            bookingId,
+            sagaState.bookingId,
         )
 
     private fun getCompensateAccommodationCommand(eventId: UUID): CompensateAccommodationCommand {
         return CompensateBookAccommodationCommand(
-            accommodationId = travelOffer.accommodationId,
+            accommodationId = sagaState.travelOffer.accommodationId,
             correlationId = metadata.correlationId,
             eventId = eventId,
-            bookingId = bookingId,
+            bookingId = sagaState.bookingId,
         )
     }
 
     private var commuteCommand: CommuteCommand =
         BookCommuteCommand(
-            travelOffer.commuteId,
+            sagaState.travelOffer.commuteId,
             metadata.correlationId,
-            bookingId,
-            seat,
+            sagaState.bookingId,
+            sagaState.seat,
         )
 
     private fun getCompensateCommuteCommand(eventId: UUID): CompensateCommuteCommand {
         return CompensateBookCommuteCommand(
-            commuteId = travelOffer.commuteId,
+            commuteId = sagaState.travelOffer.commuteId,
             correlationId = metadata.correlationId,
             eventId = eventId,
-            bookingId = bookingId,
+            bookingId = sagaState.bookingId,
         )
     }
 
     private val attractionCommand: AttractionCommand? =
-        when (val attractionId = travelOffer.attractionId) {
+        when (val attractionId = sagaState.travelOffer.attractionId) {
             is AttractionId.Present -> BookAttractionCommand(
                 attractionId,
                 metadata.correlationId,
-                bookingId,
+                sagaState.bookingId,
             )
             is AttractionId.Empty -> null
         }
@@ -84,134 +78,189 @@ class PersistentBookingSaga(
     private val maxRetries = 5
 
     suspend fun executeOrResume() {
-        val state = stateRepo.findById(id) ?: createInitialState()
-        when (state.status) {
+        when (sagaState.status) {
             SagaStatus.COMPLETED -> return
-            SagaStatus.FAILED -> compensateAndFail(state, "Saga failed")
-            SagaStatus.COMMUTE_PENDING -> handleCommuteStep(state)
-            SagaStatus.ACCOMMODATION_PENDING -> handleAccommodationStep(state)
-            SagaStatus.ATTRACTION_PENDING -> handleAttractionStep(state)
-            SagaStatus.NEW -> startSaga(state)
+            SagaStatus.FAILED -> return
+            SagaStatus.COMPENSATING -> compensateAndFail(sagaState.message!!)
+            SagaStatus.PROCESSING -> resume()
+            SagaStatus.NEW -> startSaga()
         }
-
     }
 
-    private suspend fun createInitialState(): SagaState {
-        val state = SagaState(
-            type = SagaType.BOOKING,
-            bookingId = bookingId,
-            travelOffer = travelOffer,
-            seat = seat
-        )
-        stateRepo.save(state)
-
-        startSaga(state)
-        return state
+    suspend fun resume() {
+        when (sagaState.step) {
+            SagaStep.PENDING_COMMUTE -> handleCommuteStep()
+            SagaStep.PENDING_ACCOMMODATION -> handleAccommodationStep()
+            SagaStep.PENDING_ATTRACTION -> handleAttractionStep()
+            SagaStep.COMPENSATING_ACCOMMODATION -> compensateAccommodation()
+            SagaStep.COMPENSATING_COMMUTE -> compensateCommute()
+            SagaStep.IDLE -> return
+        }
     }
 
-    private suspend fun startSaga(state: SagaState) {
+    private suspend fun startSaga() {
+        stateRepo.save(sagaState)
+        // TODO: they both should be persisted at the same time
         eventBus.publish(EventEnvelope(BookingSagaStartedEvent(
-            bookingId = bookingId
+            bookingId = sagaState.bookingId
         ), metadata))
-        handleCommuteStep(state)
+        sagaState.status = SagaStatus.PROCESSING
+        sagaState.step = SagaStep.PENDING_COMMUTE
+        persistState()
+        handleCommuteStep()
     }
 
-    private suspend fun handleCommuteStep(state: SagaState) {
-        persistStatus(state, SagaStatus.COMMUTE_PENDING)
-        try {
-            val (_, events) = withRetry(maxRetries) {
-                commandBus.dispatch<CommuteCommand, Commute>(commuteCommand)
-            }
-            state.sagaContext.commuteEventId = events.first().eventId
-            persistState(state)
-            handleAccommodationStep(state)
-        } catch (e: CommuteException) {
-            // TODO: to trochę nie ma sensu bo withRetry robi maxRetries po czym throw-uje ostatni.
-            if (state.retryCount < maxRetries) {
-                state.incrementRetryCount()
-                stateRepo.save(state)
-            } else {
-                compensateAndFail(state, e.message!!)
-            }
+    private suspend fun handleCommuteStep() {
+        val step = runCatching {
+            sagaStep(
+                sagaState = sagaState,
+                init = { },
+                loop = {
+                    val events = commandBus.dispatch<CommuteCommand, Commute>(commuteCommand).second
+                    sagaState.sagaContext.commuteEventId = events.first().eventId
+                    sagaState.step = SagaStep.PENDING_ACCOMMODATION
+                    sagaState.retryCount = 0
+                    persistState()
+                },
+            )
         }
+
+        if (step.isFailure)
+            return compensateAndFail(step.exceptionOrNull()!!.message!!)
+
+        handleAccommodationStep()
     }
 
-    private suspend fun handleAccommodationStep(state: SagaState) {
-        persistStatus(state, SagaStatus.ACCOMMODATION_PENDING)
-        try {
-            val (_, events) = withRetry(maxRetries - state.retryCount) {
-                commandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand)
-            }
-            state.sagaContext.accommodationEventId = events.first().eventId
-            persistState(state)
-            if (attractionCommand != null) handleAttractionStep(state)
-            else completeSaga(state)
-        } catch (e: Exception) {
-            // TODO: to trochę nie ma sensu bo withRetry robi maxRetries po czym throw-uje ostatni.
-            if (state.retryCount < maxRetries) {
-                state.incrementRetryCount()
-                stateRepo.save(state)
-            } else {
-                compensateAndFail(state, e.message!!)
-            }
+    private suspend fun handleAccommodationStep() {
+        val step = runCatching {
+            sagaStep(
+                sagaState = sagaState,
+                init = { },
+                loop = {
+                    val events = commandBus.dispatch<AccommodationCommand, Accommodation>(accommodationCommand).second
+                    sagaState.sagaContext.accommodationEventId = events.first().eventId
+                    sagaState.step = SagaStep.PENDING_ATTRACTION
+                    sagaState.retryCount = 0
+                    persistState()
+                }
+            )
         }
+
+        if (step.isFailure)
+            return compensateAndFail(step.exceptionOrNull()!!.message!!)
+
+        handleAttractionStep()
     }
 
-    private suspend fun handleAttractionStep(state: SagaState) {
-        persistStatus(state, SagaStatus.ATTRACTION_PENDING)
-        try {
-            withRetry(maxRetries) { commandBus.dispatch<AttractionCommand, Attraction>(attractionCommand!!) }
-            completeSaga(state)
-        } catch (e: Exception) {
-            if (state.retryCount < maxRetries) {
-                state.incrementRetryCount()
-                stateRepo.save(state)
-            } else {
-                compensateAndFail(state, e.message!!)
+    private suspend fun handleAttractionStep() {
+        attractionCommand?.let {
+            val step = runCatching {
+                sagaStep(
+                    sagaState = sagaState,
+                    init = { },
+                    loop = {
+                        commandBus.dispatch<AttractionCommand, Attraction>(it)
+                    }
+                )
             }
+
+            if (step.isFailure)
+                return compensateAndFail(step.exceptionOrNull()!!.message!!)
         }
+
+        completeSaga()
     }
 
-    private suspend fun completeSaga(state: SagaState) {
-        state.status = SagaStatus.COMPLETED
-        stateRepo.save(state)
+    private suspend fun completeSaga() {
+        sagaState.status = SagaStatus.COMPLETED
+        persistState()
         eventBus.publish(EventEnvelope(BookingSagaCompletedEvent(
-            bookingId = bookingId,
-            seat = seat), metadata))
+            bookingId = sagaState.bookingId,
+            seat = sagaState.seat),
+            metadata)
+        )
     }
 
-    private suspend fun compensateAndFail(state: SagaState, message: String) {
-        compensateAccommodation(state)
-        compensateCommute(state)
-        state.status = SagaStatus.FAILED
-        stateRepo.save(state)
+    private suspend fun compensateAndFail(message: String) {
         eventBus.publish(EventEnvelope(BookingSagaFailedEvent(
-            bookingId = bookingId,
+            bookingId = sagaState.bookingId,
             message = message), metadata))
+        sagaState.message = message
+        persistState()
+        compensateAccommodation()
+        compensateCommute()
+        sagaState.status = SagaStatus.FAILED
+        sagaState.step = SagaStep.IDLE
+        persistState()
     }
 
-    private suspend fun compensateCommute(state: SagaState) {
-        // TODO: add withRetry and ensure compensations are persisted if system were to fail
-        state.sagaContext.commuteEventId?.let {
-            withRetry(maxRetries) { commandBus.dispatch<CommuteCommand, Commute>(getCompensateCommuteCommand(it)) }
+    private suspend fun compensateCommute() {
+        sagaState.sagaContext.commuteEventId?.let {
+            val step = runCatching {
+                sagaStep(
+                    sagaState = sagaState,
+                    init = {
+                        sagaState.step = SagaStep.COMPENSATING_COMMUTE
+                        persistState()
+                    },
+                    loop = {
+                        commandBus.dispatch<CommuteCommand, Commute>(getCompensateCommuteCommand(it))
+                    },
+                )
+            }
+
+            if (step.isFailure)
+                return // ADD RECORD TO UNPROCESSABLE SAGAS
         }
     }
 
-    private suspend fun compensateAccommodation(state: SagaState) {
-        // TODO: add withRetry and ensure compensations are persisted if system were to fail
-        state.sagaContext.accommodationEventId?.let {
-            commandBus.dispatchAndForget(getCompensateAccommodationCommand(it))
+    private suspend fun compensateAccommodation() {
+        sagaState.sagaContext.accommodationEventId?.let {
+            val step = runCatching {
+                sagaStep(
+                    sagaState = sagaState,
+                    init = {
+                        sagaState.step = SagaStep.COMPENSATING_ACCOMMODATION
+                        persistState()
+                    },
+                    loop = {
+                        commandBus.dispatch<AccommodationCommand, Accommodation>(getCompensateAccommodationCommand(it))
+                    }
+                )
+            }
+
+            if (step.isFailure)
+                return // ADD RECORD TO UNPROCESSABLE SAGAS
         }
     }
 
-    private suspend fun persistStatus(state: SagaState, status: SagaStatus) {
-        state.status = status
-        state.incrementVersion()
-        stateRepo.save(state)
+    private suspend fun persistState() {
+        this.sagaState.incrementVersion()
+        stateRepo.save(this.sagaState)
     }
 
-    private suspend fun persistState(state: SagaState) {
-        state.incrementVersion()
-        stateRepo.save(state)
+    private suspend fun sagaStep(
+        sagaState: SagaState,
+        init: suspend () -> Unit,
+        loop: suspend () -> Unit,
+        exception: KClass<out Exception> = ConcurrentModificationException::class,
+        delayManager: DelayManager = DelayManager()
+    ): Boolean {
+        var lastException: Throwable? = null
+
+        init()
+
+        repeat(maxRetries - sagaState.retryCount) { attemptNo ->
+            val result = runCatching { loop() }
+            if (result.isSuccess) return true
+
+            lastException = result.exceptionOrNull()
+            if (!exception.isInstance(lastException)) return@repeat
+
+            if (attemptNo < maxRetries - sagaState.retryCount - 1)
+                delay(delayManager.getCurrentDelay())
+        }
+
+        throw lastException!!
     }
 }

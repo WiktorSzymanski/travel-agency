@@ -12,11 +12,19 @@ enum class SagaType {
 
 enum class SagaStatus {
     NEW,
-    COMMUTE_PENDING,
-    ACCOMMODATION_PENDING,
-    ATTRACTION_PENDING,
+    PROCESSING,
     COMPLETED,
+    COMPENSATING,
     FAILED,
+}
+
+enum class SagaStep {
+    IDLE,
+    PENDING_COMMUTE,
+    PENDING_ACCOMMODATION,
+    PENDING_ATTRACTION,
+    COMPENSATING_ACCOMMODATION,
+    COMPENSATING_COMMUTE,
 }
 
 data class SagaContext(
@@ -28,10 +36,12 @@ data class SagaState(
     val id: UUID = UUID.randomUUID(),
     val type: SagaType,
     var status: SagaStatus = SagaStatus.NEW,
+    var step: SagaStep = SagaStep.IDLE,
     val travelOffer: TravelOffer,
     val bookingId: BookingId,
     val seat: Seat,
     var sagaContext: SagaContext = SagaContext(),
+    var message: String? = null,
     var retryCount: Int = 0,
     var version: Int = 1
 ) {
