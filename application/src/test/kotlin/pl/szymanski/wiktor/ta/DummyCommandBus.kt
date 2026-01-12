@@ -5,6 +5,9 @@ import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.Command
 import pl.szymanski.wiktor.ta.command.CommuteCommand
+import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
+import pl.szymanski.wiktor.ta.command.CompensateAttractionCommand
+import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
@@ -54,6 +57,17 @@ class DummyCommandBus : CommandBus {
             attractionCommandHandler.handle(it)
         }
         this.registerHandler(AccommodationCommand::class.java) {
+            accommodationCommandHandler.handle(it)
+        }
+
+
+        this.registerHandler(CompensateCommuteCommand::class.java) {
+            commuteCommandHandler.handle(it)
+        }
+        this.registerHandler(CompensateAttractionCommand::class.java) {
+            attractionCommandHandler.handle(it)
+        }
+        this.registerHandler(CompensateAccommodationCommand::class.java) {
             accommodationCommandHandler.handle(it)
         }
     }

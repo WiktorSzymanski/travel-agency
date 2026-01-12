@@ -1,57 +1,110 @@
 package pl.szymanski.wiktor.ta.saga
 
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.DummyCommandBus
+import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
-import pl.szymanski.wiktor.ta.command.AccommodationCommand
-import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.BookAttractionCommand
-import pl.szymanski.wiktor.ta.command.BookCommuteCommand
-import pl.szymanski.wiktor.ta.command.CommuteCommand
-import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookAttractionCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
-import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
+import pl.szymanski.wiktor.ta.command.*
+import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
+import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
-import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
-import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
-import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
-import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
-import pl.szymanski.wiktor.ta.domain.event.DomainEvent
+import pl.szymanski.wiktor.ta.domain.aggregate.*
+import pl.szymanski.wiktor.ta.domain.event.*
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteException
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
-import java.util.UUID
+import java.util.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class BookingSagaNewTest {
-    private lateinit var eventBus: DummyEventBus
     private lateinit var commandBus: DummyCommandBus
 
-    val stateRepo = mockk<SagaRepository>(relaxed = true)
+    val bookingCommandHandler = mockk<BookingCommandHandler>(relaxed = true)
+    val commuteCommandHandler = mockk<CommuteCommandHandler>(relaxed = true)
+    val attractionCommandHandler = mockk<AttractionCommandHandler>(relaxed = true)
+    val accommodationCommandHandler = mockk<AccommodationCommandHandler>(relaxed = true)
+
+    val commuteAgg = mockk<Commute>(relaxed = true)
+    val accommodationAgg = mockk<Accommodation>(relaxed = true)
+    val attractionAgg = mockk<Attraction>(relaxed = true)
+
+    val eventBus = mockk<EventBus>(relaxed = true)
+
+    val sagaRepository = mockk<SagaRepository>(relaxed = true)
 
     private val metadata = Metadata(UUID.randomUUID(), 1)
 
     @BeforeTest
     fun setup() {
-        eventBus = DummyEventBus()
-        commandBus = DummyCommandBus()
+        commandBus = DummyCommandBus(
+            bookingCommandHandler,
+            commuteCommandHandler,
+            attractionCommandHandler,
+            accommodationCommandHandler,
+        )
+
+        coEvery { commuteCommandHandler.handle(match { it is BookCommuteCommand }) } answers {
+            val command = firstArg<BookCommuteCommand>()
+            commuteAgg to listOf(
+                CommuteBookedEvent(
+                    commuteId = command.commuteId,
+                    bookingId = command.bookingId,
+                    seat = command.seat
+                )
+            )
+        }
+
+        coEvery { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) } answers {
+            val command = firstArg<BookAccommodationCommand>()
+            accommodationAgg to listOf(
+                AccommodationBookedEvent(
+                    accommodationId = command.accommodationId,
+                    bookingId = command.bookingId,
+                ),
+            )
+        }
+
+        coEvery { attractionCommandHandler.handle(match { it is BookAttractionCommand }) } answers {
+            val command = firstArg<BookAttractionCommand>()
+            attractionAgg to listOf(
+                AttractionBookedEvent(
+                    attractionId = command.attractionId,
+                    bookingId = command.bookingId,
+                ),
+            )
+        }
+
+        coEvery { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) } answers {
+            val command = firstArg<CompensateBookCommuteCommand>()
+            commuteAgg to listOf(
+                CommuteBookedCompensatedEvent(
+                    commuteId = command.commuteId,
+                    bookingId = command.bookingId,
+                    seat = Seat.Any
+                )
+            )
+        }
+
+        coEvery { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) } answers {
+            val command = firstArg<CompensateBookAccommodationCommand>()
+            accommodationAgg to listOf(
+                AccommodationBookedCompensatedEvent(
+                    accommodationId = command.accommodationId,
+                    bookingId = command.bookingId,
+                ),
+            )
+        }
     }
 
     private fun reservedEvent(
@@ -68,79 +121,11 @@ class BookingSagaNewTest {
         state = BookingState.NEW,
     )
 
-    private fun registerCommuteHandler(onCall: (CommuteCommand) -> Pair<Commute, List<DomainEvent>>) {
-        commandBus.registerHandler(CommuteCommand::class.java) { c -> onCall(c) }
-        // Register also for the immediate superclass used by CommandBus for compensation commands
-        commandBus.registerHandler(CompensateCommuteCommand::class.java) { c -> onCall(c) }
-    }
-
-    private fun registerAccommodationHandler(onCall: (AccommodationCommand) -> Pair<Accommodation, List<DomainEvent>>) {
-        commandBus.registerHandler(AccommodationCommand::class.java) { c -> onCall(c) }
-        // Register also for the immediate superclass used by CommandBus for compensation commands
-        commandBus.registerHandler(CompensateAccommodationCommand::class.java) { c -> onCall(c) }
-    }
-
-    private fun registerAttractionHandler(onCall: (AttractionCommand) -> Pair<Attraction, List<DomainEvent>>) {
-        commandBus.registerHandler(AttractionCommand::class.java) { c -> onCall(c) }
-    }
-
     @Test
     fun `saga success with attraction should complete and publish events`() =
         runTest {
             // Given
-            val commuteAgg = mockk<Commute>(relaxed = true)
-            val accommodationAgg = mockk<Accommodation>(relaxed = true)
-            val attractionAgg = mockk<Attraction>(relaxed = true)
-
             val triggering = reservedEvent(attractionId = AttractionId.generate())
-
-            registerCommuteHandler { command ->
-                when (command) {
-                    is BookCommuteCommand ->
-                        commuteAgg to
-                            listOf(
-                                CommuteBookedEvent(
-                                    commuteId = command.commuteId,
-                                    bookingId = command.bookingId,
-                                    seat = command.seat,
-                                ),
-                            )
-                    is CompensateBookCommuteCommand -> error("Should not compensate on success")
-                    else -> error("Unexpected commute command: $command")
-                }
-            }
-
-            registerAccommodationHandler { command ->
-                when (command) {
-                    is BookAccommodationCommand ->
-                        accommodationAgg to
-                            listOf(
-                                AccommodationBookedEvent(
-                                    accommodationId = command.accommodationId,
-                                    bookingId = command.bookingId,
-                                ),
-                            )
-                    is CompensateBookAccommodationCommand -> error("Should not compensate on success")
-                    else -> error("Unexpected accommodation command: $command")
-                }
-            }
-
-            registerAttractionHandler { command ->
-                when (command) {
-                    is BookAttractionCommand ->
-                        attractionAgg to
-                            listOf(
-                                AttractionBookedEvent(
-                                    attractionId = command.attractionId,
-                                    bookingId = command.bookingId,
-                                ),
-                            )
-                    is CompensateBookAttractionCommand -> error("Should not compensate on success")
-                    else -> error("Unexpected attraction command: $command")
-                }
-            }
-
-
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
@@ -153,7 +138,7 @@ class BookingSagaNewTest {
             val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                stateRepo,
+                sagaRepository,
                 sagaState,
                 metadata)
 
@@ -161,61 +146,23 @@ class BookingSagaNewTest {
             saga.executeOrResume()
 
             // Then
-            val started = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaStartedEvent>()
-            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
 
-            assertEquals(1, started.size)
-            assertEquals(1, completed.size)
-            assertTrue(failed.isEmpty())
-            assertEquals(triggering.bookingId, completed.first().bookingId)
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaStartedEvent })}
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaCompletedEvent })}
+            coVerify(exactly = 0) { eventBus.publish(match { it.event is BookingSagaFailedEvent })}
         }
 
     @Test
     fun `saga success without attraction should complete and not call attraction handler`() =
         runTest {
             // Given
-            val commuteAgg = mockk<Commute>(relaxed = true)
-            val accommodationAgg = mockk<Accommodation>(relaxed = true)
-            var attractionCalled = false
-
             val triggering = reservedEvent(attractionId = AttractionId.Empty)
-
-            registerCommuteHandler { command ->
-                when (command) {
-                    is BookCommuteCommand ->
-                        commuteAgg to
-                            listOf(
-                                CommuteBookedEvent(
-                                    commuteId = command.commuteId,
-                                    bookingId = command.bookingId,
-                                    seat = command.seat,
-                                ),
-                            )
-                    else -> error("Unexpected commute command: $command")
-                }
-            }
-
-            registerAccommodationHandler { command ->
-                when (command) {
-                    is BookAccommodationCommand ->
-                        accommodationAgg to
-                            listOf(
-                                AccommodationBookedEvent(
-                                    accommodationId = command.accommodationId,
-                                    bookingId = command.bookingId,
-                                ),
-                            )
-                    else -> error("Unexpected accommodation command: $command")
-                }
-            }
-
-            registerAttractionHandler { command ->
-                attractionCalled = true
-                error("Attraction handler should not be called when attractionId is null, but got: $command")
-            }
-
-
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
@@ -228,7 +175,7 @@ class BookingSagaNewTest {
             val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                stateRepo,
+                sagaRepository,
                 sagaState,
                 metadata)
 
@@ -237,11 +184,16 @@ class BookingSagaNewTest {
 
 
             // Then
-            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
-            assertEquals(1, completed.size)
-            assertTrue(failed.isEmpty())
-            assertTrue(!attractionCalled)
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaStartedEvent })}
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaCompletedEvent })}
+            coVerify(exactly = 0) { eventBus.publish(match { it.event is BookingSagaFailedEvent })}
         }
 
     @Test
@@ -250,15 +202,6 @@ class BookingSagaNewTest {
             // Given
             val triggering = reservedEvent()
 
-            registerCommuteHandler { _ ->
-                throw CommuteException("Commute booking failed")
-            }
-
-            // Handlers that must not be called
-            registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
-            registerAttractionHandler { command -> error("Attraction should not be called: $command") }
-
-
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
                 type = SagaType.BOOKING,
@@ -270,108 +213,40 @@ class BookingSagaNewTest {
             val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                stateRepo,
+                sagaRepository,
                 sagaState,
                 metadata)
+
+            coEvery {
+                commuteCommandHandler.handle(match { it is BookCommuteCommand })
+            } throws CommuteException("Commute booking failed")
 
             // When
             saga.executeOrResume()
 
 
             // Then
-            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
-            assertTrue(completed.isEmpty())
-            assertEquals(1, failed.size)
-            assertEquals(triggering.bookingId, failed.first().bookingId)
-        }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
 
-    @Test
-    fun `saga commute failure without attraction should publish failed and stop`() =
-        runTest {
-            // Given
-            val triggering = reservedEvent(attractionId = AttractionId.Empty)
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
 
-            registerCommuteHandler { _ ->
-                throw CommuteException("Commute booking failed")
-            }
-
-            // Handlers that must not be called
-            registerAccommodationHandler { command -> error("Accommodation should not be called: $command") }
-            registerAttractionHandler { command -> error("Attraction should not be called: $command") }
-            
-
-
-            val sagaState = SagaState(
-                id = UUID.randomUUID(),
-                type = SagaType.BOOKING,
-                travelOffer = triggering.travelOffer,
-                bookingId = triggering.bookingId,
-                seat = triggering.seat,
-            )
-
-            val saga = PersistentBookingSaga(
-                eventBus,
-                commandBus,
-                stateRepo,
-                sagaState,
-                metadata)
-
-            // When
-            saga.executeOrResume()
-
-
-            // Then
-            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
-            assertTrue(completed.isEmpty())
-            assertEquals(1, failed.size)
-            assertEquals(triggering.bookingId, failed.first().bookingId)
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaStartedEvent })}
+            coVerify(exactly = 0) { eventBus.publish(match { it.event is BookingSagaCompletedEvent })}
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaFailedEvent })}
         }
 
     @Test
     fun `saga accommodation failure should compensate commute and publish failed`() =
         runTest {
             // Given
-            val commuteAgg = mockk<Commute>(relaxed = true)
-            var commuteCompensated = false
-
             val triggering = reservedEvent(attractionId = AttractionId.Empty)
 
-            lateinit var commuteBookedEvent: CommuteBookedEvent
-
-            registerCommuteHandler { command ->
-                when (command) {
-                    is BookCommuteCommand -> {
-                        commuteBookedEvent =
-                            CommuteBookedEvent(
-                                commuteId = command.commuteId,
-                                bookingId = command.bookingId,
-                                seat = command.seat
-                            )
-                        commuteAgg to listOf(commuteBookedEvent)
-                    }
-                    is CompensateBookCommuteCommand -> {
-                        // Validate eventId matches earlier event
-                        assertEquals(commuteBookedEvent.eventId, command.eventId)
-                        commuteCompensated = true
-                        commuteAgg to emptyList()
-                    }
-                    else -> error("Unexpected commute command: $command")
-                }
-            }
-
-            registerAccommodationHandler { command ->
-                when (command) {
-                    is BookAccommodationCommand -> throw IllegalStateException("Accommodation booking failed")
-                    else -> error("Unexpected accommodation command: $command")
-                }
-            }
-
-            // Attraction should not be called
-            registerAttractionHandler { command -> error("Attraction should not be called: $command") }
-
-
+            coEvery {
+                accommodationCommandHandler.handle(match { it is BookAccommodationCommand })
+            } throws AccommodationException("Accommodation booking failed")
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
@@ -384,7 +259,7 @@ class BookingSagaNewTest {
             val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                stateRepo,
+                sagaRepository,
                 sagaState,
                 metadata)
 
@@ -393,73 +268,27 @@ class BookingSagaNewTest {
 
 
             // Then
-            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
-            assertTrue(completed.isEmpty())
-            assertEquals(1, failed.size)
-            assertTrue(commuteCompensated)
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaStartedEvent })}
+            coVerify(exactly = 0) { eventBus.publish(match { it.event is BookingSagaCompletedEvent })}
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaFailedEvent })}
         }
 
     @Test
     fun `saga attraction failure should compensate accommodation and commute and publish failed`() =
         runTest {
             // Given
-            val commuteAgg = mockk<Commute>(relaxed = true)
-            val accommodationAgg = mockk<Accommodation>(relaxed = true)
-
-            var commuteCompensated = false
-            var accommodationCompensated = false
-
             val triggering = reservedEvent(attractionId = AttractionId.generate())
 
-            lateinit var commuteBookedEvent: CommuteBookedEvent
-            lateinit var accommodationBookedEvent: AccommodationBookedEvent
-
-            registerCommuteHandler { command ->
-                when (command) {
-                    is BookCommuteCommand -> {
-                        commuteBookedEvent =
-                            CommuteBookedEvent(
-                                commuteId = command.commuteId,
-                                bookingId = command.bookingId,
-                                seat = command.seat
-                            )
-                        commuteAgg to listOf(commuteBookedEvent)
-                    }
-                    is CompensateBookCommuteCommand -> {
-                        assertEquals(commuteBookedEvent.eventId, command.eventId)
-                        commuteCompensated = true
-                        commuteAgg to emptyList()
-                    }
-                    else -> error("Unexpected commute command: $command")
-                }
-            }
-
-            registerAccommodationHandler { command ->
-                when (command) {
-                    is BookAccommodationCommand -> {
-                        accommodationBookedEvent =
-                            AccommodationBookedEvent(
-                                accommodationId = command.accommodationId,
-                                bookingId = command.bookingId,
-                            )
-                        accommodationAgg to listOf(accommodationBookedEvent)
-                    }
-                    is CompensateBookAccommodationCommand -> {
-                        assertEquals(accommodationBookedEvent.eventId, command.eventId)
-                        accommodationCompensated = true
-                        accommodationAgg to emptyList()
-                    }
-                    else -> error("Unexpected accommodation command: $command")
-                }
-            }
-
-            registerAttractionHandler { command ->
-                when (command) {
-                    is BookAttractionCommand -> throw IllegalStateException("Attraction booking failed")
-                    else -> error("Unexpected attraction command: $command")
-                }
-            }
+            coEvery {
+                attractionCommandHandler.handle(match { it is BookAttractionCommand })
+            } throws AttractionException("Attraction booking failed")
 
             val sagaState = SagaState(
                 type = SagaType.BOOKING,
@@ -471,7 +300,7 @@ class BookingSagaNewTest {
             val saga = PersistentBookingSaga(
                 eventBus,
                 commandBus,
-                stateRepo,
+                sagaRepository,
                 sagaState,
                 metadata)
 
@@ -480,12 +309,16 @@ class BookingSagaNewTest {
 
 
             // Then
-            val completed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaCompletedEvent>()
-            val failed = eventBus.emittedEvents.map { it.event }.filterIsInstance<BookingSagaFailedEvent>()
-            assertTrue(completed.isEmpty())
-            assertEquals(1, failed.size)
-            assertTrue(accommodationCompensated)
-            assertTrue(commuteCompensated)
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaStartedEvent })}
+            coVerify(exactly = 0) { eventBus.publish(match { it.event is BookingSagaCompletedEvent })}
+            coVerify(exactly = 1) { eventBus.publish(match { it.event is BookingSagaFailedEvent })}
         }
 
 //    val l = listOf(

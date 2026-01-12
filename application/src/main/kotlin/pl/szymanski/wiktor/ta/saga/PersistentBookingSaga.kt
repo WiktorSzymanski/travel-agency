@@ -255,7 +255,7 @@ class PersistentBookingSaga(
             if (result.isSuccess) return true
 
             lastException = result.exceptionOrNull()
-            if (!exception.isInstance(lastException)) return@repeat
+            if (!exception.isInstance(lastException)) throw lastException!!
 
             if (attemptNo < maxRetries - sagaState.retryCount - 1)
                 delay(delayManager.getCurrentDelay())
