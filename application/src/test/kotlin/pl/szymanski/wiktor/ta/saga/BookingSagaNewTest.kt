@@ -132,7 +132,7 @@ class BookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -187,7 +187,7 @@ class BookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -244,7 +244,7 @@ class BookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -309,7 +309,7 @@ class BookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -369,7 +369,7 @@ class BookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -427,7 +427,7 @@ class BookingSagaNewTest {
                 step = SagaStep.PENDING_COMMUTE
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -485,7 +485,7 @@ class BookingSagaNewTest {
                 step = SagaStep.PENDING_ACCOMMODATION
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -543,7 +543,7 @@ class BookingSagaNewTest {
                 step = SagaStep.PENDING_ATTRACTION
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -600,7 +600,7 @@ class BookingSagaNewTest {
                 status = SagaStatus.COMPLETED
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -659,7 +659,7 @@ class BookingSagaNewTest {
                 message = "Attraction booking failed"
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -718,7 +718,7 @@ class BookingSagaNewTest {
                 message = "Attraction booking failed"
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -781,7 +781,7 @@ class BookingSagaNewTest {
                 message = "Accommodation booking failed"
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -838,7 +838,7 @@ class BookingSagaNewTest {
                 status = SagaStatus.FAILED
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = BookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,

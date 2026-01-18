@@ -11,7 +11,6 @@ import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.*
 import pl.szymanski.wiktor.ta.domain.event.*
@@ -25,7 +24,7 @@ import java.util.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-class CBookingSagaNewTest {
+class CancelBookingSagaTest {
     private lateinit var commandBus: DummyCommandBus
 
     val bookingCommandHandler = mockk<BookingCommandHandler>(relaxed = true)
@@ -131,7 +130,7 @@ class CBookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -186,7 +185,7 @@ class CBookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -243,7 +242,7 @@ class CBookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -308,7 +307,7 @@ class CBookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -368,7 +367,7 @@ class CBookingSagaNewTest {
                 seat = triggering.seat,
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -426,7 +425,7 @@ class CBookingSagaNewTest {
                 step = SagaStep.PENDING_COMMUTE
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -484,7 +483,7 @@ class CBookingSagaNewTest {
                 step = SagaStep.PENDING_ACCOMMODATION
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -542,7 +541,7 @@ class CBookingSagaNewTest {
                 step = SagaStep.PENDING_ATTRACTION
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -599,7 +598,7 @@ class CBookingSagaNewTest {
                 status = SagaStatus.COMPLETED
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -658,7 +657,7 @@ class CBookingSagaNewTest {
                 message = "Attraction booking failed"
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -717,7 +716,7 @@ class CBookingSagaNewTest {
                 message = "Attraction booking failed"
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -780,7 +779,7 @@ class CBookingSagaNewTest {
                 message = "Accommodation booking failed"
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -837,7 +836,7 @@ class CBookingSagaNewTest {
                 status = SagaStatus.FAILED
             )
 
-            val saga = PersistentCancelBookingSaga(
+            val saga = CancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
