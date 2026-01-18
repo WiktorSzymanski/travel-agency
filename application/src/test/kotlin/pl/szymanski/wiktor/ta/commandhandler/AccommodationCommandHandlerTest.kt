@@ -121,7 +121,6 @@ class AccommodationCommandHandlerTest {
                 CompensateBookAccommodationCommand(
                     accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
-                    eventId = UUID.randomUUID(),
                     bookingId = BookingId.generate(),
                 )
 
@@ -141,7 +140,6 @@ class AccommodationCommandHandlerTest {
                 CompensateCancelAccommodationBookingCommand(
                     accommodationId = AccommodationId.generate(),
                     correlationId = UUID.randomUUID(),
-                    eventId = UUID.randomUUID(),
                     bookingId = BookingId.generate(),
                 )
 

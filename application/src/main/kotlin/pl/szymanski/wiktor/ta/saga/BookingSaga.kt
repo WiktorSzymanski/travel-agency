@@ -47,11 +47,10 @@ class BookingSaga(
             bookingId,
         )
 
-    private fun getCompensateAccommodationCommand(eventId: UUID): CompensateAccommodationCommand {
+    private fun getCompensateAccommodationCommand(): CompensateAccommodationCommand {
         return CompensateBookAccommodationCommand(
             accommodationId = travelOffer.accommodationId,
             correlationId = metadata.correlationId,
-            eventId = eventId,
             bookingId = bookingId,
         )
     }
@@ -64,11 +63,10 @@ class BookingSaga(
             seat,
         )
 
-    private fun getCompensateCommuteCommand(eventId: UUID): CompensateCommuteCommand {
+    private fun getCompensateCommuteCommand(): CompensateCommuteCommand {
         return CompensateBookCommuteCommand(
             commuteId = travelOffer.commuteId,
             correlationId = metadata.correlationId,
-            eventId = eventId,
             bookingId = bookingId,
         )
     }
@@ -109,7 +107,7 @@ class BookingSaga(
                         ctx.commuteEventId?.let { evId ->
                             withRetry(maxRetries) {
                                 commandBus.dispatch<CommuteCommand, Commute>(
-                                    getCompensateCommuteCommand(evId),
+                                    getCompensateCommuteCommand(),
                                 )
                             }
                         }
@@ -127,7 +125,7 @@ class BookingSaga(
                         ctx.accommodationEventId?.let { evId ->
                             withRetry(maxRetries) {
                                 commandBus.dispatch<AccommodationCommand, Accommodation>(
-                                    getCompensateAccommodationCommand(evId),
+                                    getCompensateAccommodationCommand(),
                                 )
                             }
                         }

@@ -35,20 +35,16 @@ data class ExpireAccommodationCommand(
     override val correlationId: UUID,
 ) : AccommodationCommand()
 
-sealed class CompensateAccommodationCommand : AccommodationCommand() {
-    abstract val eventId: UUID
-}
+sealed class CompensateAccommodationCommand : AccommodationCommand()
 
 data class CompensateBookAccommodationCommand(
     override val accommodationId: AccommodationId,
     override val correlationId: UUID,
-    override val eventId: UUID,
     val bookingId: BookingId,
 ) : CompensateAccommodationCommand()
 
 data class CompensateCancelAccommodationBookingCommand(
     override val accommodationId: AccommodationId,
     override val correlationId: UUID,
-    override val eventId: UUID,
     val bookingId: BookingId,
 ) : CompensateAccommodationCommand()

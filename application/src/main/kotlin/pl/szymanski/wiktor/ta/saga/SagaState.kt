@@ -14,7 +14,6 @@ enum class SagaStatus {
     NEW,
     PROCESSING,
     COMPLETED,
-    COMPENSATING,
     FAILED,
 }
 
@@ -40,11 +39,7 @@ data class SagaState(
     val travelOffer: TravelOffer,
     val bookingId: BookingId,
     val seat: Seat,
-    var sagaContext: SagaContext = SagaContext(),
     var message: String? = null,
     var retryCount: Int = 0,
     var version: Int = 1
-) {
-    fun incrementRetryCount() = retryCount++
-    fun incrementVersion() = version++
-}
+)

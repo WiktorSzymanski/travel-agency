@@ -18,14 +18,14 @@ import pl.szymanski.wiktor.ta.domain.event.*
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteException
-import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
-import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
-import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 import java.util.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-class BookingSagaNewTest {
+class CBookingSagaNewTest {
     private lateinit var commandBus: DummyCommandBus
 
     val bookingCommandHandler = mockk<BookingCommandHandler>(relaxed = true)
@@ -52,41 +52,10 @@ class BookingSagaNewTest {
             accommodationCommandHandler,
         )
 
-        coEvery { commuteCommandHandler.handle(match { it is BookCommuteCommand }) } answers {
-            val command = firstArg<BookCommuteCommand>()
+        coEvery { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) } answers {
+            val command = firstArg<CancelCommuteBookingCommand>()
             commuteAgg to listOf(
-                CommuteBookedEvent(
-                    commuteId = command.commuteId,
-                    bookingId = command.bookingId,
-                    seat = command.seat
-                )
-            )
-        }
-
-        coEvery { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) } answers {
-            val command = firstArg<BookAccommodationCommand>()
-            accommodationAgg to listOf(
-                AccommodationBookedEvent(
-                    accommodationId = command.accommodationId,
-                    bookingId = command.bookingId,
-                ),
-            )
-        }
-
-        coEvery { attractionCommandHandler.handle(match { it is BookAttractionCommand }) } answers {
-            val command = firstArg<BookAttractionCommand>()
-            attractionAgg to listOf(
-                AttractionBookedEvent(
-                    attractionId = command.attractionId,
-                    bookingId = command.bookingId,
-                ),
-            )
-        }
-
-        coEvery { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) } answers {
-            val command = firstArg<CompensateBookCommuteCommand>()
-            commuteAgg to listOf(
-                CommuteBookedCompensatedEvent(
+                CommuteBookingCanceledEvent(
                     commuteId = command.commuteId,
                     bookingId = command.bookingId,
                     seat = Seat.Any
@@ -94,10 +63,41 @@ class BookingSagaNewTest {
             )
         }
 
-        coEvery { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) } answers {
-            val command = firstArg<CompensateBookAccommodationCommand>()
+        coEvery { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) } answers {
+            val command = firstArg<CancelAccommodationBookingCommand>()
             accommodationAgg to listOf(
-                AccommodationBookedCompensatedEvent(
+                AccommodationBookingCanceledEvent(
+                    accommodationId = command.accommodationId,
+                    bookingId = command.bookingId,
+                ),
+            )
+        }
+
+        coEvery { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) } answers {
+            val command = firstArg<CancelAttractionBookingCommand>()
+            attractionAgg to listOf(
+                AttractionBookingCanceledEvent(
+                    attractionId = command.attractionId,
+                    bookingId = command.bookingId,
+                ),
+            )
+        }
+
+        coEvery { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) } answers {
+            val command = firstArg<CompensateCancelCommuteBookingCommand>()
+            commuteAgg to listOf(
+                CommuteBookingCanceledCompensatedEvent(
+                    commuteId = command.commuteId,
+                    bookingId = command.bookingId,
+                    seat = Seat.Any
+                )
+            )
+        }
+
+        coEvery { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) } answers {
+            val command = firstArg<CompensateCancelAccommodationBookingCommand>()
+            accommodationAgg to listOf(
+                AccommodationBookingCanceledCompensatedEvent(
                     accommodationId = command.accommodationId,
                     bookingId = command.bookingId,
                 ),
@@ -105,34 +105,33 @@ class BookingSagaNewTest {
         }
     }
 
-    private fun bookingCreatedEvent(
+    private fun bookingCancelRequestedEvent(
         accommodationId: AccommodationId = AccommodationId.generate(),
         commuteId: CommuteId = CommuteId.generate(),
         attractionId: AttractionId = AttractionId.generate(),
         bookingId: BookingId = BookingId.generate(),
-    ) = BookingCreatedEvent(
+        seat: Seat = Seat.Picked("1", "A"),
+    ) = BookingCancelRequestedEvent(
         travelOffer = TravelOffer(commuteId, accommodationId, attractionId),
         bookingId = bookingId,
-        seat = Seat.Picked("1", "A"),
-        userId = UUID.randomUUID(),
-        state = BookingState.NEW,
+        seat = seat,
     )
 
     @Test
     fun `saga success with attraction should complete and publish events`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -144,31 +143,31 @@ class BookingSagaNewTest {
             saga.executeOrResume()
 
             // Then
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -177,17 +176,17 @@ class BookingSagaNewTest {
     fun `saga success without attraction should complete and not call attraction handler`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.Empty)
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.Empty)
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -201,31 +200,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -234,17 +233,17 @@ class BookingSagaNewTest {
     fun `saga commute failure should publish failed and stop`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent()
+            val triggering = bookingCancelRequestedEvent()
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -254,7 +253,7 @@ class BookingSagaNewTest {
 
 
             coEvery {
-                commuteCommandHandler.handle(match { it is BookCommuteCommand })
+                commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand })
             } throws CommuteException("Commute booking failed")
 
             // When
@@ -262,31 +261,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -295,21 +294,21 @@ class BookingSagaNewTest {
     fun `saga accommodation failure should compensate commute and publish failed`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.Empty)
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.Empty)
 
             coEvery {
-                accommodationCommandHandler.handle(match { it is BookAccommodationCommand })
+                accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand })
             } throws AccommodationException("Accommodation booking failed")
 
             val sagaState = SagaState(
                 id = UUID.randomUUID(),
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -323,31 +322,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -356,20 +355,20 @@ class BookingSagaNewTest {
     fun `saga attraction failure should compensate accommodation and commute and publish failed`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             coEvery {
-                attractionCommandHandler.handle(match { it is BookAttractionCommand })
+                attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand })
             } throws AttractionException("Attraction booking failed")
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -383,31 +382,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -416,10 +415,10 @@ class BookingSagaNewTest {
     fun `saga should continue booking from pending commute step`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
@@ -427,7 +426,7 @@ class BookingSagaNewTest {
                 step = SagaStep.PENDING_COMMUTE
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -441,31 +440,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -474,10 +473,10 @@ class BookingSagaNewTest {
     fun `saga should continue booking from pending accommodation step`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
@@ -485,7 +484,7 @@ class BookingSagaNewTest {
                 step = SagaStep.PENDING_ACCOMMODATION
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -499,31 +498,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -532,10 +531,10 @@ class BookingSagaNewTest {
     fun `saga should continue booking from pending attraction step`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
@@ -543,7 +542,7 @@ class BookingSagaNewTest {
                 step = SagaStep.PENDING_ATTRACTION
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -557,31 +556,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 1) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -590,17 +589,17 @@ class BookingSagaNewTest {
     fun `completed saga should not send commands`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
                 status = SagaStatus.COMPLETED
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -614,31 +613,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -647,10 +646,10 @@ class BookingSagaNewTest {
     fun `saga should continue compensating accommodation process`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
@@ -659,7 +658,7 @@ class BookingSagaNewTest {
                 message = "Attraction booking failed"
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -673,31 +672,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -706,10 +705,10 @@ class BookingSagaNewTest {
     fun `saga should save to dlq when unable to compensate`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
@@ -718,7 +717,7 @@ class BookingSagaNewTest {
                 message = "Attraction booking failed"
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -734,33 +733,33 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 1) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 2)  { dlqRepository.save(any()) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -769,10 +768,10 @@ class BookingSagaNewTest {
     fun `saga should continue compensating commute process`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
@@ -781,7 +780,7 @@ class BookingSagaNewTest {
                 message = "Accommodation booking failed"
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -795,31 +794,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 1) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 1) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }
@@ -828,17 +827,17 @@ class BookingSagaNewTest {
     fun `failed saga should not send commands`() =
         runTest {
             // Given
-            val triggering = bookingCreatedEvent(attractionId = AttractionId.generate())
+            val triggering = bookingCancelRequestedEvent(attractionId = AttractionId.generate())
 
             val sagaState = SagaState(
-                type = SagaType.BOOKING,
+                type = SagaType.CANCELLING,
                 travelOffer = triggering.travelOffer,
                 bookingId = triggering.bookingId,
                 seat = triggering.seat,
                 status = SagaStatus.FAILED
             )
 
-            val saga = PersistentBookingSaga(
+            val saga = PersistentCancelBookingSaga(
                 commandBus,
                 sagaRepository,
                 sagaOutboxPort,
@@ -852,31 +851,31 @@ class BookingSagaNewTest {
 
 
             // Then
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is BookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) }
-            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is BookAttractionCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) }
+            coVerify(exactly = 0) { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) }
 
-            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) }
-            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) }
+            coVerify(exactly = 0) { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) }
+            coVerify(exactly = 0) { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.PROCESSING },
-                    match { it.event is BookingSagaStartedEvent }
+                    match { it.event is BookingCancelSagaStartedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.COMPLETED },
-                    match { it.event is BookingSagaCompletedEvent }
+                    match { it.event is BookingCancelSagaCompletedEvent }
                 )
             }
 
             coVerify(exactly = 0) {
                 sagaOutboxPort.saveStateWithEvent(
                     match { it.status == SagaStatus.FAILED },
-                    match { it.event is BookingSagaFailedEvent }
+                    match { it.event is BookingCancelSagaFailedEvent }
                 )
             }
         }

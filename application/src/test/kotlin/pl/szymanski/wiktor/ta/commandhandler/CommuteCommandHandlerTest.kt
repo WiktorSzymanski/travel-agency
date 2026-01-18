@@ -120,7 +120,6 @@ class CommuteCommandHandlerTest {
                 CompensateBookCommuteCommand(
                     commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
-                    eventId = UUID.randomUUID(),
                     bookingId = BookingId.generate(),
                 )
 
@@ -140,7 +139,6 @@ class CommuteCommandHandlerTest {
                 CompensateCancelCommuteBookingCommand(
                     commuteId = CommuteId.generate(),
                     correlationId = UUID.randomUUID(),
-                    eventId = UUID.randomUUID(),
                     bookingId = BookingId.generate(),
                     seat = Seat.Picked("3", "D"),
                 )

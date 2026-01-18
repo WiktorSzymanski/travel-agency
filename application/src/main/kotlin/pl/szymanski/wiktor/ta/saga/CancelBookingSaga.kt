@@ -53,7 +53,6 @@ class CancelBookingSaga(
         return CompensateCancelAccommodationBookingCommand(
             accommodationId = travelOffer.accommodationId,
             correlationId = metadata.correlationId,
-            eventId = eventId,
             bookingId = bookingId
         )
     }
@@ -72,7 +71,6 @@ class CancelBookingSaga(
         return CompensateCancelCommuteBookingCommand(
             commuteId = travelOffer.commuteId,
             correlationId = metadata.correlationId,
-            eventId = eventId,
             bookingId = bookingId,
             seat = seat,
         )

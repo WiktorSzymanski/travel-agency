@@ -6,23 +6,23 @@ import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.BookAttractionCommand
-import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
+import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelAccommodationBookingCommand
+import pl.szymanski.wiktor.ta.command.CompensateCancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
-import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
-import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
-import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
+import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 
-class PersistentBookingSaga(
+class PersistentCancelBookingSaga (
     private val commandBus: CommandBus,
     private val sagaRepository: SagaRepository,
     private val sagaOutboxPort: SagaOutboxPort,
@@ -33,43 +33,44 @@ class PersistentBookingSaga(
     private val delayManager: DelayManager = DelayManager(sagaState.retryCount)
     private val maxRetries = 5
 
+
     private val accommodationCommand: AccommodationCommand =
-        BookAccommodationCommand(
+        CancelAccommodationBookingCommand(
             sagaState.travelOffer.accommodationId,
             metadata.correlationId,
-            sagaState.bookingId,
+            sagaState.bookingId
         )
 
     private fun getCompensateAccommodationCommand(): CompensateAccommodationCommand {
-        return CompensateBookAccommodationCommand(
+        return CompensateCancelAccommodationBookingCommand(
             accommodationId = sagaState.travelOffer.accommodationId,
             correlationId = metadata.correlationId,
-            bookingId = sagaState.bookingId,
+            bookingId = sagaState.bookingId
         )
     }
 
-    private var commuteCommand: CommuteCommand =
-        BookCommuteCommand(
+    private val commuteCommand: CommuteCommand =
+        CancelCommuteBookingCommand(
             sagaState.travelOffer.commuteId,
             metadata.correlationId,
             sagaState.bookingId,
-            sagaState.seat,
         )
 
     private fun getCompensateCommuteCommand(): CompensateCommuteCommand {
-        return CompensateBookCommuteCommand(
+        return CompensateCancelCommuteBookingCommand(
             commuteId = sagaState.travelOffer.commuteId,
             correlationId = metadata.correlationId,
             bookingId = sagaState.bookingId,
+            seat = sagaState.seat,
         )
     }
 
     private val attractionCommand: AttractionCommand? =
         when (val attractionId = sagaState.travelOffer.attractionId) {
-            is AttractionId.Present -> BookAttractionCommand(
+            is AttractionId.Present -> CancelAttractionBookingCommand(
                 attractionId,
                 metadata.correlationId,
-                sagaState.bookingId,
+                sagaState.bookingId
             )
             is AttractionId.Empty -> null
         }
@@ -101,7 +102,7 @@ class PersistentBookingSaga(
         sagaState.step = SagaStep.PENDING_COMMUTE
         sagaOutboxPort.saveStateWithEvent(
             sagaState.copy(),
-            EventEnvelope(BookingSagaStartedEvent(
+            EventEnvelope(BookingCancelSagaStartedEvent(
                 bookingId = sagaState.bookingId
             ), metadata)
         )
@@ -147,7 +148,7 @@ class PersistentBookingSaga(
                 delay(delayManager.getCurrentDelay())
             }
         }
-   }
+    }
 
     private suspend fun handleAttractionStep() {
         sagaState.step = SagaStep.PENDING_ATTRACTION
@@ -180,7 +181,7 @@ class PersistentBookingSaga(
 
         sagaOutboxPort.saveStateWithEvent(
             sagaState.copy(),
-            EventEnvelope(BookingSagaCompletedEvent(
+            EventEnvelope(BookingCancelSagaCompletedEvent(
                 bookingId = sagaState.bookingId,
                 seat = sagaState.seat),
                 metadata)
@@ -193,7 +194,7 @@ class PersistentBookingSaga(
 
         sagaOutboxPort.saveStateWithEvent(
             sagaState.copy(),
-            EventEnvelope(BookingSagaFailedEvent(
+            EventEnvelope(BookingCancelSagaFailedEvent(
                 bookingId = sagaState.bookingId,
                 message = sagaState.message!!),
                 metadata)
@@ -228,7 +229,6 @@ class PersistentBookingSaga(
 
         failSaga()
     }
-
 
     private suspend fun compensateAccommodation() {
         sagaState.step = SagaStep.COMPENSATING_ACCOMMODATION
