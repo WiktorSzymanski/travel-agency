@@ -5,10 +5,13 @@ import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.*
+import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueEntry
+import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.event.SagaEvent
+import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
 
 abstract class PersistentSaga(
     private val commandBus: CommandBus,
@@ -166,9 +169,7 @@ abstract class PersistentSaga(
                 if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
                     deadLetterQueueRepository.save(
                         DeadLetterQueueEntry(
-                            sagaId = sagaState.id,
-                            aggregateId = sagaState.travelOffer.commuteId,
-                            message = e.message ?: "Unknown error"
+                            "sagaId: ${sagaState.id}, aggregateId = ${sagaState.travelOffer.commuteId}, message = ${e.message ?: "Unknown error"}"
                         )
                     )
                     break
@@ -195,9 +196,7 @@ abstract class PersistentSaga(
                 if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
                     deadLetterQueueRepository.save(
                         DeadLetterQueueEntry(
-                            sagaId = sagaState.id,
-                            aggregateId = sagaState.travelOffer.accommodationId,
-                            message = e.message ?: "Unknown error"
+                            "sagaId: ${sagaState.id}, aggregateId = ${sagaState.travelOffer.accommodationId}, message = ${e.message ?: "Unknown error"}"
                         )
                     )
                     break

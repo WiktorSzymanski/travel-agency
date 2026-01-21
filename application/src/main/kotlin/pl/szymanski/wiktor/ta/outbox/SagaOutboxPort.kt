@@ -1,7 +1,8 @@
-package pl.szymanski.wiktor.ta.saga
+package pl.szymanski.wiktor.ta.outbox
 
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.event.SagaEvent
+import pl.szymanski.wiktor.ta.saga.SagaState
 import java.util.UUID
 
 interface SagaOutboxPort {

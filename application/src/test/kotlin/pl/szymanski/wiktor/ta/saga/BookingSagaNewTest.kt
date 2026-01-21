@@ -11,6 +11,7 @@ import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
+import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.*
@@ -21,6 +22,7 @@ import pl.szymanski.wiktor.ta.domain.exception.CommuteException
 import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
+import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
 import java.util.*
 import kotlin.test.BeforeTest
 import kotlin.test.Test

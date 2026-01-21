@@ -26,11 +26,6 @@ enum class SagaStep {
     COMPENSATING_COMMUTE,
 }
 
-data class SagaContext(
-    var commuteEventId: UUID? = null,
-    var accommodationEventId: UUID? = null,
-)
-
 data class SagaState(
     val id: UUID = UUID.randomUUID(),
     val type: SagaType,

@@ -7,8 +7,8 @@ import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import pl.szymanski.wiktor.ta.saga.BookingSaga
 import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
-import pl.szymanski.wiktor.ta.saga.DeadLetterQueueRepository
-import pl.szymanski.wiktor.ta.saga.SagaOutboxPort
+import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
+import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
 import pl.szymanski.wiktor.ta.saga.SagaRepository
 import pl.szymanski.wiktor.ta.saga.SagaState
 import pl.szymanski.wiktor.ta.saga.SagaType
