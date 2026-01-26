@@ -28,6 +28,7 @@ enum class SagaStep {
 
 data class SagaState(
     val id: UUID = UUID.randomUUID(),
+    val correlationId: UUID = UUID.randomUUID(),
     val type: SagaType,
     var status: SagaStatus = SagaStatus.NEW,
     var step: SagaStep = SagaStep.IDLE,

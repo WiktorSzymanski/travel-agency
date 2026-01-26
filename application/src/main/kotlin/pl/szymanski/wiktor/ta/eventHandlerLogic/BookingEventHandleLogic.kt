@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.eventHandlerLogic
 
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
@@ -25,7 +26,7 @@ class BookingEventHandleLogic(
             sagaRepository,
             sagaOutboxPort,
             deadLetterQueueRepository,
-            getSagaState(envelope.event),
+            getSagaState(envelope.event, envelope.metadata),
             envelope.metadata
         ).executeOrResume()
 
@@ -35,19 +36,21 @@ class BookingEventHandleLogic(
             sagaRepository,
             sagaOutboxPort,
             deadLetterQueueRepository,
-            getSagaState(envelope.event),
+            getSagaState(envelope.event, envelope.metadata),
             envelope.metadata
         ).executeOrResume()
 
-    fun getSagaState(event: BookingEvent) =
+    fun getSagaState(event: BookingEvent, metadata: Metadata) =
         when (event) {
             is BookingCreatedEvent -> SagaState(
+                correlationId = metadata.correlationId,
                 type = SagaType.BOOKING,
                 travelOffer = event.travelOffer,
                 bookingId = event.bookingId,
                 seat = event.seat,
             )
             is BookingCancelRequestedEvent -> SagaState(
+                correlationId = metadata.correlationId,
                 type = SagaType.CANCELLING,
                 travelOffer = event.travelOffer,
                 bookingId = event.bookingId,

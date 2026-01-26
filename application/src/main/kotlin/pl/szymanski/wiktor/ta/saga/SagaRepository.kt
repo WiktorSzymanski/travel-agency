@@ -5,7 +5,7 @@ import java.util.UUID
 interface SagaRepository {
     suspend fun findById(id: UUID): SagaState?
 
-    suspend fun findByStatus(status: SagaStatus): List<SagaState>
+    suspend fun findByStatuses(statuses: List<SagaStatus>): List<SagaState>
 
     suspend fun save(saga: SagaState)
 }
