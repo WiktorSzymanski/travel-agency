@@ -1,12 +1,14 @@
-@file:Suppress("WildcardImport")
-
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum.SCHEDULED
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
-import pl.szymanski.wiktor.ta.domain.exception.*
+import pl.szymanski.wiktor.ta.domain.exception.AttractionBookFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionBookingCancelFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionEmptyEventListException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionExpireFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AttractionMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
@@ -16,13 +18,11 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionFullEvent
 import java.time.LocalDateTime
-import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AttractionTest {

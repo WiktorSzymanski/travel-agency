@@ -1,12 +1,14 @@
-@file:Suppress("WildcardImport")
-
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
-import pl.szymanski.wiktor.ta.domain.exception.*
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationBookingCancelFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationBookingFailedException
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationEmptyEventListException
+import pl.szymanski.wiktor.ta.domain.exception.AccommodationMissingCreatedEventException
+import pl.szymanski.wiktor.ta.domain.exception.DomainException
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationBookingCanceledCompensatedEvent

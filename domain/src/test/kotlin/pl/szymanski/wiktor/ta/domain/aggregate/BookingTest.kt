@@ -11,7 +11,15 @@ import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
-import pl.szymanski.wiktor.ta.domain.exception.*
+import pl.szymanski.wiktor.ta.domain.exception.BookingCancelFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingCancelRequestFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingCompleteFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingEmptyEventListException
+import pl.szymanski.wiktor.ta.domain.exception.BookingFailCancellationFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingFailFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingMissingCreatedEventException
+import pl.szymanski.wiktor.ta.domain.exception.BookingProcessCancellationFailedException
+import pl.szymanski.wiktor.ta.domain.exception.BookingProcessFailedException
 import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test

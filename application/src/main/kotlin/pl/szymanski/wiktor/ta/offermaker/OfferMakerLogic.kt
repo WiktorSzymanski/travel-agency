@@ -14,7 +14,6 @@ import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository
 import java.time.LocalDateTime
-import java.util.UUID
 
 class OfferMakerLogic(
     private val travelOfferQueryRepository: TravelOfferQueryRepository,
@@ -30,7 +29,7 @@ class OfferMakerLogic(
         if (commute.departure.time.isBefore(LocalDateTime.now()))
             return
 
-        matchWithCommute(commute, envelope.metadata.correlationId)
+        matchWithCommute(commute)
     }
 
     suspend fun onAccommodationCreatedEvent(envelope: EventEnvelope<AccommodationCreatedEvent>) {
@@ -39,7 +38,7 @@ class OfferMakerLogic(
         if (accommodation.rent.from.isBefore(LocalDateTime.now()))
             return
 
-        matchWithAccommodation(accommodation, envelope.metadata.correlationId)
+        matchWithAccommodation(accommodation)
     }
 
     suspend fun onAttractionCreatedEvent(envelope: EventEnvelope<AttractionCreatedEvent>) {
@@ -48,10 +47,10 @@ class OfferMakerLogic(
         if (attraction.date.isBefore(LocalDateTime.now()))
             return
 
-        matchWithAttraction(attraction, envelope.metadata.correlationId)
+        matchWithAttraction(attraction)
     }
 
-    private suspend fun matchWithCommute(newCommute: Commute, correlationId: UUID) {
+    private suspend fun matchWithCommute(newCommute: Commute) {
         val matches = accommodationQueryRepository.findByLocationAndDate(
             newCommute.arrival.location,
             LocalDateTimeRange(
@@ -61,11 +60,11 @@ class OfferMakerLogic(
         )
 
         matches.forEach { accommodation ->
-            createOffers(newCommute, accommodation, correlationId)
+            createOffers(newCommute, accommodation)
         }
     }
 
-    private suspend fun matchWithAccommodation(newAccommodation: Accommodation, correlationId: UUID) {
+    private suspend fun matchWithAccommodation(newAccommodation: Accommodation) {
         val matchingCommutes = commuteQueryRepository.findByLocationAndArrivalDate(
             newAccommodation.location,
             LocalDateTimeRange(
@@ -75,11 +74,11 @@ class OfferMakerLogic(
         )
 
         matchingCommutes.forEach { commute ->
-            createOffers(commute, newAccommodation, correlationId)
+            createOffers(commute, newAccommodation)
         }
     }
 
-    private suspend fun matchWithAttraction(newAttraction: Attraction, correlationId: UUID) {
+    private suspend fun matchWithAttraction(newAttraction: Attraction) {
         val matchedAccommodations = accommodationQueryRepository.findByLocationAndRentContainsDate(
             newAttraction.location,
             newAttraction.date
@@ -105,7 +104,7 @@ class OfferMakerLogic(
         }
     }
 
-    private suspend fun createOffers(commute: Commute, accommodation: Accommodation, correlationId: UUID) {
+    private suspend fun createOffers(commute: Commute, accommodation: Accommodation) {
         saveTravelOffer(commute, accommodation, null)
 
         val matchedAttractions = attractionQueryRepository.findByLocationAndDate(
@@ -130,7 +129,7 @@ class OfferMakerLogic(
         accommodation: Accommodation,
         attraction: Attraction?,
     ) {
-        /** It needs index of all 3 ids to be unique **/
+        /** It needs an index of all 3 ids to be unique **/
         travelOfferQueryRepository.save(TravelOffer(commute.id, accommodation.id, attraction?.id ?: AttractionId.Empty))
     }
 }

@@ -7,7 +7,7 @@ import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueEntry
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
-import java.util.*
+import java.util.UUID
 
 class OutboxPoller(
     private val sagaOutboxPort: SagaOutboxPort,

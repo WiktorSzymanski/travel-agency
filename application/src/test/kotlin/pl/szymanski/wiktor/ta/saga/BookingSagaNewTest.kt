@@ -6,7 +6,11 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.DummyCommandBus
 import pl.szymanski.wiktor.ta.Metadata
-import pl.szymanski.wiktor.ta.command.*
+import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
+import pl.szymanski.wiktor.ta.command.BookAttractionCommand
+import pl.szymanski.wiktor.ta.command.BookCommuteCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookAccommodationCommand
+import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
@@ -14,8 +18,20 @@ import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
-import pl.szymanski.wiktor.ta.domain.aggregate.*
-import pl.szymanski.wiktor.ta.domain.event.*
+import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.domain.event.AccommodationBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.AttractionBookedEvent
+import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationException
 import pl.szymanski.wiktor.ta.domain.exception.AttractionException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteException
@@ -23,7 +39,7 @@ import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingSagaStartedEvent
 import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
-import java.util.*
+import java.util.UUID
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 

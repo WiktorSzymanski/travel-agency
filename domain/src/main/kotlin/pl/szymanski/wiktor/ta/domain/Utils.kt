@@ -40,7 +40,8 @@ sealed interface Seat {
     data object Any : Seat
     data class Picked(
         val row: String,
-        val column: String,) : Seat
+        val column: String
+    ) : Seat
 }
 
 data class Rent(

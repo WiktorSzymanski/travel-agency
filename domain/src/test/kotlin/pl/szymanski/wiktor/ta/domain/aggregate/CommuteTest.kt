@@ -5,7 +5,11 @@ import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
-import pl.szymanski.wiktor.ta.domain.exception.*
+import pl.szymanski.wiktor.ta.domain.exception.CommuteBookSeatFailedException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteCancelBookedSeatFailedException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteEmptyEventListException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteExpireFailedException
+import pl.szymanski.wiktor.ta.domain.exception.CommuteMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedEvent

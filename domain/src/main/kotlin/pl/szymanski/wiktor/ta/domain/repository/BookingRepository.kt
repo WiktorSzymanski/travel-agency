@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta.domain.repository
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
-import java.util.UUID
 
 interface BookingRepository {
     suspend fun findById(id: BookingId): Booking
