@@ -9,7 +9,6 @@ import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import java.util.*
 
-// implementation("io.github.pdvrieze:ktor-scheduler:0.2.0")
 class OutboxPoller(
     private val sagaOutboxPort: SagaOutboxPort,
     private val eventBus: EventBus,
@@ -43,11 +42,11 @@ class OutboxPoller(
 
         pendingOutboxEntries.forEach { outboxEntry ->
             publishEventWithRetry(outboxEntry.eventEnvelope)?.let { publishedEventId ->
-                /*
+                /**
                     Jeśli się wywali przed oznaczeniem jako published, znowu by próbował publishować event
                     więc zakładamy że EventBus/EventStore deduplikuje eventy, co za tym idzie operacja publish
                     powinna kończyć się pozytywnie gdy już event o tym ID istnieje/to trzeba gdzieś obsłuźyć
-                */
+                **/
                 sagaOutboxPort.markAsPublished(publishedEventId)
             }
         }

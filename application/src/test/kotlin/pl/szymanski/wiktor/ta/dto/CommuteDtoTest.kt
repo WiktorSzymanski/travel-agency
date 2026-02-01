@@ -35,7 +35,6 @@ class CommuteDtoTest {
         assertEquals(arr.location.name, dto.arrival.location)
         assertEquals(arr.time.toString(), dto.arrival.time)
 
-        // Only seat2 should remain available
         assertEquals(1, dto.availableSeats.size)
         assertTrue(dto.availableSeats.contains(seat2.toString()))
     }

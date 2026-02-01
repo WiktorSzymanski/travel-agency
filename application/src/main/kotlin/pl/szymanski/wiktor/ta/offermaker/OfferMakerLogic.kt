@@ -130,10 +130,7 @@ class OfferMakerLogic(
         accommodation: Accommodation,
         attraction: Attraction?,
     ) {
-        val triple = Triple(commute.id, accommodation.id, attraction?.id ?: AttractionId.Empty)
-
-        // It needs index of all 3 ids to be unique
+        /** It needs index of all 3 ids to be unique **/
         travelOfferQueryRepository.save(TravelOffer(commute.id, accommodation.id, attraction?.id ?: AttractionId.Empty))
-
     }
 }

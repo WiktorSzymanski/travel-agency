@@ -28,12 +28,10 @@ abstract class PersistentSaga(
             deadLetterQueueRepository: DeadLetterQueueRepository,
             sagaState: SagaState,
             metadata: Metadata
-        ) {
-            when (sagaState.type) {
+        ) : PersistentSaga = when (sagaState.type) {
                 SagaType.BOOKING -> BookingSaga(commandBus, sagaRepository, sagaOutboxPort, deadLetterQueueRepository, sagaState, metadata)
                 SagaType.CANCELLING -> CancelBookingSaga(commandBus, sagaRepository, sagaOutboxPort, deadLetterQueueRepository, sagaState, metadata)
             }
-        }
     }
 
     private val delayManager: DelayManager = DelayManager(sagaState.retryCount)

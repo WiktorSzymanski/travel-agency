@@ -19,24 +19,14 @@ class SagaService(
             .distinctBy { it.id }
             .forEach { sagaState ->
                 val metadata = Metadata(sagaState.correlationId, sagaState.version.toLong())
-                when (sagaState.type) {
-                    SagaType.BOOKING -> BookingSaga(
-                        commandBus,
-                        sagaRepository,
-                        sagaOutboxPort,
-                        deadLetterQueueRepository,
-                        sagaState,
-                        metadata,
-                    )
-                    SagaType.CANCELLING -> CancelBookingSaga(
-                        commandBus,
-                        sagaRepository,
-                        sagaOutboxPort,
-                        deadLetterQueueRepository,
-                        sagaState,
-                        metadata,
-                    )
-                }.executeOrResume()
+                PersistentSaga.getSagaInstance(
+                    commandBus,
+                    sagaRepository,
+                    sagaOutboxPort,
+                    deadLetterQueueRepository,
+                    sagaState,
+                    metadata,
+                ).executeOrResume()
             }
     }
 }
