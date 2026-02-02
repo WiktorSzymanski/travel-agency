@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.domain
 
+import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 
 enum class LocationEnum {
@@ -38,6 +39,7 @@ enum class BookingState {
 
 sealed interface Seat {
     data object Any : Seat
+    @Serializable
     data class Picked(
         val row: String,
         val column: String

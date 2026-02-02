@@ -8,7 +8,7 @@ data class CommuteTemplate(
     val name: String,
     val departureLocation: String,
     val arrivalLocation: String,
-    val seats: List<Seat>,
+    val seats: List<Seat.Picked>,
 )
 
 @Serializable
