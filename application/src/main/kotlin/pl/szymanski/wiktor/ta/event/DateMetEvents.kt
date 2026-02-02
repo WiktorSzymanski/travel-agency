@@ -18,7 +18,7 @@ data class AccommodationDateMetEvent(
     val accommodationId: AccommodationId,
 ) : DateMetEvent
 
-class AttractionDateMetEvent(
+data class AttractionDateMetEvent(
     override val eventId: UUID = UUID.randomUUID(),
     val attractionId: AttractionId,
 ) : DateMetEvent
