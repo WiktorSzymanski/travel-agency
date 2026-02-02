@@ -16,7 +16,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":domain"))
+    api(project(":domain"))
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
