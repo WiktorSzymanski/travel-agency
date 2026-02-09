@@ -2,18 +2,34 @@ ktor:
   deployment:
     port: 8080
   application:
+    dependencies:
+      - pl.szymanski.wiktor.ta.infrastructure.config.DatabaseProvider
+      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideAccommodationRepository
+      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideAttractionRepository
+      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideBookingRepository
+      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideCommuteRepository
+      - pl.szymanski.wiktor.ta.infrastructure.config.GeneratorProviderKt.provideAccommodationGenerator
+      - pl.szymanski.wiktor.ta.infrastructure.config.GeneratorProviderKt.provideAttractionGenerator
+      - pl.szymanski.wiktor.ta.infrastructure.config.GeneratorProviderKt.provideCommuteGenerator
+      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideAccommodationCommandHandler
+      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideAttractionCommandHandler
+      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideBookingCommandHandler
+      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideCommuteCommandHandler
+      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideCommandBus
+      - pl.szymanski.wiktor.ta.saga.SagaService
     modules:
       - pl.szymanski.wiktor.ta.infrastructure.SchedulerKt.scheduler
 
 database:
   uri: "mongodb://root:password@localhost:27017"
   dbName: "travel_agency"
+
 #
 #offerScheduler:
 #  intervalSeconds: 0.5
 
 generator:
-  intervalSeconds: 1
+  intervalSeconds: 30
   inAdvanceSeconds: 1000
   creationWindowSeconds: 10
   accommodations:
