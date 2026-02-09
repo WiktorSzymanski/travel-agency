@@ -14,15 +14,16 @@ class AccommodationGeneratorTest {
     @Test
     fun `should generate CreateAccommodationCommand and DateMetEvent from template`() {
         // given
+        val template = AccommodationTemplate(name = "Hotel", location = "Paris")
         val generator = AccommodationGenerator(
             inAdvanceSeconds = 3600,
             creationWindowSeconds = 7200,
+            listOf(template),
             clock = clock
         )
-        val template = AccommodationTemplate(name = "Hotel", location = "Paris")
 
         // when
-        val results = generator.generate(listOf(template))
+        val results = generator.generate()
 
         // then
         assertEquals(1, results.size)

@@ -12,10 +12,12 @@ import java.util.UUID
 class AccommodationGenerator(
     inAdvanceSeconds: Long,
     creationWindowSeconds: Long,
+    templates: List<AccommodationTemplate>,
     clock: Clock = Clock.systemDefaultZone(),
 ) : TemplateGenerator<AccommodationTemplate, CreateAccommodationCommand, AccommodationDateMetEvent>(
     inAdvanceSeconds,
     creationWindowSeconds,
+    templates,
     clock
 ) {
 

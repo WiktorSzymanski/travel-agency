@@ -15,11 +15,6 @@ class CommuteGeneratorTest {
     @Test
     fun `should generate CreateCommuteCommand and DateMetEvent from template`() {
         // given
-        val generator = CommuteGenerator(
-            inAdvanceSeconds = 3600,
-            creationWindowSeconds = 7200,
-            clock = clock
-        )
         val seats = listOf(Seat.Picked("1", "A"), Seat.Picked("1", "B"))
         val template = CommuteTemplate(
             name = "Flight",
@@ -27,9 +22,15 @@ class CommuteGeneratorTest {
             arrivalLocation = "Paris",
             seats = seats
         )
+        val generator = CommuteGenerator(
+            inAdvanceSeconds = 3600,
+            creationWindowSeconds = 7200,
+            listOf(template),
+            clock = clock
+        )
 
         // when
-        val results = generator.generate(listOf(template))
+        val results = generator.generate()
 
         // then
         assertEquals(1, results.size)
@@ -47,7 +48,7 @@ class CommuteGeneratorTest {
         val now = clock.instant().atZone(clock.zone).toLocalDateTime()
         assertTrue(command.departure.time.isAfter(now.plusSeconds(3599)))
         assertTrue(command.departure.time.isBefore(now.plusSeconds(3600 + 3601)))
-        assertTrue(command.arrival.time.isAfter(command.departure.time.plusHours(1).minusSeconds(1)))
-        assertTrue(command.arrival.time.isBefore(now.plusSeconds(3600 + 7201)))
+        assertTrue(command.arrival.time.isAfter(command.departure.time.minusSeconds(1)))
+        assertTrue(command.arrival.time.isBefore(now.plusSeconds(3600 + 3600 + 7201)))
     }
 }
