@@ -12,21 +12,22 @@ import java.util.UUID
 class CommuteGenerator(
     inAdvanceSeconds: Long,
     creationWindowSeconds: Long,
+    templates: List<CommuteTemplate>,
     clock: Clock = Clock.systemDefaultZone(),
 ) : TemplateGenerator<CommuteTemplate, CreateCommuteCommand, CommuteDateMetEvent>(
     inAdvanceSeconds,
     creationWindowSeconds,
+    templates,
     clock
 ) {
-
     override fun create(template: CommuteTemplate): GeneratedResult<CreateCommuteCommand, CommuteDateMetEvent> {
         val departureTime = randomDateTimeBetween(
             LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),
             LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds / 2),
         )
         val arrivalTime = randomDateTimeBetween(
-            departureTime.plusHours(1),
-            LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds + creationWindowSeconds),
+            departureTime,
+            departureTime.plusSeconds(creationWindowSeconds),
         )
 
         val id = CommuteId.generate()

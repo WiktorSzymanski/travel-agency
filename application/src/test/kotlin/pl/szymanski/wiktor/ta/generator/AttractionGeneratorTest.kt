@@ -14,15 +14,16 @@ class AttractionGeneratorTest {
     @Test
     fun `should generate CreateAttractionCommand and DateMetEvent from template`() {
         // given
+        val template = AttractionTemplate(name = "Eiffel Tower", location = "Paris", capacity = 100)
         val generator = AttractionGenerator(
             inAdvanceSeconds = 3600,
             creationWindowSeconds = 7200,
+            listOf(template),
             clock = clock
         )
-        val template = AttractionTemplate(name = "Eiffel Tower", location = "Paris", capacity = 100)
 
         // when
-        val results = generator.generate(listOf(template))
+        val results = generator.generate()
 
         // then
         assertEquals(1, results.size)

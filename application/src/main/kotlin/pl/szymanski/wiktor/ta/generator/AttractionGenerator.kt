@@ -11,13 +11,14 @@ import java.util.UUID
 class AttractionGenerator(
     inAdvanceSeconds: Long,
     creationWindowSeconds: Long,
+    templates: List<AttractionTemplate>,
     clock: Clock = Clock.systemDefaultZone(),
 ) : TemplateGenerator<AttractionTemplate, CreateAttractionCommand, AttractionDateMetEvent>(
     inAdvanceSeconds,
     creationWindowSeconds,
+    templates,
     clock
 ) {
-
     override fun create(template: AttractionTemplate): GeneratedResult<CreateAttractionCommand, AttractionDateMetEvent> {
         val date = randomDateTimeBetween(
             LocalDateTime.now(clock).plusSeconds(inAdvanceSeconds),

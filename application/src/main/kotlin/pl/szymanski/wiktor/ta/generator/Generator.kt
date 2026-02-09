@@ -11,5 +11,5 @@ data class GeneratedResult<out R : Command, out E : DateMetEvent>(
 )
 
 interface Generator<T, out R : Command, out E : DateMetEvent> {
-    fun generate(templates: List<T>): List<GeneratedResult<R, E>>
+    fun generate(): List<GeneratedResult<R, E>>
 }

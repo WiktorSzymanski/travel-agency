@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.domain
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 
+@Serializable
 enum class LocationEnum {
     POZNAN,
     LONDON,
@@ -22,11 +23,14 @@ enum class LocationEnum {
     MARSEILLE,
 }
 
+@Serializable
 data class LocationAndTime(
     val location: LocationEnum,
+    @Serializable(with = LocalDateTimeSerializer::class)
     val time: LocalDateTime,
 )
 
+@Serializable
 enum class BookingState {
     NEW,
     PROCESSING,
@@ -37,7 +41,9 @@ enum class BookingState {
     FAILED,
 }
 
+@Serializable
 sealed interface Seat {
+    @Serializable
     data object Any : Seat
     @Serializable
     data class Picked(
@@ -46,29 +52,36 @@ sealed interface Seat {
     ) : Seat
 }
 
+@Serializable
 data class Rent(
+    @Serializable(with = LocalDateTimeSerializer::class)
     val from: LocalDateTime,
+    @Serializable(with = LocalDateTimeSerializer::class)
     val till: LocalDateTime,
 )
 
+@Serializable
 enum class CommuteStatusEnum {
     SCHEDULED,
     FULL,
     EXPIRED,
 }
 
+@Serializable
 enum class AccommodationStatusEnum {
     AVAILABLE,
     BOOKED,
     EXPIRED,
 }
 
+@Serializable
 enum class AttractionStatusEnum {
     SCHEDULED,
     FULL,
     EXPIRED,
 }
 
+@Serializable
 enum class TravelOfferStatusEnum {
     AVAILABLE,
     RESERVED,
