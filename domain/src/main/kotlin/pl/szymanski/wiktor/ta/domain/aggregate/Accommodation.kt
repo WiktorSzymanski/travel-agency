@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
+import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
@@ -17,6 +18,7 @@ import pl.szymanski.wiktor.ta.domain.exception.AccommodationMissingCreatedEventE
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationEmptyEventListException
 import java.time.LocalDateTime
 
+@Serializable
 data class Accommodation(
     val id: AccommodationId = AccommodationId.generate(),
     val name: String,
