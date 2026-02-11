@@ -1,6 +1,8 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
+import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.domain.LocalDateTimeSerializer
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.event.AttractionAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionBookedCompensatedEvent
@@ -18,10 +20,12 @@ import pl.szymanski.wiktor.ta.domain.exception.AttractionMissingCreatedEventExce
 import pl.szymanski.wiktor.ta.domain.exception.AttractionEmptyEventListException
 import java.time.LocalDateTime
 
+@Serializable
 data class Attraction(
     val id: AttractionId = AttractionId.generate(),
     val name: String,
     val location: LocationEnum,
+    @Serializable(with = LocalDateTimeSerializer::class)
     val date: LocalDateTime,
     val capacity: Int,
     val bookings: MutableList<BookingId> = mutableListOf(),
