@@ -1,6 +1,12 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import pl.szymanski.wiktor.ta.domain.UUIDSerializer
 import java.util.UUID
 
@@ -22,10 +28,15 @@ value class AccommodationId(@Serializable(with = UUIDSerializer::class) override
     }
 }
 
-@Serializable
+@Serializable(with = AttractionIdSerializer::class)
 sealed interface AttractionId {
     @Serializable
-    data object Empty : AttractionId
+    val value: UUID?
+
+    @Serializable
+    data object Empty : AttractionId {
+        override val value: UUID? = null
+    }
 
     @Serializable
     @JvmInline
@@ -34,6 +45,22 @@ sealed interface AttractionId {
     companion object {
         fun generate(): Present = Present(UUID.randomUUID())
         fun from(value: UUID?): AttractionId = value?.let { Present(it) } ?: Empty
+    }
+}
+
+object AttractionIdSerializer : KSerializer<AttractionId> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("AttractionId", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: AttractionId) {
+        when (value) {
+            is AttractionId.Empty -> encoder.encodeString("EMPTY")
+            is AttractionId.Present -> encoder.encodeString(value.value.toString())
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): AttractionId {
+        val s = decoder.decodeString()
+        return if (s == "EMPTY") AttractionId.Empty else AttractionId.Present(UUID.fromString(s))
     }
 }
 
@@ -46,10 +73,15 @@ value class CommuteId(@Serializable(with = UUIDSerializer::class) override val v
     }
 }
 
-@Serializable
+@Serializable(with = BookingIdSerializer::class)
 sealed interface BookingId {
     @Serializable
-    data object Empty : BookingId
+    val value: UUID?
+
+    @Serializable
+    data object Empty : BookingId {
+        override val value: UUID? = null
+    }
 
     @Serializable
     @JvmInline
@@ -57,5 +89,22 @@ sealed interface BookingId {
 
     companion object {
         fun generate(): Present = Present(UUID.randomUUID())
+        fun from(value: UUID?): BookingId = value?.let { Present(it) } ?: Empty
+    }
+}
+
+object BookingIdSerializer : KSerializer<BookingId> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BookingId", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: BookingId) {
+        when (value) {
+            is BookingId.Empty -> encoder.encodeString("EMPTY")
+            is BookingId.Present -> encoder.encodeString(value.value.toString())
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): BookingId {
+        val s = decoder.decodeString()
+        return if (s == "EMPTY") BookingId.Empty else BookingId.Present(UUID.fromString(s))
     }
 }

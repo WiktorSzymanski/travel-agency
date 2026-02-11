@@ -1,7 +1,10 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
+import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.BookingState
+import pl.szymanski.wiktor.ta.domain.LocalDateTimeSerializer
 import pl.szymanski.wiktor.ta.domain.Seat
+import pl.szymanski.wiktor.ta.domain.UUIDSerializer
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
@@ -23,13 +26,16 @@ import pl.szymanski.wiktor.ta.domain.exception.BookingMissingCreatedEventExcepti
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Serializable
 data class Booking(
     val id: BookingId = BookingId.generate(),
+    @Serializable(with = UUIDSerializer::class)
     val userId: UUID,
     val travelOffer: TravelOffer,
     val seat: Seat,
     var status: BookingState = BookingState.NEW,
     var message: String? = null,
+    @Serializable(with = LocalDateTimeSerializer::class)
     val timestamp: LocalDateTime = LocalDateTime.now(),
 ) {
     companion object {

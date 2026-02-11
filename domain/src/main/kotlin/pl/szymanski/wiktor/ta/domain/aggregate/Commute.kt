@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
+import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.Seat
@@ -20,6 +21,7 @@ import pl.szymanski.wiktor.ta.domain.exception.CommuteEmptyEventListException
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Serializable
 data class Commute(
     val id: CommuteId = CommuteId.generate(),
     val name: String,
