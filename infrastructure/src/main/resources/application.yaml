@@ -1,3 +1,6 @@
+logging:
+  level: INFO
+
 ktor:
   deployment:
     port: 8080
@@ -16,9 +19,14 @@ ktor:
       - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideBookingCommandHandler
       - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideCommuteCommandHandler
       - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideCommandBus
+      - pl.szymanski.wiktor.ta.infrastructure.config.EventBusProviderKt.provideDelayedEventRepository
+      - pl.szymanski.wiktor.ta.infrastructure.config.EventBusProviderKt.provideEventBus
+      - pl.szymanski.wiktor.ta.infrastructure.config.EventHandlerProviderKt.provideDateMetEventHandleLogic
+      - pl.szymanski.wiktor.ta.infrastructure.config.EventHandlerProviderKt.provideDateMetEventHandler
       - pl.szymanski.wiktor.ta.saga.SagaService
     modules:
       - pl.szymanski.wiktor.ta.infrastructure.SchedulerKt.scheduler
+      - pl.szymanski.wiktor.ta.infrastructure.EventHandlersKt.eventHandlers
 
 database:
   uri: "mongodb://root:password@localhost:27017"
@@ -29,8 +37,8 @@ database:
 #  intervalSeconds: 0.5
 
 generator:
-  intervalSeconds: 30
-  inAdvanceSeconds: 1000
+  intervalSeconds: 10
+  inAdvanceSeconds: 30
   creationWindowSeconds: 10
   accommodations:
     # London Accommodations (15 total)

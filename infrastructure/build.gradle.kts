@@ -25,8 +25,13 @@ dependencies {
 
     implementation("io.github.flaxoos:ktor-server-task-scheduling-mongodb:$schedulerVersion")
 
+    // Kafka and JSON serialization
+    implementation("org.apache.kafka:kafka-clients:3.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     testImplementation(kotlin("test"))
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
 }
 
 kotlin {
