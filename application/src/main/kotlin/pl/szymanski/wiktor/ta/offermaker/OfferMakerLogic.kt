@@ -15,7 +15,7 @@ import pl.szymanski.wiktor.ta.queryrepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository
 import java.time.LocalDateTime
 
-class OfferMakerLogic(
+open class OfferMakerLogic(
     private val travelOfferQueryRepository: TravelOfferQueryRepository,
     private val commuteQueryRepository: CommuteQueryRepository,
     private val accommodationQueryRepository: AccommodationQueryRepository,

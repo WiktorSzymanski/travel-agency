@@ -8,7 +8,6 @@ import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.time.LocalDateTime
-import java.util.UUID
 
 class AccommodationDtoTest {
     @Test

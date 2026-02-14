@@ -9,7 +9,6 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import java.time.LocalDateTime
-import java.util.UUID
 
 class CommuteDtoTest {
     @Test
