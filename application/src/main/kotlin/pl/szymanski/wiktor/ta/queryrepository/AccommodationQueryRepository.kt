@@ -4,30 +4,23 @@ import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.dto.TravelOfferDto
 import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
 import java.time.LocalDateTime
-import java.util.UUID
 
 interface AccommodationQueryRepository {
-    suspend fun save(entity: Accommodation): Accommodation?
+    suspend fun save(entity: Accommodation)
 
     suspend fun update(projectionUpdate: ProjectionUpdate)
 
-    suspend fun findById(accommodationId: UUID): Accommodation
+    suspend fun findById(id: AccommodationId): Accommodation
 
     suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation>
 
     suspend fun findByLocationAndDate(location: LocationEnum, dateRange: LocalDateTimeRange): List<Accommodation>
 
     suspend fun findByLocationAndRentContainsDate(location: LocationEnum, date: LocalDateTime): List<Accommodation>
-
-    suspend fun findTravelOfferByLocation(
-        page: Int = 1,
-        size: Int = 20,
-        location: LocationEnum,
-        status: TravelOfferStatusEnum? = null,
-    ): List<TravelOfferDto>
 
     suspend fun countTravelOfferByLocation(
         location: LocationEnum,

@@ -4,15 +4,16 @@ import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
 import java.util.UUID
 
 interface AttractionQueryRepository {
-    suspend fun save(entity: Attraction): Attraction?
+    suspend fun save(entity: Attraction)
 
     suspend fun update(projectionUpdate: ProjectionUpdate)
 
-    suspend fun findById(attractionId: UUID): Attraction
+    suspend fun findById(id: AttractionId): Attraction
 
     suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction>
 
