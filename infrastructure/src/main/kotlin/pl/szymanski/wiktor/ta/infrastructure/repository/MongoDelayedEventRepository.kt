@@ -2,17 +2,19 @@ package pl.szymanski.wiktor.ta.infrastructure.repository
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
+import com.mongodb.kotlin.client.coroutine.MongoClient
 import kotlinx.coroutines.flow.toList
-import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseProvider
+import org.springframework.stereotype.Repository
+import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+@Repository
 class MongoDelayedEventRepository(
-    private val databaseProvider: DatabaseProvider
+    mongoConfiguration: MongoConfiguration
 ) : DelayedEventRepository {
-
-    private val collection = databaseProvider.mongoClient
-        .getDatabase(databaseProvider.mongoConfig.dbName)
+    private val collection = mongoConfiguration.mongoClient()
+        .getDatabase(mongoConfiguration.mongoConfig.dbName)
         .getCollection<DelayedEvent>("delayed_events")
 
     override suspend fun save(event: DelayedEvent) {

@@ -3,15 +3,24 @@ package pl.szymanski.wiktor.ta.infrastructure.config
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.kotlin.client.coroutine.MongoClient
-import io.ktor.server.plugins.di.annotations.Property
-import kotlinx.serialization.Serializable
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.kotlinx.KotlinSerializerCodecProvider
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 
-class DatabaseProvider(
-    @Property("database") val mongoConfig: MongoDBConfig
+@ConfigurationProperties(prefix = "database")
+data class MongoDBConfig(
+    var uri: String = "",
+    var dbName: String = ""
+)
+
+@Configuration
+class MongoConfiguration(
+    val mongoConfig: MongoDBConfig
 ) {
-    val mongoClient: MongoClient by lazy {
+    @Bean
+    fun mongoClient(): MongoClient {
         val codecRegistry = CodecRegistries.fromRegistries(
             MongoClientSettings.getDefaultCodecRegistry(),
             CodecRegistries.fromProviders(KotlinSerializerCodecProvider())
@@ -20,15 +29,6 @@ class DatabaseProvider(
             .applyConnectionString(ConnectionString(mongoConfig.uri))
             .codecRegistry(codecRegistry)
             .build()
-        MongoClient.create(settings)
-    }
-}
-
-@Serializable
-class MongoDBConfig (
-    val uri: String,
-    val dbName: String,
-) {
-    companion object {
+        return MongoClient.create(settings)
     }
 }

@@ -1,60 +1,46 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository
 
 import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Sorts
-import kotlinx.coroutines.flow.toList
-import kotlinx.serialization.Serializable
+import com.mongodb.client.model.ReplaceOptions
+import kotlinx.coroutines.flow.firstOrNull
+import org.springframework.stereotype.Repository
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
-import pl.szymanski.wiktor.ta.infrastructure.config.DatabaseProvider
+import pl.szymanski.wiktor.ta.infrastructure.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
+import pl.szymanski.wiktor.ta.queryrepository.BookingQueryRepository
+import java.util.UUID
 
+@Repository
 class MongoBookingRepository(
-    private val databaseProvider: DatabaseProvider,
-) : BookingRepository {
-    @Serializable
-    private data class BookingEventDocument(
-        val aggregateId: String,
-        val event: BookingEvent,
-    )
-
-    private val collection = databaseProvider.mongoClient
-        .getDatabase(databaseProvider.mongoConfig.dbName)
-        .getCollection<BookingEventDocument>("booking_events")
+    mongoConfiguration: MongoConfiguration
+) : BookingRepository, BookingQueryRepository {
+    private val collection = mongoConfiguration.mongoClient()
+        .getDatabase(mongoConfiguration.mongoConfig.dbName)
+        .getCollection<Booking>("booking_events")
 
     override suspend fun findById(id: BookingId): Booking {
-        val aggregateId = when (id) {
-            is pl.szymanski.wiktor.ta.domain.aggregate.BookingId.Present -> id.value.toString()
-            pl.szymanski.wiktor.ta.domain.aggregate.BookingId.Empty -> throw NoSuchElementException("Booking not found: $id")
-        }
-        val docs = collection
-            .find(Filters.eq("aggregateId", aggregateId))
-            .sort(Sorts.ascending("_id"))
-            .toList()
-
-        val events = docs.map { it.event }
-        if (events.isEmpty()) throw NoSuchElementException("Booking not found: $id")
-        return Booking.fromEvents(events)
+        return collection
+            .find(Filters.eq("id", id.value.toString()))
+            .firstOrNull()
+            ?: throw NoSuchElementException("Booking not found: $id")
     }
 
     override suspend fun create(entity: Booking, event: BookingEvent) {
-        val aggregateId = (entity.id as pl.szymanski.wiktor.ta.domain.aggregate.BookingId.Present).value.toString()
-        collection.insertOne(
-            BookingEventDocument(
-                aggregateId = aggregateId,
-                event = event,
-            )
-        )
+        collection.insertOne(entity)
     }
 
     override suspend fun save(entity: Booking, event: BookingEvent) {
-        val aggregateId = (entity.id as pl.szymanski.wiktor.ta.domain.aggregate.BookingId.Present).value.toString()
-        collection.insertOne(
-            BookingEventDocument(
-                aggregateId = aggregateId,
-                event = event,
-            )
+        this.save(entity)
+    }
+
+    override suspend fun save(entity: Booking) {
+        collection.replaceOne(
+            Filters.eq("id", entity.id.value.toString()),
+            entity,
+            ReplaceOptions().upsert(true)
         )
     }
 }

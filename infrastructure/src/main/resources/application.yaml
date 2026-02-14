@@ -1,45 +1,22 @@
 logging:
-  level: INFO
+  level:
+    root: INFO
 
-ktor:
-  deployment:
-    port: 8080
+server:
+  port: 8080
+
+spring:
   application:
-    dependencies:
-      - pl.szymanski.wiktor.ta.infrastructure.config.DatabaseProvider
-      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideAccommodationRepository
-      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideAttractionRepository
-      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideBookingRepository
-      - pl.szymanski.wiktor.ta.infrastructure.config.RepositoryProviderKt.provideCommuteRepository
-      - pl.szymanski.wiktor.ta.infrastructure.config.GeneratorProviderKt.provideAccommodationGenerator
-      - pl.szymanski.wiktor.ta.infrastructure.config.GeneratorProviderKt.provideAttractionGenerator
-      - pl.szymanski.wiktor.ta.infrastructure.config.GeneratorProviderKt.provideCommuteGenerator
-      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideAccommodationCommandHandler
-      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideAttractionCommandHandler
-      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideBookingCommandHandler
-      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideCommuteCommandHandler
-      - pl.szymanski.wiktor.ta.infrastructure.config.CommandBusProviderKt.provideCommandBus
-      - pl.szymanski.wiktor.ta.infrastructure.config.EventBusProviderKt.provideDelayedEventRepository
-      - pl.szymanski.wiktor.ta.infrastructure.config.EventBusProviderKt.provideEventBus
-      - pl.szymanski.wiktor.ta.infrastructure.config.EventHandlerProviderKt.provideDateMetEventHandleLogic
-      - pl.szymanski.wiktor.ta.infrastructure.config.EventHandlerProviderKt.provideDateMetEventHandler
-      - pl.szymanski.wiktor.ta.saga.SagaService
-    modules:
-      - pl.szymanski.wiktor.ta.infrastructure.SchedulerKt.scheduler
-      - pl.szymanski.wiktor.ta.infrastructure.EventHandlersKt.eventHandlers
+    name: travel-agency-app
 
 database:
   uri: "mongodb://root:password@localhost:27017"
-  dbName: "travel_agency"
-
-#
-#offerScheduler:
-#  intervalSeconds: 0.5
+  db-name: "travel_agency"
 
 generator:
-  intervalSeconds: 10
-  inAdvanceSeconds: 30
-  creationWindowSeconds: 10
+  interval-seconds: 10
+  in-advance-seconds: 30
+  creation-window-seconds: 10
   accommodations:
     # London Accommodations (15 total)
     - name: "Hotel"

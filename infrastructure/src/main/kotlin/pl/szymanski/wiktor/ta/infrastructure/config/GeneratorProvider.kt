@@ -1,34 +1,36 @@
 package pl.szymanski.wiktor.ta.infrastructure.config
 
-import io.ktor.server.plugins.di.annotations.Property
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import pl.szymanski.wiktor.ta.generator.AccommodationGenerator
 import pl.szymanski.wiktor.ta.generator.AttractionGenerator
 import pl.szymanski.wiktor.ta.generator.CommuteGenerator
 
-fun provideAccommodationGenerator(
-    @Property("generator") generatorConfig: GeneratorConfig
-): AccommodationGenerator =
-    AccommodationGenerator(
-        generatorConfig.inAdvanceSeconds,
-        generatorConfig.creationWindowSeconds,
-        generatorConfig.accommodations
-    )
+@Configuration
+class GeneratorConfiguration(
+    private val generatorConfig: GeneratorConfig
+) {
+    @Bean
+    fun accommodationGenerator(): AccommodationGenerator =
+        AccommodationGenerator(
+            generatorConfig.inAdvanceSeconds,
+            generatorConfig.creationWindowSeconds,
+            generatorConfig.accommodations
+        )
 
-fun provideAttractionGenerator(
-    @Property("generator") generatorConfig: GeneratorConfig
-): AttractionGenerator =
-    AttractionGenerator(
-        generatorConfig.inAdvanceSeconds,
-        generatorConfig.creationWindowSeconds,
-        generatorConfig.attractions
-    )
+    @Bean
+    fun attractionGenerator(): AttractionGenerator =
+        AttractionGenerator(
+            generatorConfig.inAdvanceSeconds,
+            generatorConfig.creationWindowSeconds,
+            generatorConfig.attractions
+        )
 
-fun provideCommuteGenerator(
-    @Property("generator") generatorConfig: GeneratorConfig
-): CommuteGenerator =
-    CommuteGenerator(
-        generatorConfig.inAdvanceSeconds,
-        generatorConfig.creationWindowSeconds,
-        generatorConfig.commutes
-    )
-
+    @Bean
+    fun commuteGenerator(): CommuteGenerator =
+        CommuteGenerator(
+            generatorConfig.inAdvanceSeconds,
+            generatorConfig.creationWindowSeconds,
+            generatorConfig.commutes
+        )
+}
