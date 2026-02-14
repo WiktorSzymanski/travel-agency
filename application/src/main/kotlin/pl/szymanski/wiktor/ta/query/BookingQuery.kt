@@ -8,16 +8,4 @@ class BookingQuery(
     private val bookingRepository: BookingQueryRepository,
 ) {
     suspend fun getBookingById(id: BookingId) = bookingRepository.findById(id)
-
-    suspend fun getTravelOffersByUserId(
-        page: Int,
-        size: Int,
-        userId: UUID,
-    ) = bookingRepository.findTravelOfferDtoByUserId(page, size, userId)
-
-    suspend fun getBookingsByUserId(
-        page: Int,
-        size: Int,
-        userId: UUID,
-    ) = bookingRepository.findByUserId(page, size, userId)
 }
