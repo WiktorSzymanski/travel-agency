@@ -71,54 +71,54 @@ class CancelBookingSagaTest {
 
         coEvery { commuteCommandHandler.handle(match { it is CancelCommuteBookingCommand }) } answers {
             val command = firstArg<CancelCommuteBookingCommand>()
-            commuteAgg to listOf(
+            Triple(commuteAgg, listOf(
                 CommuteBookingCanceledEvent(
                     commuteId = command.commuteId,
                     bookingId = command.bookingId,
                     seat = Seat.Any
                 )
-            )
+            ), metadata)
         }
 
         coEvery { accommodationCommandHandler.handle(match { it is CancelAccommodationBookingCommand }) } answers {
             val command = firstArg<CancelAccommodationBookingCommand>()
-            accommodationAgg to listOf(
+            Triple(accommodationAgg, listOf(
                 AccommodationBookingCanceledEvent(
                     accommodationId = command.accommodationId,
                     bookingId = command.bookingId,
                 ),
-            )
+            ), metadata)
         }
 
         coEvery { attractionCommandHandler.handle(match { it is CancelAttractionBookingCommand }) } answers {
             val command = firstArg<CancelAttractionBookingCommand>()
-            attractionAgg to listOf(
+            Triple(attractionAgg, listOf(
                 AttractionBookingCanceledEvent(
                     attractionId = command.attractionId,
                     bookingId = command.bookingId,
                 ),
-            )
+            ), metadata)
         }
 
         coEvery { commuteCommandHandler.handle(match { it is CompensateCancelCommuteBookingCommand }) } answers {
             val command = firstArg<CompensateCancelCommuteBookingCommand>()
-            commuteAgg to listOf(
+            Triple(commuteAgg, listOf(
                 CommuteBookingCanceledCompensatedEvent(
                     commuteId = command.commuteId,
                     bookingId = command.bookingId,
                     seat = Seat.Any
                 )
-            )
+            ), metadata)
         }
 
         coEvery { accommodationCommandHandler.handle(match { it is CompensateCancelAccommodationBookingCommand }) } answers {
             val command = firstArg<CompensateCancelAccommodationBookingCommand>()
-            accommodationAgg to listOf(
+            Triple(accommodationAgg, listOf(
                 AccommodationBookingCanceledCompensatedEvent(
                     accommodationId = command.accommodationId,
                     bookingId = command.bookingId,
                 ),
-            )
+            ), metadata)
         }
     }
 

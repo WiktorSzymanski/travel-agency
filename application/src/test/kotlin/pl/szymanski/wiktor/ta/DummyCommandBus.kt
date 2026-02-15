@@ -13,6 +13,7 @@ import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
+import java.util.UUID
 import kotlin.collections.get
 
 class DummyCommandBus : CommandBus {
@@ -25,7 +26,7 @@ class DummyCommandBus : CommandBus {
         handlers[commandType] = handler
     }
 
-    override suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<DomainEvent>> {
+    override suspend fun <C : Command, E> dispatch(command: C): Triple<E, List<DomainEvent>, Metadata> {
         val handler =
             handlers[command::class.java.superclass] as? CommandHandler<C, E>
                 ?: throw IllegalArgumentException("No handler registered for ${command::class.java.superclass}")
@@ -47,28 +48,28 @@ class DummyCommandBus : CommandBus {
         attractionCommandHandler: AttractionCommandHandler,
         accommodationCommandHandler: AccommodationCommandHandler,
     ) {
-        this.registerHandler(BookingCommand::class.java) {
-            bookingCommandHandler.handle(it)
+        this.registerHandler(BookingCommand::class.java) { command ->
+            bookingCommandHandler.handle(command)
         }
-        this.registerHandler(CommuteCommand::class.java) {
-            commuteCommandHandler.handle(it)
+        this.registerHandler(CommuteCommand::class.java) {  command ->
+            commuteCommandHandler.handle(command)
         }
-        this.registerHandler(AttractionCommand::class.java) {
-            attractionCommandHandler.handle(it)
+        this.registerHandler(AttractionCommand::class.java) {  command ->
+            attractionCommandHandler.handle(command)
         }
-        this.registerHandler(AccommodationCommand::class.java) {
-            accommodationCommandHandler.handle(it)
+        this.registerHandler(AccommodationCommand::class.java) {  command ->
+            accommodationCommandHandler.handle(command)
         }
 
 
-        this.registerHandler(CompensateCommuteCommand::class.java) {
-            commuteCommandHandler.handle(it)
+        this.registerHandler(CompensateCommuteCommand::class.java) {  command ->
+            commuteCommandHandler.handle(command)
         }
-        this.registerHandler(CompensateAttractionCommand::class.java) {
-            attractionCommandHandler.handle(it)
+        this.registerHandler(CompensateAttractionCommand::class.java) {  command ->
+            attractionCommandHandler.handle(command)
         }
-        this.registerHandler(CompensateAccommodationCommand::class.java) {
-            accommodationCommandHandler.handle(it)
+        this.registerHandler(CompensateAccommodationCommand::class.java) {  command ->
+            accommodationCommandHandler.handle(command)
         }
     }
 }

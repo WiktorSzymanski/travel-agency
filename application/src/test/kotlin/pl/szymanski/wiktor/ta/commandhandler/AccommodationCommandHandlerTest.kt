@@ -29,7 +29,7 @@ class AccommodationCommandHandlerTest {
 
     init {
         mockkObject(Accommodation.Companion)
-        coEvery { accommodationRepository.findById(any()) } returns accommodation
+        coEvery { accommodationRepository.findById(any()) } returns (accommodation to 1L)
     }
 
     @Test

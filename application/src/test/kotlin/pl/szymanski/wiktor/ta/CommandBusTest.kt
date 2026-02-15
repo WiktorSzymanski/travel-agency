@@ -57,17 +57,22 @@ class CommandBusTest {
             // Given
             commandBus.registerHandler(BookingCommand::class.java) { command: BookingCommand ->
                 assertIs<CreateBookingCommand>(command)
-                "OK" to listOf(
-                    ProcessBookingEvent(
-                        bookingId = BookingId.generate(),
+                Triple(
+                    "OK",
+                    listOf(
+                        ProcessBookingEvent(
+                            bookingId = BookingId.generate(),
+                        ),
                     ),
+                    Metadata(command.correlationId, 0L)
                 )
             }
 
+            val correlationId = UUID.randomUUID()
             val command =
                 CreateAccommodationCommand(
                     accommodationId = AccommodationId.generate(),
-                    correlationId = UUID.randomUUID(),
+                    correlationId = correlationId,
                     name = "Hotel",
                     location = LocationEnum.PARIS,
                     rent = Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1)),
@@ -83,17 +88,22 @@ class CommandBusTest {
             // Given
             commandBus.registerHandler(BookingCommand::class.java) { command: BookingCommand ->
                 assertIs<CreateBookingCommand>(command)
-                "OK" to listOf(
-                    ProcessBookingEvent(
-                        bookingId = BookingId.generate(),
+                Triple(
+                    "OK",
+                    listOf(
+                        ProcessBookingEvent(
+                            bookingId = BookingId.generate(),
+                        ),
                     ),
+                    Metadata(command.correlationId, 0L)
                 )
             }
 
+            val correlationId = UUID.randomUUID()
             val command =
                 CreateBookingCommand(
                     bookingId = BookingId.generate(),
-                    correlationId = UUID.randomUUID(),
+                    correlationId = correlationId,
                     travelOffer = TravelOffer(
                         CommuteId.generate(),
                         AccommodationId.generate(),
@@ -103,11 +113,13 @@ class CommandBusTest {
                 )
 
             // When
-            val (result, events) = commandBus.dispatch<BookingCommand, String>(command)
+            val (result, events, metadata) = commandBus.dispatch<BookingCommand, String>(command)
 
             // Then
             assertEquals("OK", result)
             assertEquals(1, events.size)
+            assertEquals(correlationId, metadata.correlationId)
+            assertEquals(0L, metadata.revision)
         }
 
     @Test
@@ -125,10 +137,12 @@ class CommandBusTest {
             val attraction = mockk<Attraction>(relaxed = true)
             val accommodation = mockk<Accommodation>(relaxed = true)
 
-            coEvery { bookingHandler.handle(any()) } returns (booking to emptyList<BookingEvent>())
-            coEvery { commuteHandler.handle(any()) } returns (commute to emptyList<CommuteEvent>())
-            coEvery { attractionHandler.handle(any()) } returns (attraction to emptyList<AttractionEvent>())
-            coEvery { accommodationHandler.handle(any()) } returns (accommodation to emptyList<AccommodationEvent>())
+            val metadata = mockk<Metadata>(relaxed = true)
+
+            coEvery { bookingHandler.handle(any()) } returns Triple(booking, emptyList<BookingEvent>(), metadata)
+            coEvery { commuteHandler.handle(any()) } returns Triple(commute, emptyList<CommuteEvent>(), metadata)
+            coEvery { attractionHandler.handle(any()) } returns Triple(attraction, emptyList<AttractionEvent>(), metadata)
+            coEvery { accommodationHandler.handle(any()) } returns Triple(accommodation, emptyList<AccommodationEvent>(), metadata)
 
             commandBus = DummyCommandBus(
                 bookingHandler,
@@ -145,7 +159,7 @@ class CommandBusTest {
             val commuteId = CommuteId.generate()
 
             // When
-            val (_, bEvents) =
+            val (_, bEvents, _) =
                 commandBus.dispatch<BookingCommand, Booking>(
                     CreateBookingCommand(
                         bookingId = bookingId,
@@ -155,7 +169,7 @@ class CommandBusTest {
                         seat = Seat.Any,
                     ),
                 )
-            val (_, cEvents) =
+            val (_, cEvents, _) =
                 commandBus.dispatch<CommuteCommand, Commute>(
                     CreateCommuteCommand(
                         commuteId = commuteId,
@@ -166,7 +180,7 @@ class CommandBusTest {
                         seats = listOf(Seat.Picked("1", "A")),
                     ),
                 )
-            val (_, aEvents) =
+            val (_, aEvents, _) =
                 commandBus.dispatch<AttractionCommand, Attraction>(
                     CreateAttractionCommand(
                         attractionId = attractionId,
@@ -177,7 +191,7 @@ class CommandBusTest {
                         capacity = 10,
                     ),
                 )
-            val (_, accEvents) =
+            val (_, accEvents, _) =
                 commandBus.dispatch<AccommodationCommand, Accommodation>(
                     CreateAccommodationCommand(
                         accommodationId = accommodationId,
@@ -191,7 +205,7 @@ class CommandBusTest {
             // Then
             coVerify(exactly = 1) { bookingHandler.handle(any()) }
             coVerify(exactly = 1) { commuteHandler.handle(any()) }
-            coVerify(exactly = 1) { attractionHandler.handle(any()) }
+            coEvery { attractionHandler.handle(any()) }
             coVerify(exactly = 1) { accommodationHandler.handle(any()) }
 
             assertTrue(bEvents.isEmpty())

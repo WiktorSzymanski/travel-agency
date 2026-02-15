@@ -31,7 +31,7 @@ class BookingCommandHandlerTest {
 
     init {
         mockkObject(Booking.Companion)
-        coEvery { bookingRepository.findById(any()) } returns booking
+        coEvery { bookingRepository.findById(any()) } returns (booking to 1L)
     }
 
     @Test

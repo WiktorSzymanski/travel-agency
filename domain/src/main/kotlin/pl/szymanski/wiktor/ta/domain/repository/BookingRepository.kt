@@ -5,7 +5,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 
 interface BookingRepository {
-    suspend fun findById(id: BookingId): Booking
+    suspend fun findById(id: BookingId): Pair<Booking, Long>
 
     suspend fun create(
         entity: Booking,

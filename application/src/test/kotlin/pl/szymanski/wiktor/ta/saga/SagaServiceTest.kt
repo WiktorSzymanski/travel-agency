@@ -5,6 +5,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import pl.szymanski.wiktor.ta.DummyCommandBus
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
 import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
@@ -59,9 +60,9 @@ class SagaServiceTest {
         coEvery { sagaRepository.save(any()) } returns Unit
         coEvery { sagaOutboxPort.saveStateWithEvent(any(), any()) } returns UUID.randomUUID()
         coEvery { commuteCommandHandler.handle(any<CommuteCommand>()) } returns
-            (mockk<Commute>(relaxed = true) to emptyList<CommuteEvent>())
+            Triple(mockk<Commute>(relaxed = true), emptyList<CommuteEvent>(), mockk<Metadata>(relaxed = true))
         coEvery { accommodationCommandHandler.handle(any<AccommodationCommand>()) } returns
-            (mockk<Accommodation>(relaxed = true) to emptyList<AccommodationEvent>())
+            Triple(mockk<Accommodation>(relaxed = true), emptyList<AccommodationEvent>(), mockk<Metadata>(relaxed = true))
 
         service.executePendingSagas()
 
