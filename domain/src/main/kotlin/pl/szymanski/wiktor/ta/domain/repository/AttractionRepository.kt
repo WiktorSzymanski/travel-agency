@@ -6,7 +6,7 @@ import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import java.util.UUID
 
 interface AttractionRepository {
-    suspend fun findById(id: AttractionId): Attraction
+    suspend fun findById(id: AttractionId): Pair<Attraction, Long>
 
     suspend fun create(
         entity: Attraction,

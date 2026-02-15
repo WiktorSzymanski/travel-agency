@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.commandhandler
 
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.BookAccommodationCommand
 import pl.szymanski.wiktor.ta.command.CancelAccommodationBookingCommand
@@ -14,7 +15,7 @@ import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
 class AccommodationCommandHandler(
     private val accommodationRepository: AccommodationRepository,
 ) {
-    suspend fun handle(command: AccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    suspend fun handle(command: AccommodationCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         when (command) {
             is CreateAccommodationCommand -> handle(command)
             is BookAccommodationCommand -> handle(command)
@@ -24,50 +25,50 @@ class AccommodationCommandHandler(
             is CompensateCancelAccommodationBookingCommand -> compensate(command)
         }
 
-    private fun handle(command: CreateAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    private fun handle(command: CreateAccommodationCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         Accommodation.create(
             command.name,
             command.location,
             command.rent,
-        )
+        ).let { Triple(it.first, it.second, Metadata(command.correlationId, 0)) }
 
-    private suspend fun handle(command: BookAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    private suspend fun handle(command: BookAccommodationCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val events = it.book(command.bookingId)
-                it to events
+                val events = it.first.book(command.bookingId)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: CancelAccommodationBookingCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    private suspend fun handle(command: CancelAccommodationBookingCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val events = it.cancelBooking(command.bookingId)
-                it to events
+                val events = it.first.cancelBooking(command.bookingId)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: ExpireAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    private suspend fun handle(command: ExpireAccommodationCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val events = it.expire()
-                it to events
+                val events = it.first.expire()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun compensate(command: CompensateBookAccommodationCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    private suspend fun compensate(command: CompensateBookAccommodationCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val events = it.compensateBook(command.bookingId)
-                it to events
+                val events = it.first.compensateBook(command.bookingId)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun compensate(command: CompensateCancelAccommodationBookingCommand): Pair<Accommodation, List<AccommodationEvent>> =
+    private suspend fun compensate(command: CompensateCancelAccommodationBookingCommand): Triple<Accommodation, List<AccommodationEvent>, Metadata> =
         accommodationRepository
             .findById(command.accommodationId)
             .let {
-                val events = it.compensateCancelBooking(command.bookingId)
-                it to events
+                val events = it.first.compensateCancelBooking(command.bookingId)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 }

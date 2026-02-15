@@ -28,7 +28,7 @@ class AttractionCommandHandlerTest {
 
     init {
         mockkObject(Attraction.Companion)
-        coEvery { attractionRepository.findById(any()) } returns attraction
+        coEvery { attractionRepository.findById(any()) } returns (attraction to 1L)
     }
 
     @Test

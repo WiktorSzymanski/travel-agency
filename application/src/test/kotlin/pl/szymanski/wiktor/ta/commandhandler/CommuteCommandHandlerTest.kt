@@ -30,7 +30,7 @@ class CommuteCommandHandlerTest {
 
     init {
         mockkObject(Commute.Companion)
-        coEvery { commuteRepository.findById(any()) } returns commute
+        coEvery { commuteRepository.findById(any()) } returns (commute to 1L)
     }
 
     @Test

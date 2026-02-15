@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.commandhandler
 
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.BookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CommuteCommand
@@ -7,15 +8,15 @@ import pl.szymanski.wiktor.ta.command.CompensateBookCommuteCommand
 import pl.szymanski.wiktor.ta.command.CompensateCancelCommuteBookingCommand
 import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
 import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
-import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import java.util.UUID
 
 class CommuteCommandHandler(
     private val commuteRepository: CommuteRepository,
 ) {
-    suspend fun handle(command: CommuteCommand): Pair<Commute, List<CommuteEvent>> =
+    suspend fun handle(command: CommuteCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         when (command) {
             is CreateCommuteCommand -> handle(command)
             is BookCommuteCommand -> handle(command)
@@ -25,51 +26,51 @@ class CommuteCommandHandler(
             is CompensateCancelCommuteBookingCommand -> compensate(command)
         }
 
-    private fun handle(command: CreateCommuteCommand): Pair<Commute, List<CommuteEvent>> =
+    private fun handle(command: CreateCommuteCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         Commute.create(
             command.name,
             command.departure,
             command.arrival,
             command.seats,
-        )
+        ).let { Triple(it.first, it.second, Metadata(command.correlationId, 0)) }
 
-    private suspend fun handle(command: BookCommuteCommand): Pair<Commute, List<CommuteEvent>> =
+    private suspend fun handle(command: BookCommuteCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         commuteRepository
             .findById(command.commuteId)
             .let {
-                val events = it.bookSeat(command.bookingId, command.seat)
-                it to events
+                val events = it.first.bookSeat(command.bookingId, command.seat)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: CancelCommuteBookingCommand): Pair<Commute, List<CommuteEvent>> =
+    private suspend fun handle(command: CancelCommuteBookingCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         commuteRepository
             .findById(command.commuteId)
             .let {
-                val events = it.cancelBookedSeat(command.bookingId)
-                it to events
+                val events = it.first.cancelBookedSeat(command.bookingId)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: ExpireCommuteCommand): Pair<Commute, List<CommuteEvent>> =
+    private suspend fun handle(command: ExpireCommuteCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         commuteRepository
             .findById(command.commuteId)
             .let {
-                val events = it.expire()
-                it to events
+                val events = it.first.expire()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun compensate(command: CompensateBookCommuteCommand): Pair<Commute, List<CommuteEvent>> =
+    private suspend fun compensate(command: CompensateBookCommuteCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         commuteRepository
             .findById(command.commuteId)
             .let {
-                val events = it.compensateBookSeat(command.bookingId)
-                it to events
+                val events = it.first.compensateBookSeat(command.bookingId)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun compensate(command: CompensateCancelCommuteBookingCommand): Pair<Commute, List<CommuteEvent>> =
+    private suspend fun compensate(command: CompensateCancelCommuteBookingCommand): Triple<Commute, List<CommuteEvent>, Metadata> =
         commuteRepository
             .findById(command.commuteId)
             .let {
-                val events = it.compensateCancelBookedSeat(command.bookingId, command.seat)
-                it to events
+                val events = it.first.compensateCancelBookedSeat(command.bookingId, command.seat)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 }

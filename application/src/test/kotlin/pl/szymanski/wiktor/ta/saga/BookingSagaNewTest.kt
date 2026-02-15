@@ -72,54 +72,54 @@ class BookingSagaNewTest {
 
         coEvery { commuteCommandHandler.handle(match { it is BookCommuteCommand }) } answers {
             val command = firstArg<BookCommuteCommand>()
-            commuteAgg to listOf(
+            Triple(commuteAgg, listOf(
                 CommuteBookedEvent(
                     commuteId = command.commuteId,
                     bookingId = command.bookingId,
                     seat = command.seat
                 )
-            )
+            ), Metadata(UUID.randomUUID(), 1))
         }
 
         coEvery { accommodationCommandHandler.handle(match { it is BookAccommodationCommand }) } answers {
             val command = firstArg<BookAccommodationCommand>()
-            accommodationAgg to listOf(
+            Triple(accommodationAgg, listOf(
                 AccommodationBookedEvent(
                     accommodationId = command.accommodationId,
                     bookingId = command.bookingId,
                 ),
-            )
+            ), Metadata(UUID.randomUUID(), 1))
         }
 
         coEvery { attractionCommandHandler.handle(match { it is BookAttractionCommand }) } answers {
             val command = firstArg<BookAttractionCommand>()
-            attractionAgg to listOf(
+            Triple(attractionAgg, listOf(
                 AttractionBookedEvent(
                     attractionId = command.attractionId,
                     bookingId = command.bookingId,
                 ),
-            )
+            ), Metadata(UUID.randomUUID(), 1))
         }
 
         coEvery { commuteCommandHandler.handle(match { it is CompensateBookCommuteCommand }) } answers {
             val command = firstArg<CompensateBookCommuteCommand>()
-            commuteAgg to listOf(
+            Triple(commuteAgg, listOf(
                 CommuteBookedCompensatedEvent(
                     commuteId = command.commuteId,
                     bookingId = command.bookingId,
                     seat = Seat.Any
                 )
-            )
+            ), Metadata(UUID.randomUUID(), 1))
         }
 
         coEvery { accommodationCommandHandler.handle(match { it is CompensateBookAccommodationCommand }) } answers {
             val command = firstArg<CompensateBookAccommodationCommand>()
-            accommodationAgg to listOf(
+            Triple(accommodationAgg, listOf(
                 AccommodationBookedCompensatedEvent(
                     accommodationId = command.accommodationId,
                     bookingId = command.bookingId,
                 ),
-            )
+            ), Metadata(UUID.randomUUID(), 1))
         }
     }
 

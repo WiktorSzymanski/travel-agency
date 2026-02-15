@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.commandhandler
 
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.BookingCommand
 import pl.szymanski.wiktor.ta.command.BookingRequestCancelCommand
 import pl.szymanski.wiktor.ta.command.CancelBookingCommand
@@ -12,11 +13,12 @@ import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
 import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
+import java.util.UUID
 
 class BookingCommandHandler(
     private val bookingRepository: BookingRepository,
 ) {
-    suspend fun handle(command: BookingCommand): Pair<Booking, List<BookingEvent>> =
+    suspend fun handle(command: BookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         when (command) {
             is CreateBookingCommand -> handle(command)
             is ProcessBookingCommand -> handle(command)
@@ -28,66 +30,66 @@ class BookingCommandHandler(
             is ProcessCancelBookingCommand -> handle(command)
         }
 
-    private fun handle(command: CreateBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private fun handle(command: CreateBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         Booking.create(
             userId = command.userId,
             travelOffer = command.travelOffer,
             seat = command.seat,
-        )
+        ).let { Triple(it.first, it.second, Metadata(command.correlationId, 0)) }
 
-    private suspend fun handle(command: BookingRequestCancelCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: BookingRequestCancelCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.requestCancel()
-                it to events
+                val events = it.first.requestCancel()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: ProcessBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: ProcessBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.process()
-                it to events
+                val events = it.first.process()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: CompleteBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: CompleteBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.complete()
-                it to events
+                val events = it.first.complete()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: CancelBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: CancelBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.cancel()
-                it to events
+                val events = it.first.cancel()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: FailBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: FailBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.fail(command.message!!)
-                it to events
+                val events = it.first.fail(command.message!!)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: FailCancelBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: FailCancelBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.failCancellation(command.message!!)
-                it to events
+                val events = it.first.failCancellation(command.message!!)
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 
-    private suspend fun handle(command: ProcessCancelBookingCommand): Pair<Booking, List<BookingEvent>> =
+    private suspend fun handle(command: ProcessCancelBookingCommand): Triple<Booking, List<BookingEvent>, Metadata> =
         bookingRepository
             .findById(command.bookingId)
             .let {
-                val events = it.processCancellation()
-                it to events
+                val events = it.first.processCancellation()
+                Triple(it.first, events, Metadata(command.correlationId, it.second + 1))
             }
 }
