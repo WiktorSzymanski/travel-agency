@@ -1,5 +1,6 @@
-package pl.szymanski.wiktor.ta.domain.repository
+package pl.szymanski.wiktor.ta.repository
 
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
@@ -16,5 +17,6 @@ interface AttractionRepository {
     suspend fun save(
         entity: Attraction,
         event: AttractionEvent,
+        metadata: Metadata
     )
 }

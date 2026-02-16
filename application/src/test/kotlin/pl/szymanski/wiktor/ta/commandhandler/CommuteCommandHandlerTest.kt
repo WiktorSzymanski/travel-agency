@@ -18,7 +18,7 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.CommuteRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test

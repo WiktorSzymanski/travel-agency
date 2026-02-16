@@ -20,7 +20,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.BookingRepository
 import java.util.UUID
 import kotlin.test.Test
 

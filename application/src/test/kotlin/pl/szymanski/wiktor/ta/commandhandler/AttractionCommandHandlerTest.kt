@@ -16,7 +16,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.AttractionRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test

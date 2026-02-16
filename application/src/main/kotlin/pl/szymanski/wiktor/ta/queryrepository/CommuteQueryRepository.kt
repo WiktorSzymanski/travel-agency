@@ -11,7 +11,7 @@ interface CommuteQueryRepository {
 
     suspend fun update(projectionUpdate: ProjectionUpdate)
 
-    suspend fun findById(id: CommuteId): Commute
+    suspend fun findById(id: CommuteId): Pair<Commute, Long>
 
     suspend fun findAllByStatus(status: CommuteStatusEnum): List<Commute>
 

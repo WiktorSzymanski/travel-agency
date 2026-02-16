@@ -10,7 +10,7 @@ import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.AttractionRepository
 import java.util.UUID
 
 class AttractionCommandHandler(

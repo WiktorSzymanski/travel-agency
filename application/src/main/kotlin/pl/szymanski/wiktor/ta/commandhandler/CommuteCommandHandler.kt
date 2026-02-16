@@ -10,7 +10,7 @@ import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
 import pl.szymanski.wiktor.ta.command.ExpireCommuteCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.CommuteRepository
 import java.util.UUID
 
 class CommuteCommandHandler(
