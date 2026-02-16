@@ -1,15 +1,19 @@
 package pl.szymanski.wiktor.ta.infrastructure
 
 import jakarta.annotation.PostConstruct
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.AccommodationRepository
+import pl.szymanski.wiktor.ta.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
@@ -25,20 +29,27 @@ class DateMetEventHandler(
     private val attractionRepository: AttractionRepository
 ) {
     private val handleLogic = DateMetEventHandleLogic(commandBus)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @PostConstruct
-    suspend fun init() {
-        eventBus.subscribe<CommuteDateMetEvent> {
-            val (entity, events) = handleLogic.onCommuteDateMetEvent(it)
-            commuteRepository.save(entity, events[0] as CommuteEvent)
+    fun init() {
+        scope.launch {
+            eventBus.subscribe<CommuteDateMetEvent> {
+                val (entity, events, metadata) = handleLogic.onCommuteDateMetEvent(it)
+                commuteRepository.save(entity, events[0] as CommuteEvent, metadata)
+            }
         }
-        eventBus.subscribe<AccommodationDateMetEvent> {
-            val (entity, events) = handleLogic.onAccommodationDateMetEvent(it)
-            accommodationRepository.save(entity, events[0] as AccommodationEvent)
+        scope.launch {
+            eventBus.subscribe<AccommodationDateMetEvent> {
+                val (entity, events, metadata) = handleLogic.onAccommodationDateMetEvent(it)
+                accommodationRepository.save(entity, events[0] as AccommodationEvent, metadata)
+            }
         }
-        eventBus.subscribe<AttractionDateMetEvent> {
-            val (entity, events) = handleLogic.onAttractionDateMetEvent(it)
-            attractionRepository.save(entity, events[0] as AttractionEvent)
+        scope.launch {
+            eventBus.subscribe<AttractionDateMetEvent> {
+                val (entity, events, metadata) = handleLogic.onAttractionDateMetEvent(it)
+                attractionRepository.save(entity, events[0] as AttractionEvent, metadata)
+            }
         }
     }
 }

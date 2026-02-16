@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.infrastructure
 
 import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.CommandHandler
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.command.AccommodationCommand
 import pl.szymanski.wiktor.ta.command.AttractionCommand
 import pl.szymanski.wiktor.ta.command.BookingCommand
@@ -38,7 +39,7 @@ class StandardCommandBus(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override suspend fun <C : Command, E> dispatch(command: C): Pair<E, List<DomainEvent>> {
+    override suspend fun <C : Command, E> dispatch(command: C): Triple<E, List<DomainEvent>, Metadata> {
         val handler = findHandler(command::class.java) as? CommandHandler<C, E>
             ?: throw IllegalArgumentException("No handler registered for command: ${command::class.java.name}")
         return handler.handle(command)

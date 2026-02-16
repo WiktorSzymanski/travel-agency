@@ -1,11 +1,11 @@
 val mongoVersion = "5.1.0"
-val springBootVersion = "3.2.2"
+val springBootVersion = "4.0.2"
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization") version "2.1.10"
     kotlin("plugin.spring") version "2.1.10"
-    id("org.springframework.boot") version "3.2.2"
-    id("io.spring.dependency-management") version "1.1.4"
+    id("org.springframework.boot") version "4.0.2"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 group = "pl.szymanski.wiktor"
@@ -21,12 +21,15 @@ dependencies {
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+
     // MongoDB
-    implementation("org.mongodb:mongodb-driver-kotlin-coroutine:${mongoVersion}")
-    implementation("org.mongodb:bson-kotlinx:${mongoVersion}")
+    implementation("org.mongodb:mongodb-driver-kotlin-coroutine:$mongoVersion")
+    implementation("org.mongodb:bson-kotlinx:$mongoVersion")
 
     // Kafka and JSON serialization
     implementation("org.apache.kafka:kafka-clients:3.7.0")

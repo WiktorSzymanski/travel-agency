@@ -2,17 +2,18 @@ package pl.szymanski.wiktor.ta.infrastructure.repository
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
-import com.mongodb.kotlin.client.coroutine.MongoClient
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Repository
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
+import pl.szymanski.wiktor.ta.infrastructure.dto.AttractionDto
 import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
@@ -23,32 +24,42 @@ class MongoAttractionRepository(
 ) : AttractionRepository, AttractionQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<Attraction>("attractions")
+        .getCollection<AttractionDto.Present>("attractions")
 
-    override suspend fun findById(id: AttractionId): Attraction {
+    override suspend fun findById(id: AttractionId): Pair<Attraction, Long> {
         if (id !is AttractionId.Present) throw NoSuchElementException("Attraction not found: $id")
 
-        return collection
+        val entity = collection
             .find(Filters.eq("id", id.value.toString()))
             .firstOrNull()
             ?: throw NoSuchElementException("Attraction not found: $id")
+        return entity.toDomain() to entity.version
     }
 
     override suspend fun create(entity: Attraction, event: AttractionEvent) {
-        collection.insertOne(entity)
+        collection.insertOne(AttractionDto.fromDomain(entity) as AttractionDto.Present)
     }
 
-    override suspend fun save(entity: Attraction, event: AttractionEvent) {
-        this.save(entity)
+    override suspend fun save(entity: Attraction, event: AttractionEvent, metadata: Metadata) {
+        val result = collection.replaceOne(
+            Filters.and(
+                Filters.eq("id", entity.id.value.toString()),
+                Filters.eq("version", metadata.revision - 1)
+            ),
+            AttractionDto.fromDomain(entity, metadata.revision) as AttractionDto.Present,
+            ReplaceOptions().upsert(false)
+        )
+
+        if (result.matchedCount == 0L) {
+            throw IllegalStateException(
+                "Optimistic locking failure: Attraction ${entity.id} version mismatch. " +
+                "Expected version ${metadata.revision - 1} but document was modified by another transaction."
+            )
+        }
     }
 
     override suspend fun save(entity: Attraction) {
-        val id = (entity.id as AttractionId.Present).value.toString()
-        collection.replaceOne(
-            Filters.eq("id", id),
-            entity,
-            ReplaceOptions().upsert(true)
-        )
+        throw UnsupportedOperationException("Not implemented in this approach")
     }
 
     override suspend fun update(projectionUpdate: ProjectionUpdate) {
@@ -59,6 +70,7 @@ class MongoAttractionRepository(
         return collection
             .find(Filters.eq("status", status.toString()))
             .toList()
+            .map { it.toDomain() }
     }
 
     override suspend fun findByLocationAndDate(
@@ -67,10 +79,10 @@ class MongoAttractionRepository(
     ): List<Attraction> {
         return collection.find(
             Filters.and(
-                Filters.eq("location", location.toString()),
-                dateRange.from?.let { Filters.gte("date", it) },
-                dateRange.till?.let { Filters.lte("date", it) }
+                Filters.eq("location", location.name),
+                dateRange.from?.let { Filters.gte("date", it.toString()) },
+                dateRange.till?.let { Filters.lte("date", it.toString()) }
             )
-        ).toList()
+        ).toList().map { it.toDomain() }
     }
 }

@@ -1,6 +1,11 @@
 package pl.szymanski.wiktor.ta.infrastructure
 
-import org.springframework.context.annotation.Bean
+import jakarta.annotation.PostConstruct
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
@@ -19,19 +24,32 @@ class OfferMakerImpl(
     travelOfferQueryRepository: TravelOfferQueryRepository,
     commuteQueryRepository: CommuteQueryRepository,
     accommodationQueryRepository: AccommodationQueryRepository,
-    attractionQueryRepository: AttractionQueryRepository
+    attractionQueryRepository: AttractionQueryRepository,
+    @Value("\${generator.creation-window-seconds:3}")
+    creationWindowSeconds: Long
 ) : OfferMakerLogic(
-    travelOfferQueryRepository, commuteQueryRepository, accommodationQueryRepository, attractionQueryRepository
+    travelOfferQueryRepository, commuteQueryRepository, accommodationQueryRepository, attractionQueryRepository, creationWindowSeconds
 ) {
-    suspend fun subscribe() {
-        eventBus.subscribe<CommuteCreatedEvent> {
-            onCommuteCreatedEvent(it)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @PostConstruct
+    fun init() {
+        scope.launch {
+            eventBus.subscribe<CommuteCreatedEvent> {
+                onCommuteCreatedEvent(it)
+            }
         }
-        eventBus.subscribe<AccommodationCreatedEvent> {
-            onAccommodationCreatedEvent(it)
+
+        scope.launch {
+            eventBus.subscribe<AccommodationCreatedEvent> {
+                onAccommodationCreatedEvent(it)
+            }
         }
-        eventBus.subscribe<AttractionCreatedEvent> {
-            onAttractionCreatedEvent(it)
+
+        scope.launch {
+            eventBus.subscribe<AttractionCreatedEvent> {
+                onAttractionCreatedEvent(it)
+            }
         }
     }
 }

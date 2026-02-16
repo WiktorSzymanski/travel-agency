@@ -5,15 +5,16 @@ import com.mongodb.client.model.ReplaceOptions
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Repository
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.infrastructure.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
+import pl.szymanski.wiktor.ta.infrastructure.dto.AccommodationDto
 import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
@@ -25,29 +26,40 @@ class MongoAccommodationRepository(
 ) : AccommodationRepository, AccommodationQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<Accommodation>("accommodations")
+        .getCollection<AccommodationDto>("accommodations")
 
-    override suspend fun findById(id: AccommodationId): Accommodation {
-        return collection
+    override suspend fun findById(id: AccommodationId): Pair<Accommodation, Long> {
+        val entity = collection
             .find(Filters.eq("id", id.value.toString()))
             .firstOrNull()
             ?: throw NoSuchElementException("Accommodation not found: $id")
+        return entity.toDomain() to entity.version
     }
 
     override suspend fun create(entity: Accommodation, event: AccommodationEvent) {
-        collection.insertOne(entity)
+        collection.insertOne(AccommodationDto.fromDomain(entity))
     }
 
-    override suspend fun save(entity: Accommodation, event: AccommodationEvent) {
-        this.save(entity)
+    override suspend fun save(entity: Accommodation, event: AccommodationEvent, metadata: Metadata) {
+        val result = collection.replaceOne(
+            Filters.and(
+                Filters.eq("id", entity.id.value.toString()),
+                Filters.eq("version", metadata.revision - 1)
+            ),
+            AccommodationDto.fromDomain(entity, metadata.revision),
+            ReplaceOptions().upsert(false)
+        )
+
+        if (result.matchedCount == 0L) {
+            throw IllegalStateException(
+                "Optimistic locking failure: Accommodation ${entity.id} version mismatch. " +
+                "Expected version ${metadata.revision - 1} but document was modified by another transaction."
+            )
+        }
     }
 
     override suspend fun save(entity: Accommodation) {
-        collection.replaceOne(
-            Filters.eq("id", entity.id.value.toString()),
-            entity,
-            ReplaceOptions().upsert(true)
-        )
+        throw UnsupportedOperationException("Not implemented in this approach")
     }
 
     override suspend fun update(projectionUpdate: ProjectionUpdate) {
@@ -55,7 +67,7 @@ class MongoAccommodationRepository(
     }
 
     override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> {
-        return collection.find(Filters.eq("status", status.name)).toList()
+        return collection.find(Filters.eq("status", status.name)).toList().map { it.toDomain() }
     }
 
     override suspend fun findByLocationAndDate(
@@ -64,11 +76,11 @@ class MongoAccommodationRepository(
     ): List<Accommodation> {
         return collection.find(
             Filters.and(
-                Filters.eq("location", location.toString()),
-                dateRange.from?.let { Filters.gte("rent.from", it) },
-                dateRange.till?.let { Filters.lte("rent.from", it) }
+                Filters.eq("location", location.name),
+                dateRange.from?.let { Filters.gte("rent.from", it.toString()) },
+                dateRange.till?.let { Filters.lte("rent.from", it.toString()) }
             )
-        ).toList()
+        ).toList().map { it.toDomain() }
     }
 
     override suspend fun findByLocationAndRentContainsDate(
@@ -77,11 +89,11 @@ class MongoAccommodationRepository(
     ): List<Accommodation> {
         return collection.find(
             Filters.and(
-                Filters.eq("location", location.toString()),
-                Filters.gte("rent.from", date),
-                Filters.lte("rent.till", date)
+                Filters.eq("location", location.name),
+                Filters.lte("rent.from", date.toString()),
+                Filters.gte("rent.till", date.toString())
             )
-        ).toList()
+        ).toList().map { it.toDomain() }
     }
 
     override suspend fun countTravelOfferByLocation(

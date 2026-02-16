@@ -16,7 +16,7 @@ database:
 generator:
   interval-seconds: 10
   in-advance-seconds: 30
-  creation-window-seconds: 10
+  creation-window-seconds: 15
   accommodations:
     # London Accommodations (15 total)
     - name: "Hotel"

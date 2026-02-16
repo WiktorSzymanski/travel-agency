@@ -2,6 +2,7 @@ package pl.szymanski.wiktor.ta.infrastructure.dto
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.Rent
+import java.time.LocalDateTime
 
 @Serializable
 data class RentDto(
@@ -15,4 +16,10 @@ data class RentDto(
                 till = rent.till.toString(),
             )
     }
+
+    fun toDomain(): Rent =
+        Rent(
+            from = LocalDateTime.parse(from),
+            till = LocalDateTime.parse(till)
+        )
 }

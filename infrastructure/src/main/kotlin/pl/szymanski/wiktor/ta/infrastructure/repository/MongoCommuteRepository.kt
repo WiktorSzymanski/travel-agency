@@ -5,18 +5,18 @@ import com.mongodb.client.model.ReplaceOptions
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Repository
+import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
-import pl.szymanski.wiktor.ta.infrastructure.dto.CommuteStatisticDto
+import pl.szymanski.wiktor.ta.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.infrastructure.dto.CommuteDto
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
-import java.time.LocalDateTime
 
 @Repository
 class MongoCommuteRepository(
@@ -24,29 +24,40 @@ class MongoCommuteRepository(
 ) : CommuteRepository, CommuteQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<Commute>("commutes")
+        .getCollection<CommuteDto>("commutes")
 
-    override suspend fun findById(id: CommuteId): Commute {
-        return collection
+    override suspend fun findById(id: CommuteId): Pair<Commute, Long> {
+        val entity = collection
             .find(Filters.eq("id", id.value.toString()))
             .firstOrNull()
             ?: throw NoSuchElementException("Commute not found: $id")
+        return entity.toDomain() to entity.version
     }
 
     override suspend fun create(entity: Commute, event: CommuteEvent) {
-        collection.insertOne(entity)
+        collection.insertOne(CommuteDto.fromDomain(entity))
     }
 
-    override suspend fun save(entity: Commute, event: CommuteEvent) {
-        this.save(entity)
+    override suspend fun save(entity: Commute, event: CommuteEvent, metadata: Metadata) {
+        val result = collection.replaceOne(
+            Filters.and(
+                Filters.eq("id", entity.id.value.toString()),
+                Filters.eq("version", metadata.revision - 1)
+            ),
+            CommuteDto.fromDomain(entity, metadata.revision),
+            ReplaceOptions().upsert(false)
+        )
+
+        if (result.matchedCount == 0L) {
+            throw IllegalStateException(
+                "Optimistic locking failure: Commute ${entity.id} version mismatch. " +
+                "Expected version ${metadata.revision - 1} but document was modified by another transaction."
+            )
+        }
     }
 
     override suspend fun save(entity: Commute) {
-        collection.replaceOne(
-            Filters.eq("id", entity.id.value.toString()),
-            entity,
-            ReplaceOptions().upsert(true)
-        )
+        throw UnsupportedOperationException("Not implemented in this approach")
     }
 
     override suspend fun update(projectionUpdate: ProjectionUpdate) {
@@ -54,7 +65,7 @@ class MongoCommuteRepository(
     }
 
     override suspend fun findAllByStatus(status: CommuteStatusEnum): List<Commute> {
-        return collection.find(Filters.eq("status", status.name)).toList()
+        return collection.find(Filters.eq("status", status.name)).toList().map { it.toDomain() }
     }
 
     override suspend fun findByLocationAndArrivalDate(
@@ -63,10 +74,10 @@ class MongoCommuteRepository(
     ): List<Commute> {
         return collection.find(
             Filters.and(
-                Filters.eq("location", location.toString()),
-                dateRange.from?.let { Filters.gte("departure.time", it) },
-                dateRange.till?.let { Filters.lte("departure.time", it) }
+                Filters.eq("arrival.location", location.name),
+                dateRange.from?.let { Filters.gte("arrival.time", it.toString()) },
+                dateRange.till?.let { Filters.lte("arrival.time", it.toString()) }
             )
-        ).toList()
+        ).toList().map { it.toDomain() }
     }
 }

@@ -2,6 +2,8 @@ package pl.szymanski.wiktor.ta.infrastructure.dto
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.LocationEnum
+import java.time.LocalDateTime
 
 @Serializable
 data class LocationAndTimeDto(
@@ -15,4 +17,10 @@ data class LocationAndTimeDto(
                 time = locationAndTime.time.toString(),
             )
     }
+
+    fun toDomain(): LocationAndTime =
+        LocationAndTime(
+            location = LocationEnum.valueOf(location),
+            time = LocalDateTime.parse(time)
+        )
 }

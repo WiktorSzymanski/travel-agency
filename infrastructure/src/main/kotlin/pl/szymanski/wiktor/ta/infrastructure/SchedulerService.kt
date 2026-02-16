@@ -18,9 +18,9 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.AccommodationRepository
+import pl.szymanski.wiktor.ta.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
 import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
@@ -69,18 +69,23 @@ class SchedulerService(
             .generate()
             .forEach {
                 val (entity, events) = commandBus.dispatch<AccommodationCommand, Accommodation>(it.command)
-                accommodationRepository.save(entity, events[0] as AccommodationEvent)
-                launch {
-                    eventBus.publishAtGivenTime(
-                        EventEnvelope(
-                            AccommodationDateMetEvent(
-                                accommodationId = entity.id,
-                            ),
-                            metadata = Metadata(UUID.randomUUID(), 0)
-                        ),
-                        date = entity.rent.from
+                accommodationRepository.create(entity, events[0] as AccommodationEvent)
+
+                eventBus.publish(
+                    EventEnvelope(
+                        events[0],
+                        Metadata(UUID.randomUUID(), 0)
                     )
-                }
+                )
+                eventBus.publishAtGivenTime(
+                    EventEnvelope(
+                        AccommodationDateMetEvent(
+                            accommodationId = entity.id,
+                        ),
+                        metadata = Metadata(UUID.randomUUID(), 0)
+                    ),
+                    date = entity.rent.from
+                )
             }
     }
 
@@ -91,18 +96,23 @@ class SchedulerService(
             .generate()
             .forEach {
                 val (entity, events) = commandBus.dispatch<AttractionCommand, Attraction>(it.command)
-                attractionRepository.save(entity, events[0] as AttractionEvent)
-                launch {
-                    eventBus.publishAtGivenTime(
-                        EventEnvelope(
-                            AttractionDateMetEvent(
-                                attractionId = entity.id,
-                            ),
-                            metadata = Metadata(UUID.randomUUID(), 0)
-                        ),
-                        date = entity.date
+                attractionRepository.create(entity, events[0] as AttractionEvent)
+
+                eventBus.publish(
+                    EventEnvelope(
+                        events[0],
+                        Metadata(UUID.randomUUID(), 0)
                     )
-                }
+                )
+                eventBus.publishAtGivenTime(
+                    EventEnvelope(
+                        AttractionDateMetEvent(
+                            attractionId = entity.id,
+                        ),
+                        metadata = Metadata(UUID.randomUUID(), 0)
+                    ),
+                    date = entity.date
+                )
             }
     }
 
@@ -113,18 +123,23 @@ class SchedulerService(
             .generate()
             .forEach {
                 val (entity, events) = commandBus.dispatch<CommuteCommand, Commute>(it.command)
-                commuteRepository.save(entity, events[0] as CommuteEvent)
-                launch {
-                    eventBus.publishAtGivenTime(
-                        EventEnvelope(
-                            CommuteDateMetEvent(
-                                commuteId = entity.id,
-                            ),
-                            metadata = Metadata(UUID.randomUUID(), 0)
-                        ),
-                        date = entity.departure.time
+                commuteRepository.create(entity, events[0] as CommuteEvent)
+
+                eventBus.publish(
+                    EventEnvelope(
+                        events[0],
+                        Metadata(UUID.randomUUID(), 0)
                     )
-                }
+                )
+                eventBus.publishAtGivenTime(
+                    EventEnvelope(
+                        CommuteDateMetEvent(
+                            commuteId = entity.id,
+                        ),
+                        metadata = Metadata(UUID.randomUUID(), 0)
+                    ),
+                    date = entity.departure.time
+                )
             }
     }
 }

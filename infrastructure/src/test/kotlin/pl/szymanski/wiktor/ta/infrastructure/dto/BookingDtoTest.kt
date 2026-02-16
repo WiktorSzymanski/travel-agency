@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.infrastructure.dto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
@@ -10,6 +11,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
+import java.time.LocalDateTime
 import java.util.UUID
 
 class BookingDtoTest {
@@ -29,9 +31,9 @@ class BookingDtoTest {
             message = "processing",
         )
 
-        val dto = BookingDto.fromDomain(booking)
+        val dto = BookingDto.fromDomain(booking, version = 4L)
 
-        assertEquals(booking.id.toString(), dto.id)
+        assertEquals(booking.id.value.toString(), dto.id)
         assertEquals(userId.toString(), dto.userId)
         assertEquals(TravelOfferDto.fromDomain(offer), dto.travelOffer)
         requireNotNull(dto.seat)
@@ -40,6 +42,7 @@ class BookingDtoTest {
         assertEquals("PROCESSING", dto.status)
         assertEquals("processing", dto.message)
         assertEquals(booking.timestamp.toString(), dto.timestamp)
+        assertEquals(4L, dto.version)
     }
 
     @Test
@@ -62,4 +65,95 @@ class BookingDtoTest {
 
         assertEquals("Seat Any cannot be serialized to DTO, it should be Picked by now", ex.message)
     }
+
+    @Test
+    fun `toDomain correctly converts all fields with picked seat`() {
+        val bookingId = UUID.randomUUID()
+        val userId = UUID.randomUUID()
+        val commuteId = UUID.randomUUID()
+        val accommodationId = UUID.randomUUID()
+        val attractionId = UUID.randomUUID()
+        val timestamp = LocalDateTime.of(2025, 6, 15, 10, 30)
+
+        val dto = BookingDto(
+            id = bookingId.toString(),
+            userId = userId.toString(),
+            travelOffer = TravelOfferDto(
+                commuteId = commuteId.toString(),
+                accommodationId = accommodationId.toString(),
+                attractionId = attractionId.toString()
+            ),
+            seat = SeatDto("C", "5"),
+            status = "BOOKED",
+            message = "Booking confirmed",
+            timestamp = timestamp.toString(),
+            version = 8L
+        )
+
+        val booking = dto.toDomain()
+
+        assertEquals(bookingId, booking.id.value)
+        assertEquals(userId, booking.userId)
+        assertEquals(commuteId, booking.travelOffer.commuteId.value)
+        assertEquals(accommodationId, booking.travelOffer.accommodationId.value)
+        assertEquals(attractionId, booking.travelOffer.attractionId.value)
+        assertEquals(Seat.Picked("C", "5"), booking.seat)
+        assertEquals(BookingState.BOOKED, booking.status)
+        assertEquals("Booking confirmed", booking.message)
+        assertEquals(timestamp, booking.timestamp)
+    }
+
+    @Test
+    fun `toDomain with null seat creates Seat Any`() {
+        val dto = BookingDto(
+            id = UUID.randomUUID().toString(),
+            userId = UUID.randomUUID().toString(),
+            travelOffer = TravelOfferDto(
+                commuteId = UUID.randomUUID().toString(),
+                accommodationId = UUID.randomUUID().toString(),
+                attractionId = UUID.randomUUID().toString()
+            ),
+            seat = null,
+            status = "NEW",
+            message = null,
+            timestamp = LocalDateTime.now().toString()
+        )
+
+        val booking = dto.toDomain()
+
+        assertEquals(Seat.Any, booking.seat)
+        assertEquals(BookingState.NEW, booking.status)
+        assertNull(booking.message)
+    }
+
+    @Test
+    fun `roundtrip fromDomain and toDomain preserves all data`() {
+        val userId = UUID.randomUUID()
+        val original = Booking(
+            userId = userId,
+            travelOffer = TravelOffer(
+                CommuteId.generate(),
+                AccommodationId.generate(),
+                AttractionId.generate()
+            ),
+            seat = Seat.Picked("D", "10"),
+            status = BookingState.PROCESSING,
+            message = "Test message",
+            timestamp = LocalDateTime.of(2025, 12, 1, 15, 45)
+        )
+
+        val dto = BookingDto.fromDomain(original, version = 15L)
+        val restored = dto.toDomain()
+
+        assertEquals(original.userId, restored.userId)
+        assertEquals(original.travelOffer.commuteId.value, restored.travelOffer.commuteId.value)
+        assertEquals(original.travelOffer.accommodationId.value, restored.travelOffer.accommodationId.value)
+        assertEquals(original.travelOffer.attractionId.value, restored.travelOffer.attractionId.value)
+        assertEquals(original.seat, restored.seat)
+        assertEquals(original.status, restored.status)
+        assertEquals(original.message, restored.message)
+        assertEquals(original.timestamp, restored.timestamp)
+    }
 }
+
+

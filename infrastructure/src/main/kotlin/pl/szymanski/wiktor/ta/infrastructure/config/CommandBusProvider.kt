@@ -8,10 +8,10 @@ import pl.szymanski.wiktor.ta.commandhandler.AccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.AttractionCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.BookingCommandHandler
 import pl.szymanski.wiktor.ta.commandhandler.CommuteCommandHandler
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.domain.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
-import pl.szymanski.wiktor.ta.domain.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.AccommodationRepository
+import pl.szymanski.wiktor.ta.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.CommuteRepository
 
 @Configuration
 class CommandBusConfiguration {
