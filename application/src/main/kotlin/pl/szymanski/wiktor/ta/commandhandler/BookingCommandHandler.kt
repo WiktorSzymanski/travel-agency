@@ -12,7 +12,7 @@ import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
 import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.event.BookingEvent
-import pl.szymanski.wiktor.ta.domain.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.BookingRepository
 import java.util.UUID
 
 class BookingCommandHandler(

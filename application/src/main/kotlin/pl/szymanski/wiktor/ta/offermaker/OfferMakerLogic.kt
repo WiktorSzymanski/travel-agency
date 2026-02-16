@@ -26,7 +26,8 @@ open class OfferMakerLogic(
     suspend fun onCommuteCreatedEvent(envelope: EventEnvelope<CommuteCreatedEvent>) {
         val commute = Commute.fromEvents(listOf(envelope.event))
 
-        if (commute.departure.time.isBefore(LocalDateTime.now()))
+        val now = LocalDateTime.now()
+        if (commute.departure.time.isBefore(now))
             return
 
         matchWithCommute(commute)

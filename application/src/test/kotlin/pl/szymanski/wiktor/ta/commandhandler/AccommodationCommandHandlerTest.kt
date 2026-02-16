@@ -17,7 +17,7 @@ import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.repository.AccommodationRepository
+import pl.szymanski.wiktor.ta.repository.AccommodationRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test

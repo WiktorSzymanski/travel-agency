@@ -13,7 +13,7 @@ interface AccommodationQueryRepository {
 
     suspend fun update(projectionUpdate: ProjectionUpdate)
 
-    suspend fun findById(id: AccommodationId): Accommodation
+    suspend fun findById(id: AccommodationId): Pair<Accommodation, Long>
 
     suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation>
 

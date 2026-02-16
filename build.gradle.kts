@@ -6,7 +6,7 @@ val ktlintVersion: String by project
 
 plugins {
     kotlin("jvm") version "2.1.10"
-    id("org.jlleitschuh.gradle.ktlint") version "13.0.0-rc.1"
+    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.6"
     id("org.jetbrains.kotlinx.kover") version "0.9.3"
 }
@@ -29,12 +29,8 @@ subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
     apply(plugin = "org.jetbrains.kotlinx.kover")
 
-    dependencies {
-        implementation("ch.qos.logback:logback-classic:$logbackVersion")
-    }
-
     ktlint {
-        version.set("1.2.1")
+        version.set("1.5.0")
         verbose.set(true)
         android.set(false)
         outputToConsole.set(true)
@@ -51,6 +47,7 @@ subprojects {
 
     tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
         ignoreFailures = true
+        jvmTarget = "21"
         reports {
             sarif {
                 required.set(true)
