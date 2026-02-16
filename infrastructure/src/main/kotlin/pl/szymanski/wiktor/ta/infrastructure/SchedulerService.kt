@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure
 
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled

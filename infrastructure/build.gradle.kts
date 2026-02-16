@@ -33,6 +33,7 @@ dependencies {
 
     // Kafka and JSON serialization
     implementation("org.apache.kafka:kafka-clients:3.7.0")
+    implementation("org.springframework.kafka:spring-kafka")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
