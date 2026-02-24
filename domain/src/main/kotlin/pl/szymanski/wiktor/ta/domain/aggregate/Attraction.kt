@@ -37,7 +37,7 @@ data class Attraction(
             location: LocationEnum,
             date: LocalDateTime,
             capacity: Int,
-        ): Pair<Attraction, List<AttractionCreatedEvent>> {
+        ): Pair<Attraction, AttractionCreatedEvent> {
             val attraction =
                 Attraction(
                     name = name,
@@ -55,7 +55,7 @@ data class Attraction(
                     capacity = capacity,
                 )
 
-            return attraction to listOf(event)
+            return attraction to event
         }
 
         fun fromEvents(events: List<AttractionEvent>): Attraction {

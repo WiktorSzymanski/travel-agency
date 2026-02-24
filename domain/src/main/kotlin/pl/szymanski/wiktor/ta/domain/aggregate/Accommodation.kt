@@ -32,7 +32,7 @@ data class Accommodation(
             name: String,
             location: LocationEnum,
             rent: Rent,
-        ): Pair<Accommodation, List<AccommodationCreatedEvent>> {
+        ): Pair<Accommodation, AccommodationCreatedEvent> {
             val accommodation =
                 Accommodation(
                     name = name,
@@ -48,7 +48,7 @@ data class Accommodation(
                     rent = rent,
                 )
 
-            return accommodation to listOf(event)
+            return accommodation to event
         }
     
         fun fromEvents(events: List<AccommodationEvent>): Accommodation {

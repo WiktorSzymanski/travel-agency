@@ -11,11 +11,13 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
+import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.infrastructure.dto.AccommodationDto
-import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 import java.time.LocalDateTime
@@ -36,11 +38,11 @@ class MongoAccommodationRepository(
         return entity.toDomain() to entity.version
     }
 
-    override suspend fun create(entity: Accommodation, event: AccommodationEvent) {
+    override suspend fun create(entity: Accommodation, metadata: Metadata) {
         collection.insertOne(AccommodationDto.fromDomain(entity))
     }
 
-    override suspend fun save(entity: Accommodation, event: AccommodationEvent, metadata: Metadata) {
+    override suspend fun save(entity: Accommodation, metadata: Metadata) {
         val result = collection.replaceOne(
             Filters.and(
                 Filters.eq("id", entity.id.value.toString()),

@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.generator
 
-import pl.szymanski.wiktor.ta.command.CreateCommuteCommand
+import pl.szymanski.wiktor.ta.commands.commute.create.CreateCommuteCommand
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
@@ -45,7 +45,7 @@ class CommuteGenerator(
             ),
             seats = template.seats,
         )
-        val event = CommuteDateMetEvent(commuteId = id)
+        val event = CommuteDateMetEvent(commuteId = id, date = departureTime)
         return GeneratedResult(command, event, departureTime)
     }
 }

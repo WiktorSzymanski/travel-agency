@@ -1,41 +1,44 @@
 package pl.szymanski.wiktor.ta.eventHandlerLogic
 
-import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
-import pl.szymanski.wiktor.ta.command.BookingCommand
-import pl.szymanski.wiktor.ta.command.CancelBookingCommand
-import pl.szymanski.wiktor.ta.command.FailCancelBookingCommand
-import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
-import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.commands.booking.cancel.CancelBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.cancel.CancelBookingCommandHandler
+import pl.szymanski.wiktor.ta.commands.booking.failCancel.FailCancelBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.failCancel.FailCancelBookingCommandHandler
+import pl.szymanski.wiktor.ta.commands.booking.processCancel.ProcessCancelBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.processCancel.ProcessCancelBookingCommandHandler
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaCompletedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaFailedEvent
 import pl.szymanski.wiktor.ta.event.BookingCancelSagaStartedEvent
 
-class BookingCancelSagaEventHandleLogic(
-    private val commandBus: CommandBus
-) {
-    suspend fun onStartedEvent(envelope: EventEnvelope<BookingCancelSagaStartedEvent>) =
-        commandBus.dispatch<BookingCommand, Booking>(
-            ProcessCancelBookingCommand(
-                envelope.event.bookingId,
-                envelope.metadata.correlationId,
-            )
-        )
 
-    suspend fun onCompletedEvent(envelope: EventEnvelope<BookingCancelSagaCompletedEvent>) =
-        commandBus.dispatch<BookingCommand, Booking>(
-            CancelBookingCommand(
-                envelope.event.bookingId,
-                envelope.metadata.correlationId,
-            )
+suspend fun onBookingCancelSagaStartedEvent(
+    processCancelBookingCommandHandler: ProcessCancelBookingCommandHandler,
+    envelope: EventEnvelope<BookingCancelSagaStartedEvent>
+) = processCancelBookingCommandHandler.handle(
+    ProcessCancelBookingCommand(
+        envelope.metadata.correlationId,
+        envelope.event.bookingId,
         )
+    )
 
-    suspend fun onFailedEvent(envelope: EventEnvelope<BookingCancelSagaFailedEvent>) =
-        commandBus.dispatch<BookingCommand, Booking>(
-            FailCancelBookingCommand(
-                bookingId = envelope.event.bookingId,
-                correlationId = envelope.metadata.correlationId,
-                message = envelope.event.message,
-            )
+suspend fun onBookingCancelSagaCompletedEvent(
+    cancelBookingCommandHandler: CancelBookingCommandHandler,
+    envelope: EventEnvelope<BookingCancelSagaCompletedEvent>
+) = cancelBookingCommandHandler.handle(
+        CancelBookingCommand(
+            envelope.metadata.correlationId,
+            envelope.event.bookingId,
         )
-}
+    )
+
+suspend fun onBookingCancelSagaFailedEvent(
+    failCancelBookingCommandHandler: FailCancelBookingCommandHandler,
+    envelope: EventEnvelope<BookingCancelSagaFailedEvent>
+) = failCancelBookingCommandHandler.handle(
+        FailCancelBookingCommand(
+            bookingId = envelope.event.bookingId,
+            correlationId = envelope.metadata.correlationId,
+            message = envelope.event.message,
+        )
+    )

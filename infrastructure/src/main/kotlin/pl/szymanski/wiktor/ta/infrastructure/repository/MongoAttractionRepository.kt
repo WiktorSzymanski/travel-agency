@@ -10,11 +10,13 @@ import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.repository.AttractionRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.infrastructure.dto.AttractionDto
-import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 
@@ -36,11 +38,11 @@ class MongoAttractionRepository(
         return entity.toDomain() to entity.version
     }
 
-    override suspend fun create(entity: Attraction, event: AttractionEvent) {
+    override suspend fun create(entity: Attraction, metadata: Metadata) {
         collection.insertOne(AttractionDto.fromDomain(entity) as AttractionDto.Present)
     }
 
-    override suspend fun save(entity: Attraction, event: AttractionEvent, metadata: Metadata) {
+    override suspend fun save(entity: Attraction, metadata: Metadata) {
         val result = collection.replaceOne(
             Filters.and(
                 Filters.eq("id", entity.id.value.toString()),

@@ -14,11 +14,8 @@ import org.apache.kafka.common.serialization.StringSerializer
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
-import pl.szymanski.wiktor.ta.infrastructure.repository.DelayedEvent
-import pl.szymanski.wiktor.ta.infrastructure.repository.DelayedEventRepository
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.Properties
 import java.util.UUID
 import kotlin.reflect.KClass
@@ -27,7 +24,6 @@ import kotlin.reflect.KClass
 class KafkaEventBus(
     private val producer: KafkaProducer<String, String>,
     private val consumerFactory: (groupId: String) -> KafkaConsumer<String, String>,
-    private val delayedEventRepository: DelayedEventRepository,
     private val topicResolver: (String) -> String = { type -> "events.$type" },
     private val json: Json = Json { ignoreUnknownKeys = true }
 ) : EventBus {
@@ -53,17 +49,7 @@ class KafkaEventBus(
     }
 
     override suspend fun publishAtGivenTime(event: EventEnvelope<out PublishableEvent>, date: LocalDateTime) {
-        val topic = topicResolver(event.eventType)
-        val payload = serializePayload(event)
-
-        delayedEventRepository.save(
-            DelayedEvent(
-                payload = payload,
-                topic = topic,
-                key = event.metadata.correlationId.toString(),
-                scheduledAt = date
-            )
-        )
+        throw UnsupportedOperationException("Publishing events at a given time is not supported in this implementation")
     }
 
     override suspend fun <T : PublishableEvent> subscribe(

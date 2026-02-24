@@ -4,7 +4,7 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.LocalDateTimeRange
 
 interface CommuteQueryRepository {
     suspend fun save(entity: Commute)

@@ -10,11 +10,13 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
+import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
 import pl.szymanski.wiktor.ta.repository.CommuteRepository
 import pl.szymanski.wiktor.ta.infrastructure.dto.CommuteDto
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
-import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.CommuteQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 
@@ -34,11 +36,11 @@ class MongoCommuteRepository(
         return entity.toDomain() to entity.version
     }
 
-    override suspend fun create(entity: Commute, event: CommuteEvent) {
+    override suspend fun create(entity: Commute, metadata: Metadata) {
         collection.insertOne(CommuteDto.fromDomain(entity))
     }
 
-    override suspend fun save(entity: Commute, event: CommuteEvent, metadata: Metadata) {
+    override suspend fun save(entity: Commute, metadata: Metadata) {
         val result = collection.replaceOne(
             Filters.and(
                 Filters.eq("id", entity.id.value.toString()),

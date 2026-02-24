@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.generator
 
-import pl.szymanski.wiktor.ta.command.CreateAccommodationCommand
+import pl.szymanski.wiktor.ta.commands.accommodation.create.CreateAccommodationCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
@@ -42,7 +42,7 @@ class AccommodationGenerator(
                 till = tillTime,
             )
         )
-        val event = AccommodationDateMetEvent(accommodationId = id)
+        val event = AccommodationDateMetEvent(accommodationId = id, date = fromTime)
         return GeneratedResult(command, event, fromTime)
     }
 }

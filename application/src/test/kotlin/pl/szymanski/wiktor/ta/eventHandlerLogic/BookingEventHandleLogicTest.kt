@@ -18,7 +18,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
-import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
 import pl.szymanski.wiktor.ta.saga.BookingSaga
 import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
 import pl.szymanski.wiktor.ta.saga.SagaRepository

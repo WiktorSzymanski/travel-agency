@@ -43,7 +43,7 @@ data class Booking(
             userId: UUID,
             seat: Seat,
             travelOffer: TravelOffer,
-        ): Pair<Booking, List<BookingCreatedEvent>> {
+        ): Pair<Booking, BookingCreatedEvent> {
             val booking =
                 Booking(
                     userId = userId,
@@ -59,7 +59,7 @@ data class Booking(
                     seat = seat
                 )
 
-            return booking to listOf(event)
+            return booking to event
         }
 
         fun fromEvents(events: List<BookingEvent>): Booking {

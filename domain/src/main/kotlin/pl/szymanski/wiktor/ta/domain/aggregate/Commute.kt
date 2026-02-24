@@ -37,7 +37,7 @@ data class Commute(
             departure: LocationAndTime,
             arrival: LocationAndTime,
             seats: List<Seat>,
-        ): Pair<Commute, List<CommuteCreatedEvent>> {
+        ): Pair<Commute, CommuteCreatedEvent> {
             val commute =
                 Commute(
                     name = name,
@@ -55,7 +55,7 @@ data class Commute(
                     seats = seats,
                 )
 
-            return commute to listOf(event)
+            return commute to event
         }
 
         fun fromEvents(events: List<CommuteEvent>): Commute {

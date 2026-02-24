@@ -5,7 +5,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
-import pl.szymanski.wiktor.ta.offermaker.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import java.util.UUID
 
 interface AttractionQueryRepository {

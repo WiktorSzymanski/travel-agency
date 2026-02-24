@@ -7,10 +7,13 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import pl.szymanski.wiktor.ta.infrastructure.config.GeneratorConfig
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoDBConfig
 
-@SpringBootApplication(scanBasePackages = [
-    "pl.szymanski.wiktor.ta.bootstrap",
-    "pl.szymanski.wiktor.ta.infrastructure"
-])
+@SpringBootApplication(
+    scanBasePackages = [
+        "pl.szymanski.wiktor.ta.bootstrap",
+        "pl.szymanski.wiktor.ta.presentation",
+        "pl.szymanski.wiktor.ta.infrastructure",
+    ],
+)
 @EnableScheduling
 @EnableConfigurationProperties(GeneratorConfig::class, MongoDBConfig::class)
 class TravelAgencyApplication

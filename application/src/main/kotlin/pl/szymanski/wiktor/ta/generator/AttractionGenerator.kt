@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.generator
 
-import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
+import pl.szymanski.wiktor.ta.commands.attraction.create.CreateAttractionCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
@@ -34,7 +34,7 @@ class AttractionGenerator(
             date = date,
             capacity = template.capacity,
         )
-        val event = AttractionDateMetEvent(attractionId = id)
+        val event = AttractionDateMetEvent(attractionId = id, date = date)
         return GeneratedResult(command, event, date)
     }
 }

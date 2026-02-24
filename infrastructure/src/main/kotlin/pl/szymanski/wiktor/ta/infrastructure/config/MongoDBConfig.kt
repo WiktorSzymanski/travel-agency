@@ -3,6 +3,7 @@ package pl.szymanski.wiktor.ta.infrastructure.config
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.kotlin.client.coroutine.MongoClient
+import org.bson.UuidRepresentation
 import org.bson.codecs.configuration.CodecRegistries
 import org.bson.codecs.kotlinx.KotlinSerializerCodecProvider
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -27,6 +28,7 @@ class MongoConfiguration(
         )
         val settings = MongoClientSettings.builder()
             .applyConnectionString(ConnectionString(mongoConfig.uri))
+            .uuidRepresentation(UuidRepresentation.STANDARD)
             .codecRegistry(codecRegistry)
             .build()
         return MongoClient.create(settings)
