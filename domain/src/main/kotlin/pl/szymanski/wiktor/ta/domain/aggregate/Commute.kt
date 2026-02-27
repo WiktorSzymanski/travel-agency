@@ -33,6 +33,7 @@ data class Commute(
 ) {
     companion object {
         fun create(
+            id: CommuteId,
             name: String,
             departure: LocationAndTime,
             arrival: LocationAndTime,
@@ -40,6 +41,7 @@ data class Commute(
         ): Pair<Commute, CommuteCreatedEvent> {
             val commute =
                 Commute(
+                    id = id,
                     name = name,
                     departure = departure,
                     arrival = arrival,

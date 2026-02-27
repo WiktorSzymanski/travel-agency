@@ -51,7 +51,10 @@ data class CommuteDto(
             Seat.Any
         } else {
             val parts = seatStr.removePrefix("Picked(").removeSuffix(")").split(", ")
-            Seat.Picked(parts[0], parts[1])
+            Seat.Picked(
+                row = parts[0].substringAfter("="),
+                column = parts[1].substringAfter("="),
+            )
         }
     }
 }

@@ -4,23 +4,18 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
 import kotlinx.coroutines.flow.firstOrNull
 import org.springframework.stereotype.Repository
-import pl.szymanski.wiktor.ta.EventBus
-import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingEvent
-import pl.szymanski.wiktor.ta.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import pl.szymanski.wiktor.ta.infrastructure.dto.BookingDto
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.queryrepository.BookingQueryRepository
-import java.util.UUID
 
 @Repository
 class MongoBookingRepository(
     mongoConfiguration: MongoConfiguration
-) : BookingRepository, BookingQueryRepository {
+) : CommandRepository<Booking, BookingId>, BookingQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
         .getCollection<BookingDto>("booking")

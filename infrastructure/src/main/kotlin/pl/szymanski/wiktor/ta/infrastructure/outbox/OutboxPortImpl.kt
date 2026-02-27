@@ -4,10 +4,9 @@ import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
-import pl.szymanski.wiktor.ta.event.DateMetEvent
 import pl.szymanski.wiktor.ta.outbox.OutboxEntry
 import pl.szymanski.wiktor.ta.outbox.OutboxPort
-import pl.szymanski.wiktor.ta.repository.Repository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -15,7 +14,7 @@ import java.util.UUID
 class OutboxPortImpl(
     private val outboxRepository: OutboxRepositoryMongo,
 ) : OutboxPort {
-    override suspend fun <T> create(entity: T, event: PublishableEvent, metadata: Metadata, repository: Repository<T>) {
+    override suspend fun <T, R> create(entity: T, event: PublishableEvent, metadata: Metadata, repository: CommandRepository<T, R>) {
         val entry = OutboxEntry(EventEnvelope(event, metadata))
 
         // TODO: Transactional
@@ -23,11 +22,11 @@ class OutboxPortImpl(
         outboxRepository.save(entry)
     }
 
-    override suspend fun <T> save(
+    override suspend fun <T, R> save(
         entity: T,
         events: List<PublishableEvent>,
         metadata: Metadata,
-        repository: Repository<T>
+        repository: CommandRepository<T, R>
     ) {
         val entries = events
             .map { event -> EventEnvelope(event, metadata) }

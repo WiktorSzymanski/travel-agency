@@ -21,12 +21,12 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.util.UUID
 import kotlin.test.Test
 
 class BookingCommandHandlerTest {
-    private val bookingRepository = mockk<BookingRepository>()
+    private val bookingRepository = mockk<CommandRepository<Booking, BookingId>>()
     private val handler = BookingCommandHandler(bookingRepository)
     private val booking = mockk<Booking>(relaxed = true)
 

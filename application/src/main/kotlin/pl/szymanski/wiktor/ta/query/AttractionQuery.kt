@@ -6,7 +6,6 @@ import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
 class AttractionQuery (
     private val attractionRepository: AttractionQueryRepository,
 ) {
-    suspend fun getScheduledAttractions() {
+    suspend fun getScheduledAttractions() =
         attractionRepository.findAllByStatus(AttractionStatusEnum.SCHEDULED)
-    }
 }

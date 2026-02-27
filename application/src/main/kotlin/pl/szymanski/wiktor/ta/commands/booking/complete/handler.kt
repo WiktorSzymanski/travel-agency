@@ -3,10 +3,12 @@ package pl.szymanski.wiktor.ta.commands.booking.complete
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.commands.CommandHandler
 import pl.szymanski.wiktor.ta.outbox.OutboxPort
-import pl.szymanski.wiktor.ta.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
+import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 
 class CompleteBookingCommandHandler(
-    private val bookingRepository: BookingRepository,
+    private val bookingRepository: CommandRepository<Booking, BookingId>,
     private val outboxPort: OutboxPort
 ) : CommandHandler<CompleteBookingCommand> {
     override suspend fun handle(command: CompleteBookingCommand) {

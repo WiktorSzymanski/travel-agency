@@ -28,41 +28,46 @@ import pl.szymanski.wiktor.ta.commands.booking.failCancel.FailCancelBookingComma
 import pl.szymanski.wiktor.ta.commands.booking.process.ProcessBookingCommandHandler
 import pl.szymanski.wiktor.ta.commands.booking.processCancel.ProcessCancelBookingCommandHandler
 import pl.szymanski.wiktor.ta.commands.booking.requestCancel.BookingRequestCancelCommandHandler
+import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.outbox.OutboxPort
-import pl.szymanski.wiktor.ta.repository.AccommodationRepository
-import pl.szymanski.wiktor.ta.repository.AttractionRepository
-import pl.szymanski.wiktor.ta.repository.BookingRepository
-import pl.szymanski.wiktor.ta.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
+import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
+import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
+import pl.szymanski.wiktor.ta.domain.aggregate.Booking
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 
 @Configuration
 class CommandHandlerConfiguration {
-    @Bean fun createAccommodationCommandHandler(r: AccommodationRepository, o: OutboxPort) = CreateAccommodationCommandHandler(r, o)
-    @Bean fun bookAccommodationCommandHandler(r: AccommodationRepository, o: OutboxPort) = BookAccommodationCommandHandler(r, o)
-    @Bean fun cancelAccommodationBookingCommandHandler(r: AccommodationRepository, o: OutboxPort) = CancelAccommodationBookingCommandHandler(r, o)
-    @Bean fun expireAccommodationCommandHandler(r: AccommodationRepository, o: OutboxPort) = ExpireAccommodationCommandHandler(r, o)
-    @Bean fun compensateBookAccommodationCommandHandler(r: AccommodationRepository, o: OutboxPort) = CompensateBookAccommodationCommandHandler(r, o)
-    @Bean fun compensateCancelAccommodationBookingCommandHandler(r: AccommodationRepository, o: OutboxPort) = CompensateCancelAccommodationBookingCommandHandler(r, o)
+    @Bean fun createAccommodationCommandHandler(r: CommandRepository<Accommodation, AccommodationId>, o: OutboxPort) = CreateAccommodationCommandHandler(r, o)
+    @Bean fun bookAccommodationCommandHandler(r: CommandRepository<Accommodation, AccommodationId>, o: OutboxPort) = BookAccommodationCommandHandler(r, o)
+    @Bean fun cancelAccommodationBookingCommandHandler(r: CommandRepository<Accommodation, AccommodationId>, o: OutboxPort) = CancelAccommodationBookingCommandHandler(r, o)
+    @Bean fun expireAccommodationCommandHandler(r: CommandRepository<Accommodation, AccommodationId>, o: OutboxPort) = ExpireAccommodationCommandHandler(r, o)
+    @Bean fun compensateBookAccommodationCommandHandler(r: CommandRepository<Accommodation, AccommodationId>, o: OutboxPort) = CompensateBookAccommodationCommandHandler(r, o)
+    @Bean fun compensateCancelAccommodationBookingCommandHandler(r: CommandRepository<Accommodation, AccommodationId>, o: OutboxPort) = CompensateCancelAccommodationBookingCommandHandler(r, o)
 
-    @Bean fun createAttractionCommandHandler(r: AttractionRepository, o: OutboxPort) = CreateAttractionCommandHandler(r, o)
-    @Bean fun bookAttractionCommandHandler(r: AttractionRepository, o: OutboxPort) = BookAttractionCommandHandler(r, o)
-    @Bean fun cancelAttractionBookingCommandHandler(r: AttractionRepository, o: OutboxPort) = CancelAttractionBookingCommandHandler(r, o)
-    @Bean fun expireAttractionCommandHandler(r: AttractionRepository, o: OutboxPort) = ExpireAttractionCommandHandler(r, o)
-    @Bean fun compensateBookAttractionCommandHandler(r: AttractionRepository, o: OutboxPort) = CompensateBookAttractionCommandHandler(r, o)
-    @Bean fun compensateCancelAttractionBookingCommandHandler(r: AttractionRepository, o: OutboxPort) = CompensateCancelAttractionBookingCommandHandler(r, o)
+    @Bean fun createAttractionCommandHandler(r: CommandRepository<Attraction, AttractionId>, o: OutboxPort) = CreateAttractionCommandHandler(r, o)
+    @Bean fun bookAttractionCommandHandler(r: CommandRepository<Attraction, AttractionId>, o: OutboxPort) = BookAttractionCommandHandler(r, o)
+    @Bean fun cancelAttractionBookingCommandHandler(r: CommandRepository<Attraction, AttractionId>, o: OutboxPort) = CancelAttractionBookingCommandHandler(r, o)
+    @Bean fun expireAttractionCommandHandler(r: CommandRepository<Attraction, AttractionId>, o: OutboxPort) = ExpireAttractionCommandHandler(r, o)
+    @Bean fun compensateBookAttractionCommandHandler(r: CommandRepository<Attraction, AttractionId>, o: OutboxPort) = CompensateBookAttractionCommandHandler(r, o)
+    @Bean fun compensateCancelAttractionBookingCommandHandler(r: CommandRepository<Attraction, AttractionId>, o: OutboxPort) = CompensateCancelAttractionBookingCommandHandler(r, o)
 
-    @Bean fun createCommuteCommandHandler(r: CommuteRepository, o: OutboxPort) = CreateCommuteCommandHandler(r, o)
-    @Bean fun bookCommuteCommandHandler(r: CommuteRepository, o: OutboxPort) = BookCommuteCommandHandler(r, o)
-    @Bean fun cancelCommuteBookingCommandHandler(r: CommuteRepository, o: OutboxPort) = CancelCommuteBookingCommandHandler(r, o)
-    @Bean fun expireCommuteCommandHandler(r: CommuteRepository, o: OutboxPort) = ExpireCommuteCommandHandler(r, o)
-    @Bean fun compensateBookCommuteCommandHandler(r: CommuteRepository, o: OutboxPort) = CompensateBookCommuteCommandHandler(r, o)
-    @Bean fun compensateCancelCommuteBookingCommandHandler(r: CommuteRepository, o: OutboxPort) = CompensateCancelCommuteBookingCommandHandler(r, o)
+    @Bean fun createCommuteCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = CreateCommuteCommandHandler(r, o)
+    @Bean fun bookCommuteCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = BookCommuteCommandHandler(r, o)
+    @Bean fun cancelCommuteBookingCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = CancelCommuteBookingCommandHandler(r, o)
+    @Bean fun expireCommuteCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = ExpireCommuteCommandHandler(r, o)
+    @Bean fun compensateBookCommuteCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = CompensateBookCommuteCommandHandler(r, o)
+    @Bean fun compensateCancelCommuteBookingCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = CompensateCancelCommuteBookingCommandHandler(r, o)
 
-    @Bean fun createBookingCommandHandler(r: BookingRepository, o: OutboxPort) = CreateBookingCommandHandler(r, o)
-    @Bean fun processBookingCommandHandler(r: BookingRepository, o: OutboxPort) = ProcessBookingCommandHandler(r, o)
-    @Bean fun completeBookingCommandHandler(r: BookingRepository, o: OutboxPort) = CompleteBookingCommandHandler(r, o)
-    @Bean fun cancelBookingCommandHandler(r: BookingRepository, o: OutboxPort) = CancelBookingCommandHandler(r, o)
-    @Bean fun failBookingCommandHandler(r: BookingRepository, o: OutboxPort) = FailBookingCommandHandler(r, o)
-    @Bean fun failCancelBookingCommandHandler(r: BookingRepository, o: OutboxPort) = FailCancelBookingCommandHandler(r, o)
-    @Bean fun processCancelBookingCommandHandler(r: BookingRepository, o: OutboxPort) = ProcessCancelBookingCommandHandler(r, o)
-    @Bean fun bookingRequestCancelCommandHandler(r: BookingRepository, o: OutboxPort) = BookingRequestCancelCommandHandler(r, o)
+    @Bean fun createBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = CreateBookingCommandHandler(r, o)
+    @Bean fun processBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = ProcessBookingCommandHandler(r, o)
+    @Bean fun completeBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = CompleteBookingCommandHandler(r, o)
+    @Bean fun cancelBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = CancelBookingCommandHandler(r, o)
+    @Bean fun failBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = FailBookingCommandHandler(r, o)
+    @Bean fun failCancelBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = FailCancelBookingCommandHandler(r, o)
+    @Bean fun processCancelBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = ProcessCancelBookingCommandHandler(r, o)
+    @Bean fun bookingRequestCancelCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = BookingRequestCancelCommandHandler(r, o)
 }

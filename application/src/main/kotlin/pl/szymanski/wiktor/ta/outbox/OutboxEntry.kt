@@ -20,7 +20,7 @@ data class OutboxEntry (
         published = false,
         publishedAt = null,
         createdAt = Instant.now(),
-        processAfter = null
+        processAfter = LocalDateTime.now(),
     )
 
     constructor(event: EventEnvelope<PublishableEvent>, processAfter: LocalDateTime) : this(
@@ -29,6 +29,6 @@ data class OutboxEntry (
         published = false,
         publishedAt = null,
         createdAt = Instant.now(),
-        processAfter = null
+        processAfter = processAfter
     )
 }

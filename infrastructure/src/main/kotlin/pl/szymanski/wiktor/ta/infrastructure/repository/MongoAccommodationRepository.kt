@@ -2,30 +2,33 @@ package pl.szymanski.wiktor.ta.infrastructure.repository
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
-import org.springframework.stereotype.Repository
+import kotlinx.coroutines.withContext
+import org.springframework.stereotype.Component
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
-import pl.szymanski.wiktor.ta.domain.event.AccommodationCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.AccommodationEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
-import pl.szymanski.wiktor.ta.repository.AccommodationRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.infrastructure.dto.AccommodationDto
 import pl.szymanski.wiktor.ta.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.Page
+import pl.szymanski.wiktor.ta.Pageable
+import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.AccommodationDtoMongoRepository
 import pl.szymanski.wiktor.ta.queryrepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.time.LocalDateTime
 
-@Repository
+@Component
 class MongoAccommodationRepository(
-    mongoConfiguration: MongoConfiguration
-) : AccommodationRepository, AccommodationQueryRepository {
+    mongoConfiguration: MongoConfiguration,
+    private val accommodationDtoMongoRepository: AccommodationDtoMongoRepository
+) : CommandRepository<Accommodation, AccommodationId>, AccommodationQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
         .getCollection<AccommodationDto>("accommodations")
@@ -68,9 +71,12 @@ class MongoAccommodationRepository(
         throw UnsupportedOperationException("Not implemented in this approach")
     }
 
-    override suspend fun findAllByStatus(status: AccommodationStatusEnum): List<Accommodation> {
-        return collection.find(Filters.eq("status", status.name)).toList().map { it.toDomain() }
-    }
+    override suspend fun findAllByStatus(status: AccommodationStatusEnum, pageable: Pageable): Page<Accommodation> =
+        withContext(Dispatchers.IO) {
+            accommodationDtoMongoRepository
+                .findAccommodationDtosByStatus(status.toString(), pageable.toSpring())
+                .toApplication { it.toDomain() }
+        }
 
     override suspend fun findByLocationAndDate(
         location: LocationEnum,

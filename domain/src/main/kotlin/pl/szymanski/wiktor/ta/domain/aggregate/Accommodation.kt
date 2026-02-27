@@ -29,12 +29,14 @@ data class Accommodation(
 ) {
     companion object {
         fun create(
+            id: AccommodationId,
             name: String,
             location: LocationEnum,
             rent: Rent,
         ): Pair<Accommodation, AccommodationCreatedEvent> {
             val accommodation =
                 Accommodation(
+                    id = id,
                     name = name,
                     location = location,
                     rent = rent,

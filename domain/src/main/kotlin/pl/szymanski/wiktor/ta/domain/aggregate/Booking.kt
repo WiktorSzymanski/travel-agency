@@ -40,12 +40,14 @@ data class Booking(
 ) {
     companion object {
         fun create(
+            id: BookingId,
             userId: UUID,
             seat: Seat,
             travelOffer: TravelOffer,
         ): Pair<Booking, BookingCreatedEvent> {
             val booking =
                 Booking(
+                    id = id,
                     userId = userId,
                     travelOffer = travelOffer,
                     seat = seat,

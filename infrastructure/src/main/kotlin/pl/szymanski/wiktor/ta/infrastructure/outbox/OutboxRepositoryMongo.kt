@@ -1,6 +1,7 @@
 package pl.szymanski.wiktor.ta.infrastructure.outbox
 
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Sorts
 import com.mongodb.client.model.Updates
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
@@ -11,6 +12,7 @@ import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.outbox.OutboxEntry
 import java.time.Instant
+import java.time.LocalDateTime
 import java.util.UUID
 
 // TODO: interface
@@ -43,16 +45,13 @@ class OutboxRepositoryMongo(
     }
 
     suspend fun getPendingEntries(limit: Int): List<OutboxEntry> {
-        val now = Instant.now()
+        val now = LocalDateTime.now()
         return collection.find(
             Filters.and(
                 Filters.eq("published", false),
-                Filters.or(
-                    Filters.eq("processAfter", null),
-                    Filters.lte("processAfter", now)
-                )
+                Filters.lte("processAfter", now)
             )
-        ).limit(limit).map { dto ->
+        ).sort(Sorts.ascending("createdAt")).limit(limit).map { dto ->
             val envelope = json.decodeFromString<EventEnvelope<PublishableEvent>>(dto.payload)
             OutboxEntry(
                 eventId = dto.eventId,

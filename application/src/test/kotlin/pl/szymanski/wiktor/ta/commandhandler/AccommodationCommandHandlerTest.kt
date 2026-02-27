@@ -18,13 +18,12 @@ import pl.szymanski.wiktor.ta.domain.Rent
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.repository.AccommodationRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test
 
 class AccommodationCommandHandlerTest {
-    private val accommodationRepository = mockk<AccommodationRepository>()
+    private val accommodationRepository = mockk<Repository<Accommodation, AccommodationId>>()
     private val handler = AccommodationCommandHandler(accommodationRepository)
     private val accommodation = mockk<Accommodation>(relaxed = true)
 

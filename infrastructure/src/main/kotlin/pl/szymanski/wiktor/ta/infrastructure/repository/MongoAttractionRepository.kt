@@ -10,10 +10,7 @@ import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
-import pl.szymanski.wiktor.ta.domain.event.AttractionCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.AttractionEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
-import pl.szymanski.wiktor.ta.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.infrastructure.dto.AttractionDto
 import pl.szymanski.wiktor.ta.LocalDateTimeRange
@@ -23,7 +20,7 @@ import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 @Repository
 class MongoAttractionRepository(
     mongoConfiguration: MongoConfiguration
-) : AttractionRepository, AttractionQueryRepository {
+) : CommandRepository<Attraction, AttractionId>, AttractionQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
         .getCollection<AttractionDto.Present>("attractions")

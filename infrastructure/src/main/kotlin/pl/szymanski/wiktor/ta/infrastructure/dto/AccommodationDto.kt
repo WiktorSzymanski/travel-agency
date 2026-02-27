@@ -1,6 +1,9 @@
 package pl.szymanski.wiktor.ta.infrastructure.dto
 
 import kotlinx.serialization.Serializable
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.mapping.Document
+import org.springframework.data.mongodb.core.mapping.Field
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
@@ -10,8 +13,10 @@ import java.util.UUID
 
 
 @Serializable
+@Document(collection = "accommodations")
 data class AccommodationDto(
-    val id: String,
+    @Id val mongoId: String? = null,
+    @Field("id") val id: String,
     val name: String,
     val location: String,
     val rent: RentDto,

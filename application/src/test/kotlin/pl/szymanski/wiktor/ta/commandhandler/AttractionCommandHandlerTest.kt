@@ -17,13 +17,13 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test
 
 class AttractionCommandHandlerTest {
-    private val attractionRepository = mockk<AttractionRepository>()
+    private val attractionRepository = mockk<CommandRepository<Attraction, AttractionId>>()
     private val handler = AttractionCommandHandler(attractionRepository)
     private val attraction = mockk<Attraction>(relaxed = true)
 

@@ -2,11 +2,13 @@ package pl.szymanski.wiktor.ta.commands.accommodation.expire
 
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.commands.CommandHandler
+import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
+import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.outbox.OutboxPort
-import pl.szymanski.wiktor.ta.repository.AccommodationRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 
 class ExpireAccommodationCommandHandler(
-    private val accommodationRepository: AccommodationRepository,
+    private val accommodationRepository: CommandRepository<Accommodation, AccommodationId>,
     private val outboxPort: OutboxPort
 ) : CommandHandler<ExpireAccommodationCommand> {
     override suspend fun handle(command: ExpireAccommodationCommand) {

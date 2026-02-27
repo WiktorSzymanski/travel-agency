@@ -31,15 +31,19 @@ class BookingService(
     private val processCancelBookingCommandHandler: ProcessCancelBookingCommandHandler,
     private val bookingRequestCancelCommandHandler: BookingRequestCancelCommandHandler,
 ) {
-    suspend fun createBooking(userId: UUID, travelOffer: TravelOffer, seat: Seat) {
+    suspend fun createBooking(userId: UUID, travelOffer: TravelOffer, seat: Seat): BookingId {
+        val bookingId = BookingId.generate()
         createBookingCommandHandler.handle(
             CreateBookingCommand(
+                bookingId = bookingId,
                 correlationId = UUID.randomUUID(),
                 travelOffer = travelOffer,
                 userId = userId,
                 seat = seat,
             )
         )
+
+        return bookingId
     }
 
     suspend fun processBooking(bookingId: BookingId, message: String? = null) {

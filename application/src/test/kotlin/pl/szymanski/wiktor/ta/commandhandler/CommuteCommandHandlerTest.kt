@@ -19,13 +19,13 @@ import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test
 
 class CommuteCommandHandlerTest {
-    private val commuteRepository = mockk<CommuteRepository>()
+    private val commuteRepository = mockk<CommandRepository<Commute, CommuteId>>()
     private val handler = CommuteCommandHandler(commuteRepository)
     private val commute = mockk<Commute>(relaxed = true)
 

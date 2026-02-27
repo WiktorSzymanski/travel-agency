@@ -26,7 +26,7 @@ class OutboxPoller(
 
     private val log = LoggerFactory.getLogger(this.javaClass)
 
-    @Scheduled(fixedDelayString = "\${generator.interval-seconds:10}000")
+    @Scheduled(fixedDelayString = "500")
     fun pollAndPublishAll() = runBlocking {
         do {
             val count = pollAndPublish()

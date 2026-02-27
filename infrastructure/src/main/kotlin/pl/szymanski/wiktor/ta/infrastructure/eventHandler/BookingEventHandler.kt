@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure
+package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 
 import jakarta.annotation.PostConstruct
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +15,7 @@ import pl.szymanski.wiktor.ta.saga.SagaService
 import pl.szymanski.wiktor.ta.subscribe
 
 @Service
-class SagaEventHandler(
+class BookingEventHandler(
     private val eventBus: EventBus,
     private val sagaService: SagaService,
 ) {

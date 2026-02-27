@@ -20,11 +20,12 @@ class SagaRepositoryImpl(
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
         .getCollection<SagaState>("sagas")
 
-    override suspend fun findById(id: UUID): SagaState? {
+    override suspend fun findById(id: UUID): Pair<SagaState, Long> {
         return collection
             .find(Filters.eq("_id", id))
             .toList()
-            .firstOrNull()
+            .first()
+            .let { it to it.version }
     }
 
     override suspend fun findByStatuses(statuses: List<SagaStatus>): List<SagaState> {

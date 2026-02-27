@@ -33,6 +33,7 @@ data class Attraction(
 ) {
     companion object {
         fun create(
+            id: AttractionId,
             name: String,
             location: LocationEnum,
             date: LocalDateTime,
@@ -40,6 +41,7 @@ data class Attraction(
         ): Pair<Attraction, AttractionCreatedEvent> {
             val attraction =
                 Attraction(
+                    id = id,
                     name = name,
                     location = location,
                     date = date,

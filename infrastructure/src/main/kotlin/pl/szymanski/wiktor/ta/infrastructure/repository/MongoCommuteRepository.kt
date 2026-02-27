@@ -10,10 +10,7 @@ import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.CommuteEvent
-import pl.szymanski.wiktor.ta.repository.CommuteRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import pl.szymanski.wiktor.ta.infrastructure.dto.CommuteDto
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.LocalDateTimeRange
@@ -23,7 +20,7 @@ import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 @Repository
 class MongoCommuteRepository(
     mongoConfiguration: MongoConfiguration
-) : CommuteRepository, CommuteQueryRepository {
+) : CommandRepository<Commute, CommuteId>, CommuteQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
         .getCollection<CommuteDto>("commutes")

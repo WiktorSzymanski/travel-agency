@@ -8,15 +8,18 @@ server:
 spring:
   application:
     name: travel-agency-app
+  mongodb:
+    uri: "mongodb://root:password@localhost:27017"
+    database: "travel_agency"
 
 database:
   uri: "mongodb://root:password@localhost:27017"
   db-name: "travel_agency"
 
 generator:
-  interval-seconds: 10
-  in-advance-seconds: 30
-  creation-window-seconds: 15
+  interval-seconds: 60
+  in-advance-seconds: 20
+  creation-window-seconds: 20
   accommodations:
     # London Accommodations (15 total)
     - name: "Hotel"
