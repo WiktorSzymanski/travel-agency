@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +10,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.time.LocalDateTime
 import java.util.UUID
 
-class AccommodationDtoTest {
+class AccommodationDocumentTest {
     @Test
     fun `fromDomain maps all fields`() {
         val rent = Rent(
@@ -26,16 +26,16 @@ class AccommodationDtoTest {
             status = AccommodationStatusEnum.BOOKED,
         )
 
-        val dto = AccommodationDto.fromDomain(acc, version = 2L)
+        val document = AccommodationDocument.fromDomain(acc, version = 2L)
 
-        assertEquals(acc.id.value.toString(), dto.id)
-        assertEquals("Hotel Plaza", dto.name)
-        assertEquals("ROME", dto.location)
-        assertEquals(rent.from.toString(), dto.rent.from)
-        assertEquals(rent.till.toString(), dto.rent.till)
-        assertEquals(bookingId.value.toString(), dto.booking)
-        assertEquals("BOOKED", dto.status)
-        assertEquals(2L, dto.version)
+        assertEquals(acc.id.value.toString(), document.id)
+        assertEquals("Hotel Plaza", document.name)
+        assertEquals("ROME", document.location)
+        assertEquals(rent.from.toString(), document.rent.from)
+        assertEquals(rent.till.toString(), document.rent.till)
+        assertEquals(bookingId.value.toString(), document.booking)
+        assertEquals("BOOKED", document.status)
+        assertEquals(2L, document.version)
     }
 
     @Test
@@ -45,17 +45,17 @@ class AccommodationDtoTest {
         val from = LocalDateTime.of(2025, 4, 10, 15, 0)
         val till = LocalDateTime.of(2025, 4, 15, 11, 0)
 
-        val dto = AccommodationDto(
+        val document = AccommodationDocument(
             id = accommodationId.toString(),
             name = "Grand Hotel",
             location = "PARIS",
-            rent = RentDto(from.toString(), till.toString()),
+            rent = RentDocument(from.toString(), till.toString()),
             booking = bookingId.toString(),
             status = "BOOKED",
             version = 5L
         )
 
-        val accommodation = dto.toDomain()
+        val accommodation = document.toDomain()
 
         assertEquals(accommodationId, accommodation.id.value)
         assertEquals("Grand Hotel", accommodation.name)
@@ -68,11 +68,11 @@ class AccommodationDtoTest {
 
     @Test
     fun `toDomain handles null booking as Empty`() {
-        val dto = AccommodationDto(
+        val document = AccommodationDocument(
             id = UUID.randomUUID().toString(),
             name = "Test Hotel",
             location = "LONDON",
-            rent = RentDto(
+            rent = RentDocument(
                 LocalDateTime.of(2025, 5, 1, 12, 0).toString(),
                 LocalDateTime.of(2025, 5, 5, 10, 0).toString()
             ),
@@ -80,7 +80,7 @@ class AccommodationDtoTest {
             status = "AVAILABLE"
         )
 
-        val accommodation = dto.toDomain()
+        val accommodation = document.toDomain()
 
         assertEquals(BookingId.Empty, accommodation.bookingId)
         assertEquals(AccommodationStatusEnum.AVAILABLE, accommodation.status)
@@ -99,8 +99,8 @@ class AccommodationDtoTest {
             status = AccommodationStatusEnum.BOOKED
         )
 
-        val dto = AccommodationDto.fromDomain(original, version = 10L)
-        val restored = dto.toDomain()
+        val document = AccommodationDocument.fromDomain(original, version = 10L)
+        val restored = document.toDomain()
 
         assertEquals(original.name, restored.name)
         assertEquals(original.location, restored.location)
@@ -110,5 +110,4 @@ class AccommodationDtoTest {
         assertEquals(original.status, restored.status)
     }
 }
-
 

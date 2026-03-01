@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -13,14 +13,14 @@ import java.util.UUID
 @CompoundIndexes(
     CompoundIndex(name = "idx_composite", def = "{'commuteId': 1, 'accommodationId': 1, 'attractionId': 1}")
 )
-data class TravelOfferDto(
+data class TravelOfferDocument(
     val commuteId: String,
     val accommodationId: String,
     val attractionId: String,
 ) {
     companion object {
-        fun fromDomain(travelOffer: TravelOffer): TravelOfferDto {
-            return TravelOfferDto(
+        fun fromDomain(travelOffer: TravelOffer): TravelOfferDocument {
+            return TravelOfferDocument(
                 commuteId = travelOffer.commuteId.value.toString(),
                 accommodationId = travelOffer.accommodationId.value.toString(),
                 attractionId = travelOffer.attractionId.value?.toString() ?: "",
@@ -38,3 +38,4 @@ data class TravelOfferDto(
                 AttractionId.Empty
         )
 }
+

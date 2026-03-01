@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +14,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.time.LocalDateTime
 import java.util.UUID
 
-class BookingDtoTest {
+class BookingDocumentTest {
     @Test
     fun `fromDomain maps fields with picked seat`() {
         val userId = UUID.randomUUID()
@@ -31,22 +31,22 @@ class BookingDtoTest {
             message = "processing",
         )
 
-        val dto = BookingDto.fromDomain(booking, version = 4L)
+        val document = BookingDocument.fromDomain(booking, version = 4L)
 
-        assertEquals(booking.id.value.toString(), dto.id)
-        assertEquals(userId.toString(), dto.userId)
-        assertEquals(TravelOfferDto.fromDomain(offer), dto.travelOffer)
-        requireNotNull(dto.seat)
-        assertEquals("B", dto.seat.row)
-        assertEquals("3", dto.seat.column)
-        assertEquals("PROCESSING", dto.status)
-        assertEquals("processing", dto.message)
-        assertEquals(booking.timestamp.toString(), dto.timestamp)
-        assertEquals(4L, dto.version)
+        assertEquals(booking.id.value.toString(), document.id)
+        assertEquals(userId.toString(), document.userId)
+        assertEquals(TravelOfferDocument.fromDomain(offer), document.travelOffer)
+        requireNotNull(document.seat)
+        assertEquals("B", document.seat.row)
+        assertEquals("3", document.seat.column)
+        assertEquals("PROCESSING", document.status)
+        assertEquals("processing", document.message)
+        assertEquals(booking.timestamp.toString(), document.timestamp)
+        assertEquals(4L, document.version)
     }
 
     @Test
-    fun `SeatDto fromDomain throws for Seat Any`() {
+    fun `SeatDocument fromDomain throws for Seat Any`() {
         val userId = UUID.randomUUID()
         val offer = TravelOffer(
             CommuteId.generate(),
@@ -60,10 +60,10 @@ class BookingDtoTest {
         )
 
         val ex = assertFailsWith<IllegalArgumentException> {
-            BookingDto.fromDomain(booking)
+            BookingDocument.fromDomain(booking)
         }
 
-        assertEquals("Seat Any cannot be serialized to DTO, it should be Picked by now", ex.message)
+        assertEquals("Seat Any cannot be serialized to Document, it should be Picked by now", ex.message)
     }
 
     @Test
@@ -75,22 +75,22 @@ class BookingDtoTest {
         val attractionId = UUID.randomUUID()
         val timestamp = LocalDateTime.of(2025, 6, 15, 10, 30)
 
-        val dto = BookingDto(
+        val document = BookingDocument(
             id = bookingId.toString(),
             userId = userId.toString(),
-            travelOffer = TravelOfferDto(
+            travelOffer = TravelOfferDocument(
                 commuteId = commuteId.toString(),
                 accommodationId = accommodationId.toString(),
                 attractionId = attractionId.toString()
             ),
-            seat = SeatDto("C", "5"),
+            seat = SeatDocument("C", "5"),
             status = "BOOKED",
             message = "Booking confirmed",
             timestamp = timestamp.toString(),
             version = 8L
         )
 
-        val booking = dto.toDomain()
+        val booking = document.toDomain()
 
         assertEquals(bookingId, booking.id.value)
         assertEquals(userId, booking.userId)
@@ -105,10 +105,10 @@ class BookingDtoTest {
 
     @Test
     fun `toDomain with null seat creates Seat Any`() {
-        val dto = BookingDto(
+        val document = BookingDocument(
             id = UUID.randomUUID().toString(),
             userId = UUID.randomUUID().toString(),
-            travelOffer = TravelOfferDto(
+            travelOffer = TravelOfferDocument(
                 commuteId = UUID.randomUUID().toString(),
                 accommodationId = UUID.randomUUID().toString(),
                 attractionId = UUID.randomUUID().toString()
@@ -119,7 +119,7 @@ class BookingDtoTest {
             timestamp = LocalDateTime.now().toString()
         )
 
-        val booking = dto.toDomain()
+        val booking = document.toDomain()
 
         assertEquals(Seat.Any, booking.seat)
         assertEquals(BookingState.NEW, booking.status)
@@ -142,8 +142,8 @@ class BookingDtoTest {
             timestamp = LocalDateTime.of(2025, 12, 1, 15, 45)
         )
 
-        val dto = BookingDto.fromDomain(original, version = 15L)
-        val restored = dto.toDomain()
+        val document = BookingDocument.fromDomain(original, version = 15L)
+        val restored = document.toDomain()
 
         assertEquals(original.userId, restored.userId)
         assertEquals(original.travelOffer.commuteId.value, restored.travelOffer.commuteId.value)
@@ -155,5 +155,4 @@ class BookingDtoTest {
         assertEquals(original.timestamp, restored.timestamp)
     }
 }
-
 

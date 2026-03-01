@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.infrastructure.dto.BookingDto
+import pl.szymanski.wiktor.ta.infrastructure.document.BookingDocument
 import pl.szymanski.wiktor.ta.query.BookingQuery
 import java.util.UUID
 
@@ -18,10 +18,10 @@ class BookingController(
 ) {
 
     @GetMapping("/{id}")
-    fun getBookingById(@PathVariable id: UUID): ResponseEntity<BookingDto> = runBlocking {
+    fun getBookingById(@PathVariable id: UUID): ResponseEntity<BookingDocument> = runBlocking {
         val bookingId = BookingId.from(id) as BookingId.Present
         val (booking, version) = bookingQuery.getBookingById(bookingId)
-        ResponseEntity.ok(BookingDto.fromDomain(booking, version))
+        ResponseEntity.ok(BookingDocument.fromDomain(booking, version))
     }
 }
 

@@ -8,7 +8,7 @@ import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.repository.CommandRepository
-import pl.szymanski.wiktor.ta.infrastructure.dto.BookingDto
+import pl.szymanski.wiktor.ta.infrastructure.document.BookingDocument
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.queryrepository.BookingQueryRepository
 
@@ -18,7 +18,7 @@ class MongoBookingRepository(
 ) : CommandRepository<Booking, BookingId>, BookingQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<BookingDto>("booking")
+        .getCollection<BookingDocument>("booking")
 
     override suspend fun findById(id: BookingId): Pair<Booking, Long> {
         val entity = collection
@@ -29,7 +29,7 @@ class MongoBookingRepository(
     }
 
     override suspend fun create(entity: Booking, metadata: Metadata) {
-        collection.insertOne(BookingDto.fromDomain(entity))
+        collection.insertOne(BookingDocument.fromDomain(entity))
     }
 
     override suspend fun save(entity: Booking, metadata: Metadata) {
@@ -38,7 +38,7 @@ class MongoBookingRepository(
                 Filters.eq("id", entity.id.value.toString()),
                 Filters.eq("version", metadata.revision - 1)
             ),
-            BookingDto.fromDomain(entity, metadata.revision),
+            BookingDocument.fromDomain(entity, metadata.revision),
             ReplaceOptions().upsert(false)
         )
 

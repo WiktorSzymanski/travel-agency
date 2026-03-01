@@ -11,6 +11,8 @@ spring:
   mongodb:
     uri: "mongodb://root:password@localhost:27017"
     database: "travel_agency"
+    representation:
+      uuid: standard
 
 database:
   uri: "mongodb://root:password@localhost:27017"

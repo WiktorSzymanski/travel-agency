@@ -12,7 +12,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.repository.CommandRepository
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
-import pl.szymanski.wiktor.ta.infrastructure.dto.AttractionDto
+import pl.szymanski.wiktor.ta.infrastructure.document.AttractionDocument
 import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
@@ -23,7 +23,7 @@ class MongoAttractionRepository(
 ) : CommandRepository<Attraction, AttractionId>, AttractionQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<AttractionDto.Present>("attractions")
+        .getCollection<AttractionDocument.Present>("attractions")
 
     override suspend fun findById(id: AttractionId): Pair<Attraction, Long> {
         if (id !is AttractionId.Present) throw NoSuchElementException("Attraction not found: $id")
@@ -36,7 +36,7 @@ class MongoAttractionRepository(
     }
 
     override suspend fun create(entity: Attraction, metadata: Metadata) {
-        collection.insertOne(AttractionDto.fromDomain(entity) as AttractionDto.Present)
+        collection.insertOne(AttractionDocument.fromDomain(entity) as AttractionDocument.Present)
     }
 
     override suspend fun save(entity: Attraction, metadata: Metadata) {
@@ -45,7 +45,7 @@ class MongoAttractionRepository(
                 Filters.eq("id", entity.id.value.toString()),
                 Filters.eq("version", metadata.revision - 1)
             ),
-            AttractionDto.fromDomain(entity, metadata.revision) as AttractionDto.Present,
+            AttractionDocument.fromDomain(entity, metadata.revision) as AttractionDocument.Present,
             ReplaceOptions().upsert(false)
         )
 

@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.BookingState
@@ -9,14 +9,14 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Serializable
-data class SeatDto(
+data class SeatDocument(
     val row: String,
     val column: String,
 ) {
     companion object {
         fun fromDomain(seat: Seat) = when (seat) {
-            is Seat.Any -> throw IllegalArgumentException("Seat Any cannot be serialized to DTO, it should be Picked by now")
-            is Seat.Picked -> SeatDto(seat.row, seat.column)
+            is Seat.Any -> throw IllegalArgumentException("Seat Any cannot be serialized to Document, it should be Picked by now")
+            is Seat.Picked -> SeatDocument(seat.row, seat.column)
         }
     }
 
@@ -25,11 +25,11 @@ data class SeatDto(
 }
 
 @Serializable
-data class BookingDto(
+data class BookingDocument(
     val id: String,
     val userId: String,
-    val travelOffer: TravelOfferDto,
-    val seat: SeatDto? = null,
+    val travelOffer: TravelOfferDocument,
+    val seat: SeatDocument? = null,
     var status: String,
     var message: String? = null,
     val timestamp: String,
@@ -37,11 +37,11 @@ data class BookingDto(
 ) {
     companion object {
         fun fromDomain(booking: Booking, version: Long = 0L) =
-            BookingDto(
+            BookingDocument(
                 id = booking.id.value.toString(),
                 userId = booking.userId.toString(),
-                travelOffer = TravelOfferDto.fromDomain(booking.travelOffer),
-                seat = SeatDto.fromDomain(booking.seat),
+                travelOffer = TravelOfferDocument.fromDomain(booking.travelOffer),
+                seat = SeatDocument.fromDomain(booking.seat),
                 status = booking.status.name,
                 message = booking.message,
                 timestamp = booking.timestamp.toString(),
@@ -60,3 +60,4 @@ data class BookingDto(
             timestamp = LocalDateTime.parse(timestamp)
         )
 }
+

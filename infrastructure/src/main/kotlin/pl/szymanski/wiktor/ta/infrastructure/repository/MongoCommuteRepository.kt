@@ -11,7 +11,7 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.repository.CommandRepository
-import pl.szymanski.wiktor.ta.infrastructure.dto.CommuteDto
+import pl.szymanski.wiktor.ta.infrastructure.document.CommuteDocument
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.queryrepository.CommuteQueryRepository
@@ -23,7 +23,7 @@ class MongoCommuteRepository(
 ) : CommandRepository<Commute, CommuteId>, CommuteQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<CommuteDto>("commutes")
+        .getCollection<CommuteDocument>("commutes")
 
     override suspend fun findById(id: CommuteId): Pair<Commute, Long> {
         val entity = collection
@@ -34,7 +34,7 @@ class MongoCommuteRepository(
     }
 
     override suspend fun create(entity: Commute, metadata: Metadata) {
-        collection.insertOne(CommuteDto.fromDomain(entity))
+        collection.insertOne(CommuteDocument.fromDomain(entity))
     }
 
     override suspend fun save(entity: Commute, metadata: Metadata) {
@@ -43,7 +43,7 @@ class MongoCommuteRepository(
                 Filters.eq("id", entity.id.value.toString()),
                 Filters.eq("version", metadata.revision - 1)
             ),
-            CommuteDto.fromDomain(entity, metadata.revision),
+            CommuteDocument.fromDomain(entity, metadata.revision),
             ReplaceOptions().upsert(false)
         )
 

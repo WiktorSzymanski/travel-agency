@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
@@ -10,8 +10,8 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Serializable
-sealed interface AttractionDto {
-    data object Empty : AttractionDto {
+sealed interface AttractionDocument {
+    data object Empty : AttractionDocument {
         fun toDomain(): Attraction? = null
     }
 
@@ -25,7 +25,7 @@ sealed interface AttractionDto {
         val bookings: List<String>,
         val status: String,
         val version: Long = 0L
-    ) : AttractionDto {
+    ) : AttractionDocument {
         fun toDomain(): Attraction =
             Attraction(
                 id = AttractionId.Present(UUID.fromString(id)),
@@ -54,5 +54,4 @@ sealed interface AttractionDto {
             } ?: Empty
     }
 }
-
 

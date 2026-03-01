@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController
 import pl.szymanski.wiktor.ta.Page
 import pl.szymanski.wiktor.ta.Pageable
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.infrastructure.dto.AccommodationDto
-import pl.szymanski.wiktor.ta.infrastructure.dto.AttractionDto
-import pl.szymanski.wiktor.ta.infrastructure.dto.CommuteDto
-import pl.szymanski.wiktor.ta.infrastructure.dto.CreateBookingRequest
-import pl.szymanski.wiktor.ta.infrastructure.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.infrastructure.document.AccommodationDocument
+import pl.szymanski.wiktor.ta.infrastructure.document.AttractionDocument
+import pl.szymanski.wiktor.ta.infrastructure.document.CommuteDocument
+import pl.szymanski.wiktor.ta.infrastructure.document.CreateBookingRequest
+import pl.szymanski.wiktor.ta.infrastructure.document.TravelOfferDocument
 import pl.szymanski.wiktor.ta.query.AccommodationQuery
 import pl.szymanski.wiktor.ta.query.AttractionQuery
 import pl.szymanski.wiktor.ta.query.CommuteQuery
@@ -40,9 +40,9 @@ class CommuteController(
     fun getScheduledCommutes(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<List<CommuteDto>> = runBlocking {
+    ): ResponseEntity<List<CommuteDocument>> = runBlocking {
         //TODO: pagination
-        val resp = commuteQuery.getScheduledCommutes().map { CommuteDto.fromDomain(it) }
+        val resp = commuteQuery.getScheduledCommutes().map { CommuteDocument.fromDomain(it) }
         ResponseEntity.ok(resp)
     }
 
@@ -50,9 +50,9 @@ class CommuteController(
     fun getScheduledAttractions(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<List<AttractionDto>> = runBlocking {
+    ): ResponseEntity<List<AttractionDocument>> = runBlocking {
         //TODO: pagination
-        val resp = attractionQuery.getScheduledAttractions().map { AttractionDto.fromDomain(it)}
+        val resp = attractionQuery.getScheduledAttractions().map { AttractionDocument.fromDomain(it)}
         ResponseEntity.ok(resp)
     }
 
@@ -60,9 +60,9 @@ class CommuteController(
     fun getAvailableAccommodations(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<Page<AccommodationDto>> = runBlocking {
+    ): ResponseEntity<Page<AccommodationDocument>> = runBlocking {
         val resp = accommodationQuery.getAvailableAccommodations(Pageable(page, size))
-            .map { AccommodationDto.fromDomain(it) }
+            .map { AccommodationDocument.fromDomain(it) }
         ResponseEntity.ok(resp)
     }
 
@@ -72,7 +72,7 @@ class CommuteController(
         val accommodation = accommodationQuery.getAvailableAccommodations(Pageable(0, 1)).content[0]
         val attraction = attractionQuery.getScheduledAttractions()[0]
 
-        ResponseEntity.ok(TravelOfferDto.fromDomain(
+        ResponseEntity.ok(TravelOfferDocument.fromDomain(
             TravelOffer(
                 commute.id,
                 accommodation.id,
@@ -93,5 +93,3 @@ class CommuteController(
             .body(mapOf("message" to "Booking ${bookingId.value.toString()} created successfully"))
     }
 }
-
-

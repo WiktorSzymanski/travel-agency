@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +10,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.time.LocalDateTime
 import java.util.UUID
 
-class AttractionDtoTest {
+class AttractionDocumentTest {
     @Test
     fun `fromDomain maps all fields including capacity and bookings`() {
         val bookingId1 = BookingId.generate()
@@ -24,25 +24,25 @@ class AttractionDtoTest {
             status = AttractionStatusEnum.SCHEDULED
         )
 
-        val dto = AttractionDto.fromDomain(attraction, version = 3L) as AttractionDto.Present
+        val document = AttractionDocument.fromDomain(attraction, version = 3L) as AttractionDocument.Present
 
-        assertEquals(attraction.id.value.toString(), dto.id)
-        assertEquals("Museum Tour", dto.name)
-        assertEquals("PARIS", dto.location)
-        assertEquals("2025-05-10T10:00", dto.date)
-        assertEquals(5, dto.capacity)
-        assertEquals(2, dto.bookings.size)
-        assertEquals(bookingId1.value.toString(), dto.bookings[0])
-        assertEquals(bookingId2.value.toString(), dto.bookings[1])
-        assertEquals("SCHEDULED", dto.status)
-        assertEquals(3L, dto.version)
+        assertEquals(attraction.id.value.toString(), document.id)
+        assertEquals("Museum Tour", document.name)
+        assertEquals("PARIS", document.location)
+        assertEquals("2025-05-10T10:00", document.date)
+        assertEquals(5, document.capacity)
+        assertEquals(2, document.bookings.size)
+        assertEquals(bookingId1.value.toString(), document.bookings[0])
+        assertEquals(bookingId2.value.toString(), document.bookings[1])
+        assertEquals("SCHEDULED", document.status)
+        assertEquals(3L, document.version)
     }
 
     @Test
     fun `fromDomain returns Empty for null attraction`() {
-        val dto = AttractionDto.fromDomain(null)
+        val document = AttractionDocument.fromDomain(null)
 
-        assertEquals(AttractionDto.Empty, dto)
+        assertEquals(AttractionDocument.Empty, document)
     }
 
     @Test
@@ -53,7 +53,7 @@ class AttractionDtoTest {
         val bookingId3 = UUID.randomUUID()
         val date = LocalDateTime.of(2025, 8, 20, 14, 30)
 
-        val dto = AttractionDto.Present(
+        val document = AttractionDocument.Present(
             id = attractionId.toString(),
             name = "City Walking Tour",
             location = "LONDON",
@@ -64,7 +64,7 @@ class AttractionDtoTest {
             version = 7L
         )
 
-        val attraction = dto.toDomain()
+        val attraction = document.toDomain()
 
         assertEquals(attractionId, attraction.id.value)
         assertEquals("City Walking Tour", attraction.name)
@@ -80,7 +80,7 @@ class AttractionDtoTest {
 
     @Test
     fun `toDomain with empty bookings creates empty list`() {
-        val dto = AttractionDto.Present(
+        val document = AttractionDocument.Present(
             id = UUID.randomUUID().toString(),
             name = "Test Attraction",
             location = "ROME",
@@ -90,7 +90,7 @@ class AttractionDtoTest {
             status = "FULL"
         )
 
-        val attraction = dto.toDomain()
+        val attraction = document.toDomain()
 
         assertEquals(0, attraction.bookings.size)
         assertEquals(AttractionStatusEnum.FULL, attraction.status)
@@ -98,7 +98,7 @@ class AttractionDtoTest {
 
     @Test
     fun `Empty toDomain returns null`() {
-        val attraction = AttractionDto.Empty.toDomain()
+        val attraction = AttractionDocument.Empty.toDomain()
 
         assertNull(attraction)
     }
@@ -118,8 +118,8 @@ class AttractionDtoTest {
             status = AttractionStatusEnum.SCHEDULED
         )
 
-        val dto = AttractionDto.fromDomain(original, version = 12L) as AttractionDto.Present
-        val restored = dto.toDomain()
+        val document = AttractionDocument.fromDomain(original, version = 12L) as AttractionDocument.Present
+        val restored = document.toDomain()
 
         assertEquals(original.name, restored.name)
         assertEquals(original.location, restored.location)
@@ -127,7 +127,6 @@ class AttractionDtoTest {
         assertEquals(original.capacity, restored.capacity)
         assertEquals(original.bookings.size, restored.bookings.size)
         assertEquals(original.status, restored.status)
-        // Verify booking IDs are preserved
         original.bookings.forEachIndexed { index, bookingId ->
             assertEquals(bookingId.value, restored.bookings[index].value)
         }

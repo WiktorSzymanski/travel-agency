@@ -1,36 +1,31 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
-import kotlinx.serialization.Serializable
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.data.mongodb.core.mapping.Field
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import java.util.UUID
+import java.util.*
 
-
-@Serializable
 @Document(collection = "accommodations")
-data class AccommodationDto(
-    @Id val mongoId: String? = null,
-    @Field("id") val id: String,
+data class AccommodationDocument(
+    @Id val id: UUID,
     val name: String,
     val location: String,
-    val rent: RentDto,
+    val rent: RentDocument,
     val booking: String? = null,
     val status: String,
     val version: Long = 0L
 ) {
     companion object {
         fun fromDomain(accommodation: Accommodation, version: Long = 0L) =
-            AccommodationDto(
-                id = accommodation.id.value.toString(),
+            AccommodationDocument(
+                id = accommodation.id.value,
                 name = accommodation.name,
                 location = accommodation.location.name,
-                rent = RentDto.fromDomain(accommodation.rent),
+                rent = RentDocument.fromDomain(accommodation.rent),
                 booking = accommodation.bookingId.value?.toString(),
                 status = accommodation.status.name,
                 version = version
@@ -39,7 +34,7 @@ data class AccommodationDto(
 
     fun toDomain(): Accommodation =
         Accommodation(
-            id = AccommodationId.from(UUID.fromString(id)),
+            id = AccommodationId.from(id),
             name = name,
             location = LocationEnum.valueOf(location),
             rent = rent.toDomain(),
@@ -47,3 +42,4 @@ data class AccommodationDto(
             status = AccommodationStatusEnum.valueOf(status)
         )
 }
+

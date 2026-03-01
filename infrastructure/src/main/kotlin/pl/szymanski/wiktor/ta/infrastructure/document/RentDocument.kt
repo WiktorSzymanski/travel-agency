@@ -1,17 +1,17 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.time.LocalDateTime
 
 @Serializable
-data class RentDto(
+data class RentDocument(
     val from: String,
     val till: String,
 ) {
     companion object {
         fun fromDomain(rent: Rent) =
-            RentDto(
+            RentDocument(
                 from = rent.from.toString(),
                 till = rent.till.toString(),
             )
@@ -23,3 +23,4 @@ data class RentDto(
             till = LocalDateTime.parse(till)
         )
 }
+

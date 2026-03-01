@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +12,7 @@ import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import java.time.LocalDateTime
 import java.util.UUID
 
-class CommuteDtoTest {
+class CommuteDocumentTest {
     @Test
     fun `fromDomain maps all fields including seats and bookings`() {
         val dep = LocationAndTime(LocationEnum.POZNAN, LocalDateTime.of(2025, 1, 1, 8, 0))
@@ -30,22 +30,22 @@ class CommuteDtoTest {
             status = CommuteStatusEnum.SCHEDULED
         )
 
-        val dto = CommuteDto.fromDomain(commute, version = 5L)
+        val document = CommuteDocument.fromDomain(commute, version = 5L)
 
-        assertEquals(commute.id.value.toString(), dto.id)
-        assertEquals(commute.name, dto.name)
-        assertEquals(dep.location.name, dto.departure.location)
-        assertEquals(dep.time.toString(), dto.departure.time)
-        assertEquals(arr.location.name, dto.arrival.location)
-        assertEquals(arr.time.toString(), dto.arrival.time)
-        assertEquals(3, dto.seats.size)
-        assertTrue(dto.seats.contains(seat1.toString()))
-        assertTrue(dto.seats.contains(seat2.toString()))
-        assertTrue(dto.seats.contains(seat3.toString()))
-        assertEquals(1, dto.bookings.size)
-        assertEquals(seat1.toString(), dto.bookings[bookingId.value.toString()])
-        assertEquals("SCHEDULED", dto.status)
-        assertEquals(5L, dto.version)
+        assertEquals(commute.id.value.toString(), document.id)
+        assertEquals(commute.name, document.name)
+        assertEquals(dep.location.name, document.departure.location)
+        assertEquals(dep.time.toString(), document.departure.time)
+        assertEquals(arr.location.name, document.arrival.location)
+        assertEquals(arr.time.toString(), document.arrival.time)
+        assertEquals(3, document.seats.size)
+        assertTrue(document.seats.contains(seat1.toString()))
+        assertTrue(document.seats.contains(seat2.toString()))
+        assertTrue(document.seats.contains(seat3.toString()))
+        assertEquals(1, document.bookings.size)
+        assertEquals(seat1.toString(), document.bookings[bookingId.value.toString()])
+        assertEquals("SCHEDULED", document.status)
+        assertEquals(5L, document.version)
     }
 
     @Test
@@ -55,18 +55,18 @@ class CommuteDtoTest {
         val commuteId = UUID.randomUUID()
         val bookingId = UUID.randomUUID()
 
-        val dto = CommuteDto(
+        val document = CommuteDocument(
             id = commuteId.toString(),
             name = "Express Train",
-            departure = LocationAndTimeDto("LONDON", depTime.toString()),
-            arrival = LocationAndTimeDto("PARIS", arrTime.toString()),
+            departure = LocationAndTimeDocument("LONDON", depTime.toString()),
+            arrival = LocationAndTimeDocument("PARIS", arrTime.toString()),
             seats = listOf("Picked(A, 1)", "Picked(A, 2)", "Picked(B, 1)"),
             bookings = mapOf(bookingId.toString() to "Picked(A, 1)"),
             status = "SCHEDULED",
             version = 3L
         )
 
-        val commute = dto.toDomain()
+        val commute = document.toDomain()
 
         assertEquals(commuteId, commute.id.value)
         assertEquals("Express Train", commute.name)
@@ -85,17 +85,17 @@ class CommuteDtoTest {
 
     @Test
     fun `toDomain handles Seat Any correctly`() {
-        val dto = CommuteDto(
+        val document = CommuteDocument(
             id = UUID.randomUUID().toString(),
             name = "Test",
-            departure = LocationAndTimeDto("LONDON", LocalDateTime.now().toString()),
-            arrival = LocationAndTimeDto("PARIS", LocalDateTime.now().toString()),
+            departure = LocationAndTimeDocument("LONDON", LocalDateTime.now().toString()),
+            arrival = LocationAndTimeDocument("PARIS", LocalDateTime.now().toString()),
             seats = listOf("Any", "Picked(A, 1)"),
             bookings = emptyMap(),
             status = "SCHEDULED"
         )
 
-        val commute = dto.toDomain()
+        val commute = document.toDomain()
 
         assertEquals(2, commute.seats.size)
         assertTrue(commute.seats.contains(Seat.Any))
@@ -104,17 +104,17 @@ class CommuteDtoTest {
 
     @Test
     fun `toDomain with empty bookings creates empty map`() {
-        val dto = CommuteDto(
+        val document = CommuteDocument(
             id = UUID.randomUUID().toString(),
             name = "Test",
-            departure = LocationAndTimeDto("BERLIN", LocalDateTime.now().toString()),
-            arrival = LocationAndTimeDto("ROME", LocalDateTime.now().toString()),
+            departure = LocationAndTimeDocument("BERLIN", LocalDateTime.now().toString()),
+            arrival = LocationAndTimeDocument("ROME", LocalDateTime.now().toString()),
             seats = listOf("Picked(C, 5)"),
             bookings = emptyMap(),
             status = "FULL"
         )
 
-        val commute = dto.toDomain()
+        val commute = document.toDomain()
 
         assertTrue(commute.bookings.isEmpty())
         assertEquals(CommuteStatusEnum.FULL, commute.status)
@@ -133,8 +133,8 @@ class CommuteDtoTest {
             status = CommuteStatusEnum.SCHEDULED
         )
 
-        val dto = CommuteDto.fromDomain(original, version = 7L)
-        val restored = dto.toDomain()
+        val document = CommuteDocument.fromDomain(original, version = 7L)
+        val restored = document.toDomain()
 
         assertEquals(original.name, restored.name)
         assertEquals(original.departure.location, restored.departure.location)
@@ -146,5 +146,4 @@ class CommuteDtoTest {
         assertEquals(original.status, restored.status)
     }
 }
-
 

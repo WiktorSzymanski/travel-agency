@@ -4,7 +4,7 @@ import org.springframework.stereotype.Repository
 import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOfferComponentId
-import pl.szymanski.wiktor.ta.infrastructure.dto.TravelOfferDto
+import pl.szymanski.wiktor.ta.infrastructure.document.TravelOfferDocument
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 import pl.szymanski.wiktor.ta.queryrepository.TravelOfferQueryRepository

@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
@@ -6,13 +6,13 @@ import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 
 @Serializable
-data class LocationAndTimeDto(
+data class LocationAndTimeDocument(
     val location: String,
     val time: String,
 ) {
     companion object {
         fun fromDomain(locationAndTime: LocationAndTime) =
-            LocationAndTimeDto(
+            LocationAndTimeDocument(
                 location = locationAndTime.location.name,
                 time = locationAndTime.time.toString(),
             )
@@ -24,3 +24,4 @@ data class LocationAndTimeDto(
             time = LocalDateTime.parse(time)
         )
 }
+

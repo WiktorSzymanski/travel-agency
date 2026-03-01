@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.infrastructure.dto
+package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.Seat
@@ -7,15 +7,12 @@ import java.util.UUID
 
 @Serializable
 data class CreateBookingRequest(
-    val travelOffer: TravelOfferDto,
+    val travelOffer: TravelOfferDocument,
     val userId: String,
-    val seat: SeatDto,
+    val seat: SeatDocument,
 ) {
     fun userIdAsUUID(): UUID = UUID.fromString(userId)
 
     fun travelOfferToDomain(): TravelOffer = travelOffer.toDomain()
 }
-
-
-
 

@@ -14,11 +14,11 @@ import pl.szymanski.wiktor.ta.domain.TravelOfferStatusEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
-import pl.szymanski.wiktor.ta.infrastructure.dto.AccommodationDto
+import pl.szymanski.wiktor.ta.infrastructure.document.AccommodationDocument
 import pl.szymanski.wiktor.ta.LocalDateTimeRange
 import pl.szymanski.wiktor.ta.Page
 import pl.szymanski.wiktor.ta.Pageable
-import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.AccommodationDtoMongoRepository
+import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.AccommodationDocumentMongoRepository
 import pl.szymanski.wiktor.ta.queryrepository.AccommodationQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
 import pl.szymanski.wiktor.ta.repository.CommandRepository
@@ -27,11 +27,11 @@ import java.time.LocalDateTime
 @Component
 class MongoAccommodationRepository(
     mongoConfiguration: MongoConfiguration,
-    private val accommodationDtoMongoRepository: AccommodationDtoMongoRepository
+    private val accommodationDocumentMongoRepository: AccommodationDocumentMongoRepository
 ) : CommandRepository<Accommodation, AccommodationId>, AccommodationQueryRepository {
     private val collection = mongoConfiguration.mongoClient()
         .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<AccommodationDto>("accommodations")
+        .getCollection<AccommodationDocument>("accommodations")
 
     override suspend fun findById(id: AccommodationId): Pair<Accommodation, Long> {
         val entity = collection
@@ -42,7 +42,7 @@ class MongoAccommodationRepository(
     }
 
     override suspend fun create(entity: Accommodation, metadata: Metadata) {
-        collection.insertOne(AccommodationDto.fromDomain(entity))
+        collection.insertOne(AccommodationDocument.fromDomain(entity))
     }
 
     override suspend fun save(entity: Accommodation, metadata: Metadata) {
@@ -51,7 +51,7 @@ class MongoAccommodationRepository(
                 Filters.eq("id", entity.id.value.toString()),
                 Filters.eq("version", metadata.revision - 1)
             ),
-            AccommodationDto.fromDomain(entity, metadata.revision),
+            AccommodationDocument.fromDomain(entity, metadata.revision),
             ReplaceOptions().upsert(false)
         )
 
@@ -73,8 +73,8 @@ class MongoAccommodationRepository(
 
     override suspend fun findAllByStatus(status: AccommodationStatusEnum, pageable: Pageable): Page<Accommodation> =
         withContext(Dispatchers.IO) {
-            accommodationDtoMongoRepository
-                .findAccommodationDtosByStatus(status.toString(), pageable.toSpring())
+            accommodationDocumentMongoRepository
+                .findAccommodationDocumentsByStatus(status.toString(), pageable.toSpring())
                 .toApplication { it.toDomain() }
         }
 
