@@ -3,7 +3,7 @@ package pl.szymanski.wiktor.ta.infrastructure.repository
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ReplaceOptions
 import kotlinx.coroutines.flow.toList
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.saga.SagaRepository
@@ -11,7 +11,7 @@ import pl.szymanski.wiktor.ta.saga.SagaState
 import pl.szymanski.wiktor.ta.saga.SagaStatus
 import java.util.UUID
 
-@Repository
+@Component
 class SagaRepositoryImpl(
     mongoConfiguration: MongoConfiguration
 ) : SagaRepository {

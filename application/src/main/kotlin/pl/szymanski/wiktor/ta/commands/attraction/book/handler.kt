@@ -16,7 +16,7 @@ class BookAttractionCommandHandler(
             .findById(command.attractionId)
             .let { (attraction, version) ->
                 val events = attraction.book(command.bookingId)
-                outboxPort.save(attraction, events, Metadata(command.correlationId, version + 1), attractionRepository)
+                outboxPort.save(attraction, events, Metadata(command.correlationId, version), attractionRepository)
             }
     }
 }

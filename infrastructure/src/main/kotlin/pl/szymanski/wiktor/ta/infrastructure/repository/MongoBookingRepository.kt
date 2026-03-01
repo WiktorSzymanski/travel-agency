@@ -1,56 +1,53 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.ReplaceOptions
-import kotlinx.coroutines.flow.firstOrNull
-import org.springframework.stereotype.Repository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.springframework.stereotype.Component
 import pl.szymanski.wiktor.ta.Metadata
+import pl.szymanski.wiktor.ta.Page
+import pl.szymanski.wiktor.ta.Pageable
+import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.repository.CommandRepository
 import pl.szymanski.wiktor.ta.infrastructure.document.BookingDocument
-import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
+import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.BookingDocumentMongoRepository
 import pl.szymanski.wiktor.ta.queryrepository.BookingQueryRepository
+import kotlin.jvm.optionals.getOrNull
 
-@Repository
+@Component
 class MongoBookingRepository(
-    mongoConfiguration: MongoConfiguration
+    private val bookingDocumentMongoRepository: BookingDocumentMongoRepository
 ) : CommandRepository<Booking, BookingId>, BookingQueryRepository {
-    private val collection = mongoConfiguration.mongoClient()
-        .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<BookingDocument>("booking")
 
     override suspend fun findById(id: BookingId): Pair<Booking, Long> {
-        val entity = collection
-            .find(Filters.eq("id", id.value.toString()))
-            .firstOrNull()
+        return withContext(Dispatchers.IO) {
+            bookingDocumentMongoRepository.findById(id.value.toString())
+        }.getOrNull()?.let { it.toDomain() to it.version }
             ?: throw NoSuchElementException("Booking not found: $id")
-        return entity.toDomain() to entity.version
     }
 
     override suspend fun create(entity: Booking, metadata: Metadata) {
-        collection.insertOne(BookingDocument.fromDomain(entity))
+        withContext(Dispatchers.IO) {
+            bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity, metadata.revision))
+        }
     }
 
     override suspend fun save(entity: Booking, metadata: Metadata) {
-        val result = collection.replaceOne(
-            Filters.and(
-                Filters.eq("id", entity.id.value.toString()),
-                Filters.eq("version", metadata.revision - 1)
-            ),
-            BookingDocument.fromDomain(entity, metadata.revision),
-            ReplaceOptions().upsert(false)
-        )
-
-        if (result.matchedCount == 0L) {
-            throw IllegalStateException(
-                "Optimistic locking failure: Booking ${entity.id} version mismatch. " +
-                "Expected version ${metadata.revision - 1} but document was modified by another transaction."
-            )
+        withContext(Dispatchers.IO) {
+            bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity, metadata.revision))
         }
     }
 
     override suspend fun save(entity: Booking) {
-        throw UnsupportedOperationException("Not implemented in this approach")
+        withContext(Dispatchers.IO) {
+            bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity))
+        }
+    }
+
+    override suspend fun findAllByStatus(status: BookingState, pageable: Pageable): Page<Booking> {
+        return withContext(Dispatchers.IO) {
+            bookingDocumentMongoRepository.findBookingDocumentsByStatus(status.name, pageable.toSpring())
+        }.toApplication { it.toDomain() }
     }
 }

@@ -1,87 +1,52 @@
 package pl.szymanski.wiktor.ta.infrastructure.repository
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.ReplaceOptions
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.toList
-import org.springframework.stereotype.Repository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.springframework.stereotype.Component
 import pl.szymanski.wiktor.ta.Metadata
+import pl.szymanski.wiktor.ta.Page
+import pl.szymanski.wiktor.ta.Pageable
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
-import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
-import pl.szymanski.wiktor.ta.repository.CommandRepository
-import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
 import pl.szymanski.wiktor.ta.infrastructure.document.AttractionDocument
-import pl.szymanski.wiktor.ta.LocalDateTimeRange
+import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.AttractionDocumentMongoRepository
 import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
 import pl.szymanski.wiktor.ta.queryrepository.ProjectionUpdate
+import pl.szymanski.wiktor.ta.repository.CommandRepository
+import kotlin.jvm.optionals.getOrNull
 
-@Repository
+@Component
 class MongoAttractionRepository(
-    mongoConfiguration: MongoConfiguration
+    private val attractionDocumentMongoRepository: AttractionDocumentMongoRepository,
 ) : CommandRepository<Attraction, AttractionId>, AttractionQueryRepository {
-    private val collection = mongoConfiguration.mongoClient()
-        .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<AttractionDocument.Present>("attractions")
 
     override suspend fun findById(id: AttractionId): Pair<Attraction, Long> {
-        if (id !is AttractionId.Present) throw NoSuchElementException("Attraction not found: $id")
-
-        val entity = collection
-            .find(Filters.eq("id", id.value.toString()))
-            .firstOrNull()
-            ?: throw NoSuchElementException("Attraction not found: $id")
-        return entity.toDomain() to entity.version
+        val uuid = id.value ?: throw IllegalArgumentException("AttractionId value cannot be null")
+        return withContext(Dispatchers.IO) {
+            attractionDocumentMongoRepository.findById(uuid)
+        }.getOrNull()?.let { it.toDomain() to it.version } ?: throw NoSuchElementException("Attraction not found: $id")
     }
 
     override suspend fun create(entity: Attraction, metadata: Metadata) {
-        collection.insertOne(AttractionDocument.fromDomain(entity) as AttractionDocument.Present)
-    }
-
-    override suspend fun save(entity: Attraction, metadata: Metadata) {
-        val result = collection.replaceOne(
-            Filters.and(
-                Filters.eq("id", entity.id.value.toString()),
-                Filters.eq("version", metadata.revision - 1)
-            ),
-            AttractionDocument.fromDomain(entity, metadata.revision) as AttractionDocument.Present,
-            ReplaceOptions().upsert(false)
-        )
-
-        if (result.matchedCount == 0L) {
-            throw IllegalStateException(
-                "Optimistic locking failure: Attraction ${entity.id} version mismatch. " +
-                "Expected version ${metadata.revision - 1} but document was modified by another transaction."
-            )
+        withContext(Dispatchers.IO) {
+            attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
         }
     }
 
-    override suspend fun save(entity: Attraction) {
-        throw UnsupportedOperationException("Not implemented in this approach")
+    override suspend fun save(entity: Attraction, metadata: Metadata) {
+        withContext(Dispatchers.IO) {
+            attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
+        }
     }
 
     override suspend fun update(projectionUpdate: ProjectionUpdate) {
         throw UnsupportedOperationException("Not implemented in this approach")
     }
 
-    override suspend fun findAllByStatus(status: AttractionStatusEnum): List<Attraction> {
-        return collection
-            .find(Filters.eq("status", status.toString()))
-            .toList()
-            .map { it.toDomain() }
-    }
-
-    override suspend fun findByLocationAndDate(
-        location: LocationEnum,
-        dateRange: LocalDateTimeRange
-    ): List<Attraction> {
-        return collection.find(
-            Filters.and(
-                Filters.eq("location", location.name),
-                dateRange.from?.let { Filters.gte("date", it.toString()) },
-                dateRange.till?.let { Filters.lte("date", it.toString()) }
-            )
-        ).toList().map { it.toDomain() }
+    override suspend fun findAllByStatus(status: AttractionStatusEnum, pageable: Pageable): Page<Attraction> {
+        return withContext(Dispatchers.IO) {
+            attractionDocumentMongoRepository.findPresentByStatus(status.toString(), pageable.toSpring())
+        }.toApplication { it.toDomain() }
     }
 }

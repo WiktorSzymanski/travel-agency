@@ -20,7 +20,7 @@ class CompensateBookAccommodationCommandHandler(
                 outboxPort.save(
                     accommodation,
                     events,
-                    Metadata(command.correlationId, version + 1),
+                    Metadata(command.correlationId, version),
                     accommodationRepository
                 )
             }

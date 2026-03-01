@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.commands.booking.cancel.CancelBookingCommandHandler
@@ -39,36 +40,58 @@ class SagaEventHandler(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    companion object {
+        private val log = LoggerFactory.getLogger(SagaEventHandler::class.java)
+    }
+
     @PostConstruct
     fun init() {
         scope.launch {
             eventBus.subscribe<BookingSagaStartedEvent> {
-                onBookingSagaStartedEvent(processBookingCommandHandler, it)
+                scope.launch {
+                    runCatching { onBookingSagaStartedEvent(processBookingCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling BookingSagaStartedEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<BookingSagaCompletedEvent> {
-                onBookingSagaCompletedEvent(completeBookingCommandHandler, it)
+                scope.launch {
+                    runCatching { onBookingSagaCompletedEvent(completeBookingCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling BookingSagaCompletedEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<BookingSagaFailedEvent> {
-                onBookingSagaFailedEvent(failBookingCommandHandler, it)
+                scope.launch {
+                    runCatching { onBookingSagaFailedEvent(failBookingCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling BookingSagaFailedEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<BookingCancelSagaStartedEvent> {
-                onBookingCancelSagaStartedEvent(processCancelBookingCommandHandler, it)
+                scope.launch {
+                    runCatching { onBookingCancelSagaStartedEvent(processCancelBookingCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling BookingCancelSagaStartedEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<BookingCancelSagaCompletedEvent> {
-                onBookingCancelSagaCompletedEvent(cancelBookingCommandHandler, it)
+                scope.launch {
+                    runCatching { onBookingCancelSagaCompletedEvent(cancelBookingCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling BookingCancelSagaCompletedEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<BookingCancelSagaFailedEvent> {
-                onBookingCancelSagaFailedEvent(failCancelBookingCommandHandler, it)
+                scope.launch {
+                    runCatching { onBookingCancelSagaFailedEvent(failCancelBookingCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling BookingCancelSagaFailedEvent", e) }
+                }
             }
         }
     }

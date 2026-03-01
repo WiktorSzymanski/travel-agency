@@ -10,6 +10,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+import org.springframework.core.convert.converter.Converter
+import org.springframework.data.convert.ReadingConverter
+import org.springframework.data.convert.WritingConverter
+import org.springframework.data.mongodb.core.convert.MongoCustomConversions
+import java.util.*
+
 @ConfigurationProperties(prefix = "database")
 data class MongoDBConfig(
     var uri: String = "",

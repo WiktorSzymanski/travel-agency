@@ -16,7 +16,7 @@ class BookingRequestCancelCommandHandler(
             .findById(command.bookingId)
             .let { (booking, version) ->
                 val events = booking.requestCancel()
-                outboxPort.save(booking, events, Metadata(command.correlationId, version + 1), bookingRepository)
+                outboxPort.save(booking, events, Metadata(command.correlationId, version), bookingRepository)
             }
     }
 }

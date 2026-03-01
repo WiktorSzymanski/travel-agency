@@ -16,7 +16,7 @@ class FailBookingCommandHandler(
             .findById(command.bookingId)
             .let { (booking, version) ->
                 val events = booking.fail(command.message!!)
-                outboxPort.save(booking, events, Metadata(command.correlationId, version + 1), bookingRepository)
+                outboxPort.save(booking, events, Metadata(command.correlationId, version), bookingRepository)
             }
     }
 }

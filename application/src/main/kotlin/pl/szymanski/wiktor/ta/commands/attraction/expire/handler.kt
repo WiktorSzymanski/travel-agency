@@ -16,7 +16,7 @@ class ExpireAttractionCommandHandler(
             .findById(command.attractionId)
             .let { (attraction, version) ->
                 val events = attraction.expire()
-                outboxPort.save(attraction, events, Metadata(command.correlationId, version + 1), attractionRepository)
+                outboxPort.save(attraction, events, Metadata(command.correlationId, version), attractionRepository)
             }
     }
 }

@@ -16,7 +16,7 @@ class CompensateCancelCommuteBookingCommandHandler(
             .findById(command.commuteId)
             .let { (commute, version) ->
                 val events = commute.compensateCancelBookedSeat(command.bookingId, command.seat)
-                outboxPort.save(commute, events, Metadata(command.correlationId, version + 1), commuteRepository)
+                outboxPort.save(commute, events, Metadata(command.correlationId, version), commuteRepository)
             }
     }
 }

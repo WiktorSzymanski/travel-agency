@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.commands.accommodation.expire.ExpireAccommodationCommandHandler
@@ -27,21 +28,34 @@ class DateMetEventHandler(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    companion object {
+        private val log = LoggerFactory.getLogger(DateMetEventHandler::class.java)
+    }
+
     @PostConstruct
     fun init() {
         scope.launch {
             eventBus.subscribe<CommuteDateMetEvent> {
-                onCommuteDateMetEvent(expireCommuteCommandHandler, it)
+                scope.launch {
+                    runCatching { onCommuteDateMetEvent(expireCommuteCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling CommuteDateMetEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<AccommodationDateMetEvent> {
-                onAccommodationDateMetEvent(expireAccommodationCommandHandler, it)
+                scope.launch {
+                    runCatching { onAccommodationDateMetEvent(expireAccommodationCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling AccommodationDateMetEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<AttractionDateMetEvent> {
-                onAttractionDateMetEvent(expireAttractionCommandHandler, it)
+                scope.launch {
+                    runCatching { onAttractionDateMetEvent(expireAttractionCommandHandler, it) }
+                        .onFailure { e -> log.error("Error handling AttractionDateMetEvent", e) }
+                }
             }
         }
     }

@@ -1,28 +1,35 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
-import kotlinx.serialization.Serializable
+import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
+import org.springframework.data.mongodb.core.mapping.Document
+import org.springframework.data.mongodb.core.mapping.Field
+import org.springframework.data.mongodb.core.mapping.FieldType
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import java.util.UUID
+import java.util.*
 
-@Serializable
+@Document(collection = "commutes")
 data class CommuteDocument(
-    val id: String,
+    @Id
+    @Field("_id", targetType = FieldType.IMPLICIT)
+    val id: UUID,
     val name: String,
     val departure: LocationAndTimeDocument,
     val arrival: LocationAndTimeDocument,
     val seats: List<String>,
     val bookings: Map<String, String>,
     val status: String,
+    @Version
     val version: Long = 0L
 ) {
     companion object {
         fun fromDomain(commute: Commute, version: Long = 0L) =
             CommuteDocument(
-                id = commute.id.value.toString(),
+                id = commute.id.value,
                 name = commute.name,
                 departure = LocationAndTimeDocument.fromDomain(commute.departure),
                 arrival = LocationAndTimeDocument.fromDomain(commute.arrival),
@@ -35,7 +42,7 @@ data class CommuteDocument(
 
     fun toDomain(): Commute =
         Commute(
-            id = CommuteId.from(UUID.fromString(id)),
+            id = CommuteId.from(id),
             name = name,
             departure = departure.toDomain(),
             arrival = arrival.toDomain(),

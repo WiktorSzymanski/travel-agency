@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
@@ -21,16 +22,26 @@ class BookingEventHandler(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    companion object {
+        private val log = LoggerFactory.getLogger(BookingEventHandler::class.java)
+    }
+
     @PostConstruct
     fun init() {
         scope.launch {
             eventBus.subscribe<BookingCreatedEvent> {
-                onCreatedEvent(sagaService, it)
+                scope.launch {
+                    runCatching { onCreatedEvent(sagaService, it) }
+                        .onFailure { e -> log.error("Error handling BookingCreatedEvent", e) }
+                }
             }
         }
         scope.launch {
             eventBus.subscribe<BookingCancelRequestedEvent> {
-                onCancelRequestedEvent(sagaService, it)
+                scope.launch {
+                    runCatching { onCancelRequestedEvent(sagaService, it) }
+                        .onFailure { e -> log.error("Error handling BookingCancelRequestedEvent", e) }
+                }
             }
         }
     }

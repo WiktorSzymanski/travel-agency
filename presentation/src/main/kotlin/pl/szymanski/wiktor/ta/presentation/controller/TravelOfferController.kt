@@ -31,28 +31,21 @@ class CommuteController(
     private val accommodationQuery: AccommodationQuery
 ) {
 
-    /**
-     * Get all travel offers with pagination
-     * @param page Page number (default: 1)
-     * @param size Page size (default: 20)
-     */
     @GetMapping("/scheduledCommutes")
     fun getScheduledCommutes(
-        @RequestParam(defaultValue = "1") page: Int,
+        @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<List<CommuteDocument>> = runBlocking {
-        //TODO: pagination
-        val resp = commuteQuery.getScheduledCommutes().map { CommuteDocument.fromDomain(it) }
+    ): ResponseEntity<Page<CommuteDocument>> = runBlocking {
+        val resp = commuteQuery.getScheduledCommutes(Pageable(page, size)).map { CommuteDocument.fromDomain(it) }
         ResponseEntity.ok(resp)
     }
 
     @GetMapping("/scheduledAttractions")
     fun getScheduledAttractions(
-        @RequestParam(defaultValue = "1") page: Int,
+        @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<List<AttractionDocument>> = runBlocking {
-        //TODO: pagination
-        val resp = attractionQuery.getScheduledAttractions().map { AttractionDocument.fromDomain(it)}
+    ): ResponseEntity<Page<AttractionDocument>> = runBlocking {
+        val resp = attractionQuery.getScheduledAttractions(Pageable(page, size)).map { AttractionDocument.fromDomain(it)}
         ResponseEntity.ok(resp)
     }
 
@@ -68,9 +61,9 @@ class CommuteController(
 
     @GetMapping("/anyTravelOffer")
     fun getAnyTravelOffer() = runBlocking {
-        val commute = commuteQuery.getScheduledCommutes()[0]
+        val commute = commuteQuery.getScheduledCommutes(Pageable(0, 1)).content[0]
         val accommodation = accommodationQuery.getAvailableAccommodations(Pageable(0, 1)).content[0]
-        val attraction = attractionQuery.getScheduledAttractions()[0]
+        val attraction = attractionQuery.getScheduledAttractions(Pageable(0, 1)).content[0]
 
         ResponseEntity.ok(TravelOfferDocument.fromDomain(
             TravelOffer(

@@ -1,6 +1,11 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
 import kotlinx.serialization.Serializable
+import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
+import org.springframework.data.mongodb.core.mapping.Document
+import org.springframework.data.mongodb.core.mapping.Field
+import org.springframework.data.mongodb.core.mapping.FieldType
 import pl.szymanski.wiktor.ta.domain.BookingState
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
@@ -24,34 +29,41 @@ data class SeatDocument(
         Seat.Picked(row, column)
 }
 
-@Serializable
+@Document(collection = "bookings")
 data class BookingDocument(
-    val id: String,
+    @Id
+    @Field("_id", targetType = FieldType.IMPLICIT)
+    val id: UUID,
     val userId: String,
     val travelOffer: TravelOfferDocument,
     val seat: SeatDocument? = null,
     var status: String,
     var message: String? = null,
     val timestamp: String,
+    @Version
     val version: Long = 0L
 ) {
     companion object {
         fun fromDomain(booking: Booking, version: Long = 0L) =
-            BookingDocument(
-                id = booking.id.value.toString(),
-                userId = booking.userId.toString(),
-                travelOffer = TravelOfferDocument.fromDomain(booking.travelOffer),
-                seat = SeatDocument.fromDomain(booking.seat),
-                status = booking.status.name,
-                message = booking.message,
-                timestamp = booking.timestamp.toString(),
-                version = version
-            )
+            when (booking.id) {
+                is BookingId.Present -> BookingDocument(
+                    id = booking.id.value!!,
+                    userId = booking.userId.toString(),
+                    travelOffer = TravelOfferDocument.fromDomain(booking.travelOffer),
+                    seat = SeatDocument.fromDomain(booking.seat),
+                    status = booking.status.name,
+                    message = booking.message,
+                    timestamp = booking.timestamp.toString(),
+                    version = version
+                )
+
+                is BookingId.Empty -> throw IllegalArgumentException("Booking ID cannot be empty when converting to document")
+            }
     }
 
     fun toDomain(): Booking =
         Booking(
-            id = BookingId.from(UUID.fromString(id)) as BookingId.Present,
+            id = BookingId.from(id) as BookingId.Present,
             userId = UUID.fromString(userId),
             travelOffer = travelOffer.toDomain(),
             seat = seat?.toDomain() ?: Seat.Any,

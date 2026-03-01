@@ -1,48 +1,37 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
-import kotlinx.serialization.Serializable
+import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
+import org.springframework.data.mongodb.core.mapping.Document
+import org.springframework.data.mongodb.core.mapping.Field
+import org.springframework.data.mongodb.core.mapping.FieldType
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
-@Serializable
-sealed interface AttractionDocument {
-    data object Empty : AttractionDocument {
-        fun toDomain(): Attraction? = null
-    }
-
-    @Serializable
-    data class Present(
-        val id: String,
-        val name: String,
-        val location: String,
-        val date: String,
-        val capacity: Int,
-        val bookings: List<String>,
-        val status: String,
-        val version: Long = 0L
-    ) : AttractionDocument {
-        fun toDomain(): Attraction =
-            Attraction(
-                id = AttractionId.Present(UUID.fromString(id)),
-                name = name,
-                location = LocationEnum.valueOf(location),
-                date = LocalDateTime.parse(date),
-                capacity = capacity,
-                bookings = bookings.map { BookingId.from(UUID.fromString(it)) }.toMutableList(),
-                status = AttractionStatusEnum.valueOf(status)
-            )
-    }
-
+@Document(collection = "attractions")
+data class AttractionDocument (
+    @Id
+    @Field("_id", targetType = FieldType.IMPLICIT)
+    val id: UUID,
+    val name: String,
+    val location: String,
+    val date: String,
+    val capacity: Int,
+    val bookings: List<String>,
+    val status: String,
+    @Version
+    val version: Long = 0L
+) {
     companion object {
-        fun fromDomain(attraction: Attraction?, version: Long = 0L) =
-            attraction?.let {
-                Present(
-                    id = attraction.id.value.toString(),
+        fun fromDomain(attraction: Attraction, version: Long = 0L) =
+            when (attraction.id) {
+                is AttractionId.Present -> AttractionDocument(
+                    id = attraction.id.value!!,
                     name = attraction.name,
                     location = attraction.location.name,
                     date = attraction.date.toString(),
@@ -51,7 +40,19 @@ sealed interface AttractionDocument {
                     status = attraction.status.name,
                     version = version
                 )
-            } ?: Empty
+                is AttractionId.Empty -> throw IllegalArgumentException("Attraction ID cannot be empty when converting to document")
+            }
     }
+
+    fun toDomain(): Attraction =
+        Attraction(
+            id = AttractionId.Present(id),
+            name = name,
+            location = LocationEnum.valueOf(location),
+            date = LocalDateTime.parse(date),
+            capacity = capacity,
+            bookings = bookings.map { BookingId.from(UUID.fromString(it)) }.toMutableList(),
+            status = AttractionStatusEnum.valueOf(status)
+        )
 }
 

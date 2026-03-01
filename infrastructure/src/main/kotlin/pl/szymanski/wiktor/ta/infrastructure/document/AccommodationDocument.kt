@@ -1,7 +1,10 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.mapping.Document
+import org.springframework.data.mongodb.core.mapping.Field
+import org.springframework.data.mongodb.core.mapping.FieldType
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
@@ -11,12 +14,15 @@ import java.util.*
 
 @Document(collection = "accommodations")
 data class AccommodationDocument(
-    @Id val id: UUID,
+    @Id
+    @Field("_id", targetType = FieldType.IMPLICIT)
+    val id: UUID,
     val name: String,
     val location: String,
     val rent: RentDocument,
     val booking: String? = null,
     val status: String,
+    @Version
     val version: Long = 0L
 ) {
     companion object {

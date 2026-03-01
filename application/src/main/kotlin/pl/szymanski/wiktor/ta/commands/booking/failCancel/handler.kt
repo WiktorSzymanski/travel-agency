@@ -16,7 +16,7 @@ class FailCancelBookingCommandHandler(
             .findById(command.bookingId)
             .let { (booking, version) ->
                 val events = booking.failCancellation(command.message!!)
-                outboxPort.save(booking, events, Metadata(command.correlationId, version + 1), bookingRepository)
+                outboxPort.save(booking, events, Metadata(command.correlationId, version), bookingRepository)
             }
     }
 }
