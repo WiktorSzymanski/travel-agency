@@ -5,9 +5,9 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 
-@Serializable
+
 data class Metadata (
-    val correlationId: @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class) UUID,
+    val correlationId: UUID,
     val revision: Long,
 )
 

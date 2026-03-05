@@ -3,20 +3,18 @@ package pl.szymanski.wiktor.ta.infrastructure.document
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.data.mongodb.core.mapping.Field
-import org.springframework.data.mongodb.core.mapping.FieldType
+import pl.szymanski.wiktor.ta.domain.AnySeat
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
+import pl.szymanski.wiktor.ta.domain.PickedSeat
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.Commute
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
-import java.util.*
 
 @Document(collection = "commutes")
 data class CommuteDocument(
     @Id
-    @Field("_id", targetType = FieldType.IMPLICIT)
-    val id: UUID,
+    val id: CommuteId,
     val name: String,
     val departure: LocationAndTimeDocument,
     val arrival: LocationAndTimeDocument,
@@ -29,7 +27,7 @@ data class CommuteDocument(
     companion object {
         fun fromDomain(commute: Commute, version: Long = 0L) =
             CommuteDocument(
-                id = commute.id.value,
+                id = commute.id,
                 name = commute.name,
                 departure = LocationAndTimeDocument.fromDomain(commute.departure),
                 arrival = LocationAndTimeDocument.fromDomain(commute.arrival),
@@ -42,27 +40,26 @@ data class CommuteDocument(
 
     fun toDomain(): Commute =
         Commute(
-            id = CommuteId.from(id),
+            id = id,
             name = name,
             departure = departure.toDomain(),
             arrival = arrival.toDomain(),
             seats = seats.map { parseSeat(it) },
-            bookings = bookings.mapKeys { BookingId.from(UUID.fromString(it.key)) }
+            bookings = bookings.mapKeys { BookingId.from(java.util.UUID.fromString(it.key)) }
                 .mapValues { parseSeat(it.value) }
                 .toMutableMap(),
             status = CommuteStatusEnum.valueOf(status)
         )
 
     private fun parseSeat(seatStr: String): Seat {
-        return if (seatStr == "Any") {
-            Seat.Any
+        return if (seatStr == "AnySeat") {
+            AnySeat
         } else {
-            val parts = seatStr.removePrefix("Picked(").removeSuffix(")").split(", ")
-            Seat.Picked(
+            val parts = seatStr.removePrefix("PickedSeat(").removeSuffix(")").split(", ")
+            PickedSeat(
                 row = parts[0].substringAfter("="),
                 column = parts[1].substringAfter("="),
             )
         }
     }
 }
-

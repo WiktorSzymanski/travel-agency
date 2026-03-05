@@ -1,22 +1,21 @@
 package pl.szymanski.wiktor.ta.infrastructure.outbox
 
-import com.mongodb.client.model.Filters
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Repository
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueEntry
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
-import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
+import pl.szymanski.wiktor.ta.infrastructure.document.DeadLetterQueueEntryDocument
+import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.DeadLetterQueueDocumentMongoRepository
 
 @Repository
 class DeadLetterQueueRepositoryMongo(
-    mongoConfiguration: MongoConfiguration
+    private val deadLetterQueueDocumentMongoRepository: DeadLetterQueueDocumentMongoRepository,
 ) : DeadLetterQueueRepository {
 
-    private val collection = mongoConfiguration.mongoClient()
-        .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<DeadLetterQueueEntry>("dead_letter_queue")
-
     override suspend fun save(dlqEntry: DeadLetterQueueEntry) {
-        collection.insertOne(dlqEntry)
+        withContext(Dispatchers.IO) {
+            deadLetterQueueDocumentMongoRepository.save(DeadLetterQueueEntryDocument.fromDomain(dlqEntry))
+        }
     }
 }

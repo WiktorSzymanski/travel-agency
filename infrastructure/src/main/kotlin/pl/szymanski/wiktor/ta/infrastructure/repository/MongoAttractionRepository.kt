@@ -22,9 +22,8 @@ class MongoAttractionRepository(
 ) : CommandRepository<Attraction, AttractionId>, AttractionQueryRepository {
 
     override suspend fun findById(id: AttractionId): Pair<Attraction, Long> {
-        val uuid = id.value ?: throw IllegalArgumentException("AttractionId value cannot be null")
         return withContext(Dispatchers.IO) {
-            attractionDocumentMongoRepository.findById(uuid)
+            attractionDocumentMongoRepository.findById(id)
         }.getOrNull()?.let { it.toDomain() to it.version } ?: throw NoSuchElementException("Attraction not found: $id")
     }
 
@@ -38,6 +37,14 @@ class MongoAttractionRepository(
         withContext(Dispatchers.IO) {
             attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
         }
+    }
+
+    override fun createBlocking(entity: Attraction, metadata: Metadata) {
+        attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
+    }
+
+    override fun saveBlocking(entity: Attraction, metadata: Metadata) {
+        attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
     }
 
     override suspend fun update(projectionUpdate: ProjectionUpdate) {

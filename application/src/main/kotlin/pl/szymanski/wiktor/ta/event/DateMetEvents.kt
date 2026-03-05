@@ -1,41 +1,37 @@
 package pl.szymanski.wiktor.ta.event
 
-import kotlinx.serialization.Serializable
-import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
-import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
-import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
+import com.fasterxml.jackson.annotation.JsonIgnore
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import java.time.LocalDateTime
 import java.util.UUID
 
-@Serializable
 sealed interface DateMetEvent : PublishableEvent {
     val date: LocalDateTime
 }
 
-@Serializable
 data class CommuteDateMetEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.LocalDateTimeSerializer::class)
     override val date: LocalDateTime,
-    val commuteId: CommuteId,
-) : DateMetEvent
+    val commuteId: UUID,
+) : DateMetEvent {
+    @get:JsonIgnore
+    override val entityId: UUID get() = commuteId
+}
 
-@Serializable
-data class AccommodationDateMetEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
+data class AccommodationDateMetEvent (
     override val eventId: UUID = UUID.randomUUID(),
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.LocalDateTimeSerializer::class)
     override val date: LocalDateTime,
-    val accommodationId: AccommodationId,
-) : DateMetEvent
+    val accommodationId: UUID,
+) : DateMetEvent {
+    @get:JsonIgnore
+    override val entityId: UUID get() = accommodationId
+}
 
-@Serializable
 data class AttractionDateMetEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.LocalDateTimeSerializer::class)
     override val date: LocalDateTime,
-    val attractionId: AttractionId,
-) : DateMetEvent
+    val attractionId: UUID,
+) : DateMetEvent {
+    @get:JsonIgnore
+    override val entityId: UUID get() = attractionId
+}

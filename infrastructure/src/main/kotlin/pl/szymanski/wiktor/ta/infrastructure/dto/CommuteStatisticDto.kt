@@ -1,8 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.dto
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 data class CommuteStatisticDto(
     val time: String,
     val totalCommuteCount: Int,
@@ -10,7 +7,6 @@ data class CommuteStatisticDto(
     val arrivalLocations: List<ArrivalLocationDto>,
 )
 
-@Serializable
 data class ArrivalLocationDto(
     val location: String,
     val commutesNumber: Int,

@@ -3,8 +3,6 @@ package pl.szymanski.wiktor.ta.infrastructure.document
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.data.mongodb.core.mapping.Field
-import org.springframework.data.mongodb.core.mapping.FieldType
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
@@ -15,8 +13,7 @@ import java.util.*
 @Document(collection = "accommodations")
 data class AccommodationDocument(
     @Id
-    @Field("_id", targetType = FieldType.IMPLICIT)
-    val id: UUID,
+    val id: AccommodationId,
     val name: String,
     val location: String,
     val rent: RentDocument,
@@ -28,7 +25,7 @@ data class AccommodationDocument(
     companion object {
         fun fromDomain(accommodation: Accommodation, version: Long = 0L) =
             AccommodationDocument(
-                id = accommodation.id.value,
+                id = accommodation.id,
                 name = accommodation.name,
                 location = accommodation.location.name,
                 rent = RentDocument.fromDomain(accommodation.rent),
@@ -40,7 +37,7 @@ data class AccommodationDocument(
 
     fun toDomain(): Accommodation =
         Accommodation(
-            id = AccommodationId.from(id),
+            id = id,
             name = name,
             location = LocationEnum.valueOf(location),
             rent = rent.toDomain(),
@@ -48,4 +45,3 @@ data class AccommodationDocument(
             status = AccommodationStatusEnum.valueOf(status)
         )
 }
-

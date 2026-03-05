@@ -88,18 +88,18 @@ class CancelBookingSaga(
 
     override fun getSagaStartedEvent(): SagaEvent =
         BookingCancelSagaStartedEvent(
-            bookingId = sagaState.bookingId
+            bookingId = sagaState.bookingId.value!!
         )
 
     override fun getSagaCompletedEvent(): SagaEvent =
         BookingCancelSagaCompletedEvent(
-            bookingId = sagaState.bookingId,
+            bookingId = sagaState.bookingId.value!!,
             seat = sagaState.seat
         )
 
     override fun getSagaFailedEvent(): SagaEvent =
         BookingCancelSagaFailedEvent(
-            bookingId = sagaState.bookingId,
+            bookingId = sagaState.bookingId.value!!,
             message = sagaState.message!!
         )
 }

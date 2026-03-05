@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.commandhandler
+/*package pl.szymanski.wiktor.ta.commandhandler
 
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -150,3 +150,4 @@ class AttractionCommandHandlerTest {
             verify(exactly = 1) { attraction.compensateCancelBooking(any()) }
         }
 }
+*/

@@ -31,8 +31,6 @@ import pl.szymanski.wiktor.ta.domain.event.CommuteExpiredEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteFullEvent
 import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
-import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
-import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import pl.szymanski.wiktor.ta.event.AccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.event.AttractionDateMetEvent
@@ -73,11 +71,9 @@ val publishableEventModule = SerializersModule {
         subclass(AttractionBookingCanceledCompensatedEvent::class)
         // BookingEvent
         subclass(BookingCreatedEvent::class)
-        subclass(ProcessBookingEvent::class)
         subclass(CompleteBookingEvent::class)
         subclass(BookingCancelRequestedEvent::class)
         subclass(CancelBookingEvent::class)
-        subclass(ProcessCancelBookingEvent::class)
         subclass(FailBookingEvent::class)
         subclass(FailCancelBookingEvent::class)
         // SagaEvent

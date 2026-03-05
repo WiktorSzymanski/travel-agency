@@ -1,10 +1,8 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
-import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.Rent
 import java.time.LocalDateTime
 
-@Serializable
 data class RentDocument(
     val from: String,
     val till: String,
@@ -23,4 +21,3 @@ data class RentDocument(
             till = LocalDateTime.parse(till)
         )
 }
-

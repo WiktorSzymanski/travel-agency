@@ -45,7 +45,7 @@ class CommuteGenerator(
             ),
             seats = template.seats,
         )
-        val event = CommuteDateMetEvent(commuteId = id, date = departureTime)
+        val event = CommuteDateMetEvent(commuteId = id.value!!, date = departureTime)
         return GeneratedResult(command, event, departureTime)
     }
 }

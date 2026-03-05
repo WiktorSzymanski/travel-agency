@@ -1,8 +1,10 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import kotlinx.serialization.Serializable
+import pl.szymanski.wiktor.ta.domain.AnySeat
 import pl.szymanski.wiktor.ta.domain.CommuteStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
+import pl.szymanski.wiktor.ta.domain.PickedSeat
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.event.CommuteAvailableEvent
 import pl.szymanski.wiktor.ta.domain.event.CommuteBookedCompensatedEvent
@@ -19,9 +21,7 @@ import pl.szymanski.wiktor.ta.domain.exception.CommuteExpireFailedException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteMissingCreatedEventException
 import pl.szymanski.wiktor.ta.domain.exception.CommuteEmptyEventListException
 import java.time.LocalDateTime
-import java.util.UUID
 
-@Serializable
 data class Commute(
     val id: CommuteId = CommuteId.generate(),
     val name: String,
@@ -50,7 +50,7 @@ data class Commute(
 
             val event =
                 CommuteCreatedEvent(
-                    commuteId = commute.id,
+                    commuteId = commute.id.value,
                     name = name,
                     departure = departure,
                     arrival = arrival,
@@ -70,7 +70,7 @@ data class Commute(
 
             val commute =
                 Commute(
-                    id = createdEvent.commuteId,
+                    id = CommuteId.from(createdEvent.commuteId),
                     name = createdEvent.name,
                     departure = createdEvent.departure,
                     arrival = createdEvent.arrival,
@@ -89,7 +89,7 @@ data class Commute(
         is CommuteCreatedEvent -> Unit
 
         is CommuteBookedEvent -> {
-            this.bookings[event.bookingId] = event.seat
+            this.bookings[BookingId.from(event.bookingId)] = event.seat
         }
 
         is CommuteFullEvent -> {
@@ -101,7 +101,7 @@ data class Commute(
         }
 
         is CommuteBookingCanceledEvent -> {
-            this.bookings.remove(event.bookingId)
+            this.bookings.remove(BookingId.from(event.bookingId))
             Unit
         }
 
@@ -110,12 +110,12 @@ data class Commute(
         }
 
         is CommuteBookedCompensatedEvent -> {
-            this.bookings.remove(event.bookingId)
+            this.bookings.remove(BookingId.from(event.bookingId))
             Unit
         }
 
         is CommuteBookingCanceledCompensatedEvent -> {
-            this.bookings[event.bookingId] = event.seat
+            this.bookings[BookingId.from(event.bookingId)] = event.seat
         }
     }
 
@@ -132,7 +132,7 @@ data class Commute(
 
         return listOf(
             CommuteExpiredEvent(
-                commuteId = id,
+                commuteId = id.value,
             ),
         )
     }
@@ -147,21 +147,21 @@ data class Commute(
         }
 
         val seatToBook = when (seat) {
-            is Seat.Any -> getFirstAvailableSeat()
-            is Seat.Picked -> validateSeat(seat)
+            is AnySeat -> getFirstAvailableSeat()
+            is PickedSeat -> validateSeat(seat)
         }
 
         this.bookings[bookingId] = seatToBook
 
         return listOfNotNull(
             CommuteBookedEvent(
-                commuteId = id,
-                bookingId = bookingId,
+                commuteId = id.value,
+                bookingId = bookingId.value!!,
                 seat = seatToBook,
             ),
             takeIf { seatsCheck() }?.let {
                 CommuteFullEvent(
-                    commuteId = id,
+                    commuteId = id.value,
                 )
             },
         )
@@ -179,13 +179,13 @@ data class Commute(
 
         return listOfNotNull(
             CommuteBookingCanceledEvent(
-                commuteId = id,
-                bookingId = bookingId,
+                commuteId = id.value,
+                bookingId = bookingId.value!!,
                 seat = seat,
             ),
             takeIf { seatsCheck() }?.let {
                 CommuteAvailableEvent(
-                    commuteId = id,
+                    commuteId = id.value,
                 )
             },
         )
@@ -207,13 +207,13 @@ data class Commute(
 
         return listOfNotNull(
             CommuteBookingCanceledCompensatedEvent(
-                commuteId = id,
-                bookingId = bookingId,
+                commuteId = id.value,
+                bookingId = bookingId.value!!,
                 seat = seat,
             ),
             takeIf { seatsCheck() }?.let {
                 CommuteFullEvent(
-                    commuteId = id,
+                    commuteId = id.value,
                 )
             },
         )
@@ -226,13 +226,13 @@ data class Commute(
 
         return listOfNotNull(
             CommuteBookedCompensatedEvent(
-                commuteId = id,
-                bookingId = bookingId,
+                commuteId = id.value,
+                bookingId = bookingId.value!!,
                 seat = seat,
             ),
             takeIf { seatsCheck() }?.let {
                 CommuteAvailableEvent(
-                    commuteId = id,
+                    commuteId = id.value,
                 )
             },
         )

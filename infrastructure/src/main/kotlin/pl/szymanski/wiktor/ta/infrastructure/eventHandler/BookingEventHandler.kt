@@ -1,48 +1,44 @@
 package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 
-import jakarta.annotation.PostConstruct
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import org.springframework.kafka.annotation.KafkaHandler
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Service
-import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
 import pl.szymanski.wiktor.ta.eventHandlerLogic.onCancelRequestedEvent
 import pl.szymanski.wiktor.ta.eventHandlerLogic.onCreatedEvent
 import pl.szymanski.wiktor.ta.saga.SagaService
-import pl.szymanski.wiktor.ta.subscribe
 
 @Service
+@KafkaListener(topics = ["booking-events"], groupId = "travel-agency")
 class BookingEventHandler(
-    private val eventBus: EventBus,
     private val sagaService: SagaService,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     companion object {
         private val log = LoggerFactory.getLogger(BookingEventHandler::class.java)
     }
 
-    @PostConstruct
-    fun init() {
-        scope.launch {
-            eventBus.subscribe<BookingCreatedEvent> {
-                scope.launch {
-                    runCatching { onCreatedEvent(sagaService, it) }
-                        .onFailure { e -> log.error("Error handling BookingCreatedEvent", e) }
-                }
-            }
+    @KafkaHandler
+    suspend fun onBookingEvent(envelope: EventEnvelope<*>, acknowledgment: Acknowledgment) {
+        when (envelope.event) {
+            is BookingCreatedEvent -> onCreatedEvent(
+                sagaService,
+                @Suppress("UNCHECKED_CAST")
+                envelope as EventEnvelope<BookingCreatedEvent>
+            )
+
+            is BookingCancelRequestedEvent -> onCancelRequestedEvent(
+                sagaService,
+                @Suppress("UNCHECKED_CAST")
+                envelope as EventEnvelope<BookingCancelRequestedEvent>
+            )
+
+            else -> log.error("Received unhandled event type in booking-events topic: ${envelope.event::class.java}")
         }
-        scope.launch {
-            eventBus.subscribe<BookingCancelRequestedEvent> {
-                scope.launch {
-                    runCatching { onCancelRequestedEvent(sagaService, it) }
-                        .onFailure { e -> log.error("Error handling BookingCancelRequestedEvent", e) }
-                }
-            }
-        }
+
+        acknowledgment.acknowledge()
     }
 }

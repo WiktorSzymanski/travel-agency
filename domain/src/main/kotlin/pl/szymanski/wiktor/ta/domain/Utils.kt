@@ -1,9 +1,8 @@
 package pl.szymanski.wiktor.ta.domain
 
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import java.time.LocalDateTime
 
-@Serializable
 enum class LocationEnum {
     POZNAN,
     LONDON,
@@ -23,70 +22,46 @@ enum class LocationEnum {
     MARSEILLE,
 }
 
-@Serializable
 data class LocationAndTime(
     val location: LocationEnum,
-    @Serializable(with = LocalDateTimeSerializer::class)
     val time: LocalDateTime,
 )
 
-@Serializable
 enum class BookingState {
     NEW,
-    PROCESSING,
     BOOKED,
     CANCEL_REQUESTED,
-    PROCESSING_CANCELLATION,
     CANCELED,
     FAILED,
 }
 
-@Serializable
-sealed interface Seat {
-    @Serializable
-    data object Any : Seat
-    @Serializable
-    data class Picked(
-        val row: String,
-        val column: String
-    ) : Seat
-}
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
+sealed interface Seat
+data object AnySeat : Seat
+data class PickedSeat(
+    val row: String,
+    val column: String
+) : Seat
 
-@Serializable
 data class Rent(
-    @Serializable(with = LocalDateTimeSerializer::class)
     val from: LocalDateTime,
-    @Serializable(with = LocalDateTimeSerializer::class)
     val till: LocalDateTime,
 )
 
-@Serializable
 enum class CommuteStatusEnum {
     SCHEDULED,
     FULL,
     EXPIRED,
 }
 
-@Serializable
 enum class AccommodationStatusEnum {
     AVAILABLE,
     BOOKED,
     EXPIRED,
 }
 
-@Serializable
 enum class AttractionStatusEnum {
     SCHEDULED,
     FULL,
     EXPIRED,
-}
-
-@Serializable
-enum class TravelOfferStatusEnum {
-    AVAILABLE,
-    RESERVED,
-    BOOKED,
-    UNAVAILABLE,
-    EXPIRED,
-    RELEASING,
 }

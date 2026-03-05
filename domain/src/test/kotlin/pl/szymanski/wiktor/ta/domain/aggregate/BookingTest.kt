@@ -1,6 +1,7 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
 import pl.szymanski.wiktor.ta.domain.BookingState
+import pl.szymanski.wiktor.ta.domain.PickedSeat
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.assertEventEquals
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
@@ -35,7 +36,7 @@ class BookingTest {
         AccommodationId.generate(),
         AttractionId.generate(),
     )
-    private var seat: Seat = Seat.Picked("1", "A")
+    private var seat: Seat = PickedSeat("1", "A")
 
     private val booking: Booking =
         Booking(
@@ -47,16 +48,16 @@ class BookingTest {
 
     @Test
     fun aggregate_should_return_booking_and_created_event() {
-        val (booking, events) = Booking.create(userId, seat, travelOffer)
+        val (booking, events) = Booking.create(bookingId, userId, seat, travelOffer)
 
         assertEventEquals(
             BookingCreatedEvent(
-                bookingId = booking.id,
+                bookingId = booking.id.value!!,
                 userId = userId,
                 travelOffer = travelOffer,
                 seat = seat
             ),
-            events.first()
+            events,
         )
 
         assertEquals(BookingState.NEW, booking.status)
@@ -71,7 +72,7 @@ class BookingTest {
 
         assertEventEquals(
             ProcessBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -92,7 +93,7 @@ class BookingTest {
 
         assertEventEquals(
             CompleteBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -105,7 +106,7 @@ class BookingTest {
 
         assertEventEquals(
             CompleteBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -131,7 +132,7 @@ class BookingTest {
 
         assertEventEquals(
             BookingCancelRequestedEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
                 travelOffer = travelOffer,
                 seat = seat,
             ),
@@ -152,7 +153,7 @@ class BookingTest {
 
         assertEventEquals(
             CancelBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -172,7 +173,7 @@ class BookingTest {
 
         assertEventEquals(
             ProcessCancelBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -192,7 +193,7 @@ class BookingTest {
 
         assertEventEquals(
             FailBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
                 message = message,
             ),
             events.first(),
@@ -208,7 +209,7 @@ class BookingTest {
 
         assertEventEquals(
             FailBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
                 message = message,
             ),
             events.first(),
@@ -241,7 +242,7 @@ class BookingTest {
 
         assertEventEquals(
             FailCancelBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
                 message = message,
             ),
             events.first(),
@@ -258,7 +259,7 @@ class BookingTest {
 
         assertEventEquals(
             FailCancelBookingEvent(
-                bookingId = bookingId,
+                bookingId = bookingId.value!!,
                 message = message,
             ),
             events.first(),
@@ -283,19 +284,19 @@ class BookingTest {
     @Test
     fun booking_fromEvents_should_handle_empty_and_invalid_first_event() {
         assertFailsWith<BookingEmptyEventListException> { Booking.fromEvents(emptyList()) }
-        val invalid = listOf(ProcessBookingEvent(bookingId = bookingId))
+        val invalid = listOf(ProcessBookingEvent(bookingId = bookingId.value!!))
         assertFailsWith<BookingMissingCreatedEventException> { Booking.fromEvents(invalid) }
     }
 
     @Test
     fun booking_fromEvents_should_rebuild_state() {
         val events = listOf(
-            BookingCreatedEvent(bookingId = bookingId, travelOffer = travelOffer, userId = userId, seat = seat),
-            ProcessBookingEvent(bookingId = bookingId),
-            CompleteBookingEvent(bookingId = bookingId),
-            BookingCancelRequestedEvent(bookingId = bookingId, travelOffer = travelOffer, seat = seat),
-            ProcessCancelBookingEvent(bookingId = bookingId),
-            FailCancelBookingEvent(bookingId = bookingId, message = "Retry later")
+            BookingCreatedEvent(bookingId = bookingId.value!!, travelOffer = travelOffer, userId = userId, seat = seat),
+            ProcessBookingEvent(bookingId = bookingId.value!!),
+            CompleteBookingEvent(bookingId = bookingId.value!!),
+            BookingCancelRequestedEvent(bookingId = bookingId.value!!, travelOffer = travelOffer, seat = seat),
+            ProcessCancelBookingEvent(bookingId = bookingId.value!!),
+            FailCancelBookingEvent(bookingId = bookingId.value!!, message = "Retry later")
         )
 
         val result = Booking.fromEvents(events)

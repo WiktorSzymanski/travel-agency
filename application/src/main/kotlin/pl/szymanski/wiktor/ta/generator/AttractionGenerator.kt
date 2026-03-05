@@ -34,7 +34,7 @@ class AttractionGenerator(
             date = date,
             capacity = template.capacity,
         )
-        val event = AttractionDateMetEvent(attractionId = id, date = date)
+        val event = AttractionDateMetEvent(attractionId = id.value!!, date = date)
         return GeneratedResult(command, event, date)
     }
 }

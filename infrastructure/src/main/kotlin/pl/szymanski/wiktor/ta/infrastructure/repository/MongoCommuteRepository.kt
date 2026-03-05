@@ -25,7 +25,7 @@ class MongoCommuteRepository(
 
     override suspend fun findById(id: CommuteId): Pair<Commute, Long> {
         return withContext(Dispatchers.IO) {
-            commuteDocumentMongoRepository.findById(id.value.toString())
+            commuteDocumentMongoRepository.findById(id)
         }.getOrNull()?.let { it.toDomain() to it.version }
             ?: throw NoSuchElementException("Commute not found: $id")
     }
@@ -40,6 +40,14 @@ class MongoCommuteRepository(
         withContext(Dispatchers.IO) {
             commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
         }
+    }
+
+    override fun createBlocking(entity: Commute, metadata: Metadata) {
+        commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
+    }
+
+    override fun saveBlocking(entity: Commute, metadata: Metadata) {
+        commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
     }
 
     override suspend fun save(entity: Commute) {

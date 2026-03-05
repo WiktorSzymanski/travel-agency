@@ -1,56 +1,44 @@
 package pl.szymanski.wiktor.ta.event
 
-import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.Seat
-import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import java.util.UUID
 
-@Serializable
-sealed interface SagaEvent : PublishableEvent
+sealed interface SagaEvent : PublishableEvent {
+    val bookingId: UUID
+    override val entityId: UUID get() = bookingId
+}
 
-@Serializable
 data class BookingSagaStartedEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    val bookingId: BookingId,
+    override val bookingId: UUID,
 ) : SagaEvent
 
-@Serializable
 data class BookingSagaFailedEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    val bookingId: BookingId,
+    override val bookingId: UUID,
     val message: String,
 ) : SagaEvent
 
-@Serializable
 data class BookingSagaCompletedEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    val bookingId: BookingId,
+    override val bookingId: UUID,
     val seat: Seat,
 ) : SagaEvent
 
-@Serializable
 data class BookingCancelSagaStartedEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    val bookingId: BookingId,
+    override val bookingId: UUID,
 ) : SagaEvent
 
-@Serializable
 data class BookingCancelSagaFailedEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    val bookingId: BookingId,
+    override val bookingId: UUID,
     val message: String,
 ) : SagaEvent
 
-@Serializable
 data class BookingCancelSagaCompletedEvent(
-    @Serializable(with = pl.szymanski.wiktor.ta.domain.UUIDSerializer::class)
     override val eventId: UUID = UUID.randomUUID(),
-    val bookingId: BookingId,
+    override val bookingId: UUID,
     val seat: Seat,
 ) : SagaEvent

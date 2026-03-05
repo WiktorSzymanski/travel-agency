@@ -23,43 +23,14 @@ import pl.szymanski.wiktor.ta.query.CommuteQuery
 import pl.szymanski.wiktor.ta.service.BookingService
 
 @RestController
-@RequestMapping("/api")
-class CommuteController(
+@RequestMapping("/api/travelOffer")
+class TravelOfferController(
     private val commuteQuery: CommuteQuery,
-    private val bookingService: BookingService,
     private val attractionQuery: AttractionQuery,
     private val accommodationQuery: AccommodationQuery
 ) {
 
-    @GetMapping("/scheduledCommutes")
-    fun getScheduledCommutes(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<Page<CommuteDocument>> = runBlocking {
-        val resp = commuteQuery.getScheduledCommutes(Pageable(page, size)).map { CommuteDocument.fromDomain(it) }
-        ResponseEntity.ok(resp)
-    }
-
-    @GetMapping("/scheduledAttractions")
-    fun getScheduledAttractions(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<Page<AttractionDocument>> = runBlocking {
-        val resp = attractionQuery.getScheduledAttractions(Pageable(page, size)).map { AttractionDocument.fromDomain(it)}
-        ResponseEntity.ok(resp)
-    }
-
-    @GetMapping("/availableAccommodations")
-    fun getAvailableAccommodations(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-    ): ResponseEntity<Page<AccommodationDocument>> = runBlocking {
-        val resp = accommodationQuery.getAvailableAccommodations(Pageable(page, size))
-            .map { AccommodationDocument.fromDomain(it) }
-        ResponseEntity.ok(resp)
-    }
-
-    @GetMapping("/anyTravelOffer")
+    @GetMapping("/any")
     fun getAnyTravelOffer() = runBlocking {
         val commute = commuteQuery.getScheduledCommutes(Pageable(0, 1)).content[0]
         val accommodation = accommodationQuery.getAvailableAccommodations(Pageable(0, 1)).content[0]
@@ -72,17 +43,5 @@ class CommuteController(
                 attraction.id
             )
         ))
-    }
-
-
-    @PostMapping("/bookings")
-    fun createBooking(@RequestBody request: CreateBookingRequest): ResponseEntity<Map<String, String>> = runBlocking {
-        val bookingId = bookingService.createBooking(
-            userId = request.userIdAsUUID(),
-            travelOffer = request.travelOfferToDomain(),
-            seat = request.seat.toDomain(),
-        )
-        ResponseEntity.status(HttpStatus.CREATED)
-            .body(mapOf("message" to "Booking ${bookingId.value.toString()} created successfully"))
     }
 }

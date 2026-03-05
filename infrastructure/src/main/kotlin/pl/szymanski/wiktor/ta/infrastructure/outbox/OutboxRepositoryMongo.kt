@@ -1,38 +1,39 @@
 package pl.szymanski.wiktor.ta.infrastructure.outbox
 
-import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Sorts
-import com.mongodb.client.model.Updates
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import tools.jackson.databind.json.JsonMapper
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Repository
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
-import pl.szymanski.wiktor.ta.infrastructure.config.MongoConfiguration
+import pl.szymanski.wiktor.ta.infrastructure.document.OutboxEntryDocument
+import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.OutboxDocumentMongoRepository
 import pl.szymanski.wiktor.ta.outbox.OutboxEntry
-import java.time.Instant
 import java.time.LocalDateTime
 import java.util.UUID
 
-// TODO: interface
-
 @Repository
 class OutboxRepositoryMongo(
-    mongoConfiguration: MongoConfiguration
+    private val outboxDocumentMongoRepository: OutboxDocumentMongoRepository,
+    private val objectMapper: JsonMapper,
 ) {
-    private val json = Json {
-        ignoreUnknownKeys = true
-        serializersModule = publishableEventModule
-    }
-
-    private val collection = mongoConfiguration.mongoClient()
-        .getDatabase(mongoConfiguration.mongoConfig.dbName)
-        .getCollection<OutboxEntryDto>("outbox")
 
     suspend fun save(entry: OutboxEntry) {
-        val payload = json.encodeToString(entry.eventEnvelope)
-        val dto = OutboxEntryDto(
+        val document = toDocument(entry)
+        withContext(Dispatchers.IO) {
+            outboxDocumentMongoRepository.save(document)
+        }
+    }
+
+    fun saveBlocking(entry: OutboxEntry) {
+        val document = toDocument(entry)
+        outboxDocumentMongoRepository.save(document)
+    }
+
+    private fun toDocument(entry: OutboxEntry): OutboxEntryDocument {
+        val payload = objectMapper.writeValueAsString(entry.eventEnvelope)
+        return OutboxEntryDocument(
             eventId = entry.eventId,
             eventType = entry.eventEnvelope.eventType,
             payload = payload,
@@ -41,30 +42,34 @@ class OutboxRepositoryMongo(
             createdAt = entry.createdAt,
             processAfter = entry.processAfter,
         )
-        collection.insertOne(dto)
     }
 
     suspend fun getPendingEntries(limit: Int): List<OutboxEntry> {
         val now = LocalDateTime.now()
-        return collection.find(
-            Filters.and(
-                Filters.eq("published", false),
-                Filters.lte("processAfter", now)
+        return withContext(Dispatchers.IO) {
+            outboxDocumentMongoRepository.findByPublishedFalseAndProcessAfterLessThanEqualOrderByCreatedAtAsc(
+                now,
+                PageRequest.of(0, limit)
             )
-        ).sort(Sorts.ascending("createdAt")).limit(limit).map { dto ->
-            val envelope = json.decodeFromString<EventEnvelope<PublishableEvent>>(dto.payload)
+        }.map { doc ->
+            @Suppress("UNCHECKED_CAST")
+            val envelope = objectMapper.readValue(doc.payload, EventEnvelope::class.java) as EventEnvelope<PublishableEvent>
             OutboxEntry(
-                eventId = dto.eventId,
+                eventId = doc.eventId,
                 eventEnvelope = envelope,
-                published = dto.published,
-                publishedAt = dto.publishedAt,
-                createdAt = dto.createdAt,
-                processAfter = dto.processAfter,
+                published = doc.published,
+                publishedAt = doc.publishedAt,
+                createdAt = doc.createdAt,
+                processAfter = doc.processAfter,
             )
-        }.toList()
+        }
     }
 
     suspend fun markAsPublished(eventId: UUID) {
-        collection.updateOne(Filters.eq("_id", eventId), Updates.set("published", true))
+        withContext(Dispatchers.IO) {
+            outboxDocumentMongoRepository.findById(eventId).ifPresent { doc ->
+                outboxDocumentMongoRepository.save(doc.copy(published = true))
+            }
+        }
     }
 }

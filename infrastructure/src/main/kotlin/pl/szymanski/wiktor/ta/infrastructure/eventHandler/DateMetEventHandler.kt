@@ -1,13 +1,11 @@
 package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 
-import jakarta.annotation.PostConstruct
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import org.springframework.kafka.annotation.KafkaHandler
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Service
-import pl.szymanski.wiktor.ta.EventBus
+import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.commands.accommodation.expire.ExpireAccommodationCommandHandler
 import pl.szymanski.wiktor.ta.commands.attraction.expire.ExpireAttractionCommandHandler
 import pl.szymanski.wiktor.ta.commands.commute.expire.ExpireCommuteCommandHandler
@@ -17,46 +15,40 @@ import pl.szymanski.wiktor.ta.event.CommuteDateMetEvent
 import pl.szymanski.wiktor.ta.eventHandlerLogic.onAccommodationDateMetEvent
 import pl.szymanski.wiktor.ta.eventHandlerLogic.onAttractionDateMetEvent
 import pl.szymanski.wiktor.ta.eventHandlerLogic.onCommuteDateMetEvent
-import pl.szymanski.wiktor.ta.subscribe
+
 
 @Service
+@KafkaListener(topics = ["date-met-events"], groupId = "travel-agency")
 class DateMetEventHandler(
-    private val eventBus: EventBus,
     private val expireCommuteCommandHandler: ExpireCommuteCommandHandler,
     private val expireAccommodationCommandHandler: ExpireAccommodationCommandHandler,
     private val expireAttractionCommandHandler: ExpireAttractionCommandHandler,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
     companion object {
         private val log = LoggerFactory.getLogger(DateMetEventHandler::class.java)
     }
 
-    @PostConstruct
-    fun init() {
-        scope.launch {
-            eventBus.subscribe<CommuteDateMetEvent> {
-                scope.launch {
-                    runCatching { onCommuteDateMetEvent(expireCommuteCommandHandler, it) }
-                        .onFailure { e -> log.error("Error handling CommuteDateMetEvent", e) }
-                }
-            }
+    @KafkaHandler
+    suspend fun onDateMetEvent(envelope: EventEnvelope<*>, acknowledgment: Acknowledgment) {
+        when (envelope.event) {
+            is AccommodationDateMetEvent -> onAccommodationDateMetEvent(
+                expireAccommodationCommandHandler,
+                envelope as EventEnvelope<AccommodationDateMetEvent>
+            )
+
+            is CommuteDateMetEvent -> onCommuteDateMetEvent(
+                expireCommuteCommandHandler,
+                envelope as EventEnvelope<CommuteDateMetEvent>
+            )
+
+            is AttractionDateMetEvent -> onAttractionDateMetEvent(
+                expireAttractionCommandHandler,
+                envelope as EventEnvelope<AttractionDateMetEvent>
+            )
+
+            else -> log.warn("Received unhandled event type in date-met-events topic: ${envelope.event::class.java}")
         }
-        scope.launch {
-            eventBus.subscribe<AccommodationDateMetEvent> {
-                scope.launch {
-                    runCatching { onAccommodationDateMetEvent(expireAccommodationCommandHandler, it) }
-                        .onFailure { e -> log.error("Error handling AccommodationDateMetEvent", e) }
-                }
-            }
-        }
-        scope.launch {
-            eventBus.subscribe<AttractionDateMetEvent> {
-                scope.launch {
-                    runCatching { onAttractionDateMetEvent(expireAttractionCommandHandler, it) }
-                        .onFailure { e -> log.error("Error handling AttractionDateMetEvent", e) }
-                }
-            }
-        }
+
+        acknowledgment.acknowledge()
     }
 }

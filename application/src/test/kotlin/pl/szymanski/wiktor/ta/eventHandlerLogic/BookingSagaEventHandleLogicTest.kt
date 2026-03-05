@@ -11,6 +11,7 @@
 //import pl.szymanski.wiktor.ta.commands.booking.fail.FailBookingCommandHandler
 //import pl.szymanski.wiktor.ta.commands.booking.process.ProcessBookingCommand
 //import pl.szymanski.wiktor.ta.commands.booking.process.ProcessBookingCommandHandler
+//import pl.szymanski.wiktor.ta.domain.Seat
 //import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 //import pl.szymanski.wiktor.ta.event.BookingSagaCompletedEvent
 //import pl.szymanski.wiktor.ta.event.BookingSagaFailedEvent
@@ -31,7 +32,7 @@
 //        onBookingSagaStartedEvent(
 //            processBookingCommandHandler,
 //            EventEnvelope(
-//                BookingSagaStartedEvent(bookingId = bookingId),
+//                BookingSagaStartedEvent(bookingId = bookingId.value!!),
 //                Metadata(correlationId, 0)
 //            )
 //        )
@@ -54,7 +55,7 @@
 //        onBookingSagaCompletedEvent(
 //            completeBookingCommandHandler,
 //            EventEnvelope(
-//                BookingSagaCompletedEvent(bookingId = bookingId),
+//                BookingSagaCompletedEvent(bookingId = bookingId.value!!, seat = Seat.Any),
 //                Metadata(correlationId, 0)
 //            )
 //        )
@@ -78,7 +79,7 @@
 //        onBookingSagaFailedEvent(
 //            failBookingCommandHandler,
 //            EventEnvelope(
-//                BookingSagaFailedEvent(bookingId = bookingId, message = message),
+//                BookingSagaFailedEvent(bookingId = bookingId.value!!, message = message),
 //                Metadata(correlationId, 0)
 //            )
 //        )

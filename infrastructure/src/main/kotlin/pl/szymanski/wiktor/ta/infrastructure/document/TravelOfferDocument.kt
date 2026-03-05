@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
-import kotlinx.serialization.Serializable
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.index.CompoundIndexes
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
@@ -9,7 +8,6 @@ import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
 import java.util.UUID
 
-@Serializable
 @CompoundIndexes(
     CompoundIndex(name = "idx_composite", def = "{'commuteId': 1, 'accommodationId': 1, 'attractionId': 1}")
 )
@@ -38,4 +36,3 @@ data class TravelOfferDocument(
                 AttractionId.Empty
         )
 }
-

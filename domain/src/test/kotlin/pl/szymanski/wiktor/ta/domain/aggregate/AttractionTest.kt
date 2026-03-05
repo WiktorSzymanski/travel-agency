@@ -44,17 +44,17 @@ class AttractionTest {
 
     @Test
     fun aggregate_should_return_attraction_and_created_event() {
-        val (attraction, events) = Attraction.create("attraction_name", LocationEnum.POZNAN, LocalDateTime.now().plusHours(1), 3)
+        val (attraction, events) = Attraction.create(AttractionId.generate(), "attraction_name", LocationEnum.POZNAN, LocalDateTime.now().plusHours(1), 3)
 
         assertEventEquals(
             AttractionCreatedEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
                 name = "attraction_name",
                 location = LocationEnum.POZNAN,
                 date = attraction.date,
                 capacity = 3,
             ),
-            events.first()
+            events,
         )
 
         assertEquals("attraction_name", attraction.name)
@@ -70,8 +70,8 @@ class AttractionTest {
 
         assertEventEquals(
             AttractionBookedEvent(
-                attractionId = attraction.id,
-                bookingId = bookingId,
+                attractionId = attraction.id.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -106,8 +106,8 @@ class AttractionTest {
 
         assertEventEquals(
             AttractionBookingCanceledEvent(
-                attractionId = attraction.id,
-                bookingId = bookingId,
+                attractionId = attraction.id.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -132,7 +132,7 @@ class AttractionTest {
 
         assertEventEquals(
             AttractionExpiredEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
             ),
             events.first(),
         )
@@ -161,14 +161,14 @@ class AttractionTest {
         assertEquals(2, events.size)
         assertEventEquals(
             AttractionBookedEvent(
-                attractionId = attraction.id,
-                bookingId = someBookingId,
+                attractionId = attraction.id.value!!,
+                bookingId = someBookingId.value!!,
             ),
             events.first(),
         )
         assertEventEquals(
             AttractionFullEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
             ),
             events.last(),
         )
@@ -192,14 +192,14 @@ class AttractionTest {
         assertEquals(2, events.size)
         assertEventEquals(
             AttractionBookingCanceledEvent(
-                attractionId = attraction.id,
-                bookingId = id2,
+                attractionId = attraction.id.value!!,
+                bookingId = id2.value!!,
             ),
             events.first(),
         )
         assertEventEquals(
             AttractionAvailableEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
             ),
             events.last(),
         )
@@ -250,8 +250,8 @@ class AttractionTest {
 
         assertEventEquals(
             AttractionBookedCompensatedEvent(
-                attractionId = attraction.id,
-                bookingId = bookingId,
+                attractionId = attraction.id.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -281,14 +281,14 @@ class AttractionTest {
         assertEquals(2, events.size)
         assertEventEquals(
             AttractionBookedCompensatedEvent(
-                attractionId = attraction.id,
-                bookingId = id2,
+                attractionId = attraction.id.value!!,
+                bookingId = id2.value!!,
             ),
             events.first(),
         )
         assertEventEquals(
             AttractionAvailableEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
             ),
             events.last(),
         )
@@ -302,8 +302,8 @@ class AttractionTest {
 
         assertEventEquals(
             AttractionBookingCanceledCompensatedEvent(
-                attractionId = attraction.id,
-                bookingId = bookingId,
+                attractionId = attraction.id.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -339,14 +339,14 @@ class AttractionTest {
         assertEquals(2, events.size)
         assertEventEquals(
             AttractionBookingCanceledCompensatedEvent(
-                attractionId = attraction.id,
-                bookingId = bookingId,
+                attractionId = attraction.id.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
         assertEventEquals(
             AttractionFullEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
             ),
             events.last(),
         )
@@ -391,14 +391,14 @@ class AttractionTest {
         assertEquals(2, events.size)
         assertEventEquals(
             AttractionBookedEvent(
-                attractionId = attraction.id,
-                bookingId = id2,
+                attractionId = attraction.id.value!!,
+                bookingId = id2.value!!,
             ),
             events.first(),
         )
         assertEventEquals(
             AttractionFullEvent(
-                attractionId = attraction.id,
+                attractionId = attraction.id.value!!,
             ),
             events.last(),
         )
@@ -411,26 +411,26 @@ class AttractionTest {
         val bookingId = BookingId.generate()
         val base = Attraction(id, "a", LocationEnum.VENICE, LocalDateTime.now().plusDays(5), 2)
 
-        base.apply(AttractionCreatedEvent(attractionId = id, name = "n", location = LocationEnum.ZERMATT, date = LocalDateTime.now().plusDays(1), capacity = 3))
+        base.apply(AttractionCreatedEvent(attractionId = id.value!!, name = "n", location = LocationEnum.ZERMATT, date = LocalDateTime.now().plusDays(1), capacity = 3))
         assertEquals(id, base.id)
         assertEquals("a", base.name)
         assertEquals(AttractionStatusEnum.SCHEDULED, base.status)
         assertEquals(0, base.bookings.size)
 
-        base.apply(AttractionBookedEvent(attractionId = id, bookingId = bookingId))
+        base.apply(AttractionBookedEvent(attractionId = id.value!!, bookingId = bookingId.value!!))
         assertEquals(1, base.bookings.size)
         assertEquals(bookingId, base.bookings.first())
 
-        base.apply(AttractionFullEvent(attractionId = id))
+        base.apply(AttractionFullEvent(attractionId = id.value!!))
         assertEquals(AttractionStatusEnum.FULL, base.status)
 
-        base.apply(AttractionAvailableEvent(attractionId = id))
+        base.apply(AttractionAvailableEvent(attractionId = id.value!!))
         assertEquals(AttractionStatusEnum.SCHEDULED, base.status)
 
-        base.apply(AttractionBookingCanceledEvent(attractionId = id, bookingId = bookingId))
+        base.apply(AttractionBookingCanceledEvent(attractionId = id.value!!, bookingId = bookingId.value!!))
         assertEquals(0, base.bookings.size)
 
-        base.apply(AttractionExpiredEvent(attractionId = id))
+        base.apply(AttractionExpiredEvent(attractionId = id.value!!))
         assertEquals(AttractionStatusEnum.EXPIRED, base.status)
     }
 
@@ -438,7 +438,7 @@ class AttractionTest {
     fun attraction_fromEvents_should_handle_empty_and_invalid_first_event() {
         assertFailsWith<AttractionEmptyEventListException> { Attraction.fromEvents(emptyList()) }
         val id = AttractionId.generate()
-        val invalid = listOf(AttractionBookedEvent(attractionId = id, bookingId = BookingId.generate()))
+        val invalid = listOf(AttractionBookedEvent(attractionId = id.value!!, bookingId = BookingId.generate().value!!))
         assertFailsWith<AttractionMissingCreatedEventException> { Attraction.fromEvents(invalid) }
     }
 
@@ -448,11 +448,11 @@ class AttractionTest {
         val bookingId = BookingId.generate()
         val createdDate = LocalDateTime.now().plusDays(3)
         val events = listOf(
-            AttractionCreatedEvent(attractionId = id, name = "tours", location = LocationEnum.PARIS, date = createdDate, capacity = 2),
-            AttractionBookedEvent(attractionId = id, bookingId = bookingId),
-            AttractionFullEvent(attractionId = id),
-            AttractionBookingCanceledEvent(attractionId = id, bookingId = bookingId),
-            AttractionAvailableEvent(attractionId = id),
+            AttractionCreatedEvent(attractionId = id.value!!, name = "tours", location = LocationEnum.PARIS, date = createdDate, capacity = 2),
+            AttractionBookedEvent(attractionId = id.value!!, bookingId = bookingId.value!!),
+            AttractionFullEvent(attractionId = id.value!!),
+            AttractionBookingCanceledEvent(attractionId = id.value!!, bookingId = bookingId.value!!),
+            AttractionAvailableEvent(attractionId = id.value!!),
         )
 
         val result = Attraction.fromEvents(events)
@@ -472,19 +472,19 @@ class AttractionTest {
         val bookingId = BookingId.generate()
         val attraction = Attraction(attractionId, "a", LocationEnum.VENICE, LocalDateTime.now().plusDays(1), 1)
 
-        attraction.apply(AttractionBookedEvent(attractionId = attractionId, bookingId = bookingId))
-        attraction.apply(AttractionFullEvent(attractionId = attractionId))
+        attraction.apply(AttractionBookedEvent(attractionId = attractionId.value!!, bookingId = bookingId.value!!))
+        attraction.apply(AttractionFullEvent(attractionId = attractionId.value!!))
 
-        attraction.apply(AttractionBookedCompensatedEvent(attractionId = attractionId, bookingId = bookingId))
+        attraction.apply(AttractionBookedCompensatedEvent(attractionId = attractionId.value!!, bookingId = bookingId.value!!))
         assertEquals(0, attraction.bookings.size)
 
-        attraction.apply(AttractionAvailableEvent(attractionId = attractionId))
+        attraction.apply(AttractionAvailableEvent(attractionId = attractionId.value!!))
         assertEquals(SCHEDULED, attraction.status)
 
-        attraction.apply(AttractionBookingCanceledCompensatedEvent(attractionId = attractionId, bookingId = bookingId))
+        attraction.apply(AttractionBookingCanceledCompensatedEvent(attractionId = attractionId.value!!, bookingId = bookingId.value!!))
         assertEquals(1, attraction.bookings.size)
 
-        attraction.apply(AttractionFullEvent(attractionId = attractionId))
+        attraction.apply(AttractionFullEvent(attractionId = attractionId.value!!))
         assertEquals(AttractionStatusEnum.FULL, attraction.status)
     }
 }

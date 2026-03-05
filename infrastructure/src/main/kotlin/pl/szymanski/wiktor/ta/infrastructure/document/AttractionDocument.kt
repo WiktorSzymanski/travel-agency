@@ -3,8 +3,6 @@ package pl.szymanski.wiktor.ta.infrastructure.document
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.Version
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.data.mongodb.core.mapping.Field
-import org.springframework.data.mongodb.core.mapping.FieldType
 import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
@@ -16,8 +14,7 @@ import java.util.*
 @Document(collection = "attractions")
 data class AttractionDocument (
     @Id
-    @Field("_id", targetType = FieldType.IMPLICIT)
-    val id: UUID,
+    val id: AttractionId,
     val name: String,
     val location: String,
     val date: String,
@@ -31,7 +28,7 @@ data class AttractionDocument (
         fun fromDomain(attraction: Attraction, version: Long = 0L) =
             when (attraction.id) {
                 is AttractionId.Present -> AttractionDocument(
-                    id = attraction.id.value!!,
+                    id = attraction.id,
                     name = attraction.name,
                     location = attraction.location.name,
                     date = attraction.date.toString(),
@@ -46,7 +43,7 @@ data class AttractionDocument (
 
     fun toDomain(): Attraction =
         Attraction(
-            id = AttractionId.Present(id),
+            id = id,
             name = name,
             location = LocationEnum.valueOf(location),
             date = LocalDateTime.parse(date),
@@ -55,4 +52,3 @@ data class AttractionDocument (
             status = AttractionStatusEnum.valueOf(status)
         )
 }
-

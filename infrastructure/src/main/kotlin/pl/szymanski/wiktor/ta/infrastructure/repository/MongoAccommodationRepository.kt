@@ -32,13 +32,21 @@ class MongoAccommodationRepository(
         }
     }
 
+    override fun createBlocking(entity: Accommodation, metadata: Metadata) {
+        accommodationDocumentMongoRepository.save(AccommodationDocument.fromDomain(entity, metadata.revision))
+    }
+
+    override fun saveBlocking(entity: Accommodation, metadata: Metadata) {
+        accommodationDocumentMongoRepository.save(AccommodationDocument.fromDomain(entity, metadata.revision))
+    }
+
     override suspend fun update(projectionUpdate: ProjectionUpdate) {
         throw UnsupportedOperationException("Not implemented for this approach")
     }
 
     override suspend fun findById(id: AccommodationId): Pair<Accommodation, Long> {
         return withContext(Dispatchers.IO) {
-            accommodationDocumentMongoRepository.findById(id.value)
+            accommodationDocumentMongoRepository.findById(id)
         }.getOrNull()?.let { it.toDomain() to it.version } ?: throw NoSuchElementException("Accommodation not found: $id")
     }
 

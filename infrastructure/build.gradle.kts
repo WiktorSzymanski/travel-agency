@@ -36,6 +36,10 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("tools.jackson.module:jackson-module-kotlin")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.13.10")

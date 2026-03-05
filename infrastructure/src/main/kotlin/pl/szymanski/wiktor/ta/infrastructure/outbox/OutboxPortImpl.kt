@@ -1,6 +1,9 @@
 package pl.szymanski.wiktor.ta.infrastructure.outbox
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
+import org.springframework.transaction.support.TransactionTemplate
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
@@ -13,13 +16,17 @@ import java.util.UUID
 @Service
 class OutboxPortImpl(
     private val outboxRepository: OutboxRepositoryMongo,
+    private val transactionTemplate: TransactionTemplate,
 ) : OutboxPort {
     override suspend fun <T, R> create(entity: T, event: PublishableEvent, metadata: Metadata, repository: CommandRepository<T, R>) {
         val entry = OutboxEntry(EventEnvelope(event, metadata))
 
-        // TODO: Transactional
-        repository.create(entity, metadata)
-        outboxRepository.save(entry)
+        withContext(Dispatchers.IO) {
+            transactionTemplate.execute {
+                repository.createBlocking(entity, metadata)
+                outboxRepository.saveBlocking(entry)
+            }
+        }
     }
 
     override suspend fun <T, R> save(
@@ -32,9 +39,12 @@ class OutboxPortImpl(
             .map { event -> EventEnvelope(event, metadata) }
             .map { eventEnvelope -> OutboxEntry(eventEnvelope) }
 
-        // TODO: Transactional
-        repository.save(entity, metadata)
-        entries.forEach { entry -> outboxRepository.save(entry) }
+        withContext(Dispatchers.IO) {
+            transactionTemplate.execute {
+                repository.saveBlocking(entity, metadata)
+                entries.forEach { entry -> outboxRepository.saveBlocking(entry) }
+            }
+        }
     }
 
     override suspend fun delayEvent(event: PublishableEvent, processAfter: LocalDateTime) {

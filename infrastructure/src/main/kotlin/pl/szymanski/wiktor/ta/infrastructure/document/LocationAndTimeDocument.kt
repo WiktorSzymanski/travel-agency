@@ -1,11 +1,9 @@
 package pl.szymanski.wiktor.ta.infrastructure.document
 
-import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.LocationAndTime
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import java.time.LocalDateTime
 
-@Serializable
 data class LocationAndTimeDocument(
     val location: String,
     val time: String,
@@ -24,4 +22,3 @@ data class LocationAndTimeDocument(
             time = LocalDateTime.parse(time)
         )
 }
-

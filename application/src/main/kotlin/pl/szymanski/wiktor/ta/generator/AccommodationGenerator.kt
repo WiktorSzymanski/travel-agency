@@ -42,7 +42,7 @@ class AccommodationGenerator(
                 till = tillTime,
             )
         )
-        val event = AccommodationDateMetEvent(accommodationId = id, date = fromTime)
+        val event = AccommodationDateMetEvent(accommodationId = id.value!!, date = fromTime)
         return GeneratedResult(command, event, fromTime)
     }
 }

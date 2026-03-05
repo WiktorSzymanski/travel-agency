@@ -25,8 +25,6 @@ import pl.szymanski.wiktor.ta.commands.booking.complete.CompleteBookingCommandHa
 import pl.szymanski.wiktor.ta.commands.booking.create.CreateBookingCommandHandler
 import pl.szymanski.wiktor.ta.commands.booking.fail.FailBookingCommandHandler
 import pl.szymanski.wiktor.ta.commands.booking.failCancel.FailCancelBookingCommandHandler
-import pl.szymanski.wiktor.ta.commands.booking.process.ProcessBookingCommandHandler
-import pl.szymanski.wiktor.ta.commands.booking.processCancel.ProcessCancelBookingCommandHandler
 import pl.szymanski.wiktor.ta.commands.booking.requestCancel.BookingRequestCancelCommandHandler
 import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
@@ -63,11 +61,9 @@ class CommandHandlerConfiguration {
     @Bean fun compensateCancelCommuteBookingCommandHandler(r: CommandRepository<Commute, CommuteId>, o: OutboxPort) = CompensateCancelCommuteBookingCommandHandler(r, o)
 
     @Bean fun createBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = CreateBookingCommandHandler(r, o)
-    @Bean fun processBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = ProcessBookingCommandHandler(r, o)
     @Bean fun completeBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = CompleteBookingCommandHandler(r, o)
     @Bean fun cancelBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = CancelBookingCommandHandler(r, o)
     @Bean fun failBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = FailBookingCommandHandler(r, o)
     @Bean fun failCancelBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = FailCancelBookingCommandHandler(r, o)
-    @Bean fun processCancelBookingCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = ProcessCancelBookingCommandHandler(r, o)
     @Bean fun bookingRequestCancelCommandHandler(r: CommandRepository<Booking, BookingId>, o: OutboxPort) = BookingRequestCancelCommandHandler(r, o)
 }

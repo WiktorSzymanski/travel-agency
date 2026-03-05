@@ -9,18 +9,14 @@ spring:
   application:
     name: travel-agency-app
   mongodb:
-    uri: "mongodb://root:password@localhost:27017"
+    uri: "mongodb://root:password@localhost:27017/?authSource=admin"
     database: "travel_agency"
     representation:
       uuid: standard
 
-database:
-  uri: "mongodb://root:password@localhost:27017"
-  db-name: "travel_agency"
-
 generator:
   interval-seconds: 60
-  in-advance-seconds: 20
+  in-advance-seconds: 600
   creation-window-seconds: 20
   accommodations:
     # London Accommodations (15 total)

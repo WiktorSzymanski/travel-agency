@@ -49,16 +49,17 @@ class AccommodationTest {
             name = "accommodation_name",
             location = LocationEnum.PARIS,
             rent = rent,
+            id = AccommodationId.generate(),
         )
 
         assertEventEquals(
             AccommodationCreatedEvent(
-                accommodationId = acc.id,
+                accommodationId = acc.id.value!!,
                 name = "accommodation_name",
                 location = LocationEnum.PARIS,
                 rent = rent,
             ),
-            events.first(),
+            events,
         )
         assertEquals("accommodation_name", acc.name)
         assertEquals(LocationEnum.PARIS, acc.location)
@@ -72,8 +73,8 @@ class AccommodationTest {
         assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookedEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
+                accommodationId = accommodationId.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -95,8 +96,8 @@ class AccommodationTest {
         assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookingCanceledEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
+                accommodationId = accommodationId.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -166,7 +167,7 @@ class AccommodationTest {
         assertEquals(1, events.size)
         assertEventEquals(
             AccommodationExpiredEvent(
-                accommodationId = accommodationId,
+                accommodationId = accommodationId.value!!,
             ),
             events.first(),
         )
@@ -193,8 +194,8 @@ class AccommodationTest {
         assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookedCompensatedEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
+                accommodationId = accommodationId.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -222,8 +223,8 @@ class AccommodationTest {
         assertEquals(1, events.size)
         assertEventEquals(
             AccommodationBookingCanceledCompensatedEvent(
-                accommodationId = accommodationId,
-                bookingId = bookingId,
+                accommodationId = accommodationId.value!!,
+                bookingId = bookingId.value!!,
             ),
             events.first(),
         )
@@ -246,21 +247,21 @@ class AccommodationTest {
         val acc = Accommodation(id, "acc", LocationEnum.PARIS, Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1)))
 
         // Created event is ignored by in-aggregate apply; state is set on creation or fromEvents
-        acc.apply(AccommodationCreatedEvent(accommodationId = id, name = "n", location = LocationEnum.LONDON, rent = Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(2))))
+        acc.apply(AccommodationCreatedEvent(accommodationId = id.value!!, name = "n", location = LocationEnum.LONDON, rent = Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(2))))
         assertEquals(id, acc.id)
         assertEquals("acc", acc.name)
         assertEquals(LocationEnum.PARIS, acc.location)
         assertEquals(AccommodationStatusEnum.AVAILABLE, acc.status)
 
-        acc.apply(AccommodationBookedEvent(accommodationId = id, bookingId = bookingId))
+        acc.apply(AccommodationBookedEvent(accommodationId = id.value!!, bookingId = bookingId.value!!))
         assertEquals(AccommodationStatusEnum.BOOKED, acc.status)
         assertEquals(bookingId, acc.bookingId)
 
-        acc.apply(AccommodationBookingCanceledEvent(accommodationId = id, bookingId = bookingId))
+        acc.apply(AccommodationBookingCanceledEvent(accommodationId = id.value!!, bookingId = bookingId.value!!))
         assertEquals(AccommodationStatusEnum.AVAILABLE, acc.status)
         assertEquals(BookingId.Empty, acc.bookingId)
 
-        acc.apply(AccommodationExpiredEvent(accommodationId = id))
+        acc.apply(AccommodationExpiredEvent(accommodationId = id.value!!))
         assertEquals(AccommodationStatusEnum.EXPIRED, acc.status)
     }
 
@@ -271,7 +272,7 @@ class AccommodationTest {
 
         // first not created -> throws
         val dummyId = AccommodationId.generate()
-        val notCreatedFirst = listOf(AccommodationBookedEvent(accommodationId = dummyId, bookingId = BookingId.generate()))
+        val notCreatedFirst = listOf(AccommodationBookedEvent(accommodationId = dummyId.value!!, bookingId = BookingId.generate().value!!))
         assertFailsWith<AccommodationMissingCreatedEventException> { Accommodation.fromEvents(notCreatedFirst) }
     }
 
@@ -281,14 +282,14 @@ class AccommodationTest {
         val bookingId = BookingId.generate()
         val events = listOf(
             AccommodationCreatedEvent(
-                accommodationId = id,
+                accommodationId = id.value!!,
                 name = "acc",
                 location = LocationEnum.ROME,
                 rent = Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(3))
             ),
-            AccommodationBookedEvent(accommodationId = id, bookingId = bookingId),
-            AccommodationBookingCanceledEvent(accommodationId = id, bookingId = bookingId),
-            AccommodationExpiredEvent(accommodationId = id),
+            AccommodationBookedEvent(accommodationId = id.value!!, bookingId = bookingId.value!!),
+            AccommodationBookingCanceledEvent(accommodationId = id.value!!, bookingId = bookingId.value!!),
+            AccommodationExpiredEvent(accommodationId = id.value!!),
         )
 
         val result = Accommodation.fromEvents(events)
@@ -306,12 +307,12 @@ class AccommodationTest {
             Rent(LocalDateTime.now(), LocalDateTime.now().plusDays(1))
         )
 
-        accommodation.apply(AccommodationBookedEvent(accommodationId = accommodationId, bookingId = bookingId))
-        accommodation.apply(AccommodationBookedCompensatedEvent(accommodationId = accommodationId, bookingId = bookingId))
+        accommodation.apply(AccommodationBookedEvent(accommodationId = accommodationId.value!!, bookingId = bookingId.value!!))
+        accommodation.apply(AccommodationBookedCompensatedEvent(accommodationId = accommodationId.value!!, bookingId = bookingId.value!!))
         assertEquals(AccommodationStatusEnum.AVAILABLE, accommodation.status)
         assertEquals(accommodation.bookingId, BookingId.Empty)
 
-        accommodation.apply(AccommodationBookingCanceledCompensatedEvent(accommodationId = accommodationId, bookingId = bookingId))
+        accommodation.apply(AccommodationBookingCanceledCompensatedEvent(accommodationId = accommodationId.value!!, bookingId = bookingId.value!!))
         assertEquals(AccommodationStatusEnum.BOOKED, accommodation.status)
         assertEquals(bookingId, accommodation.bookingId)
     }
