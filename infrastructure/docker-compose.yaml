@@ -1,26 +1,50 @@
 version: '3.8'
 
 services:
-  mongodb:
+  mongodb_1:
     image: mongo:8.0
-    container_name: mongodb
-    restart: unless-stopped
+    container_name: mongodb_1
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/data/mongo-keyfile" ]
     ports:
       - "27017:27017"
+    volumes:
+      - mongodb_data_1:/data/db
+      - ./mongo-keyfile:/data/mongo-keyfile:ro
+    networks:
+      - mongo-net
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: travel_agency
+
+  mongodb_2:
+    image: mongo:8.0
+    container_name: mongodb_2
+    command: [ "mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/data/mongo-keyfile" ]
+    ports:
+      - "27018:27017"
     volumes:
-      - mongodb_data:/data/db
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
-    healthcheck:
-      test: >
-        mongosh -u root -p password --authenticationDatabase admin --eval "
-        try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }) }
-        "
-      interval: 10s
-      start_period: 30s
+      - mongodb_data_2:/data/db
+      - ./mongo-keyfile:/data/mongo-keyfile:ro
+    networks:
+      - mongo-net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: travel_agency
+
+  mongoinit:
+    image: mongo:8.0
+    container_name: mongoinit
+    depends_on:
+      - mongodb_1
+      - mongodb_2
+    networks:
+      - mongo-net
+    restart: "no"
+    volumes:
+      - ./mongo-init.sh:/mongo-init.sh:ro
+    entrypoint: [ "bash", "/mongo-init.sh" ]
 
   kafka:
     image: apache/kafka:latest
@@ -39,6 +63,11 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+networks:
+  mongo-net:
+
 volumes:
-  mongodb_data:
+  mongodb_data_1:
+    driver: local
+  mongodb_data_2:
     driver: local

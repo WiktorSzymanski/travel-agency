@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaHandler
 import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.commands.accommodation.expire.ExpireAccommodationCommandHandler
@@ -29,7 +28,7 @@ class DateMetEventHandler(
     }
 
     @KafkaHandler
-    suspend fun onDateMetEvent(envelope: EventEnvelope<*>, acknowledgment: Acknowledgment) {
+    suspend fun onDateMetEvent(envelope: EventEnvelope<*>) {
         when (envelope.event) {
             is AccommodationDateMetEvent -> onAccommodationDateMetEvent(
                 expireAccommodationCommandHandler,
@@ -48,7 +47,5 @@ class DateMetEventHandler(
 
             else -> log.warn("Received unhandled event type in date-met-events topic: ${envelope.event::class.java}")
         }
-
-        acknowledgment.acknowledge()
     }
 }

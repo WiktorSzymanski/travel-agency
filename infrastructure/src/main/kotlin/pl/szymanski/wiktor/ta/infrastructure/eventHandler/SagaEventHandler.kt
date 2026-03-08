@@ -3,7 +3,6 @@ package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaHandler
 import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.kafka.support.Acknowledgment
 import org.springframework.stereotype.Service
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.commands.booking.cancel.CancelBookingCommandHandler
@@ -26,7 +25,7 @@ class SagaEventHandler(
     }
 
     @KafkaHandler
-    suspend fun onSagaEvent(envelope: EventEnvelope<*>, acknowledgment: Acknowledgment) {
+    suspend fun onSagaEvent(envelope: EventEnvelope<*>) {
         when (envelope.event) {
             is BookingSagaCompletedEvent -> onBookingSagaCompletedEvent(
                 completeBookingCommandHandler,
@@ -46,7 +45,5 @@ class SagaEventHandler(
             )
             else -> log.error("Received unhandled event type in saga-events topic: ${envelope.event::class.java}")
         }
-
-        acknowledgment.acknowledge()
     }
 }
