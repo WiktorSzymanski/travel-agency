@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaHandler
 import org.springframework.kafka.annotation.KafkaListener
@@ -28,19 +29,19 @@ class DateMetEventHandler(
     }
 
     @KafkaHandler
-    suspend fun onDateMetEvent(envelope: EventEnvelope<*>) {
-        when (envelope.event) {
-            is AccommodationDateMetEvent -> onAccommodationDateMetEvent(
+    fun onDateMetEvent(envelope: EventEnvelope<*>) = runBlocking {
+        when (envelope.eventType) {
+            "AccommodationDateMetEvent" -> onAccommodationDateMetEvent(
                 expireAccommodationCommandHandler,
                 envelope as EventEnvelope<AccommodationDateMetEvent>
             )
 
-            is CommuteDateMetEvent -> onCommuteDateMetEvent(
+            "CommuteDateMetEvent" -> onCommuteDateMetEvent(
                 expireCommuteCommandHandler,
                 envelope as EventEnvelope<CommuteDateMetEvent>
             )
 
-            is AttractionDateMetEvent -> onAttractionDateMetEvent(
+            "AttractionDateMetEvent" -> onAttractionDateMetEvent(
                 expireAttractionCommandHandler,
                 envelope as EventEnvelope<AttractionDateMetEvent>
             )

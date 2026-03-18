@@ -24,9 +24,15 @@ class BookingService(
     private val failBookingCommandHandler: FailBookingCommandHandler,
     private val failCancelBookingCommandHandler: FailCancelBookingCommandHandler,
     private val bookingRequestCancelCommandHandler: BookingRequestCancelCommandHandler,
+    private val accommodationService: AccommodationService,
+    private val commuteService: CommuteService,
+    private val attractionService: AttractionService,
 ) {
     suspend fun createBooking(userId: UUID, travelOffer: TravelOffer, seat: Seat): BookingId {
         val bookingId = BookingId.generate()
+
+        checkAvailability(travelOffer, seat)
+
         createBookingCommandHandler.handle(
             CreateBookingCommand(
                 bookingId = bookingId,
@@ -38,6 +44,12 @@ class BookingService(
         )
 
         return bookingId
+    }
+
+    private suspend fun checkAvailability(travelOffer: TravelOffer, seat: Seat) {
+        accommodationService.checkAvailability(travelOffer.accommodationId)
+        commuteService.checkAvailability(travelOffer.commuteId, seat)
+        attractionService.checkAvailability(travelOffer.attractionId)
     }
 
     suspend fun completeBooking(bookingId: BookingId) {

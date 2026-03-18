@@ -119,10 +119,7 @@ data class Accommodation(
     }
 
     fun book(bookingId: BookingId): List<AccommodationEvent> {
-        statusCheck()
-        if (this.status != AccommodationStatusEnum.AVAILABLE) {
-            throw AccommodationBookingFailedException(id, status)
-        }
+        checkAvailability()
 
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
@@ -131,6 +128,13 @@ data class Accommodation(
             accommodationId = id.value,
             bookingId = bookingId.value!!,
         ))
+    }
+
+    fun checkAvailability() {
+        statusCheck()
+        if (this.status != AccommodationStatusEnum.AVAILABLE) {
+            throw AccommodationBookingFailedException(id, status)
+        }
     }
 
     fun cancelBooking(bookingId: BookingId): List<AccommodationEvent> {

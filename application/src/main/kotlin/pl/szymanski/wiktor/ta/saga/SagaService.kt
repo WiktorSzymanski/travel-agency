@@ -31,7 +31,7 @@ class SagaService(
 ) {
     suspend fun executeSaga(sagaState: SagaState) = getSagaInstance(sagaState).executeOrResume()
 
-    suspend fun executePendingSagas() {
+    suspend fun executePendingSagas() { // TODO: SagaPoller?
         val pendingSagas =
             sagaRepository.findByStatuses(listOf(SagaStatus.NEW, SagaStatus.PROCESSING))
 

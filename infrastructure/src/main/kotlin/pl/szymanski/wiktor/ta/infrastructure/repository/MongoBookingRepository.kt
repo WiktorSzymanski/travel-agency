@@ -13,6 +13,7 @@ import pl.szymanski.wiktor.ta.repository.CommandRepository
 import pl.szymanski.wiktor.ta.infrastructure.document.BookingDocument
 import pl.szymanski.wiktor.ta.infrastructure.repository.interfaces.BookingDocumentMongoRepository
 import pl.szymanski.wiktor.ta.queryrepository.BookingQueryRepository
+import java.util.UUID
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -56,6 +57,15 @@ class MongoBookingRepository(
     override suspend fun findAllByStatus(status: BookingState, pageable: Pageable): Page<Booking> {
         return withContext(Dispatchers.IO) {
             bookingDocumentMongoRepository.findBookingDocumentsByStatus(status.name, pageable.toSpring())
+        }.toApplication { it.toDomain() }
+    }
+
+    override suspend fun findAllByUserId(
+        userId: UUID,
+        pageable: Pageable
+    ): Page<Booking> {
+        return withContext(Dispatchers.IO) {
+            bookingDocumentMongoRepository.findByUserId(userId.toString(), pageable.toSpring())
         }.toApplication { it.toDomain() }
     }
 }

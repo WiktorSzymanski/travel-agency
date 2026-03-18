@@ -10,4 +10,5 @@ import pl.szymanski.wiktor.ta.infrastructure.document.BookingDocument
 @Repository
 interface BookingDocumentMongoRepository : MongoRepository<BookingDocument, BookingId> {
     fun findBookingDocumentsByStatus(status: String, pageable: Pageable): Page<BookingDocument>
+    fun findByUserId(userId: String, pageable: Pageable): Page<BookingDocument>
 }

@@ -16,10 +16,11 @@ abstract class PersistentSaga(
     private val delayManager: DelayManager = DelayManager(sagaState.retryCount)
     private val maxRetries = 5
 
-    private val metadata = Metadata(
-        correlationId = sagaState.id,
-        revision = sagaState.version.toLong(),
-    )
+    private val metadata: Metadata
+        get() = Metadata(
+            correlationId = sagaState.id,
+            revision = sagaState.version,
+        )
 
     suspend fun executeOrResume() {
         when (sagaState.status) {
@@ -42,7 +43,7 @@ abstract class PersistentSaga(
     }
 
     private suspend fun startSaga() {
-        sagaRepository.save(sagaState)
+//        sagaRepository.save(sagaState) // TODO: redundant???
 
         sagaState.status = SagaStatus.PROCESSING
         sagaState.step = SagaStep.PENDING_COMMUTE
@@ -124,6 +125,7 @@ abstract class PersistentSaga(
     private suspend fun completeSaga() {
         sagaState.status = SagaStatus.COMPLETED
         sagaState.step = SagaStep.IDLE
+        sagaState.version++
 
         outboxPort.save(
             sagaState.copy(),
@@ -136,6 +138,7 @@ abstract class PersistentSaga(
     private suspend fun failSaga() {
         sagaState.status = SagaStatus.FAILED
         sagaState.step = SagaStep.IDLE
+        sagaState.version++
 
         outboxPort.save(
             sagaState.copy(),

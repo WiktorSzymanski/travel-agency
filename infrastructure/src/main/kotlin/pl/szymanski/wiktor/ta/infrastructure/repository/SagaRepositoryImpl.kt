@@ -32,7 +32,7 @@ class SagaRepositoryImpl(
 
     override suspend fun save(saga: SagaState) {
         withContext(Dispatchers.IO) {
-            sagaDocumentMongoRepository.save(SagaStateDocument.fromDomain(saga))
+            sagaDocumentMongoRepository.save(SagaStateDocument.fromDomain(saga, saga.version))
         }
     }
 

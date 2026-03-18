@@ -37,5 +37,5 @@ data class SagaState(
     val seat: Seat,
     var message: String? = null,
     var retryCount: Int = 0,
-    var version: Long = 1
+    var version: Long = 0L
 )

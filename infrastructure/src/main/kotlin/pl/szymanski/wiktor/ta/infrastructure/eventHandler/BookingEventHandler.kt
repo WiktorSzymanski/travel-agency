@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaHandler
 import org.springframework.kafka.annotation.KafkaListener
@@ -21,21 +22,21 @@ class BookingEventHandler(
     }
 
     @KafkaHandler
-    suspend fun onBookingEvent(envelope: EventEnvelope<*>) {
-        when (envelope.event) {
-            is BookingCreatedEvent -> onCreatedEvent(
+    fun onBookingEvent(envelope: EventEnvelope<*>) = runBlocking {
+        when (envelope.eventType) {
+            "BookingCreatedEvent" -> onCreatedEvent(
                 sagaService,
                 @Suppress("UNCHECKED_CAST")
                 envelope as EventEnvelope<BookingCreatedEvent>
             )
 
-            is BookingCancelRequestedEvent -> onCancelRequestedEvent(
+            "BookingCancelRequestedEvent" -> onCancelRequestedEvent(
                 sagaService,
                 @Suppress("UNCHECKED_CAST")
                 envelope as EventEnvelope<BookingCancelRequestedEvent>
             )
 
-            else -> log.error("Received unhandled event type in booking-events topic: ${envelope.event::class.java}")
+            else -> log.warn("Received unhandled event type in booking-events topic: ${envelope.event::class.java}")
         }
     }
 }

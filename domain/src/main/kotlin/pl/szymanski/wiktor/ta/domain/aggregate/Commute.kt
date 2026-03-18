@@ -141,10 +141,7 @@ data class Commute(
         bookingId: BookingId,
         seat: Seat,
     ): List<CommuteEvent> {
-        statusCheck()
-        if (this.status != CommuteStatusEnum.SCHEDULED) {
-            throw CommuteBookSeatFailedException(id, status)
-        }
+        checkAvailability(seat)
 
         val seatToBook = when (seat) {
             is AnySeat -> getFirstAvailableSeat()
@@ -165,6 +162,18 @@ data class Commute(
                 )
             },
         )
+    }
+
+    fun checkAvailability(seat: Seat) {
+        statusCheck()
+        if (this.status != CommuteStatusEnum.SCHEDULED) {
+            throw CommuteBookSeatFailedException(id, status)
+        }
+
+        when (seat) {
+            is AnySeat -> getFirstAvailableSeat()
+            is PickedSeat -> validateSeat(seat)
+        }
     }
 
     fun cancelBookedSeat(bookingId: BookingId): List<CommuteEvent> {

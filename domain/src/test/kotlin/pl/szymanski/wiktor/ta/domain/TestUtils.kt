@@ -29,8 +29,6 @@ import pl.szymanski.wiktor.ta.domain.event.CompleteBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.DomainEvent
 import pl.szymanski.wiktor.ta.domain.event.FailBookingEvent
 import pl.szymanski.wiktor.ta.domain.event.FailCancelBookingEvent
-import pl.szymanski.wiktor.ta.domain.event.ProcessBookingEvent
-import pl.szymanski.wiktor.ta.domain.event.ProcessCancelBookingEvent
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -58,11 +56,9 @@ fun DomainEvent.copy(
         is CommuteFullEvent -> copy(eventId = eventId)
         is CommuteAvailableEvent -> copy(eventId = eventId)
         is BookingCreatedEvent -> copy(eventId = eventId)
-        is ProcessBookingEvent -> copy(eventId = eventId)
         is CompleteBookingEvent -> copy(eventId = eventId)
         is BookingCancelRequestedEvent -> copy(eventId = eventId)
         is CancelBookingEvent -> copy(eventId = eventId)
-        is ProcessCancelBookingEvent -> copy(eventId = eventId)
         is FailBookingEvent -> copy(eventId = eventId)
         is FailCancelBookingEvent -> copy(eventId = eventId)
         is AttractionBookedCompensatedEvent -> copy(eventId = eventId)

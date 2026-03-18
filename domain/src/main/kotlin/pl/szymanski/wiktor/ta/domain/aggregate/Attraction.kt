@@ -139,15 +139,7 @@ data class Attraction(
     }
 
     fun book(bookingId: BookingId): List<AttractionEvent> {
-        statusCheck()
-
-        if (bookings.size >= capacity) {
-            throw AttractionBookFailedException(id)
-        }
-
-        if (status != AttractionStatusEnum.SCHEDULED) {
-            throw AttractionBookFailedException(id, status)
-        }
+        checkAvailability()
 
         if (bookings.any { it == bookingId }) {
             throw AttractionBookFailedException(bookingId, id)
@@ -166,6 +158,18 @@ data class Attraction(
                 )
             },
         )
+    }
+
+    fun checkAvailability() {
+        statusCheck()
+
+        if (status != AttractionStatusEnum.SCHEDULED) {
+            throw AttractionBookFailedException(id, status)
+        }
+
+        if (bookings.size >= capacity) {
+            throw AttractionBookFailedException(id)
+        }
     }
 
     fun cancelBooking(bookingId: BookingId): List<AttractionEvent> {

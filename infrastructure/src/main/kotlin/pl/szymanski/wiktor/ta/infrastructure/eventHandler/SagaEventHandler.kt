@@ -1,5 +1,6 @@
 package pl.szymanski.wiktor.ta.infrastructure.eventHandler
 
+import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaHandler
 import org.springframework.kafka.annotation.KafkaListener
@@ -25,25 +26,30 @@ class SagaEventHandler(
     }
 
     @KafkaHandler
-    suspend fun onSagaEvent(envelope: EventEnvelope<*>) {
-        when (envelope.event) {
-            is BookingSagaCompletedEvent -> onBookingSagaCompletedEvent(
-                completeBookingCommandHandler,
-                envelope as EventEnvelope<BookingSagaCompletedEvent>
-            )
-            is BookingSagaFailedEvent -> onBookingSagaFailedEvent(
-                failBookingCommandHandler,
-                envelope as EventEnvelope<BookingSagaFailedEvent>
-            )
-            is BookingCancelSagaCompletedEvent -> onBookingCancelSagaCompletedEvent(
-                cancelBookingCommandHandler,
-                envelope as EventEnvelope<BookingCancelSagaCompletedEvent>
-            )
-            is BookingCancelSagaFailedEvent -> onBookingCancelSagaFailedEvent(
-                failCancelBookingCommandHandler,
-                envelope as EventEnvelope<BookingCancelSagaFailedEvent>
-            )
-            else -> log.error("Received unhandled event type in saga-events topic: ${envelope.event::class.java}")
+    fun onSagaEvent(envelope: EventEnvelope<*>) = runBlocking {
+        try {
+            log.debug("START handling {} id={}", envelope.eventType, envelope.event.eventId)
+            when (envelope.eventType) {
+                "BookingSagaCompletedEvent" -> onBookingSagaCompletedEvent(
+                    completeBookingCommandHandler,
+                    envelope as EventEnvelope<BookingSagaCompletedEvent>
+                )
+                "BookingSagaFailedEvent" -> onBookingSagaFailedEvent(
+                    failBookingCommandHandler,
+                    envelope as EventEnvelope<BookingSagaFailedEvent>
+                )
+                "BookingCancelSagaCompletedEvent" -> onBookingCancelSagaCompletedEvent(
+                    cancelBookingCommandHandler,
+                    envelope as EventEnvelope<BookingCancelSagaCompletedEvent>
+                )
+                "BookingCancelSagaFailedEvent" -> onBookingCancelSagaFailedEvent(
+                    failCancelBookingCommandHandler,
+                    envelope as EventEnvelope<BookingCancelSagaFailedEvent>
+                )
+                else -> log.warn("Received unhandled event type in saga-events topic: ${envelope.event::class.java}")
+            }
+        } finally {
+            log.debug("END handling {} id={}", envelope.eventType, envelope.event.eventId)
         }
     }
 }

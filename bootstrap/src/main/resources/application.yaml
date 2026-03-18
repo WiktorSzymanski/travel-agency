@@ -1,6 +1,8 @@
 logging:
   level:
     root: INFO
+#    org.springframework.kafka.listener: DEBUG
+#    org.springframework.kafka.listener.DefaultErrorHandler: DEBUG
 
 server:
   port: 8080
@@ -15,31 +17,31 @@ spring:
       uuid: standard
 
 generator:
-  interval-seconds: 60
-  in-advance-seconds: 600
+  interval-seconds: 5
+  in-advance-seconds: 60
   creation-window-seconds: 20
   accommodations:
     # London Accommodations (15 total)
     - name: "Hotel"
       location: "London"
-#    - name: "Central Suites"
-#      location: "London"
-#    - name: "Royal Inn"
-#      location: "London"
-#    - name: "The London Retreat"
-#      location: "London"
-#    - name: "Cityscape Hotel"
-#      location: "London"
-#    - name: "The Crown Lodge"
-#      location: "London"
-#    - name: "Parkside Hotel"
-#      location: "London"
-#    - name: "Windsor Residence"
-#      location: "London"
-#    - name: "The Regent Hotel"
-#      location: "London"
-#    - name: "London Bridge Inn"
-#      location: "London"
+    - name: "Central Suites"
+      location: "London"
+    - name: "Royal Inn"
+      location: "London"
+    - name: "The London Retreat"
+      location: "London"
+    - name: "Cityscape Hotel"
+      location: "London"
+    - name: "The Crown Lodge"
+      location: "London"
+    - name: "Parkside Hotel"
+      location: "London"
+    - name: "Windsor Residence"
+      location: "London"
+    - name: "The Regent Hotel"
+      location: "London"
+    - name: "London Bridge Inn"
+      location: "London"
 #    - name: "Thames View Hotel"
 #      location: "London"
 #    - name: "The Kensington"
@@ -283,13 +285,13 @@ generator:
     - name: "Westminster Abbey Visit"
       location: "London"
       capacity: 3
-#    # Berlin
-#    - name: "City tour by boat"
-#      location: "Berlin"
-#      capacity: 3
-#    - name: "Berlin Wall Museum"
-#      location: "Berlin"
-#      capacity: 3
+    # Berlin
+    - name: "City tour by boat"
+      location: "Berlin"
+      capacity: 3
+    - name: "Berlin Wall Museum"
+      location: "Berlin"
+      capacity: 3
 #    # Rome
 #    - name: "Colosseum Visit"
 #      location: "Rome"
