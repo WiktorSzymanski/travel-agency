@@ -31,7 +31,7 @@ class SagaService(
 ) {
     suspend fun executeSaga(sagaState: SagaState) = getSagaInstance(sagaState).executeOrResume()
 
-    suspend fun executePendingSagas() { // TODO: SagaPoller?
+    suspend fun executePendingSagas() { // TODO: SagaPoller? How to distinguish sagas that are in progress to not run them again
         val pendingSagas =
             sagaRepository.findByStatuses(listOf(SagaStatus.NEW, SagaStatus.PROCESSING))
 

@@ -4,6 +4,7 @@ import kotlinx.coroutines.delay
 import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueEntry
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
+import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import pl.szymanski.wiktor.ta.event.SagaEvent
 import pl.szymanski.wiktor.ta.outbox.OutboxPort
 
@@ -49,7 +50,7 @@ abstract class PersistentSaga(
         sagaState.step = SagaStep.PENDING_COMMUTE
         outboxPort.save(
             sagaState.copy(),
-            listOf(getSagaStartedEvent()),
+            listOf(getSagaStartedEvent()) as List<PublishableEvent>,
             metadata,
             sagaRepository
         )
@@ -129,7 +130,7 @@ abstract class PersistentSaga(
 
         outboxPort.save(
             sagaState.copy(),
-            listOf(getSagaCompletedEvent()),
+            listOf(getSagaCompletedEvent()) as List<PublishableEvent>,
             metadata,
             sagaRepository
         )
@@ -142,7 +143,7 @@ abstract class PersistentSaga(
 
         outboxPort.save(
             sagaState.copy(),
-            listOf(getSagaFailedEvent()),
+            listOf(getSagaFailedEvent()) as List<PublishableEvent>,
             metadata,
             sagaRepository
         )
