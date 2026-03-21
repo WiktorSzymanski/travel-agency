@@ -1,6 +1,5 @@
 package pl.szymanski.wiktor.ta.domain.aggregate
 
-import kotlinx.serialization.Serializable
 import pl.szymanski.wiktor.ta.domain.AccommodationStatusEnum
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.Rent
@@ -18,7 +17,6 @@ import pl.szymanski.wiktor.ta.domain.exception.AccommodationMissingCreatedEventE
 import pl.szymanski.wiktor.ta.domain.exception.AccommodationEmptyEventListException
 import java.time.LocalDateTime
 
-@Serializable
 data class Accommodation(
     val id: AccommodationId = AccommodationId.generate(),
     val name: String,
@@ -29,12 +27,14 @@ data class Accommodation(
 ) {
     companion object {
         fun create(
+            id: AccommodationId,
             name: String,
             location: LocationEnum,
             rent: Rent,
-        ): Pair<Accommodation, List<AccommodationCreatedEvent>> {
+        ): Pair<Accommodation, AccommodationCreatedEvent> {
             val accommodation =
                 Accommodation(
+                    id = id,
                     name = name,
                     location = location,
                     rent = rent,
@@ -42,13 +42,13 @@ data class Accommodation(
 
             val event =
                 AccommodationCreatedEvent(
-                    accommodationId = accommodation.id,
+                    accommodationId = accommodation.id.value,
                     name = name,
                     location = location,
                     rent = rent,
                 )
 
-            return accommodation to listOf(event)
+            return accommodation to event
         }
     
         fun fromEvents(events: List<AccommodationEvent>): Accommodation {
@@ -62,7 +62,7 @@ data class Accommodation(
 
             val accommodation =
                 Accommodation(
-                    id = createdEvent.accommodationId,
+                    id = AccommodationId.from(createdEvent.accommodationId),
                     name = createdEvent.name,
                     location = createdEvent.location,
                     rent = createdEvent.rent,
@@ -79,7 +79,7 @@ data class Accommodation(
         
         is AccommodationBookedEvent -> {
             this.status = AccommodationStatusEnum.BOOKED
-            this.bookingId = event.bookingId
+            this.bookingId = BookingId.from(event.bookingId)
         }
 
         is AccommodationBookingCanceledEvent -> {
@@ -98,13 +98,13 @@ data class Accommodation(
 
         is AccommodationBookingCanceledCompensatedEvent -> {
             this.status = AccommodationStatusEnum.BOOKED
-            this.bookingId = event.bookingId
+            this.bookingId = BookingId.from(event.bookingId)
         }
     }
 
     fun expire(): List<AccommodationEvent> {
         if (status != AccommodationStatusEnum.AVAILABLE) {
-            throw AccommodationExpireFailedException(id, status)
+            return listOf()
         }
 
         if (LocalDateTime.now().isBefore(rent.from)) {
@@ -114,23 +114,27 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.EXPIRED
 
         return listOf(AccommodationExpiredEvent(
-            accommodationId = id,
+            accommodationId = id.value,
         ))
     }
 
     fun book(bookingId: BookingId): List<AccommodationEvent> {
-        statusCheck()
-        if (this.status != AccommodationStatusEnum.AVAILABLE) {
-            throw AccommodationBookingFailedException(id, status)
-        }
+        checkAvailability()
 
         this.status = AccommodationStatusEnum.BOOKED
         this.bookingId = bookingId
 
         return listOf(AccommodationBookedEvent(
-            accommodationId = id,
-            bookingId = bookingId,
+            accommodationId = id.value,
+            bookingId = bookingId.value!!,
         ))
+    }
+
+    fun checkAvailability() {
+        statusCheck()
+        if (this.status != AccommodationStatusEnum.AVAILABLE) {
+            throw AccommodationBookingFailedException(id, status)
+        }
     }
 
     fun cancelBooking(bookingId: BookingId): List<AccommodationEvent> {
@@ -147,8 +151,8 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return listOf(AccommodationBookingCanceledEvent(
-            accommodationId = id,
-            bookingId = bookingId,
+            accommodationId = id.value,
+            bookingId = bookingId.value!!,
         ))
     }
 
@@ -169,8 +173,8 @@ data class Accommodation(
         this.status = AccommodationStatusEnum.AVAILABLE
 
         return listOf(AccommodationBookedCompensatedEvent(
-            accommodationId = id,
-            bookingId = bookingId,
+            accommodationId = id.value,
+            bookingId = bookingId.value!!,
         ))
     }
 
@@ -183,8 +187,8 @@ data class Accommodation(
         this.bookingId = bookingId
 
         return listOf(AccommodationBookingCanceledCompensatedEvent(
-            accommodationId = id,
-            bookingId = bookingId,
+            accommodationId = id.value!!,
+            bookingId = bookingId.value!!,
         ))
     }
 }

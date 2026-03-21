@@ -1,0 +1,12 @@
+package pl.szymanski.wiktor.ta.query
+
+import pl.szymanski.wiktor.ta.Pageable
+import pl.szymanski.wiktor.ta.domain.AttractionStatusEnum
+import pl.szymanski.wiktor.ta.queryrepository.AttractionQueryRepository
+
+class AttractionQuery (
+    private val attractionRepository: AttractionQueryRepository,
+) {
+    suspend fun getScheduledAttractions(pageable: Pageable) =
+        attractionRepository.findAllByStatus(AttractionStatusEnum.SCHEDULED, pageable)
+}

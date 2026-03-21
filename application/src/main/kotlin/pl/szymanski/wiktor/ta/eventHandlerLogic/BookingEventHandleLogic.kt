@@ -1,61 +1,33 @@
 package pl.szymanski.wiktor.ta.eventHandlerLogic
 
-import pl.szymanski.wiktor.ta.CommandBus
 import pl.szymanski.wiktor.ta.EventEnvelope
-import pl.szymanski.wiktor.ta.Metadata
 import pl.szymanski.wiktor.ta.domain.event.BookingCancelRequestedEvent
 import pl.szymanski.wiktor.ta.domain.event.BookingCreatedEvent
-import pl.szymanski.wiktor.ta.domain.event.BookingEvent
-import pl.szymanski.wiktor.ta.saga.BookingSaga
-import pl.szymanski.wiktor.ta.saga.CancelBookingSaga
-import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
-import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
-import pl.szymanski.wiktor.ta.saga.SagaRepository
+import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
+import pl.szymanski.wiktor.ta.saga.SagaService
 import pl.szymanski.wiktor.ta.saga.SagaState
 import pl.szymanski.wiktor.ta.saga.SagaType
 
-class BookingEventHandleLogic(
-    private val commandBus: CommandBus,
-    private val sagaRepository: SagaRepository,
-    private val sagaOutboxPort: SagaOutboxPort,
-    private val deadLetterQueueRepository: DeadLetterQueueRepository,
-) {
-    suspend fun onCreatedEvent(envelope: EventEnvelope<BookingCreatedEvent>) =
-        BookingSaga(
-            commandBus,
-            sagaRepository,
-            sagaOutboxPort,
-            deadLetterQueueRepository,
-            getSagaState(envelope.event, envelope.metadata),
-            envelope.metadata
-        ).executeOrResume()
 
-    suspend fun onCancelRequestedEvent(envelope: EventEnvelope<BookingCancelRequestedEvent>) =
-        CancelBookingSaga(
-            commandBus,
-            sagaRepository,
-            sagaOutboxPort,
-            deadLetterQueueRepository,
-            getSagaState(envelope.event, envelope.metadata),
-            envelope.metadata
-        ).executeOrResume()
+suspend fun onCreatedEvent(sagaService: SagaService, envelope: EventEnvelope<BookingCreatedEvent>) =
+    sagaService.executeSaga(
+        SagaState(
+            correlationId = envelope.metadata.correlationId,
+            type = SagaType.BOOKING,
+            travelOffer = envelope.event.travelOffer,
+            bookingId = BookingId.from(envelope.event.bookingId),
+            seat = envelope.event.seat,
+        )
+    )
 
-    fun getSagaState(event: BookingEvent, metadata: Metadata) =
-        when (event) {
-            is BookingCreatedEvent -> SagaState(
-                correlationId = metadata.correlationId,
-                type = SagaType.BOOKING,
-                travelOffer = event.travelOffer,
-                bookingId = event.bookingId,
-                seat = event.seat,
-            )
-            is BookingCancelRequestedEvent -> SagaState(
-                correlationId = metadata.correlationId,
-                type = SagaType.CANCELLING,
-                travelOffer = event.travelOffer,
-                bookingId = event.bookingId,
-                seat = event.seat,
-            )
-            else -> throw IllegalArgumentException("Unsupported event type: ${event::class.simpleName} for getSagaState method")
-        }
-}
+suspend fun onCancelRequestedEvent(sagaService: SagaService, envelope: EventEnvelope<BookingCancelRequestedEvent>) =
+    sagaService.executeSaga(
+        SagaState(
+            correlationId = envelope.metadata.correlationId,
+            type = SagaType.CANCELLING,
+            travelOffer = envelope.event.travelOffer,
+            bookingId = BookingId.from(envelope.event.bookingId),
+            seat = envelope.event.seat,
+        )
+    )
+

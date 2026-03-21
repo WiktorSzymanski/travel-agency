@@ -33,13 +33,15 @@ data class Attraction(
 ) {
     companion object {
         fun create(
+            id: AttractionId,
             name: String,
             location: LocationEnum,
             date: LocalDateTime,
             capacity: Int,
-        ): Pair<Attraction, List<AttractionCreatedEvent>> {
+        ): Pair<Attraction, AttractionCreatedEvent> {
             val attraction =
                 Attraction(
+                    id = id,
                     name = name,
                     location = location,
                     date = date,
@@ -48,14 +50,14 @@ data class Attraction(
 
             val event =
                 AttractionCreatedEvent(
-                    attractionId = attraction.id,
+                    attractionId = attraction.id.value!!,
                     name = name,
                     location = location,
                     date = date,
                     capacity = capacity,
                 )
 
-            return attraction to listOf(event)
+            return attraction to event
         }
 
         fun fromEvents(events: List<AttractionEvent>): Attraction {
@@ -68,7 +70,7 @@ data class Attraction(
 
             val attraction =
                 Attraction(
-                    id = createdEvent.attractionId,
+                    id = AttractionId.from(createdEvent.attractionId) as AttractionId.Present,
                     name = createdEvent.name,
                     location = createdEvent.location,
                     date = createdEvent.date,
@@ -87,7 +89,7 @@ data class Attraction(
         is AttractionCreatedEvent -> Unit
 
         is AttractionBookedEvent -> {
-            this.bookings.add(event.bookingId)
+            this.bookings.add(BookingId.from(event.bookingId))
             Unit
         }
 
@@ -102,7 +104,7 @@ data class Attraction(
 
 
         is AttractionBookingCanceledEvent -> {
-            this.bookings.removeIf { it == event.bookingId }
+            this.bookings.removeIf { it == BookingId.from(event.bookingId) }
             Unit
         }
 
@@ -112,12 +114,12 @@ data class Attraction(
 
 
         is AttractionBookedCompensatedEvent -> {
-            this.bookings.removeIf { it == event.bookingId }
+            this.bookings.removeIf { it == BookingId.from(event.bookingId) }
             Unit
         }
 
         is AttractionBookingCanceledCompensatedEvent -> {
-            this.bookings.add(event.bookingId)
+            this.bookings.add(BookingId.from(event.bookingId))
             Unit
         }
     }
@@ -131,21 +133,13 @@ data class Attraction(
 
         return listOf(
             AttractionExpiredEvent(
-                attractionId = id,
+                attractionId = id.value!!,
             ),
         )
     }
 
     fun book(bookingId: BookingId): List<AttractionEvent> {
-        statusCheck()
-
-        if (bookings.size >= capacity) {
-            throw AttractionBookFailedException(id)
-        }
-
-        if (status != AttractionStatusEnum.SCHEDULED) {
-            throw AttractionBookFailedException(id, status)
-        }
+        checkAvailability()
 
         if (bookings.any { it == bookingId }) {
             throw AttractionBookFailedException(bookingId, id)
@@ -155,15 +149,27 @@ data class Attraction(
 
         return listOfNotNull(
             AttractionBookedEvent(
-                attractionId = id,
-                bookingId = bookingId,
+                attractionId = id.value!!,
+                bookingId = bookingId.value!!,
             ),
             takeIf { slotsCheck() }?.let {
                 AttractionFullEvent(
-                    attractionId = id,
+                    attractionId = id.value!!,
                 )
             },
         )
+    }
+
+    fun checkAvailability() {
+        statusCheck()
+
+        if (status != AttractionStatusEnum.SCHEDULED) {
+            throw AttractionBookFailedException(id, status)
+        }
+
+        if (bookings.size >= capacity) {
+            throw AttractionBookFailedException(id)
+        }
     }
 
     fun cancelBooking(bookingId: BookingId): List<AttractionEvent> {
@@ -181,12 +187,12 @@ data class Attraction(
 
         return listOf(
             AttractionBookingCanceledEvent(
-                attractionId = id,
-                bookingId = bookingId,
+                attractionId = id.value!!,
+                bookingId = bookingId.value!!,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionAvailableEvent(
-                    attractionId = id,
+                    attractionId = id.value!!,
                 )
             },
         )
@@ -224,12 +230,12 @@ data class Attraction(
 
         return listOf(
             AttractionBookedCompensatedEvent(
-                attractionId = id,
-                bookingId = bookingId,
+                attractionId = id.value!!,
+                bookingId = bookingId.value!!,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionAvailableEvent(
-                    attractionId = id,
+                    attractionId = id.value!!,
                 )
             },
         )
@@ -249,12 +255,12 @@ data class Attraction(
 
         return listOf(
             AttractionBookingCanceledCompensatedEvent(
-                attractionId = id,
-                bookingId = bookingId,
+                attractionId = id.value!!,
+                bookingId = bookingId.value!!,
             ),
             takeIf { slotsCheck() }.let {
                 AttractionFullEvent(
-                    attractionId = id,
+                    attractionId = id.value!!,
                 )
             },
         )

@@ -1,45 +1,27 @@
 package pl.szymanski.wiktor.ta.saga
 
 import kotlinx.coroutines.delay
-import pl.szymanski.wiktor.ta.CommandBus
-import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.Metadata
-import pl.szymanski.wiktor.ta.command.AccommodationCommand
-import pl.szymanski.wiktor.ta.command.AttractionCommand
-import pl.szymanski.wiktor.ta.command.CommuteCommand
-import pl.szymanski.wiktor.ta.command.CompensateAccommodationCommand
-import pl.szymanski.wiktor.ta.command.CompensateCommuteCommand
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueEntry
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
-import pl.szymanski.wiktor.ta.domain.aggregate.Accommodation
-import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
-import pl.szymanski.wiktor.ta.domain.aggregate.Commute
+import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 import pl.szymanski.wiktor.ta.event.SagaEvent
-import pl.szymanski.wiktor.ta.outbox.SagaOutboxPort
+import pl.szymanski.wiktor.ta.outbox.OutboxPort
 
 abstract class PersistentSaga(
-    private val commandBus: CommandBus,
     private val sagaRepository: SagaRepository,
-    private val sagaOutboxPort: SagaOutboxPort,
+    private val outboxPort: OutboxPort,
     private val deadLetterQueueRepository: DeadLetterQueueRepository,
     private val sagaState: SagaState
 ) {
-    companion object {
-        fun getSagaInstance(
-            commandBus: CommandBus,
-            sagaRepository: SagaRepository,
-            sagaOutboxPort: SagaOutboxPort,
-            deadLetterQueueRepository: DeadLetterQueueRepository,
-            sagaState: SagaState,
-            metadata: Metadata
-        ) : PersistentSaga = when (sagaState.type) {
-                SagaType.BOOKING -> BookingSaga(commandBus, sagaRepository, sagaOutboxPort, deadLetterQueueRepository, sagaState, metadata)
-                SagaType.CANCELLING -> CancelBookingSaga(commandBus, sagaRepository, sagaOutboxPort, deadLetterQueueRepository, sagaState, metadata)
-            }
-    }
-
     private val delayManager: DelayManager = DelayManager(sagaState.retryCount)
     private val maxRetries = 5
+
+    private val metadata: Metadata
+        get() = Metadata(
+            correlationId = sagaState.id,
+            revision = sagaState.version,
+        )
 
     suspend fun executeOrResume() {
         when (sagaState.status) {
@@ -62,13 +44,15 @@ abstract class PersistentSaga(
     }
 
     private suspend fun startSaga() {
-        sagaRepository.save(sagaState)
+//        sagaRepository.save(sagaState) // TODO: redundant???
 
         sagaState.status = SagaStatus.PROCESSING
         sagaState.step = SagaStep.PENDING_COMMUTE
-        sagaOutboxPort.saveStateWithEvent(
+        outboxPort.save(
             sagaState.copy(),
-            getSagaStartedEvent()
+            listOf(getSagaStartedEvent()) as List<PublishableEvent>,
+            metadata,
+            sagaRepository
         )
 
         handleCommuteStep()
@@ -77,7 +61,7 @@ abstract class PersistentSaga(
     private suspend fun handleCommuteStep() {
         while(true) {
             try {
-                commandBus.dispatch<CommuteCommand, Commute>(getCommuteCommand())
+                commuteStep()
                 return handleAccommodationStep()
             } catch (e: Exception) {
                 if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
@@ -98,7 +82,7 @@ abstract class PersistentSaga(
         persistState()
         while(true) {
             try {
-                commandBus.dispatch<AccommodationCommand, Accommodation>(getAccommodationCommand())
+                accommodationStep()
                 return handleAttractionStep()
             } catch (e: Exception) {
                 if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
@@ -118,44 +102,50 @@ abstract class PersistentSaga(
         sagaState.step = SagaStep.PENDING_ATTRACTION
         sagaState.retryCount = 0
         persistState()
-        getAttractionCommand()?.let {
-            while (true) {
-                try {
-                    commandBus.dispatch<AttractionCommand, Attraction>(it)
-                    break
-                } catch (e: Exception) {
-                    if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
-                        sagaState.message = e.message
-                        persistState()
-                        return compensateAccommodation()
-                    }
 
-                    sagaState.retryCount++
+        while (true) {
+            try {
+                attractionStep()
+                break
+            } catch (e: Exception) {
+                if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
+                    sagaState.message = e.message
                     persistState()
-                    delay(delayManager.getCurrentDelay())
+                    return compensateAccommodation()
                 }
+
+                sagaState.retryCount++
+                persistState()
+                delay(delayManager.getCurrentDelay())
             }
         }
+
         completeSaga()
     }
 
     private suspend fun completeSaga() {
         sagaState.status = SagaStatus.COMPLETED
         sagaState.step = SagaStep.IDLE
+        sagaState.version++
 
-        sagaOutboxPort.saveStateWithEvent(
+        outboxPort.save(
             sagaState.copy(),
-            getSagaCompletedEvent()
+            listOf(getSagaCompletedEvent()) as List<PublishableEvent>,
+            metadata,
+            sagaRepository
         )
     }
 
     private suspend fun failSaga() {
         sagaState.status = SagaStatus.FAILED
         sagaState.step = SagaStep.IDLE
+        sagaState.version++
 
-        sagaOutboxPort.saveStateWithEvent(
+        outboxPort.save(
             sagaState.copy(),
-            getSagaFailedEvent()
+            listOf(getSagaFailedEvent()) as List<PublishableEvent>,
+            metadata,
+            sagaRepository
         )
     }
 
@@ -165,13 +155,13 @@ abstract class PersistentSaga(
         persistState()
         while(true) {
             try {
-                commandBus.dispatch<CommuteCommand, Commute>(getCompensateCommuteCommand())
+                compensateCommuteStep()
                 break
             } catch (e: Exception) {
                 if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
                     deadLetterQueueRepository.save(
                         DeadLetterQueueEntry(
-                            "sagaId: ${sagaState.id}, aggregateId = ${sagaState.travelOffer.commuteId}, message = ${e.message ?: "Unknown error"}"
+                            message = "sagaId: ${sagaState.id}, aggregateId = ${sagaState.travelOffer.commuteId}, message = ${e.message ?: "Unknown error"}"
                         )
                     )
                     break
@@ -192,13 +182,13 @@ abstract class PersistentSaga(
         persistState()
         while(true) {
             try {
-                commandBus.dispatch<AccommodationCommand, Accommodation>(getCompensateAccommodationCommand())
+                compensateAccommodationStep()
                 break
             } catch (e: Exception) {
                 if (!ConcurrentModificationException::class.isInstance(e) || sagaState.retryCount >= maxRetries) {
                     deadLetterQueueRepository.save(
                         DeadLetterQueueEntry(
-                            "sagaId: ${sagaState.id}, aggregateId = ${sagaState.travelOffer.accommodationId}, message = ${e.message ?: "Unknown error"}"
+                            message = "sagaId: ${sagaState.id}, aggregateId = ${sagaState.travelOffer.accommodationId}, message = ${e.message ?: "Unknown error"}"
                         )
                     )
                     break
@@ -216,19 +206,19 @@ abstract class PersistentSaga(
         sagaRepository.save(sagaState)
     }
 
-    abstract fun getAccommodationCommand(): AccommodationCommand
+    abstract suspend fun accommodationStep()
 
-    abstract fun getCompensateAccommodationCommand(): CompensateAccommodationCommand
+    abstract suspend fun compensateAccommodationStep()
 
-    abstract fun getCommuteCommand(): CommuteCommand
+    abstract suspend fun commuteStep()
 
-    abstract fun getCompensateCommuteCommand(): CompensateCommuteCommand
+    abstract suspend fun compensateCommuteStep()
 
-    abstract fun getAttractionCommand(): AttractionCommand?
+    abstract suspend fun attractionStep()
 
-    abstract fun getSagaStartedEvent(): EventEnvelope<SagaEvent>
+    abstract fun getSagaStartedEvent(): SagaEvent
 
-    abstract fun getSagaCompletedEvent(): EventEnvelope<SagaEvent>
+    abstract fun getSagaCompletedEvent(): SagaEvent
 
-    abstract fun getSagaFailedEvent(): EventEnvelope<SagaEvent>
+    abstract fun getSagaFailedEvent(): SagaEvent
 }

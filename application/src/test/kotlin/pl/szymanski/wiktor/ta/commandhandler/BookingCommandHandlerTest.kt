@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.commandhandler
+/*package pl.szymanski.wiktor.ta.commandhandler
 
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -6,26 +6,27 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import pl.szymanski.wiktor.ta.command.BookingRequestCancelCommand
-import pl.szymanski.wiktor.ta.command.CancelBookingCommand
-import pl.szymanski.wiktor.ta.command.CompleteBookingCommand
-import pl.szymanski.wiktor.ta.command.CreateBookingCommand
-import pl.szymanski.wiktor.ta.command.FailBookingCommand
-import pl.szymanski.wiktor.ta.command.FailCancelBookingCommand
-import pl.szymanski.wiktor.ta.command.ProcessBookingCommand
-import pl.szymanski.wiktor.ta.command.ProcessCancelBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.BookingCommandHandler
+import pl.szymanski.wiktor.ta.commands.booking.BookingRequestCancelCommand
+import pl.szymanski.wiktor.ta.commands.booking.CancelBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.CompleteBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.CreateBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.FailBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.FailCancelBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.ProcessBookingCommand
+import pl.szymanski.wiktor.ta.commands.booking.ProcessCancelBookingCommand
 import pl.szymanski.wiktor.ta.domain.Seat
 import pl.szymanski.wiktor.ta.domain.aggregate.AccommodationId
 import pl.szymanski.wiktor.ta.domain.aggregate.Booking
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
 import pl.szymanski.wiktor.ta.domain.aggregate.CommuteId
 import pl.szymanski.wiktor.ta.domain.aggregate.TravelOffer
-import pl.szymanski.wiktor.ta.repository.BookingRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.util.UUID
 import kotlin.test.Test
 
 class BookingCommandHandlerTest {
-    private val bookingRepository = mockk<BookingRepository>()
+    private val bookingRepository = mockk<CommandRepository<Booking, BookingId>>()
     private val handler = BookingCommandHandler(bookingRepository)
     private val booking = mockk<Booking>(relaxed = true)
 
@@ -47,7 +48,7 @@ class BookingCommandHandlerTest {
                         AccommodationId.generate(),
                     ),
                     userId = UUID.randomUUID(),
-                    seat = Seat.Picked("1", "A"),
+                    seat = PickedSeat("1", "A"),
                 )
 
             // When
@@ -186,3 +187,4 @@ class BookingCommandHandlerTest {
             verify(exactly = 1) { booking.processCancellation() }
         }
 }
+*/

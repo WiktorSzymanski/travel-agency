@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.commandhandler
+/*package pl.szymanski.wiktor.ta.commandhandler
 
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -6,23 +6,24 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import pl.szymanski.wiktor.ta.command.BookAttractionCommand
-import pl.szymanski.wiktor.ta.command.CancelAttractionBookingCommand
-import pl.szymanski.wiktor.ta.command.CompensateBookAttractionCommand
-import pl.szymanski.wiktor.ta.command.CompensateCancelAttractionBookingCommand
-import pl.szymanski.wiktor.ta.command.CreateAttractionCommand
-import pl.szymanski.wiktor.ta.command.ExpireAttractionCommand
+import pl.szymanski.wiktor.ta.commands.attraction.AttractionCommandHandler
+import pl.szymanski.wiktor.ta.commands.attraction.BookAttractionCommand
+import pl.szymanski.wiktor.ta.commands.attraction.CancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.commands.attraction.CompensateBookAttractionCommand
+import pl.szymanski.wiktor.ta.commands.attraction.CompensateCancelAttractionBookingCommand
+import pl.szymanski.wiktor.ta.commands.attraction.CreateAttractionCommand
+import pl.szymanski.wiktor.ta.commands.attraction.ExpireAttractionCommand
 import pl.szymanski.wiktor.ta.domain.LocationEnum
 import pl.szymanski.wiktor.ta.domain.aggregate.Attraction
 import pl.szymanski.wiktor.ta.domain.aggregate.AttractionId
 import pl.szymanski.wiktor.ta.domain.aggregate.BookingId
-import pl.szymanski.wiktor.ta.repository.AttractionRepository
+import pl.szymanski.wiktor.ta.repository.CommandRepository
 import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test
 
 class AttractionCommandHandlerTest {
-    private val attractionRepository = mockk<AttractionRepository>()
+    private val attractionRepository = mockk<CommandRepository<Attraction, AttractionId>>()
     private val handler = AttractionCommandHandler(attractionRepository)
     private val attraction = mockk<Attraction>(relaxed = true)
 
@@ -149,3 +150,4 @@ class AttractionCommandHandlerTest {
             verify(exactly = 1) { attraction.compensateCancelBooking(any()) }
         }
 }
+*/

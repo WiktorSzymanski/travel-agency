@@ -1,9 +1,8 @@
 package pl.szymanski.wiktor.ta
 
-import kotlinx.serialization.Serializable
+
 import pl.szymanski.wiktor.ta.domain.event.PublishableEvent
 
-@Serializable
 data class EventEnvelope<T: PublishableEvent> (
     val eventType: String,
     val event: T,

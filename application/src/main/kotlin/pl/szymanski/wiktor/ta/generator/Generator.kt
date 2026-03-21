@@ -1,6 +1,6 @@
 package pl.szymanski.wiktor.ta.generator
 
-import pl.szymanski.wiktor.ta.command.Command
+import pl.szymanski.wiktor.ta.commands.Command
 import pl.szymanski.wiktor.ta.event.DateMetEvent
 import java.time.LocalDateTime
 

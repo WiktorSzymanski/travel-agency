@@ -25,6 +25,9 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:$mokkVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinxCoroutinesTestVersion")
+
+    implementation("tools.jackson.module:jackson-module-kotlin:3.0.0")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.20")
 }
 
 tasks.test {

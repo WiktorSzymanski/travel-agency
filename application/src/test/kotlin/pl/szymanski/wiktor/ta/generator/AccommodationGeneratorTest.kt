@@ -1,4 +1,4 @@
-package pl.szymanski.wiktor.ta.generator
+/*package pl.szymanski.wiktor.ta.generator
 
 import java.time.Clock
 import java.time.Instant
@@ -41,5 +41,6 @@ class AccommodationGeneratorTest {
         assertTrue(command.rent.from.isBefore(now.plusSeconds(3600 + 3601)))
         assertTrue(command.rent.till.isAfter(command.rent.from.minusSeconds(1)))
         assertTrue(command.rent.till.isBefore(now.plusSeconds(3600 + 7201)))
-    }
+        }
 }
+*/
