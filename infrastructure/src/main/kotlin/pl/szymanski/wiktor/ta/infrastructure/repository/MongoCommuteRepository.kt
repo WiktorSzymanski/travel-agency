@@ -21,33 +21,13 @@ import kotlin.jvm.optionals.getOrNull
 @Component
 class MongoCommuteRepository(
     private val commuteDocumentMongoRepository: CommuteDocumentMongoRepository
-) : CommandRepository<Commute, CommuteId>, CommuteQueryRepository {
+) : CommuteQueryRepository {
 
     override suspend fun findById(id: CommuteId): Pair<Commute, Long> {
         return withContext(Dispatchers.IO) {
             commuteDocumentMongoRepository.findById(id)
         }.getOrNull()?.let { it.toDomain() to it.version }
             ?: throw NoSuchElementException("Commute not found: $id")
-    }
-
-    override suspend fun create(entity: Commute, metadata: Metadata) {
-        withContext(Dispatchers.IO) {
-            commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
-        }
-    }
-
-    override suspend fun save(entity: Commute, metadata: Metadata) {
-        withContext(Dispatchers.IO) {
-            commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
-        }
-    }
-
-    override fun createBlocking(entity: Commute, metadata: Metadata) {
-        commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
-    }
-
-    override fun saveBlocking(entity: Commute, metadata: Metadata) {
-        commuteDocumentMongoRepository.save(CommuteDocument.fromDomain(entity, metadata.revision))
     }
 
     override suspend fun save(entity: Commute) {

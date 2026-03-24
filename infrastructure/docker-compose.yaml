@@ -46,22 +46,25 @@ services:
       - ./mongo-init.sh:/mongo-init.sh:ro
     entrypoint: [ "bash", "/mongo-init.sh" ]
 
-  kafka:
-    image: apache/kafka:latest
-    hostname: kafka
-    container_name: kafka
+  kurrentdb:
+    image: kurrentplatform/kurrentdb:latest
+    container_name: kurrentdb
     restart: unless-stopped
-    ports:
-      - "9092:9092"
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KURRENTDB_INSECURE: "true"
+      KURRENTDB_RUN_PROJECTIONS: All
+      KURRENTDB_START_STANDARD_PROJECTIONS: "true"
+      KURRENTDB_NODE_IP: 0.0.0.0
+      KURRENTDB_REPLICATION_IP: 0.0.0.0
+      KURRENTDB_NODE_PORT: 2113
+      KURRENTDB_ADVERTISE_HOST_TO_CLIENT_AS: 127.0.0.1
+      KURRENTDB_DEFAULT_ADMIN_PASSWORD: "changeit"
+    ports:
+      - "2113:2113"
+    volumes:
+      - kurrentdb_data:/var/lib/kurrentdb
+    networks:
+      - mongo-net
 
 networks:
   mongo-net:
@@ -70,4 +73,6 @@ volumes:
   mongodb_data_1:
     driver: local
   mongodb_data_2:
+    driver: local
+  kurrentdb_data:
     driver: local

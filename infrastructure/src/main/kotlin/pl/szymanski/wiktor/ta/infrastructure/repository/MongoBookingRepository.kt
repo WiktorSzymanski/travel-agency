@@ -19,33 +19,13 @@ import kotlin.jvm.optionals.getOrNull
 @Component
 class MongoBookingRepository(
     private val bookingDocumentMongoRepository: BookingDocumentMongoRepository
-) : CommandRepository<Booking, BookingId>, BookingQueryRepository {
+) : BookingQueryRepository {
 
     override suspend fun findById(id: BookingId): Pair<Booking, Long> {
         return withContext(Dispatchers.IO) {
             bookingDocumentMongoRepository.findById(id)
         }.getOrNull()?.let { it.toDomain() to it.version }
             ?: throw NoSuchElementException("Booking not found: $id")
-    }
-
-    override suspend fun create(entity: Booking, metadata: Metadata) {
-        withContext(Dispatchers.IO) {
-            bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity, metadata.revision))
-        }
-    }
-
-    override suspend fun save(entity: Booking, metadata: Metadata) {
-        withContext(Dispatchers.IO) {
-            bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity, metadata.revision))
-        }
-    }
-
-    override fun createBlocking(entity: Booking, metadata: Metadata) {
-        bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity, metadata.revision))
-    }
-
-    override fun saveBlocking(entity: Booking, metadata: Metadata) {
-        bookingDocumentMongoRepository.save(BookingDocument.fromDomain(entity, metadata.revision))
     }
 
     override suspend fun save(entity: Booking) {

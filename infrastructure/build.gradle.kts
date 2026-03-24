@@ -27,13 +27,13 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
+    implementation("io.kurrent:kurrentdb-client:1.1.2")
+
     // MongoDB
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:$mongoVersion")
     implementation("org.mongodb:bson-kotlinx:$mongoVersion")
 
-    // Kafka and JSON serialization
-    implementation("org.apache.kafka:kafka-clients:3.7.0")
-    implementation("org.springframework.kafka:spring-kafka")
+    // JSON serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

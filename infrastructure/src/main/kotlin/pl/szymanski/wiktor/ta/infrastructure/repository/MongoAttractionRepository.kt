@@ -19,7 +19,7 @@ import kotlin.jvm.optionals.getOrNull
 @Component
 class MongoAttractionRepository(
     private val attractionDocumentMongoRepository: AttractionDocumentMongoRepository,
-) : CommandRepository<Attraction, AttractionId>, AttractionQueryRepository {
+) : AttractionQueryRepository {
 
     override suspend fun findById(id: AttractionId): Pair<Attraction, Long> {
         return withContext(Dispatchers.IO) {
@@ -27,24 +27,10 @@ class MongoAttractionRepository(
         }.getOrNull()?.let { it.toDomain() to it.version } ?: throw NoSuchElementException("Attraction not found: $id")
     }
 
-    override suspend fun create(entity: Attraction, metadata: Metadata) {
-        withContext(Dispatchers.IO) {
-            attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
-        }
-    }
-
     override suspend fun save(entity: Attraction, metadata: Metadata) {
         withContext(Dispatchers.IO) {
             attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
         }
-    }
-
-    override fun createBlocking(entity: Attraction, metadata: Metadata) {
-        attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
-    }
-
-    override fun saveBlocking(entity: Attraction, metadata: Metadata) {
-        attractionDocumentMongoRepository.save(AttractionDocument.fromDomain(entity, metadata.revision))
     }
 
     override suspend fun update(projectionUpdate: ProjectionUpdate) {

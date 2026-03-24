@@ -1,8 +1,6 @@
 logging:
   level:
     root: INFO
-#    org.springframework.kafka.listener: DEBUG
-#    org.springframework.kafka.listener.DefaultErrorHandler: DEBUG
 
 server:
   port: 8080
@@ -11,10 +9,17 @@ spring:
   application:
     name: travel-agency-app
   mongodb:
-    uri: "mongodb://root:password@localhost:27017/?authSource=admin"
+    uri: "mongodb://root:password@127.0.0.1:27017/?authSource=admin"
     database: "travel_agency"
     representation:
       uuid: standard
+
+kurrentdb:
+  host: "localhost"
+  port: 2113
+  username: "admin"
+  password: "changeit"
+
 
 generator:
   interval-seconds: 5
