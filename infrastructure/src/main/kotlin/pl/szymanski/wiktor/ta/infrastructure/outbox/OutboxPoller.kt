@@ -1,10 +1,12 @@
 package pl.szymanski.wiktor.ta.infrastructure.outbox
 
+import io.kurrent.dbclient.KurrentDBClient
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import pl.szymanski.wiktor.ta.EventBus
 import pl.szymanski.wiktor.ta.EventEnvelope
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueEntry
 import pl.szymanski.wiktor.ta.dlq.DeadLetterQueueRepository
@@ -15,6 +17,7 @@ import java.util.UUID
 @Component
 class OutboxPoller(
     private val outboxPort: OutboxPort,
+    private val eventBus: EventBus,
     private val deadLetterQueueRepository: DeadLetterQueueRepository
 ) {
     companion object {
@@ -58,11 +61,11 @@ class OutboxPoller(
     }
 
     private suspend fun publishEventWithRetry(
-        eventEnvelope: EventEnvelope<PublishableEvent>,
+        eventEnvelope: EventEnvelope<out PublishableEvent>,
         retryCount: Int = 0
     ): UUID? {
         try {
-            outboxPort.save(eventEnvelope)
+            eventBus.publish(eventEnvelope)
             log.debug("Published event {} ({})", eventEnvelope.event.eventId, eventEnvelope.eventType)
 
             return eventEnvelope.event.eventId
@@ -79,15 +82,5 @@ class OutboxPoller(
 
             return null
         }
-    }
-
-    private suspend fun getEntityObj(eventEnvelope: EventEnvelope): Any = when (eventEnvelope.eventType) {
-        is AccommodationEvent -> "accommodation-events"
-        is AttractionEvent -> "attraction-events"
-        is CommuteEvent -> "commute-events"
-        is BookingEvent -> "booking-events"
-        is SagaEvent -> "saga-events"
-        is DateMetEvent -> "date-met-events"
-        else -> throw IllegalArgumentException("Unknown event type: ${eventEnvelope.eventType}")
     }
 }

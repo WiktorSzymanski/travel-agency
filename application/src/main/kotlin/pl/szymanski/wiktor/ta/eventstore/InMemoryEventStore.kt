@@ -12,13 +12,13 @@ class InMemoryEventStore : EventStore {
     private val events = mutableListOf<Pair<EventEnvelope<out PublishableEvent>, LocalDateTime?>>()
     private val subscribers = ConcurrentHashMap<Class<out PublishableEvent>, MutableList<suspend (EventEnvelope<out PublishableEvent>) -> Unit>>()
 
-    override suspend fun append(event: EventEnvelope<out PublishableEvent>) {
-        events.add(event to null)
-        notifySubscribers(event)
+    override suspend fun publish(eventEnvelope: EventEnvelope<out PublishableEvent>) {
+        events.add(eventEnvelope to null)
+        notifySubscribers(eventEnvelope)
     }
 
-    override suspend fun appendAt(event: EventEnvelope<out PublishableEvent>, processAfter: LocalDateTime) {
-        events.add(event to processAfter)
+    override suspend fun publishAt(eventEnvelope: EventEnvelope<out PublishableEvent>, processAfter: LocalDateTime) {
+        events.add(eventEnvelope to processAfter)
         // In a real implementation, a scheduler would check processAfter and dispatch when due
     }
 

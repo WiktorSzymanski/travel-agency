@@ -8,13 +8,13 @@ import java.util.UUID
 
 data class OutboxEntry (
     val eventId: UUID,
-    val eventEnvelope: EventEnvelope<PublishableEvent>,
+    val eventEnvelope: EventEnvelope<out PublishableEvent>,
     val published: Boolean,
     val publishedAt: Instant?,
     val createdAt: Instant,
     val processAfter: LocalDateTime?,
 ) {
-    constructor(event: EventEnvelope<PublishableEvent>) : this(
+    constructor(event: EventEnvelope<out PublishableEvent>) : this(
         eventId = event.event.eventId,
         eventEnvelope = event,
         published = false,
@@ -23,7 +23,7 @@ data class OutboxEntry (
         processAfter = LocalDateTime.now(),
     )
 
-    constructor(event: EventEnvelope<PublishableEvent>, processAfter: LocalDateTime) : this(
+    constructor(event: EventEnvelope<out PublishableEvent>, processAfter: LocalDateTime) : this(
         eventId = event.event.eventId,
         eventEnvelope = event,
         published = false,
